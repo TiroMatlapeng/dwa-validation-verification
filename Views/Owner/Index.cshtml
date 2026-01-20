@@ -1,0 +1,109 @@
+@model IEnumerable<PropertyOwner>
+
+<div class="container">
+
+<!--<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />-->
+
+<div class="container mt-5">
+    <h2 class="mb-4">Ongoing Cases</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Edwin</td>
+                    <td>Matlapeng</td>
+                    <td>edwin@example.com</td>
+                    <td>Admin</td>
+                    <td>
+                        <span class="badge bg-success">Active</span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-primary">Edit</button>
+                        <button class="btn btn-sm btn-danger">Delete</button>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>2</td>
+                    <td>Jane</td>
+                    <td>Doe</td>
+                    <td>jane@example.com</td>
+                    <td>User</td>
+                    <td>
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-primary">Edit</button>
+                        <button class="btn btn-sm btn-danger">Delete</button>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>3</td>
+                    <td>John</td>
+                    <td>Smith</td>
+                    <td>john@example.com</td>
+                    <td>Manager</td>
+                    <td>
+                        <span class="badge bg-danger">Inactive</span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-primary">Edit</button>
+                        <button class="btn btn-sm btn-danger">Delete</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Zoran</td>
+                    <td>Mamdani</td>
+                    <td>zoran@example.com</td>
+                    <td>Owner</td>
+                    <td>
+                        <span class="badge bg-success">Active</span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-primary">Edit</button>
+                        <button class="btn btn-sm btn-danger">Delete</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Al</td>
+                    <td>Sharpton</td>
+                    <td>alvin@example.com</td>
+                    <td>User</td>
+                    <td>
+                        <span class="badge bg-success">Active</span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-primary">Edit</button>
+                        <button class="btn btn-sm btn-danger">Delete</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="m-4">
+    <a class="btn btn-primary"
+       inputmode="button"
+       asp-controller="Owner"
+       asp-action="Register"
+    >Register User</a>
+</div>
+
+</div> 

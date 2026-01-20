@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "dwa_ver_val/1.0.0": {
+        "runtime": {
+          "dwa_ver_val.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "dwa_ver_val/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

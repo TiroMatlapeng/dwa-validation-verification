@@ -1,0 +1,212 @@
+﻿
+<div class="container">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card m3 p2">
+        <h6 class="card-title text-center">Validations #</h6>
+         <h1 class="card-text text-center">110</h1>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card m3 p2">
+        <h6 class="card-title text-center">ELU Estimate #</h6>
+         <h1 class="card-text text-center">3500 kL</h1>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card m3 p2">
+        <h6 class="card-title text-center">Outstanding Validations #</h6>
+         <h1 class="card-text text-center">15000</h1>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card m3 p2">
+        <h6 class="card-title text-center">Investigations #</h6>
+         <h1 class="card-text text-center">23</h1>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card m3 p2">
+        <h6 class="card-title text-center">Property Management</h6>
+         <a asp-controller="Property" asp-action="Index" class="card-text text-center">Go to Properties</a>
+      </div>
+    </div>
+    
+  </div>
+    <div class="row mb-2">
+      
+        <div class="col-md-6 m2">
+            <canvas id="myChart"></canvas>
+        </div>
+        <div class="col-md-6 m2">
+            <canvas id="myLineChart"></canvas>
+        </div>
+     <div>
+      <div class="row m-2">
+        <div class="col-md-4">
+           <canvas id="pieChart" height="300"></canvas>
+        </div>
+
+        <div class="col-md-4" >
+           <canvas id="comboChart" height="300"></canvas>
+        </div>
+
+        <div class="col-md-4">
+           <canvas id="scatterChart" height="300"></canvas>
+        </div>
+
+      </div>
+    
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const ctx = document.getElementById('myChart');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['January', 'February', 'March', 'April', 'May', 'June'],
+      datasets: [{
+        label: '# of Validations',
+        data: [12, 19, 3, 5, 2, 3],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
+
+<script>
+  const contex = document.getElementById('myLineChart');
+
+  new Chart(contex, {
+    type: 'line',
+    data: {
+      labels: ['January', 'February', 'March', 'April', 'May', 'June'],
+      datasets: [{
+        label: '# of ELU cases',
+        data: [12, 19, 3, 5, 2, 3],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
+<script>
+    /* =========================
+       1. PIE CHART
+    ========================== */
+    const pieCtx = document.getElementById('pieChart');
+
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Commercial', 'Small & Emerging', 'Undefined', 'Household'],
+            datasets: [{
+                data: [55, 25, 10, 10],
+                backgroundColor: [
+                    '#0d6efd',
+                    '#198754',
+                    '#ffc107',
+                    '#dc3545'
+                ]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+
+    /* =========================
+       2. COMBO CHART (BAR + LINE)
+    ========================== */
+    const comboCtx = document.getElementById('comboChart');
+
+    new Chart(comboCtx, {
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Irrigation',
+                    data: [120, 190, 300, 250, 220],
+                    backgroundColor: '#0d6efd'
+                },
+                {
+                    type: 'line',
+                    label: 'Storage',
+                    data: [30, 50, 80, 60, 70],
+                    borderColor: '#dc3545',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    /* =========================
+       3. SCATTER CHART
+    ========================== */
+    const scatterCtx = document.getElementById('scatterChart');
+
+    new Chart(scatterCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Water Volumes per Hectare',
+                data: [
+                    { x: 60, y: 165 },
+                    { x: 65, y: 170 },
+                    { x: 70, y: 175 },
+                    { x: 75, y: 180 },
+                    { x: 80, y: 185 }
+                ],
+                backgroundColor: '#198754'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Hectare (km2)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Water volume (kL)'
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+
+</div>

@@ -1,0 +1,69 @@
+is_global = true
+build_property.TargetFramework = net9.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = dwa_ver_val
+build_property.RootNamespace = dwa_ver_val
+build_property.ProjectDir = /Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 9.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = /Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 9.0
+build_property.EnableCodeStyleSeverity = 
+
+[/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/Views/Home/Privacy.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9Qcml2YWN5LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/Views/Owner/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvT3duZXIvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/Views/Owner/Register.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvT3duZXIvUmVnaXN0ZXIuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/Views/Property/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUHJvcGVydHkvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/Views/Property/PropertRegister.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUHJvcGVydHkvUHJvcGVydFJlZ2lzdGVyLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/Views/Shared/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL0Vycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/Views/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/Views/Validation/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVmFsaWRhdGlvbi9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-4yuy7ung15

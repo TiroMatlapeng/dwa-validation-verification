@@ -1,0 +1,106 @@
+@model IEnumerable<Property>
+
+@{
+    ViewData["Title"] = "Properties";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card m3 p2">
+                <h6 class="card-title text-center">Total Properties #</h6>
+                <h1 class="card-text text-center">1200</h1>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card m3 p2">
+                <h6 class="card-title text-center">Properties with pending validation #</h6>
+                <h1 class="card-text text-center">250</h1>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card m3 p2">
+                <h6 class="card-title text-center">Properties with outstanding issues #</h6>
+                <h1 class="card-text text-center">50</h1>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card m3 p2">
+                <h6 class="card-title text-center">Properties under investigation #</h6>
+                <h1 class="card-text text-center">10</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="m-4">
+        <a class="btn btn-primary"
+           inputmode="button"
+           asp-controller="Property"
+           asp-action="Register"
+        >Register Property</a>
+    </div>
+
+        <h1>Properties</h1>
+    
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>
+                            @Html.DisplayNameFor(model => model.PropertyNumber)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.PropertySize)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.ProclamationDate)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.RegistrationDate)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.SGCode)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.QuatenaryDrainage)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.WaterManagementArea)
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model) {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.PropertyNumber)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.PropertySize)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.ProclamationDate)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.RegistrationDate)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.SGCode)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.QuatenaryDrainage)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.WaterManagementArea)
+                            </td>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@item.PropertyId" class="btn btn-sm btn-primary">Edit</a> |
+                                <a asp-action="Details" asp-route-id="@item.PropertyId" class="btn btn-sm btn-info">Details</a> |
+                                <a asp-action="Delete" asp-route-id="@item.PropertyId" class="btn btn-sm btn-danger">Delete</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div></div>

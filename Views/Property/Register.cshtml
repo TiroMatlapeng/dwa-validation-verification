@@ -1,0 +1,109 @@
+@model Property
+
+@{
+    ViewData["Title"] = "Register Property";
+}
+
+<div class="container">
+    <div class="row m2">
+        <div class="col-5">
+            <div class="text-centered">
+                <h2>Register Property</h2>
+            </div>
+            <form asp-action="Register">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="mb-3">
+                    <label asp-for="PropertyNumber" class="form-label"></label>
+                    <input asp-for="PropertyNumber" class="form-control" />
+                    <span asp-validation-for="PropertyNumber" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="PropertySize" class="form-label"></label>
+                    <input asp-for="PropertySize" class="form-control" />
+                    <span asp-validation-for="PropertySize" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ProclamationDate" class="form-label"></label>
+                    <input asp-for="ProclamationDate" type="date" class="form-control" />
+                    <span asp-validation-for="ProclamationDate" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="RegistrationDate" class="form-label"></label>
+                    <input asp-for="RegistrationDate" type="date" class="form-control" />
+                    <span asp-validation-for="RegistrationDate" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="SGCode" class="form-label"></label>
+                    <input asp-for="SGCode" class="form-control" />
+                    <span asp-validation-for="SGCode" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="QuatenaryDrainage" class="form-label"></label>
+                    <input asp-for="QuatenaryDrainage" class="form-control" />
+                    <span asp-validation-for="QuatenaryDrainage" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="WaterManagementArea" class="form-label"></label>
+                    <input asp-for="WaterManagementArea" class="form-control" />
+                    <span asp-validation-for="WaterManagementArea" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Longitude" class="form-label"></label>
+                    <input asp-for="Longitude" class="form-control" />
+                    <span asp-validation-for="Longitude" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Latitude" class="form-label"></label>
+                    <input asp-for="Latitude" class="form-control" />
+                    <span asp-validation-for="Latitude" class="text-danger small"></span>
+                </div>
+            
+                <div class="mb-3">
+                    <h4>Property Address</h4>
+                    <div class="mb-3">
+                        <label asp-for="PropertyAddress.StreetAddress" class="form-label"></label>
+                        <input asp-for="PropertyAddress.StreetAddress" class="form-control" />
+                        <span asp-validation-for="PropertyAddress.StreetAddress" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="PropertyAddress.SuburbName" class="form-label"></label>
+                        <input asp-for="PropertyAddress.SuburbName" class="form-control" />
+                        <span asp-validation-for="PropertyAddress.SuburbName" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="PropertyAddress.CityName" class="form-label"></label>
+                        <input asp-for="PropertyAddress.CityName" class="form-control" />
+                        <span asp-validation-for="PropertyAddress.CityName" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="PropertyAddress.Province" class="form-label"></label>
+                        <input asp-for="PropertyAddress.Province" class="form-control" />
+                        <span asp-validation-for="PropertyAddress.Province" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="PropertyAddress.Longitude" class="form-label"></label>
+                        <input asp-for="PropertyAddress.Longitude" class="form-control" />
+                        <span asp-validation-for="PropertyAddress.Longitude" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="PropertyAddress.Latitude" class="form-label"></label>
+                        <input asp-for="PropertyAddress.Latitude" class="form-control" />
+                        <span asp-validation-for="PropertyAddress.Latitude" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <input type="submit" value="Register" class="btn btn-primary" />
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
