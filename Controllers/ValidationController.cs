@@ -6,6 +6,7 @@ public class ValidationController : Controller
     public IActionResult Index()
     {
         return View();
+        
     }
     
 }

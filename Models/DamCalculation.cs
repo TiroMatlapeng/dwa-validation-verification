@@ -13,5 +13,6 @@ public class DamCalculation
     public required decimal DamCapacity { get; set; }
     public required River River{ get; set; }
     public Guid RiverId { get; set; }
+    public DamCalculationStatus DamCalculationStatus { get; set;}
 
 }

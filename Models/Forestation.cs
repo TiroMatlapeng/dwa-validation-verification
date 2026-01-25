@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 public class Forestation
 {
     public Guid ForestationId { get; set; }
+    public required Property Property { get; set;}
     public bool? WithinGWCA { get; set; }
     [Column(TypeName = "decimal(18, 2)")]
     public decimal? QualifyPeriodSFRAHectares { get; set; }

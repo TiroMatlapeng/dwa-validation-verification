@@ -8,9 +8,9 @@ builder.Services.AddDbContext<ApplicationDBContext>(
     options => options
     .UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+//builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IPropertyInterface, PropertyRepository>();
-
+builder.Services.AddScoped<IAddress, AddressRepository>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

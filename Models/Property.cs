@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
 public class Property
-{   
+{
     public Guid PropertyId { get; set; }
     public string? PropertyNumber { get; set; }
     public Address? PropertyAddress { get; set;}  

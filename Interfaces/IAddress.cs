@@ -1,5 +1,7 @@
+using System.Threading.Tasks;
+
 public interface IAddress
 {
-    Address AddAddress(Address Address);
-    Address UpdateAddress(Address Address);
+    public Task<Address> AddAddress(Address Address);
+    public Task<Address> UpdateAddress(Address Address);
 }
