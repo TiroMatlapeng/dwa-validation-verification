@@ -1,9 +1,8 @@
 public interface IForestation
 {
-    IForestation RegisterForestation(Forestation forestation);
-    ICollection<Forestation> ListAll();
-    ICollection<Forestation> ListByWaterUser(PropertyOwner propertyOwner);
+    public Task<Forestation> RegisterForestation(Forestation forestation);
+    public ICollection<Forestation> ListAll();
 
-    Forestation UpdateForestation(Forestation forestation);
+    public Task<Forestation> UpdateForestation(Forestation forestation);
     
 }

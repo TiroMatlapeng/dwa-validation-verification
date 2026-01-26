@@ -31,7 +31,7 @@ public class PropertyController : Controller
     {
         if (ModelState.IsValid)
         {
-            _propertyRepository.Add(property);
+            _propertyRepository.AddProperty(property);
             return RedirectToAction(nameof(Index));
         }
         return View(property);

@@ -4,7 +4,7 @@ public class PropertyRepository : IPropertyInterface
 {
     private readonly ApplicationDBContext _context;
 
-    public PropertyRepository(ApplicationDBContext context) : base(context)
+    public PropertyRepository(ApplicationDBContext context)
     {
         _context = context;
     }
@@ -19,19 +19,31 @@ public class PropertyRepository : IPropertyInterface
         throw new NotImplementedException();
     }
 
-    public Property DeleteProperty(Guid PropertyId)
+    public async Task<Property?> DeleteProperty(Guid PropertyId)
     {
-         throw new NotImplementedException();
+        var property = await _context.Properties
+                       .FirstOrDefaultAsync(Property => Property.PropertyId == PropertyId);
+        if(property == null){
+            return null;
+        }
+         _context.Properties.Remove(property);
+         await _context.SaveChangesAsync();
+         return property;
     }
 
     public Property UpdateProperty(Property Property)
     {
-         throw new NotImplementedException();
+         
+         _context.Properties.Update(Property);
+         _context.SaveChanges();
+         return Property;
     }
 
     public Property AddProperty(Property Property)
     {
-         return new NotImplementedException();
+          _context.Properties.Add(Property);
+          _context.SaveChanges();
+          return Property;
     }
 
 
@@ -45,7 +57,6 @@ public class PropertyRepository : IPropertyInterface
     public ICollection<Property> ListAll()
     {
         return _context.Properties
-//            .Where(p => p.PropertyAddress != null && p.PropertyAddress.Province == provinceName)
             .ToList();
     }
 }
