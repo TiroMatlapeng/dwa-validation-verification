@@ -20,5 +20,6 @@ public class FieldAndCrop
     public decimal CropArea { get; set; }
     [Column(TypeName = "decimal(18, 2)")]
     public decimal SAPWATCalculationResult { get; set; }
+    public Entitlement Entitlemwnt {get; set;}
 
 }

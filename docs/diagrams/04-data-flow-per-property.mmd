@@ -1,0 +1,86 @@
+flowchart LR
+    subgraph Inputs["External Inputs"]
+        WARMS_Data["WARMS\nRegistration Data"]
+        SG_Data["Surveyor General\nBoundaries & Diagrams"]
+        Deeds_Data["Deeds Office\nTitle Deeds"]
+        Satellite["Satellite Imagery\n(1996-1999 + Current)"]
+        HistData["Historical Data\nPermits, Surveys\nCourt Decisions"]
+    end
+
+    subgraph Phase2_Steps["Verification Steps"]
+        CP06["CP06\nEvaluate WARMS"]
+        CP07["CP07\nSpatial Info"]
+        CP09["CP09\nProperty & Source\nEvaluation"]
+        CP10["CP10\nAdditional Info"]
+        CP11["CP11\nGIS Analysis &\nField Digitising"]
+        CP12["CP12\nSAPWAT\nModelling"]
+        CP13["CP13\nELU\nCalculation"]
+        CP15["CP15\nDam Volume\nCalculation"]
+        CP16["CP16\nSFRA\nCalculation"]
+    end
+
+    subgraph Calculators["Calculator Engine"]
+        SAPWAT["SAPWAT\nCalculator"]
+        ELU_Calc["ELU\nCalculator"]
+        Dam_Calc["Dam Volume\nCalculator"]
+        SFRA_Calc["SFRA\nCalculator"]
+    end
+
+    subgraph DataStore["Database Tables Written"]
+        FM["FileMaster\n(registration flags,\nvalidation status)"]
+        PROP["Property\n(verified size,\ncoordinates, SG code)"]
+        PO["PropertyOwner\n(verified from\ntitle deeds)"]
+        POWN["PropertyOwnership\n(title deed no,\ndate)"]
+        IRR["Irrigation\n(all 9 scenarios:\nProclamation through\nPresent day)"]
+        STOR["Storing\n(dam count,\nvolumes per\nscenario)"]
+        FOR["Forestation\n(SFRA hectares,\nvolumes, ELU,\nlawful/unlawful)"]
+        FC["FieldAndCrop\n(field area, crop,\nrotation, irrigation,\nSAPWAT result)"]
+        DC["DamCalculation\n(capacity,\nriver, status)"]
+        ENT["Entitlement\n(type, volume\ndetermined)"]
+        WS["WaterSource\n(verified sources)"]
+        SI["SateliteImage\n(imagery records)"]
+    end
+
+    WARMS_Data --> CP06
+    SG_Data --> CP07
+    SG_Data --> CP09
+    Deeds_Data --> CP09
+    Satellite --> CP07
+    Satellite --> CP11
+    HistData --> CP10
+
+    CP06 --> FM
+    CP06 --> IRR
+    CP06 --> STOR
+    CP06 --> FOR
+
+    CP07 --> SI
+    CP07 --> PROP
+
+    CP09 --> PROP
+    CP09 --> PO
+    CP09 --> POWN
+    CP09 --> WS
+
+    CP10 --> ENT
+
+    CP11 --> FC
+    CP11 --> DC
+
+    CP12 --> SAPWAT
+    SAPWAT --> FC
+
+    CP13 --> ELU_Calc
+    ELU_Calc --> IRR
+    ELU_Calc --> ENT
+
+    CP15 --> Dam_Calc
+    Dam_Calc --> DC
+    Dam_Calc --> STOR
+
+    CP16 --> SFRA_Calc
+    SFRA_Calc --> FOR
+
+    style Inputs fill:#ffe6e6,stroke:#cc0000
+    style Calculators fill:#e6ffe6,stroke:#006600
+    style DataStore fill:#e6e6ff,stroke:#0000cc

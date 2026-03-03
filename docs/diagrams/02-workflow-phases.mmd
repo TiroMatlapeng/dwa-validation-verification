@@ -1,0 +1,53 @@
+flowchart TB
+    Start([Property Enters V&V System]) --> CP01
+
+    subgraph Phase1["Phase 1: Project Inception"]
+        CP01["CP01: Obtain WARMS Database\n& Perform Audit\n---\nCompare WARMS vs V&V DB\nIdentify new records\nDetect ownership changes"]
+        CP02["CP02: Identify Unregistered\nUsers\n---\nGIS analysis on satellite imagery\nFlag unregistered water use"]
+        CP03["CP03: V&V Database Analysis\nRecord Status Quo\n---\nCategorise: completed,\nverification-only, in-process,\nnot started"]
+        CP04["CP04: Project Inception\nReport\n---\nScope, totals, status\nbreakdown, resource plan"]
+        CP05["CP05: Public Participation\nSession 1\n---\nLarge-scale public launch\nMedia, industry, agriculture"]
+
+        CP01 --> CP02 --> CP03 --> CP04 --> CP05
+    end
+
+    CP05 --> CP06
+
+    subgraph Phase2["Phase 2: Verification (per property)"]
+        CP06["CP06: Evaluate WARMS\nRegistration Information\n---\nIdentify activities: Taking,\nStoring, Industrial, SFRA"]
+        CP07["CP07: Obtain Supportive\nSpatial Information\n---\nSG boundaries, satellite\nimagery 1996-1999 + current"]
+        CP08["CP08: Obtain Other\nSupportive Information\n---\nField surveys, GWCA,\nIrrigation Board, Section 9B"]
+        CP09["CP09: Property & Source\nEvaluation\n---\nTitle deeds, SG diagram,\nowner verification, source eval"]
+        CP10["CP10: Evaluate Additional\nInformation\n---\nPermits, Section 32/33,\ntransfers, court decisions"]
+        CP11["CP11: GIS Analysis &\nField Digitising\n---\nOverlay boundaries on imagery\nDigitise fields & dams\nCalculate hectares"]
+        CP12["CP12: Field & Crop +\nSAPWAT Modelling\n---\nCrop data per field\nSAPWAT volume calculation"]
+        CP13["CP13: Calculate ELU /\nLawful / Unlawful\n---\nAll scenarios: Proclamation,\nExisting, Lawful, Unlawful,\nRegistered, Present"]
+        CP14["CP14: Update V&V\nDatabase\n---\nCapture all calculated data\nLink to WARMS reg number"]
+        CP15["CP15: Calculate Dam\nVolumes\n---\nWall x Fetch x Depth x Factor\nor Area x Depth x Factor"]
+        CP16["CP16: Calculate Stream\nFlow Reduction\n---\nSFRA hectares & volumes\nQualify vs Current period"]
+
+        CP06 --> CP07 --> CP08 --> CP09 --> CP10 --> CP11 --> CP12 --> CP13
+        CP13 --> CP14
+        CP13 --> CP15
+        CP13 --> CP16
+        CP15 --> CP14
+        CP16 --> CP14
+    end
+
+    CP14 --> CP17
+
+    subgraph Phase3["Phase 3: Validation / Section 35"]
+        CP17["CP17: Public Participation\nSession 2\n---\nField visits per small area\nIndividual sessions with users\nPresent application letters"]
+        CP18["CP18: Field Visit &\nLetter Dissemination\n---\nPresent findings to users\nIssue Letter 1"]
+        CP19["CP19: Section 35\nCorrespondence\n---\nPost letters to non-attendees\nTrack responses & deadlines"]
+        CP20["CP20: Section 35 Process\nTracking\n---\nLetter state machine\nEscalation paths"]
+        CP21["CP21: Project Control\n& Reporting\n---\nProgress reports\nLetter tracking summary"]
+
+        CP17 --> CP18 --> CP19 --> CP20 --> CP21
+    end
+
+    CP21 --> Complete([V&V Complete for Property])
+
+    style Phase1 fill:#e6f3ff,stroke:#0066cc
+    style Phase2 fill:#e6ffe6,stroke:#006600
+    style Phase3 fill:#fff3e6,stroke:#cc6600

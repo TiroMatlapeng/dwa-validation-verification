@@ -1,10 +1,11 @@
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
 public class Property
 {
     public Guid PropertyId { get; set; }
-    public string? PropertyNumber { get; set; }
-    public Address? PropertyAddress { get; set;}  
+    public string? PropertyReferenceNumber { get; set; }
+    public Address PropertyAddress { get; set;}  
     public int PropertySize { get; set;}
     public DateOnly ProclamationDate { get; set; }
     public DateOnly RegistrationDate { get; set; }
@@ -17,4 +18,6 @@ public class Property
     public decimal? Latitude { get; set; }
     
     public ICollection<PropertyOwnership> PropertyOwnerships { get; set; } = new List<PropertyOwnership>();
+    public Guid EntitlementId {get; set;}
+    public Entitlement Entitlement {get; set;}
 }

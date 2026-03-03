@@ -1,11 +1,12 @@
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
 public class FileMaster
 {
 public Guid Id { get; set; }
 public required string RegistrationNumber { get; set; }
-public Guid PropertyAddressId { get; set; }
-public required PropertyAddress PropertyAddress { get; set; }
+public Guid PropertyId {get;set;}
+public Property Property {get; set;}
 public required string SurveyorGeneralCode { get; set; }
 public required string PrimaryCatchment { get; set; }
 public required string QuaternaryCatchment { get; set; }
