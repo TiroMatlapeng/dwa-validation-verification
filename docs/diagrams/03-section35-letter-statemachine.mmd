@@ -1,0 +1,83 @@
+stateDiagram-v2
+    [*] --> L1_Generated: Letter 1 Created
+
+    state "Letter 1: S35(1) Notice to Apply" as L1 {
+        L1_Generated --> L1_Signed: Regional Manager signs
+        L1_Signed --> L1_Issued: Issued (post/email/person)
+        L1_Issued --> L1_Awaiting: Waiting for response
+    }
+
+    L1_Awaiting --> L1_Agreed: Application returned\n(Agreed)
+    L1_Awaiting --> L1_NotAgreed: Application returned\n(Not Agreed)
+    L1_Awaiting --> L1_NoResponse: Failure to respond\n(past due date)
+    L1_Awaiting --> L1_RTS: Return to Sender
+
+    L1_RTS --> L1R_Generated: Investigate & Reissue
+
+    state "Letter 1 Reissue" as L1R {
+        L1R_Generated --> L1R_Issued: Re-issued
+        L1R_Issued --> L1R_Awaiting: Waiting for response
+    }
+
+    L1R_Awaiting --> L1_Agreed: Agreed
+    L1R_Awaiting --> L1_NotAgreed: Not Agreed
+    L1R_Awaiting --> L1A_Generated: Still no response
+
+    L1_NoResponse --> L1A_Generated: Escalate
+
+    state "Letter 1A: S53(1) Directive to Apply" as L1A {
+        L1A_Generated --> L1A_Issued: Issued
+        L1A_Issued --> L1A_Awaiting: Waiting
+    }
+
+    L1A_Awaiting --> L1_Agreed: Complied
+    L1A_Awaiting --> L1_NotAgreed: Not Agreed
+
+    L1_NotAgreed --> L2_Generated: Need more info
+
+    state "Letter 2: S35(3)(a) Request Info" as L2 {
+        L2_Generated --> L2_Issued: Issued
+        L2_Issued --> L2_Awaiting: Waiting
+    }
+
+    L2_Awaiting --> L2_Returned: Info returned
+    L2_Awaiting --> L2A_Generated: Failure to respond
+
+    L2_Returned --> ReEvaluate: Re-evaluate with new info
+    ReEvaluate --> L3_Generated: Determination updated
+
+    state "Letter 2A: S53(1) Directive for Info" as L2A {
+        L2A_Generated --> L2A_Issued: Issued
+        L2A_Issued --> L2A_Awaiting: Waiting
+    }
+
+    L2A_Awaiting --> L3_Generated: Proceed with\navailable data
+
+    L1_Agreed --> L3_Generated: Proceed to confirmation
+
+    state "Letter 3: S35(4) ELU Confirmation" as L3 {
+        L3_Generated --> L3_Signed: Signed by authority
+        L3_Signed --> L3_Issued: Issued to water user
+    }
+
+    L3_Issued --> ELU_Confirmed: ELU Confirmed\n(same status as licence)
+
+    ELU_Confirmed --> AllLawful: All use is lawful
+    ELU_Confirmed --> HasUnlawful: Unlawful use identified
+
+    AllLawful --> UpdateWARMS: Update WARMS\n& eWULAAS
+    UpdateWARMS --> [*]: Case Complete
+
+    HasUnlawful --> L4A_Generated: Enforcement
+
+    state "Letter 4A: S53(1) Notice of Intent" as L4A {
+        L4A_Generated --> L4A_Issued: Issued
+    }
+
+    L4A_Issued --> L45_Generated: No compliance
+
+    state "Letter 4&5: S53(1) Directive to Stop" as L45 {
+        L45_Generated --> L45_Issued: Issued
+    }
+
+    L45_Issued --> [*]: Enforcement Complete

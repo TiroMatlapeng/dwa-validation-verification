@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
 public class Irrigation
@@ -13,8 +14,7 @@ public class Irrigation
     public decimal WaterLandArea { get; set; }
     [Column(TypeName = "decimal(18, 2)")]
     public decimal WaterCropArea { get; set; }
-    public WaterSourceType WaterSourceType { get; set; }
-
-
+    public Guid WaterSourceId {get; set;}
+    public WaterSource WaterSource { get; set; }
 
 }

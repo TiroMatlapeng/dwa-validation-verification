@@ -1,0 +1,56 @@
+graph TB
+    subgraph External["External Systems"]
+        WARMS["WARMS\n(Water Use Registration)"]
+        eWULAAS["eWULAAS\n(Licence Applications)"]
+        SG["Surveyor General\n(DRDLR)"]
+        Deeds["Deeds Office\n(DRDLR)"]
+        GIS["Satellite / GIS\nImage Store"]
+    end
+
+    subgraph Clients["User Interfaces"]
+        InternalApp["Internal MVC App\n(DWS/CMA Officials)\n/Admin, /Property, /Validation\n/Workflow, /Reports, /Letters"]
+        PublicPortal["Public Portal\n(Water Users)\n/Portal/Login, /Portal/Dashboard\n/Portal/Cases, /Portal/Letters"]
+    end
+
+    subgraph Services["Service Layer"]
+        WE["Workflow Engine"]
+        CE["Calculator Engine\n(SAPWAT, Dam, ELU, SFRA)"]
+        LS["Letter Service\n(Generate, Track, Batch)"]
+        NS["Notification Service\n(Email + In-App)"]
+        SS["Signature Service\n(Capture + Verify)"]
+        IS["Integration Service\n(WARMS, eWULAAS, SG, Deeds)"]
+        AS["Audit Service\n(Immutable Log)"]
+        RS["Reporting Service"]
+    end
+
+    subgraph Repositories["Repository Layer"]
+        PR["PropertyRepo"]
+        FR["FileMasterRepo"]
+        WR["WorkflowRepo"]
+        LR["LetterRepo"]
+        OR["Other Repos..."]
+    end
+
+    subgraph Database["SQL Server Database"]
+        CoreDB["Core Domain\nProperties, Owners\nFileMasters, Irrigation\nStoring, Forestation\nFieldAndCrop, DamCalc"]
+        WorkflowDB["Workflow\nWorkflowInstances\nWorkflowSteps\nAuditLog"]
+        CorrespDB["Correspondence\nLetterIssuances\nDocuments\nDigitalSignatures"]
+        PortalDB["Portal\nPublicUsers\nNotifications"]
+    end
+
+    InternalApp --> Services
+    PublicPortal --> Services
+    Services --> Repositories
+    Repositories --> Database
+
+    IS <--> WARMS
+    IS <--> eWULAAS
+    IS <--> SG
+    IS <--> Deeds
+    IS <--> GIS
+
+    style External fill:#f9f,stroke:#333
+    style Clients fill:#bbf,stroke:#333
+    style Services fill:#bfb,stroke:#333
+    style Repositories fill:#fdb,stroke:#333
+    style Database fill:#ddd,stroke:#333

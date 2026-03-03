@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
-
+  
 public class Address
 {
     public Guid AddressId { get; set; } 

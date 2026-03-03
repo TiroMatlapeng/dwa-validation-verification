@@ -44,5 +44,7 @@ public class Forestation
     public decimal SFRAPermitHectares { get; set;}
     public string? CommentsOnData { get; set; }
 
+    public Entitlement Entitlement {get; set;}
+
 
 }
