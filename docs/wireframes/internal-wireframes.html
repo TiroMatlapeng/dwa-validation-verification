@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWA V&V System — Internal Application Wireframes</title>
+<style>
+/* ── Reset & Base ── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; background: #e8ecf1; color: #1a1a1a; line-height: 1.5; }
+
+/* ── Wireframe Index ── */
+.index-page { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+.index-page h1 { font-size: 28px; color: #003366; margin-bottom: 6px; }
+.index-page .subtitle { color: #555; margin-bottom: 30px; font-size: 15px; }
+.index-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.index-card { background: #fff; border-radius: 8px; padding: 20px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.index-card:hover { border-color: #003366; box-shadow: 0 4px 12px rgba(0,51,102,0.15); transform: translateY(-2px); }
+.index-card h3 { font-size: 15px; color: #003366; margin-bottom: 4px; }
+.index-card p { font-size: 12px; color: #666; }
+.index-card .card-number { font-size: 11px; color: #999; margin-bottom: 6px; font-weight: 600; }
+
+/* ── Wireframe Container ── */
+.wireframe { display: none; max-width: 1200px; margin: 20px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); overflow: hidden; }
+.wireframe.active { display: block; }
+
+/* ── Browser Chrome ── */
+.browser-bar { background: #dee2e6; padding: 8px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #c8ccd0; }
+.browser-dot { width: 10px; height: 10px; border-radius: 50%; }
+.browser-dot.red { background: #ff5f57; }
+.browser-dot.yellow { background: #ffbd2e; }
+.browser-dot.green { background: #28c840; }
+.browser-url { flex: 1; background: #fff; border: 1px solid #c8ccd0; border-radius: 4px; padding: 4px 10px; font-size: 12px; color: #444; margin-left: 8px; }
+
+/* ── App Shell ── */
+.app-shell { display: flex; min-height: 700px; }
+
+/* ── Sidebar ── */
+.sidebar { width: 220px; background: #003366; color: #fff; padding: 0; flex-shrink: 0; }
+.sidebar-logo { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 13px; font-weight: 700; letter-spacing: 0.5px; }
+.sidebar-logo span { color: #7db8e0; }
+.sidebar-section { padding: 12px 0 4px 16px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.4); }
+.sidebar-item { display: flex; align-items: center; padding: 8px 16px; font-size: 12.5px; color: rgba(255,255,255,0.75); cursor: pointer; transition: all 0.15s; gap: 8px; }
+.sidebar-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.sidebar-item.active { background: rgba(255,255,255,0.12); color: #fff; border-left: 3px solid #7db8e0; padding-left: 13px; }
+.sidebar-icon { width: 16px; text-align: center; font-size: 13px; }
+.sidebar-badge { margin-left: auto; background: #e74c3c; color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+
+/* ── Main Content ── */
+.main-content { flex: 1; background: #f5f7fa; display: flex; flex-direction: column; }
+
+/* ── Top Bar ── */
+.top-bar { background: #fff; border-bottom: 1px solid #e0e4e8; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; }
+.top-bar-left { display: flex; align-items: center; gap: 16px; }
+.breadcrumb { font-size: 12px; color: #888; }
+.breadcrumb a { color: #003366; text-decoration: none; }
+.global-search { border: 1px solid #d0d5db; border-radius: 4px; padding: 6px 12px; font-size: 12px; width: 280px; background: #f9fafb; }
+.top-bar-right { display: flex; align-items: center; gap: 14px; }
+.notif-bell { position: relative; cursor: pointer; font-size: 16px; }
+.notif-count { position: absolute; top: -4px; right: -6px; background: #e74c3c; color: #fff; font-size: 9px; padding: 1px 4px; border-radius: 8px; }
+.user-avatar { width: 30px; height: 30px; border-radius: 50%; background: #003366; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+
+/* ── Page Content ── */
+.page-content { padding: 20px 24px; flex: 1; overflow-y: auto; }
+.page-title { font-size: 20px; font-weight: 600; color: #1a2a3a; margin-bottom: 4px; }
+.page-subtitle { font-size: 13px; color: #777; margin-bottom: 20px; }
+
+/* ── KPI Cards ── */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.kpi-card { background: #fff; border-radius: 6px; padding: 16px; border: 1px solid #e5e8ec; }
+.kpi-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.kpi-value { font-size: 24px; font-weight: 700; color: #003366; }
+.kpi-sub { font-size: 11px; color: #888; margin-top: 2px; }
+.kpi-card.alert .kpi-value { color: #e74c3c; }
+.kpi-card.success .kpi-value { color: #27ae60; }
+.kpi-card.warn .kpi-value { color: #f39c12; }
+
+/* ── Data Tables ── */
+.data-table-wrap { background: #fff; border-radius: 6px; border: 1px solid #e5e8ec; overflow: hidden; margin-bottom: 20px; }
+.table-header { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; }
+.table-title { font-size: 14px; font-weight: 600; color: #1a2a3a; }
+.table-actions { display: flex; gap: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { background: #f5f7fa; padding: 8px 12px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #e5e8ec; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+tbody tr:hover { background: #f8fafc; }
+
+/* ── Buttons ── */
+.btn { padding: 6px 14px; border-radius: 4px; font-size: 12px; cursor: pointer; border: 1px solid transparent; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+.btn-primary { background: #003366; color: #fff; }
+.btn-outline { background: #fff; color: #003366; border-color: #003366; }
+.btn-success { background: #27ae60; color: #fff; }
+.btn-danger { background: #e74c3c; color: #fff; }
+.btn-warning { background: #f39c12; color: #fff; }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.btn-back { background: none; color: #003366; border: none; cursor: pointer; font-size: 13px; margin-bottom: 16px; display: inline-flex; align-items: center; gap: 4px; }
+
+/* ── Status Badges ── */
+.badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+.badge-green { background: #e8f5e9; color: #2e7d32; }
+.badge-blue { background: #e3f2fd; color: #1565c0; }
+.badge-orange { background: #fff3e0; color: #e65100; }
+.badge-red { background: #ffebee; color: #c62828; }
+.badge-grey { background: #f0f0f0; color: #666; }
+.badge-purple { background: #f3e5f5; color: #6a1b9a; }
+
+/* ── Form Elements ── */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12px; font-weight: 600; color: #444; display: block; margin-bottom: 4px; }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 8px 10px; border: 1px solid #d0d5db; border-radius: 4px; font-size: 12px; background: #fff; }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* ── Tabs ── */
+.tab-bar { display: flex; border-bottom: 2px solid #e5e8ec; margin-bottom: 16px; }
+.tab { padding: 8px 18px; font-size: 12.5px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; color: #666; }
+.tab.active { border-bottom-color: #003366; color: #003366; font-weight: 600; }
+
+/* ── Progress Tracker ── */
+.progress-tracker { display: flex; flex-direction: column; gap: 2px; margin-bottom: 20px; }
+.progress-step { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-radius: 4px; background: #fff; border: 1px solid #eee; font-size: 12px; }
+.progress-step.completed { border-left: 3px solid #27ae60; }
+.progress-step.active { border-left: 3px solid #003366; background: #f0f4f8; }
+.progress-step.pending { border-left: 3px solid #ddd; color: #999; }
+.step-number { font-weight: 700; min-width: 32px; color: #003366; }
+.step-label { flex: 1; }
+.step-status { font-size: 11px; }
+
+/* ── Cards ── */
+.card { background: #fff; border-radius: 6px; border: 1px solid #e5e8ec; padding: 16px; margin-bottom: 14px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.card-title { font-size: 14px; font-weight: 600; color: #1a2a3a; }
+
+/* ── Panels ── */
+.panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.panel-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* ── Alerts ── */
+.alert { padding: 10px 14px; border-radius: 4px; font-size: 12px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.alert-info { background: #e3f2fd; color: #1565c0; }
+.alert-warn { background: #fff3e0; color: #e65100; }
+.alert-danger { background: #ffebee; color: #c62828; }
+.alert-success { background: #e8f5e9; color: #2e7d32; }
+
+/* ── Signature Pad ── */
+.sig-pad { border: 2px dashed #ccc; border-radius: 6px; height: 120px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 13px; background: #fafbfc; margin: 10px 0; }
+
+/* ── Timeline ── */
+.timeline { border-left: 2px solid #e0e4e8; margin-left: 12px; padding-left: 16px; }
+.timeline-item { margin-bottom: 14px; position: relative; }
+.timeline-item::before { content: ''; position: absolute; left: -21px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: #003366; border: 2px solid #fff; }
+.timeline-item.grey::before { background: #ccc; }
+.timeline-date { font-size: 10px; color: #888; }
+.timeline-text { font-size: 12px; }
+
+/* ── Chart placeholder ── */
+.chart-placeholder { background: #f5f7fa; border: 1px dashed #ccc; border-radius: 6px; height: 200px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 13px; }
+
+/* ── Filter bar ── */
+.filter-bar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+.filter-bar .form-select, .filter-bar .form-input { width: auto; min-width: 150px; }
+
+/* ── Utility ── */
+.text-right { text-align: right; }
+.text-muted { color: #999; }
+.text-sm { font-size: 11px; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.gap-8 { gap: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ INDEX PAGE ═══════════════════════ -->
+<div class="index-page" id="indexPage">
+    <h1>DWA V&V System — Internal Application Wireframes</h1>
+    <p class="subtitle">Interactive wireframes for the DWS/CMA internal MVC application. Click any card to view the wireframe.</p>
+
+    <div class="index-grid">
+        <div class="index-card" onclick="showWireframe('dashboard')">
+            <div class="card-number">01 of 12</div>
+            <h3>Dashboard</h3>
+            <p>National overview: KPI cards, V&V progress by WMA, overdue tasks, letter tracking, and catchment status at a glance.</p>
+        </div>
+        <div class="index-card" onclick="showWireframe('property-list')">
+            <div class="card-number">02 of 12</div>
+            <h3>Property List &amp; Search</h3>
+            <p>Browse, filter, and search all properties by SG code, WARMS registration, WMA, owner name, or validation status.</p>
+        </div>
+        <div class="index-card" onclick="showWireframe('case-detail')">
+            <div class="card-number">03 of 12</div>
+            <h3>Case Detail (FileMaster)</h3>
+            <p>Central case view with tabbed layout: overview, water use, calculations, letters, documents, audit trail, and workflow status.</p>
+        </div>
+        <div class="index-card" onclick="showWireframe('workflow')">
+            <div class="card-number">04 of 12</div>
+            <h3>Workflow Progress Tracker</h3>
+            <p>Control point progression through all 21 steps, guard validation, evidence checklist, and transition requests.</p>
+        </div>
+        <div class="index-card" onclick="showWireframe('water-use')">
+            <div class="card-number">05 of 12</div>
+            <h3>Water Use Data Entry</h3>
+            <p>Field &amp; Crop entry with SAPWAT calculation, irrigation records, dam calculations, and forestation/SFRA data.</p>
+        </div>
+        <div class="index-card" onclick="showWireframe('elu-summary')">
+            <div class="card-number">06 of 12</div>
+            <h3>ELU Determination Summary</h3>
+            <p>Validation outcome: all 9 scenario categories, qualifying vs current comparison, lawful/unlawful volumes, registration status.</p>
+        </div>
+        <div class="index-card" onclick="showWireframe('letters')">
+            <div class="card-number">07 of 12</div>
+            <h3>Letter Management</h3>
+            <p>Generate, preview, sign, issue, and track Section 35 letters. Batch processing and response recording.</p>
+        </div>
+        <div class="index-card" onclick="showWireframe('letter-sign')">
+            <div class="card-number">08 of 12</div>
+            <h3>Letter Signing</h3>
+            <p>Electronic signature capture with SignaturePad, document integrity verification, and signature request management.</p>
+        </div>
+        <div class="index-card" onclick="showWireframe('notifications')">
+            <div class="card-number">09 of 12</div>
+            <h3>Notifications &amp; Inbox</h3>
+            <p>In-app notification centre with unread indicators, action links, and notification preference settings.</p>
+        </div>
+        <div class="index-card" onclick="showWireframe('admin')">
+            <div class="card-number">10 of 12</div>
+            <h3>Administration</h3>
+            <p>User management, role assignment, organisational unit hierarchy, reference data, and public user approvals.</p>
+        </div>
+        <div class="index-card" onclick="showWireframe('reports')">
+            <div class="card-number">11 of 12</div>
+            <h3>Reports</h3>
+            <p>Catchment progress, letter tracking, validation summary, and user activity reports with export to PDF/Excel.</p>
+        </div>
+        <div class="index-card" onclick="showWireframe('audit')">
+            <div class="card-number">12 of 12</div>
+            <h3>Audit Log</h3>
+            <p>Immutable action log with advanced filtering, entity history timeline, and case-level audit trail for PAJA compliance.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ SIDEBAR TEMPLATE (reused) ═══════════════════════ -->
+<!-- Each wireframe includes its own sidebar to show active state correctly -->
+
+<!-- ═══════════════════════ 01: DASHBOARD ═══════════════════════ -->
+<div class="wireframe" id="wf-dashboard">
+    <div class="browser-bar">
+        <div class="browser-dot red"></div>
+        <div class="browser-dot yellow"></div>
+        <div class="browser-dot green"></div>
+        <div class="browser-url">https://vv.dws.gov.za/Home/Dashboard</div>
+    </div>
+    <div class="app-shell">
+        <div class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&V</span></div>
+            <div class="sidebar-section">Main</div>
+            <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Properties</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Cases <span class="sidebar-badge">247</span></div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Workflow</div>
+            <div class="sidebar-section">Operations</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Letters <span class="sidebar-badge">12</span></div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Validation</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Calculator</div>
+            <div class="sidebar-section">System</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Reports</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Notifications <span class="sidebar-badge">5</span></div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Admin</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Audit Log</div>
+        </div>
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <span class="breadcrumb"><a href="#">Home</a> / Dashboard</span>
+                    <input type="text" class="global-search" placeholder="Search properties, cases, WARMS reg...">
+                </div>
+                <div class="top-bar-right">
+                    <div class="notif-bell">&#128276;<span class="notif-count">5</span></div>
+                    <div class="user-avatar">TM</div>
+                </div>
+            </div>
+            <div class="page-content">
+                <button class="btn-back" onclick="showIndex()">&#8592; Back to wireframe index</button>
+                <div class="flex-between mb-16">
+                    <div>
+                        <div class="page-title">Dashboard</div>
+                        <div class="page-subtitle">National Overview &mdash; Breede-Gouritz WMA &bull; 11 March 2026</div>
+                    </div>
+                    <select class="form-select" style="width: 220px;">
+                        <option>All WMAs (National View)</option>
+                        <option selected>Breede-Gouritz WMA</option>
+                        <option>Inkomati-Usuthu WMA</option>
+                        <option>Limpopo WMA</option>
+                        <option>Olifants WMA</option>
+                    </select>
+                </div>
+
+                <div class="kpi-row">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total Properties</div>
+                        <div class="kpi-value">12,483</div>
+                        <div class="kpi-sub">in selected WMA</div>
+                    </div>
+                    <div class="kpi-card success">
+                        <div class="kpi-label">Completed</div>
+                        <div class="kpi-value">4,812</div>
+                        <div class="kpi-sub">38.5% of total</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">In Process</div>
+                        <div class="kpi-value">3,241</div>
+                        <div class="kpi-sub">Phase 2: 2,140 | Phase 3: 1,101</div>
+                    </div>
+                    <div class="kpi-card warn">
+                        <div class="kpi-label">Overdue Tasks</div>
+                        <div class="kpi-value">67</div>
+                        <div class="kpi-sub">23 letters, 44 workflow steps</div>
+                    </div>
+                    <div class="kpi-card alert">
+                        <div class="kpi-label">Letters Pending Response</div>
+                        <div class="kpi-value">189</div>
+                        <div class="kpi-sub">34 past due date</div>
+                    </div>
+                </div>
+
+                <div class="panel-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">V&V Progress by Phase</span>
+                            <span class="btn btn-sm btn-outline">View Report</span>
+                        </div>
+                        <div class="chart-placeholder">[ Stacked bar chart: Not Started | Phase 1 | Phase 2 | Phase 3 | Complete ]</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Letter Status Summary</span>
+                            <span class="btn btn-sm btn-outline">View All</span>
+                        </div>
+                        <table>
+                            <thead><tr><th>Letter Type</th><th>Issued</th><th>Awaiting</th><th>Overdue</th></tr></thead>
+                            <tbody>
+                                <tr><td>Letter 1 &mdash; S35(1)</td><td>1,204</td><td>89</td><td><span class="badge badge-red">12</span></td></tr>
+                                <tr><td>Letter 1A &mdash; S53(1)</td><td>156</td><td>34</td><td><span class="badge badge-red">8</span></td></tr>
+                                <tr><td>Letter 2 &mdash; S35(3)(a)</td><td>312</td><td>45</td><td><span class="badge badge-orange">6</span></td></tr>
+                                <tr><td>Letter 3 &mdash; S35(4)</td><td>4,812</td><td>&mdash;</td><td>&mdash;</td></tr>
+                                <tr><td>Letter 4A &mdash; S53(1)</td><td>23</td><td>11</td><td><span class="badge badge-red">3</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Recent Activity</span>
+                        </div>
+                        <div class="timeline">
+                            <div class="timeline-item"><div class="timeline-date">10 Mar, 14:32</div><div class="timeline-text">J. Mokoena completed CP12 (SAPWAT) for <strong>Farm Rietfontein 234</strong></div></div>
+                            <div class="timeline-item"><div class="timeline-date">10 Mar, 11:15</div><div class="timeline-text">Letter 3 issued to <strong>P.J. van der Merwe</strong> &mdash; ELU confirmed 45,200 m&sup3;</div></div>
+                            <div class="timeline-item"><div class="timeline-date">10 Mar, 09:40</div><div class="timeline-text">M. Naidoo uploaded title deed for <strong>Erf 1145 Stellenbosch</strong></div></div>
+                            <div class="timeline-item grey"><div class="timeline-date">09 Mar, 16:22</div><div class="timeline-text">WARMS daily sync completed &mdash; 3 new records, 1 ownership change</div></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">My Assigned Tasks</span>
+                            <span class="badge badge-blue">7 pending</span>
+                        </div>
+                        <table>
+                            <thead><tr><th>Case</th><th>Task</th><th>Due</th></tr></thead>
+                            <tbody>
+                                <tr><td>BG-2024-0412</td><td>Complete CP11 (GIS Analysis)</td><td><span class="badge badge-red">Overdue</span></td></tr>
+                                <tr><td>BG-2024-0567</td><td>Sign Letter 1 for issuance</td><td><span class="badge badge-orange">Today</span></td></tr>
+                                <tr><td>BG-2024-0891</td><td>Record Letter 1 response</td><td>14 Mar</td></tr>
+                                <tr><td>BG-2024-1023</td><td>Review uploaded documents</td><td>16 Mar</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ 02: PROPERTY LIST ═══════════════════════ -->
+<div class="wireframe" id="wf-property-list">
+    <div class="browser-bar">
+        <div class="browser-dot red"></div><div class="browser-dot yellow"></div><div class="browser-dot green"></div>
+        <div class="browser-url">https://vv.dws.gov.za/Property/Index</div>
+    </div>
+    <div class="app-shell">
+        <div class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&V</span></div>
+            <div class="sidebar-section">Main</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+            <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Properties</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Cases</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Workflow</div>
+            <div class="sidebar-section">Operations</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Letters</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Validation</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Calculator</div>
+            <div class="sidebar-section">System</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Reports</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Notifications</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Admin</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Audit Log</div>
+        </div>
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <span class="breadcrumb"><a href="#">Home</a> / Properties</span>
+                    <input type="text" class="global-search" placeholder="Search by SG code, farm name, WARMS reg...">
+                </div>
+                <div class="top-bar-right"><div class="notif-bell">&#128276;</div><div class="user-avatar">TM</div></div>
+            </div>
+            <div class="page-content">
+                <button class="btn-back" onclick="showIndex()">&#8592; Back to wireframe index</button>
+                <div class="flex-between mb-16">
+                    <div><div class="page-title">Properties</div><div class="page-subtitle">12,483 properties in Breede-Gouritz WMA</div></div>
+                    <div style="display:flex; gap:8px;"><button class="btn btn-outline">Export CSV</button><button class="btn btn-primary">+ New Property</button></div>
+                </div>
+
+                <div class="filter-bar">
+                    <select class="form-select"><option>All WMAs</option><option selected>Breede-Gouritz</option></select>
+                    <select class="form-select"><option>All Statuses</option><option>Not Commenced</option><option>In Process</option><option>Completed</option></select>
+                    <select class="form-select"><option>All Water Use</option><option>Irrigation</option><option>Storage</option><option>Forestation</option></select>
+                    <input type="text" class="form-input" style="width:200px;" placeholder="SG Code or Farm Name...">
+                    <button class="btn btn-primary btn-sm">Filter</button>
+                    <button class="btn btn-outline btn-sm">Clear</button>
+                </div>
+
+                <div class="data-table-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>SG Code</th><th>Farm Name</th><th>Owner</th><th>WMA</th><th>QDR</th><th>V&V Status</th><th>Current CP</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td style="font-weight:600;">C03400000000023400000</td><td>Rietfontein 234</td><td>P.J. van der Merwe</td><td>Breede-Gouritz</td><td>J33A</td><td><span class="badge badge-green">Completed</span></td><td>CP21</td><td><button class="btn btn-sm btn-outline">View</button></td></tr>
+                            <tr><td style="font-weight:600;">C03400000000045600000</td><td>Welgelegen 456</td><td>S.M. Abrahams</td><td>Breede-Gouritz</td><td>J33B</td><td><span class="badge badge-blue">In Process</span></td><td>CP12</td><td><button class="btn btn-sm btn-outline">View</button></td></tr>
+                            <tr><td style="font-weight:600;">C03400000000078900000</td><td>Langkloof 789</td><td>N.T. Ndlovu</td><td>Breede-Gouritz</td><td>J35A</td><td><span class="badge badge-orange">S35 Letters</span></td><td>CP19</td><td><button class="btn btn-sm btn-outline">View</button></td></tr>
+                            <tr><td style="font-weight:600;">C03400000000012300000</td><td>Doornfontein 123</td><td>Agricultural Co-op Ltd</td><td>Breede-Gouritz</td><td>J33C</td><td><span class="badge badge-grey">Not Commenced</span></td><td>&mdash;</td><td><button class="btn btn-sm btn-outline">View</button></td></tr>
+                            <tr><td style="font-weight:600;">C03400000000098700000</td><td>Uitkyk 987</td><td>J.H. Botha</td><td>Breede-Gouritz</td><td>J34A</td><td><span class="badge badge-red">Overdue</span></td><td>CP13</td><td><button class="btn btn-sm btn-outline">View</button></td></tr>
+                        </tbody>
+                    </table>
+                    <div style="padding: 10px 16px; font-size: 11px; color: #888; display: flex; justify-content: space-between; border-top: 1px solid #eee;">
+                        <span>Showing 1&ndash;25 of 12,483</span>
+                        <span>Page: <a href="#" style="color:#003366;">1</a> 2 3 4 ... 500</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ 03: CASE DETAIL ═══════════════════════ -->
+<div class="wireframe" id="wf-case-detail">
+    <div class="browser-bar">
+        <div class="browser-dot red"></div><div class="browser-dot yellow"></div><div class="browser-dot green"></div>
+        <div class="browser-url">https://vv.dws.gov.za/FileMaster/Details/BG-2024-0412</div>
+    </div>
+    <div class="app-shell">
+        <div class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&V</span></div>
+            <div class="sidebar-section">Main</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Properties</div>
+            <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Cases</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Workflow</div>
+            <div class="sidebar-section">Operations</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Letters</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Validation</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Calculator</div>
+            <div class="sidebar-section">System</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Reports</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Notifications</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Admin</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Audit Log</div>
+        </div>
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <span class="breadcrumb"><a href="#">Home</a> / <a href="#">Cases</a> / BG-2024-0412</span>
+                </div>
+                <div class="top-bar-right"><div class="notif-bell">&#128276;</div><div class="user-avatar">TM</div></div>
+            </div>
+            <div class="page-content">
+                <button class="btn-back" onclick="showIndex()">&#8592; Back to wireframe index</button>
+                <div class="flex-between mb-8">
+                    <div>
+                        <div class="page-title">Case BG-2024-0412 &mdash; Rietfontein 234</div>
+                        <div class="page-subtitle">WARMS Reg: WU12345 &bull; SG: C03400000000023400000 &bull; Breede-Gouritz WMA &bull; J33A</div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <span class="badge badge-blue" style="font-size:12px;padding:6px 14px;">Phase 2: CP12 &mdash; SAPWAT Modelling</span>
+                        <button class="btn btn-primary">Advance to CP13</button>
+                    </div>
+                </div>
+
+                <div class="tab-bar">
+                    <div class="tab active">Overview</div>
+                    <div class="tab">Water Use</div>
+                    <div class="tab">Calculations</div>
+                    <div class="tab">Letters</div>
+                    <div class="tab">Documents (8)</div>
+                    <div class="tab">Comments (3)</div>
+                    <div class="tab">Audit Trail</div>
+                </div>
+
+                <div class="panel-grid">
+                    <div class="card">
+                        <div class="card-title mb-8">Property Details</div>
+                        <table>
+                            <tr><td style="width:140px;font-weight:600;color:#666;">Farm Name</td><td>Rietfontein 234</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">SG Code</td><td>C03400000000023400000</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">QDR / Catchment</td><td>J33A</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Property Size</td><td>245.6 ha</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Coordinates</td><td>-33.9152, 19.0425</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Registration</td><td><span class="badge badge-blue">In Process</span></td></tr>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <div class="card-title mb-8">Owner &amp; Assignment</div>
+                        <table>
+                            <tr><td style="width:140px;font-weight:600;color:#666;">Owner</td><td>P.J. van der Merwe</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">ID Number</td><td>650412 **** 08*</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Title Deed</td><td>T12345/2005</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Validator</td><td>J. Mokoena</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Regional Mgr</td><td>A. Petersen</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">File Created</td><td>12 Jan 2024</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel-grid">
+                    <div class="card">
+                        <div class="card-title mb-8">Water Use Summary</div>
+                        <table>
+                            <thead><tr><th>Type</th><th>Qualifying</th><th>Current</th><th>ELU (m&sup3;)</th></tr></thead>
+                            <tbody>
+                                <tr><td>Irrigation</td><td>120 ha</td><td>135 ha</td><td style="font-weight:600;">45,200</td></tr>
+                                <tr><td>Storage (dams)</td><td>2 dams</td><td>2 dams</td><td style="font-weight:600;">18,400</td></tr>
+                                <tr><td>Forestation</td><td>0 ha</td><td>0 ha</td><td>&mdash;</td></tr>
+                                <tr style="background:#f5f7fa;font-weight:600;"><td>Total ELU</td><td></td><td></td><td>63,600</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <div class="card-title mb-8">Entitlement</div>
+                        <table>
+                            <tr><td style="width:160px;font-weight:600;color:#666;">Entitlement Type</td><td>Existing Lawful Use</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Lawful Volume</td><td style="font-size:18px;font-weight:700;color:#27ae60;">45,200 m&sup3;</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Unlawful Increase</td><td style="color:#e74c3c;font-weight:600;">4,200 m&sup3; (15 ha expansion)</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Registration Status</td><td><span class="badge badge-orange">Under Registered</span></td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Validation Status</td><td><span class="badge badge-blue">In Process</span></td></tr>
+                        </table>
+                        <div class="alert alert-warn mt-8">Possible unlawful increase of 4,200 m&sup3; detected (15 ha irrigation expansion since qualifying period)</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Appendix A File Checklist</span>
+                        <span class="text-sm text-muted">7 of 12 items complete</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size:12px;">
+                        <div style="padding:4px 8px; background:#e8f5e9; border-radius:3px;">&#10003; 1. Checklist</div>
+                        <div style="padding:4px 8px; background:#e8f5e9; border-radius:3px;">&#10003; 2. WARMS Report</div>
+                        <div style="padding:4px 8px; background:#e8f5e9; border-radius:3px;">&#10003; 3. Title Deed Report</div>
+                        <div style="padding:4px 8px; background:#e8f5e9; border-radius:3px;">&#10003; 4. SG Diagram</div>
+                        <div style="padding:4px 8px; background:#e8f5e9; border-radius:3px;">&#10003; 5. Previous Documentation</div>
+                        <div style="padding:4px 8px; background:#e8f5e9; border-radius:3px;">&#10003; 6. Field &amp; Crop Table</div>
+                        <div style="padding:4px 8px; background:#e8f5e9; border-radius:3px;">&#10003; 7. Qualifying GIS Map</div>
+                        <div style="padding:4px 8px; background:#fff3e0; border-radius:3px;">&#9744; 8. Qualifying Volume Calculations</div>
+                        <div style="padding:4px 8px; background:#fff3e0; border-radius:3px;">&#9744; 9. Current GIS Map</div>
+                        <div style="padding:4px 8px; background:#fff3e0; border-radius:3px;">&#9744; 10. Current Volume Calculations</div>
+                        <div style="padding:4px 8px; background:#f0f0f0; border-radius:3px;">&#9744; 11. Dam Calculations</div>
+                        <div style="padding:4px 8px; background:#f0f0f0; border-radius:3px;">&#9744; 12. Section 35 Letters</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ 04: WORKFLOW ═══════════════════════ -->
+<div class="wireframe" id="wf-workflow">
+    <div class="browser-bar">
+        <div class="browser-dot red"></div><div class="browser-dot yellow"></div><div class="browser-dot green"></div>
+        <div class="browser-url">https://vv.dws.gov.za/Workflow/BG-2024-0412</div>
+    </div>
+    <div class="app-shell">
+        <div class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&V</span></div>
+            <div class="sidebar-section">Main</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Properties</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Cases</div>
+            <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Workflow</div>
+            <div class="sidebar-section">Operations</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Letters</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Validation</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Calculator</div>
+        </div>
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left"><span class="breadcrumb"><a href="#">Home</a> / <a href="#">Cases</a> / <a href="#">BG-2024-0412</a> / Workflow</span></div>
+                <div class="top-bar-right"><div class="notif-bell">&#128276;</div><div class="user-avatar">TM</div></div>
+            </div>
+            <div class="page-content">
+                <button class="btn-back" onclick="showIndex()">&#8592; Back to wireframe index</button>
+                <div class="page-title">Workflow &mdash; BG-2024-0412 (Rietfontein 234)</div>
+                <div class="page-subtitle mb-16">Assigned to: J. Mokoena &bull; Current: <strong>CP12 &mdash; Field &amp; Crop + SAPWAT</strong></div>
+
+                <div class="card mb-16">
+                    <div class="card-title mb-8">Phase 1: Project Inception (Catchment-level)</div>
+                    <div class="progress-tracker">
+                        <div class="progress-step completed"><span class="step-number">CP01</span><span class="step-label">WARMS Database Audit</span><span class="step-status badge badge-green">Complete</span></div>
+                        <div class="progress-step completed"><span class="step-number">CP02</span><span class="step-label">Identify Unregistered Users</span><span class="step-status badge badge-green">Complete</span></div>
+                        <div class="progress-step completed"><span class="step-number">CP03</span><span class="step-label">V&V Database Analysis</span><span class="step-status badge badge-green">Complete</span></div>
+                        <div class="progress-step completed"><span class="step-number">CP04</span><span class="step-label">Project Inception Report</span><span class="step-status badge badge-green">Complete</span></div>
+                        <div class="progress-step completed"><span class="step-number">CP05</span><span class="step-label">Public Participation Session 1</span><span class="step-status badge badge-green">Complete</span></div>
+                    </div>
+                </div>
+
+                <div class="card mb-16">
+                    <div class="card-title mb-8">Phase 2: Verification (Per Property)</div>
+                    <div class="progress-tracker">
+                        <div class="progress-step completed"><span class="step-number">CP06</span><span class="step-label">Evaluate WARMS Registration</span><span class="step-status badge badge-green">Complete</span></div>
+                        <div class="progress-step completed"><span class="step-number">CP07</span><span class="step-label">Supportive Spatial Information</span><span class="step-status badge badge-green">Complete</span></div>
+                        <div class="progress-step completed"><span class="step-number">CP08</span><span class="step-label">Other Supportive Information</span><span class="step-status badge badge-green">Complete</span></div>
+                        <div class="progress-step completed"><span class="step-number">CP09</span><span class="step-label">Property &amp; Source Evaluation</span><span class="step-status badge badge-green">Complete</span></div>
+                        <div class="progress-step completed"><span class="step-number">CP10</span><span class="step-label">Additional Information (Permits, S32/33)</span><span class="step-status badge badge-green">Complete</span></div>
+                        <div class="progress-step completed"><span class="step-number">CP11</span><span class="step-label">GIS Analysis &amp; Field Digitising</span><span class="step-status badge badge-green">Complete</span></div>
+                        <div class="progress-step active"><span class="step-number">CP12</span><span class="step-label"><strong>Field &amp; Crop + SAPWAT Modelling</strong></span><span class="step-status badge badge-blue">In Progress</span></div>
+                        <div class="progress-step pending"><span class="step-number">CP13</span><span class="step-label">Calculate ELU</span><span class="step-status badge badge-grey">Pending</span></div>
+                        <div class="progress-step pending"><span class="step-number">CP14</span><span class="step-label">Update V&V Database</span><span class="step-status badge badge-grey">Pending</span></div>
+                        <div class="progress-step pending"><span class="step-number">CP15</span><span class="step-label">Dam Volume Calculation</span><span class="step-status badge badge-grey">Pending</span></div>
+                        <div class="progress-step pending"><span class="step-number">CP16</span><span class="step-label">SFRA / Forestation</span><span class="step-status badge badge-grey">N/A (no forestry)</span></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Transition Guards for CP12 &rarr; CP13</span>
+                        <button class="btn btn-primary">Request Transition to CP13</button>
+                    </div>
+                    <div class="alert alert-warn">2 of 4 guards not yet satisfied. Complete the items below before advancing.</div>
+                    <table>
+                        <thead><tr><th>Guard</th><th>Requirement</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr><td>FieldAndCrop records present</td><td>At least 1 FieldAndCrop record per digitised field</td><td><span class="badge badge-green">&#10003; 8 records</span></td></tr>
+                            <tr><td>SAPWAT calculations complete</td><td>All FieldAndCrop records have SAPWATCalculationResult</td><td><span class="badge badge-red">&#10007; 3 of 8 missing</span></td></tr>
+                            <tr><td>Crop types assigned</td><td>All fields have a CropType selected</td><td><span class="badge badge-green">&#10003; All assigned</span></td></tr>
+                            <tr><td>Irrigation systems assigned</td><td>All fields have an IrrigationSystem selected</td><td><span class="badge badge-red">&#10007; 2 of 8 missing</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ 05: WATER USE DATA ENTRY ═══════════════════════ -->
+<div class="wireframe" id="wf-water-use">
+    <div class="browser-bar">
+        <div class="browser-dot red"></div><div class="browser-dot yellow"></div><div class="browser-dot green"></div>
+        <div class="browser-url">https://vv.dws.gov.za/FieldAndCrop/Index?fileMasterId=BG-2024-0412</div>
+    </div>
+    <div class="app-shell">
+        <div class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&V</span></div>
+            <div class="sidebar-section">Main</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Properties</div>
+            <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Cases</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Workflow</div>
+            <div class="sidebar-section">Operations</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Letters</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Validation</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Calculator</div>
+        </div>
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left"><span class="breadcrumb"><a href="#">Home</a> / <a href="#">Cases</a> / <a href="#">BG-2024-0412</a> / Field &amp; Crop</span></div>
+                <div class="top-bar-right"><div class="notif-bell">&#128276;</div><div class="user-avatar">TM</div></div>
+            </div>
+            <div class="page-content">
+                <button class="btn-back" onclick="showIndex()">&#8592; Back to wireframe index</button>
+                <div class="flex-between mb-16">
+                    <div><div class="page-title">Field &amp; Crop Data &mdash; Rietfontein 234</div><div class="page-subtitle">CP12: SAPWAT Modelling &bull; 8 fields digitised</div></div>
+                    <div style="display:flex;gap:8px;"><button class="btn btn-success">Run SAPWAT (All)</button><button class="btn btn-primary">+ Add Field</button></div>
+                </div>
+
+                <div class="tab-bar">
+                    <div class="tab active">Field &amp; Crop (CP12)</div>
+                    <div class="tab">Irrigation (CP06)</div>
+                    <div class="tab">Storing / Dams (CP15)</div>
+                    <div class="tab">Forestation / SFRA (CP16)</div>
+                    <div class="tab">Authorisations (CP10)</div>
+                </div>
+
+                <div class="data-table-wrap">
+                    <table>
+                        <thead><tr><th>Field #</th><th>Period</th><th>Area (ha)</th><th>Crop</th><th>Irrigation</th><th>Rotation</th><th>SAPWAT (mm/ha/a)</th><th>Volume (m&sup3;)</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            <tr><td>F-001</td><td><span class="badge badge-purple">Qualifying</span></td><td>25.3</td><td>Table Grapes</td><td>Drip</td><td>1.0</td><td style="font-weight:600;">4,850</td><td style="font-weight:600;">12,271</td><td><span class="badge badge-green">Calc'd</span></td><td><button class="btn btn-sm btn-outline">Edit</button></td></tr>
+                            <tr><td>F-002</td><td><span class="badge badge-purple">Qualifying</span></td><td>18.7</td><td>Citrus</td><td>Micro</td><td>1.0</td><td style="font-weight:600;">6,200</td><td style="font-weight:600;">11,594</td><td><span class="badge badge-green">Calc'd</span></td><td><button class="btn btn-sm btn-outline">Edit</button></td></tr>
+                            <tr><td>F-003</td><td><span class="badge badge-purple">Qualifying</span></td><td>32.1</td><td>Wheat</td><td>Centre Pivot</td><td>0.5</td><td style="font-weight:600;">3,400</td><td style="font-weight:600;">5,457</td><td><span class="badge badge-green">Calc'd</span></td><td><button class="btn btn-sm btn-outline">Edit</button></td></tr>
+                            <tr><td>F-004</td><td><span class="badge badge-purple">Qualifying</span></td><td>44.0</td><td>Lucerne</td><td>Flood</td><td>1.0</td><td style="font-weight:600;">7,100</td><td style="font-weight:600;">31,240</td><td><span class="badge badge-green">Calc'd</span></td><td><button class="btn btn-sm btn-outline">Edit</button></td></tr>
+                            <tr><td>F-005</td><td><span class="badge badge-purple">Qualifying</span></td><td>12.5</td><td>Vegetables</td><td>Drip</td><td>0.8</td><td style="font-weight:600;">5,500</td><td style="font-weight:600;">5,500</td><td><span class="badge badge-green">Calc'd</span></td><td><button class="btn btn-sm btn-outline">Edit</button></td></tr>
+                            <tr style="background:#fff8f0;"><td>F-006</td><td><span class="badge badge-blue">Current</span></td><td>28.0</td><td>Table Grapes</td><td>&mdash;</td><td>&mdash;</td><td style="color:#999;">&mdash;</td><td style="color:#999;">&mdash;</td><td><span class="badge badge-red">No Irrig System</span></td><td><button class="btn btn-sm btn-warning">Edit</button></td></tr>
+                            <tr style="background:#fff8f0;"><td>F-007</td><td><span class="badge badge-blue">Current</span></td><td>15.2</td><td>Citrus</td><td>&mdash;</td><td>&mdash;</td><td style="color:#999;">&mdash;</td><td style="color:#999;">&mdash;</td><td><span class="badge badge-red">No Irrig System</span></td><td><button class="btn btn-sm btn-warning">Edit</button></td></tr>
+                            <tr style="background:#fff8f0;"><td>F-008</td><td><span class="badge badge-blue">Current</span></td><td>42.0</td><td>Lucerne</td><td>Flood</td><td>1.0</td><td style="color:#999;">&mdash;</td><td style="color:#999;">&mdash;</td><td><span class="badge badge-orange">Needs SAPWAT</span></td><td><button class="btn btn-sm btn-outline">Run SAPWAT</button></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-warn">3 fields require attention: 2 missing irrigation system, 1 awaiting SAPWAT calculation. Complete these before advancing to CP13.</div>
+
+                <div class="card">
+                    <div class="card-title mb-8">SAPWAT Calculation Summary</div>
+                    <div class="panel-grid-3">
+                        <div>
+                            <div class="kpi-label">Qualifying Period Total</div>
+                            <div style="font-size:20px;font-weight:700;color:#003366;">66,062 m&sup3;</div>
+                            <div class="text-sm text-muted">5 fields, 132.6 ha</div>
+                        </div>
+                        <div>
+                            <div class="kpi-label">Current Period Total</div>
+                            <div style="font-size:20px;font-weight:700;color:#f39c12;">Pending (3 fields incomplete)</div>
+                            <div class="text-sm text-muted">3 fields, 85.2 ha digitised</div>
+                        </div>
+                        <div>
+                            <div class="kpi-label">Catchment Calibration</div>
+                            <div style="font-size:14px;font-weight:600;">J33A &mdash; Breede River</div>
+                            <div class="text-sm text-muted">Calibration factor: 1.02</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ 06: ELU SUMMARY ═══════════════════════ -->
+<div class="wireframe" id="wf-elu-summary">
+    <div class="browser-bar">
+        <div class="browser-dot red"></div><div class="browser-dot yellow"></div><div class="browser-dot green"></div>
+        <div class="browser-url">https://vv.dws.gov.za/Validation/ELUSummary/BG-2024-0412</div>
+    </div>
+    <div class="app-shell">
+        <div class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&V</span></div>
+            <div class="sidebar-section">Main</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Properties</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Cases</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Workflow</div>
+            <div class="sidebar-section">Operations</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Letters</div>
+            <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Validation</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Calculator</div>
+        </div>
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left"><span class="breadcrumb"><a href="#">Home</a> / <a href="#">Cases</a> / <a href="#">BG-2024-0412</a> / ELU Summary</span></div>
+                <div class="top-bar-right"><div class="notif-bell">&#128276;</div><div class="user-avatar">TM</div></div>
+            </div>
+            <div class="page-content">
+                <button class="btn-back" onclick="showIndex()">&#8592; Back to wireframe index</button>
+                <div class="page-title">ELU Determination &mdash; Rietfontein 234</div>
+                <div class="page-subtitle mb-16">CP13: Calculate ELU &bull; All 9 scenario categories</div>
+
+                <div class="kpi-row">
+                    <div class="kpi-card success"><div class="kpi-label">Possible Existing Lawful (ELU)</div><div class="kpi-value">45,200 m&sup3;</div><div class="kpi-sub">Row 4.4 &mdash; intersection of existing &amp; lawful</div></div>
+                    <div class="kpi-card alert"><div class="kpi-label">Possible Unlawful Increase</div><div class="kpi-value">4,200 m&sup3;</div><div class="kpi-sub">Row 4.8 &mdash; current exceeds qualifying</div></div>
+                    <div class="kpi-card"><div class="kpi-label">WARMS Registered</div><div class="kpi-value">38,000 m&sup3;</div><div class="kpi-sub">Row 4.6 &mdash; under-registered by 7,200 m&sup3;</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Present Day Use</div><div class="kpi-value">49,400 m&sup3;</div><div class="kpi-sub">Row 4.7 &mdash; from current satellite</div></div>
+                </div>
+
+                <div class="data-table-wrap">
+                    <div class="table-header"><span class="table-title">Irrigation Water Use Categories (Rows 4.1 &ndash; 4.9)</span></div>
+                    <table>
+                        <thead><tr><th>Row</th><th>Category</th><th>Land (ha)</th><th>Crop (ha)</th><th>Volume Surface (m&sup3;)</th><th>Volume Borehole (m&sup3;)</th><th>Total (m&sup3;)</th></tr></thead>
+                        <tbody>
+                            <tr><td>4.1</td><td>Proclamation Date / Previous Surveys</td><td>100.0</td><td>85.0</td><td>32,000</td><td>0</td><td>32,000</td></tr>
+                            <tr><td>4.2</td><td>Possible Existing (qualifying period)</td><td>132.6</td><td>120.0</td><td>52,400</td><td>0</td><td>52,400</td></tr>
+                            <tr><td>4.3</td><td>Possible Lawful (with authorisation)</td><td>132.6</td><td>120.0</td><td>45,200</td><td>0</td><td>45,200</td></tr>
+                            <tr style="background:#e8f5e9;font-weight:600;"><td>4.4</td><td>Possible Existing Lawful (ELU)</td><td>132.6</td><td>120.0</td><td>45,200</td><td>0</td><td style="font-size:14px;">45,200</td></tr>
+                            <tr style="background:#ffebee;"><td>4.5</td><td>Possible Unlawful</td><td>&mdash;</td><td>&mdash;</td><td>7,200</td><td>0</td><td style="color:#c62828;font-weight:600;">7,200</td></tr>
+                            <tr><td>4.6</td><td>Registration (WARMS)</td><td>110.0</td><td>95.0</td><td>38,000</td><td>0</td><td>38,000</td></tr>
+                            <tr><td>4.7</td><td>Present Day Use</td><td>135.0</td><td>125.0</td><td>49,400</td><td>0</td><td>49,400</td></tr>
+                            <tr style="background:#fff3e0;"><td>4.8</td><td>Possible Unlawful Increase</td><td>+2.4</td><td>+5.0</td><td>+4,200</td><td>0</td><td style="color:#e65100;font-weight:600;">+4,200</td></tr>
+                            <tr><td>4.9</td><td>General Authorisation</td><td>&mdash;</td><td>&mdash;</td><td>0</td><td>0</td><td>0</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="panel-grid">
+                    <div class="card">
+                        <div class="card-title mb-8">Dam Storage Summary</div>
+                        <table>
+                            <tr><td style="font-weight:600;color:#666;">Number of Dams</td><td>2</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Total Capacity</td><td>18,400 m&sup3;</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Calculation Method</td><td>Method 1 (Wall Length)</td></tr>
+                            <tr><td style="font-weight:600;color:#666;">Shape Factor Used</td><td>0.4 (square with bends)</td></tr>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <div class="card-title mb-8">Determination Outcome</div>
+                        <div class="alert alert-success">ELU of <strong>45,200 m&sup3;</strong> can be confirmed under Section 35(4).</div>
+                        <div class="alert alert-warn">Unlawful increase of <strong>4,200 m&sup3;</strong> requires Letter 4A (S53(1) notice of intent).</div>
+                        <div class="mt-8" style="display:flex;gap:8px;">
+                            <button class="btn btn-success">Generate Letter 3 (ELU Certificate)</button>
+                            <button class="btn btn-warning">Generate Letter 4A (Unlawful Use)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ 07: LETTER MANAGEMENT ═══════════════════════ -->
+<div class="wireframe" id="wf-letters">
+    <div class="browser-bar">
+        <div class="browser-dot red"></div><div class="browser-dot yellow"></div><div class="browser-dot green"></div>
+        <div class="browser-url">https://vv.dws.gov.za/Letter/Index</div>
+    </div>
+    <div class="app-shell">
+        <div class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&V</span></div>
+            <div class="sidebar-section">Main</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Properties</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Cases</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Workflow</div>
+            <div class="sidebar-section">Operations</div>
+            <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Letters <span class="sidebar-badge">12</span></div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Validation</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Calculator</div>
+        </div>
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left"><span class="breadcrumb"><a href="#">Home</a> / Letters</span></div>
+                <div class="top-bar-right"><div class="notif-bell">&#128276;</div><div class="user-avatar">TM</div></div>
+            </div>
+            <div class="page-content">
+                <button class="btn-back" onclick="showIndex()">&#8592; Back to wireframe index</button>
+                <div class="flex-between mb-16">
+                    <div><div class="page-title">Letter Management</div><div class="page-subtitle">Section 35 correspondence tracking</div></div>
+                    <div style="display:flex;gap:8px;"><button class="btn btn-outline">Batch Generate</button><button class="btn btn-primary">+ Generate Letter</button></div>
+                </div>
+
+                <div class="filter-bar">
+                    <select class="form-select"><option>All Letter Types</option><option>Letter 1 - S35(1)</option><option>Letter 1A - S53(1)</option><option>Letter 2 - S35(3)(a)</option><option>Letter 3 - S35(4)</option><option>Letter 4A - S53(1)</option></select>
+                    <select class="form-select"><option>All Statuses</option><option>Draft</option><option>Ready for Signing</option><option>Signed</option><option>Issued</option><option>Awaiting Response</option><option>Response Received</option><option>Overdue</option></select>
+                    <select class="form-select"><option>All WMAs</option><option>Breede-Gouritz</option></select>
+                    <button class="btn btn-primary btn-sm">Filter</button>
+                </div>
+
+                <div class="data-table-wrap">
+                    <table>
+                        <thead><tr><th>Case</th><th>Owner</th><th>Type</th><th>Generated</th><th>Signed</th><th>Issued</th><th>Due Date</th><th>Response</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            <tr><td>BG-2024-0412</td><td>P.J. van der Merwe</td><td><span class="badge badge-blue">Letter 1</span></td><td>01 Mar</td><td>03 Mar</td><td>05 Mar</td><td><span class="badge badge-red">10 Mar (overdue)</span></td><td><span class="badge badge-orange">No Response</span></td><td><button class="btn btn-sm btn-warning">Record Response</button> <button class="btn btn-sm btn-outline">Escalate to 1A</button></td></tr>
+                            <tr><td>BG-2024-0567</td><td>S.M. Abrahams</td><td><span class="badge badge-blue">Letter 1</span></td><td>28 Feb</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td><button class="btn btn-sm btn-primary">Submit for Signing</button></td></tr>
+                            <tr><td>BG-2024-0891</td><td>N.T. Ndlovu</td><td><span class="badge badge-purple">Letter 2</span></td><td>15 Feb</td><td>16 Feb</td><td>18 Feb</td><td>20 Mar</td><td><span class="badge badge-grey">Awaiting</span></td><td><button class="btn btn-sm btn-outline">Record Response</button></td></tr>
+                            <tr><td>BG-2024-0345</td><td>J.H. Botha</td><td><span class="badge badge-green">Letter 3</span></td><td>10 Feb</td><td>11 Feb</td><td>12 Feb</td><td>&mdash;</td><td><span class="badge badge-green">Agreed</span></td><td><button class="btn btn-sm btn-outline">View PDF</button></td></tr>
+                            <tr><td>BG-2024-0123</td><td>Agricultural Co-op</td><td><span class="badge badge-red">Letter 4A</span></td><td>05 Feb</td><td>06 Feb</td><td>08 Feb</td><td>08 Mar</td><td><span class="badge badge-red">No Compliance</span></td><td><button class="btn btn-sm btn-danger">Issue Letters 4&5</button></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ 08: LETTER SIGNING ═══════════════════════ -->
+<div class="wireframe" id="wf-letter-sign">
+    <div class="browser-bar">
+        <div class="browser-dot red"></div><div class="browser-dot yellow"></div><div class="browser-dot green"></div>
+        <div class="browser-url">https://vv.dws.gov.za/Letter/Sign/LI-00567</div>
+    </div>
+    <div class="app-shell">
+        <div class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&V</span></div>
+            <div class="sidebar-section">Main</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Properties</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Cases</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Workflow</div>
+            <div class="sidebar-section">Operations</div>
+            <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Letters</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Validation</div>
+        </div>
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left"><span class="breadcrumb"><a href="#">Home</a> / <a href="#">Letters</a> / Sign Letter LI-00567</span></div>
+                <div class="top-bar-right"><div class="notif-bell">&#128276;</div><div class="user-avatar">AP</div></div>
+            </div>
+            <div class="page-content">
+                <button class="btn-back" onclick="showIndex()">&#8592; Back to wireframe index</button>
+                <div class="page-title">Sign Letter &mdash; Letter 1 (S35(1))</div>
+                <div class="page-subtitle mb-16">Case BG-2024-0567 &bull; Welgelegen 456 &bull; Recipient: S.M. Abrahams</div>
+
+                <div class="panel-grid">
+                    <div class="card">
+                        <div class="card-title mb-8">Letter Preview</div>
+                        <div style="background:#f5f7fa; border:1px solid #ddd; border-radius:4px; height:360px; display:flex; align-items:center; justify-content:center; color:#888;">
+                            [ PDF Preview of Letter 1 &mdash; S35(1) Notice ]<br><br>
+                            <em>Department of Water and Sanitation<br>
+                            Notice in terms of Section 35(1) of the<br>
+                            National Water Act (Act 38 of 1998)<br><br>
+                            To: S.M. Abrahams<br>
+                            Property: Welgelegen 456<br>
+                            SG Code: C03400000000045600000<br>
+                            WARMS Registration: WU56789</em>
+                        </div>
+                        <div class="mt-8" style="display:flex;gap:8px;">
+                            <button class="btn btn-outline btn-sm">Download PDF</button>
+                            <button class="btn btn-outline btn-sm">Print</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="card">
+                            <div class="card-title mb-8">Letter Details</div>
+                            <table>
+                                <tr><td style="font-weight:600;color:#666;width:140px;">Letter Type</td><td>Letter 1 &mdash; S35(1)</td></tr>
+                                <tr><td style="font-weight:600;color:#666;">Generated</td><td>28 February 2026</td></tr>
+                                <tr><td style="font-weight:600;color:#666;">Recipient</td><td>S.M. Abrahams</td></tr>
+                                <tr><td style="font-weight:600;color:#666;">Property</td><td>Welgelegen 456</td></tr>
+                                <tr><td style="font-weight:600;color:#666;">Requested By</td><td>J. Mokoena (Validator)</td></tr>
+                                <tr><td style="font-weight:600;color:#666;">Document Hash</td><td style="font-family:monospace;font-size:10px;">a3f2b7c...d4e91f</td></tr>
+                            </table>
+                        </div>
+                        <div class="card">
+                            <div class="card-title mb-8">Electronic Signature</div>
+                            <div class="alert alert-info">As Regional Manager, you are authorised to sign this Section 35(1) notice.</div>
+                            <div class="form-group">
+                                <label class="form-label">Reason for Signing</label>
+                                <input type="text" class="form-input" value="Section 35(1) verification notice for Welgelegen 456" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Draw Your Signature Below</label>
+                                <div class="sig-pad">[ SignaturePad.js Canvas &mdash; Draw signature here ]</div>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-outline">Clear</button>
+                                <button class="btn btn-success" style="flex:1;">Sign &amp; Submit</button>
+                            </div>
+                            <div class="text-sm text-muted mt-8">Your IP address and browser details will be recorded for audit purposes. The document hash will be captured at the time of signing for integrity verification.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ 09: NOTIFICATIONS ═══════════════════════ -->
+<div class="wireframe" id="wf-notifications">
+    <div class="browser-bar">
+        <div class="browser-dot red"></div><div class="browser-dot yellow"></div><div class="browser-dot green"></div>
+        <div class="browser-url">https://vv.dws.gov.za/Notification/Index</div>
+    </div>
+    <div class="app-shell">
+        <div class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&V</span></div>
+            <div class="sidebar-section">Main</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Properties</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Cases</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Workflow</div>
+            <div class="sidebar-section">Operations</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Letters</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Validation</div>
+            <div class="sidebar-section">System</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Reports</div>
+            <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Notifications <span class="sidebar-badge">5</span></div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Admin</div>
+        </div>
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left"><span class="breadcrumb"><a href="#">Home</a> / Notifications</span></div>
+                <div class="top-bar-right"><div class="notif-bell">&#128276;<span class="notif-count">5</span></div><div class="user-avatar">TM</div></div>
+            </div>
+            <div class="page-content">
+                <button class="btn-back" onclick="showIndex()">&#8592; Back to wireframe index</button>
+                <div class="flex-between mb-16">
+                    <div><div class="page-title">Notifications</div><div class="page-subtitle">5 unread notifications</div></div>
+                    <div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm">Mark All Read</button><button class="btn btn-outline btn-sm">Settings</button></div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    <div class="card" style="border-left:3px solid #e74c3c; background:#fff9f9;">
+                        <div class="flex-between"><span class="badge badge-red">Overdue</span><span class="text-sm text-muted">2 hours ago</span></div>
+                        <div style="font-weight:600;margin:6px 0;">Letter 1 response overdue &mdash; BG-2024-0412 (Rietfontein 234)</div>
+                        <div class="text-sm">Response was due 10 March. P.J. van der Merwe has not responded. Consider escalating to Letter 1A (S53(1) directive).</div>
+                        <div class="mt-8"><button class="btn btn-sm btn-outline">View Case</button> <button class="btn btn-sm btn-warning">Escalate</button></div>
+                    </div>
+                    <div class="card" style="border-left:3px solid #003366;">
+                        <div class="flex-between"><span class="badge badge-blue">Letter</span><span class="text-sm text-muted">4 hours ago</span></div>
+                        <div style="font-weight:600;margin:6px 0;">Letter 1 ready for signing &mdash; BG-2024-0567 (Welgelegen 456)</div>
+                        <div class="text-sm">J. Mokoena has submitted Letter 1 for your signature. Recipient: S.M. Abrahams.</div>
+                        <div class="mt-8"><button class="btn btn-sm btn-primary">Sign Now</button></div>
+                    </div>
+                    <div class="card" style="border-left:3px solid #f39c12;">
+                        <div class="flex-between"><span class="badge badge-orange">Workflow</span><span class="text-sm text-muted">Yesterday</span></div>
+                        <div style="font-weight:600;margin:6px 0;">CP11 assigned &mdash; BG-2024-1023 (Doornfontein 123)</div>
+                        <div class="text-sm">You have been assigned the GIS Analysis &amp; Field Digitising step. Due: 18 March.</div>
+                        <div class="mt-8"><button class="btn btn-sm btn-outline">View Workflow</button></div>
+                    </div>
+                    <div class="card" style="border-left:3px solid #27ae60;">
+                        <div class="flex-between"><span class="badge badge-green">Response</span><span class="text-sm text-muted">Yesterday</span></div>
+                        <div style="font-weight:600;margin:6px 0;">Letter 1 response received &mdash; BG-2024-0891 (Langkloof 789)</div>
+                        <div class="text-sm">N.T. Ndlovu has responded to Letter 1. Response: Not Agreed &mdash; requests additional information.</div>
+                        <div class="mt-8"><button class="btn btn-sm btn-outline">View Response</button></div>
+                    </div>
+                    <div class="card" style="border-left:3px solid #ccc;opacity:0.7;">
+                        <div class="flex-between"><span class="badge badge-grey">System</span><span class="text-sm text-muted">2 days ago</span></div>
+                        <div style="font-weight:600;margin:6px 0;">WARMS daily sync completed</div>
+                        <div class="text-sm">3 new records imported, 1 ownership change detected. No errors.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ 10: ADMIN ═══════════════════════ -->
+<div class="wireframe" id="wf-admin">
+    <div class="browser-bar">
+        <div class="browser-dot red"></div><div class="browser-dot yellow"></div><div class="browser-dot green"></div>
+        <div class="browser-url">https://vv.dws.gov.za/Admin/Users</div>
+    </div>
+    <div class="app-shell">
+        <div class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&V</span></div>
+            <div class="sidebar-section">Main</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Properties</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Cases</div>
+            <div class="sidebar-section">System</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Reports</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Notifications</div>
+            <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Admin</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Audit Log</div>
+        </div>
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left"><span class="breadcrumb"><a href="#">Home</a> / Admin / Users</span></div>
+                <div class="top-bar-right"><div class="user-avatar">SA</div></div>
+            </div>
+            <div class="page-content">
+                <button class="btn-back" onclick="showIndex()">&#8592; Back to wireframe index</button>
+                <div class="page-title">Administration</div>
+                <div class="page-subtitle mb-16">User management, organisational units, and reference data</div>
+
+                <div class="tab-bar">
+                    <div class="tab active">Users (Internal)</div>
+                    <div class="tab">Public User Approvals (3)</div>
+                    <div class="tab">Organisational Units</div>
+                    <div class="tab">Reference Data</div>
+                    <div class="tab">System Config</div>
+                </div>
+
+                <div class="flex-between mb-16">
+                    <div class="filter-bar" style="margin-bottom:0;">
+                        <select class="form-select"><option>All Roles</option><option>SystemAdmin</option><option>NationalManager</option><option>RegionalManager</option><option>Validator</option><option>Capturer</option><option>ReadOnly</option></select>
+                        <select class="form-select"><option>All Org Units</option><option>National</option><option>Western Cape</option><option>Breede-Gouritz WMA</option></select>
+                        <input type="text" class="form-input" style="width:200px;" placeholder="Search by name or email...">
+                    </div>
+                    <button class="btn btn-primary">+ New User</button>
+                </div>
+
+                <div class="data-table-wrap">
+                    <table>
+                        <thead><tr><th>Name</th><th>Email</th><th>Employee #</th><th>Role</th><th>Org Unit</th><th>Last Login</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            <tr><td style="font-weight:600;">A. Petersen</td><td>a.petersen@dws.gov.za</td><td>DWS-00412</td><td><span class="badge badge-blue">RegionalManager</span></td><td>Breede-Gouritz WMA</td><td>11 Mar, 08:14</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-sm btn-outline">Edit</button></td></tr>
+                            <tr><td style="font-weight:600;">J. Mokoena</td><td>j.mokoena@dws.gov.za</td><td>DWS-00567</td><td><span class="badge badge-purple">Validator</span></td><td>Breede-Gouritz WMA</td><td>10 Mar, 16:45</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-sm btn-outline">Edit</button></td></tr>
+                            <tr><td style="font-weight:600;">M. Naidoo</td><td>m.naidoo@dws.gov.za</td><td>DWS-00891</td><td><span class="badge badge-grey">Capturer</span></td><td>Breede-Gouritz WMA</td><td>10 Mar, 14:20</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-sm btn-outline">Edit</button></td></tr>
+                            <tr><td style="font-weight:600;">K. Mthembu</td><td>k.mthembu@dws.gov.za</td><td>DWS-00234</td><td><span class="badge badge-orange">NationalManager</span></td><td>National (Head Office)</td><td>09 Mar, 11:30</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-sm btn-outline">Edit</button></td></tr>
+                            <tr style="opacity:0.6;"><td style="font-weight:600;">R. Swart</td><td>r.swart@dws.gov.za</td><td>DWS-00345</td><td><span class="badge badge-grey">Capturer</span></td><td>Olifants WMA</td><td>15 Jan, 09:10</td><td><span class="badge badge-red">Deactivated</span></td><td><button class="btn btn-sm btn-outline">Edit</button></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ 11: REPORTS ═══════════════════════ -->
+<div class="wireframe" id="wf-reports">
+    <div class="browser-bar">
+        <div class="browser-dot red"></div><div class="browser-dot yellow"></div><div class="browser-dot green"></div>
+        <div class="browser-url">https://vv.dws.gov.za/Report/CatchmentProgress</div>
+    </div>
+    <div class="app-shell">
+        <div class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&V</span></div>
+            <div class="sidebar-section">Main</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Properties</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Cases</div>
+            <div class="sidebar-section">System</div>
+            <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Reports</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Notifications</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Admin</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Audit Log</div>
+        </div>
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left"><span class="breadcrumb"><a href="#">Home</a> / Reports / Catchment Progress</span></div>
+                <div class="top-bar-right"><div class="user-avatar">TM</div></div>
+            </div>
+            <div class="page-content">
+                <button class="btn-back" onclick="showIndex()">&#8592; Back to wireframe index</button>
+                <div class="page-title">Reports</div>
+                <div class="page-subtitle mb-16">Catchment-wide progress and analytics</div>
+
+                <div class="tab-bar">
+                    <div class="tab active">Catchment Progress</div>
+                    <div class="tab">Letter Tracking</div>
+                    <div class="tab">Validation Summary</div>
+                    <div class="tab">User Activity</div>
+                    <div class="tab">Portal Usage</div>
+                    <div class="tab">Integration Health</div>
+                </div>
+
+                <div class="flex-between mb-16">
+                    <div class="filter-bar" style="margin-bottom:0;">
+                        <select class="form-select"><option>All WMAs</option><option selected>Breede-Gouritz</option></select>
+                        <select class="form-select"><option>This Week</option><option selected>This Month</option><option>This Quarter</option><option>All Time</option></select>
+                    </div>
+                    <div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm">Export PDF</button><button class="btn btn-outline btn-sm">Export Excel</button></div>
+                </div>
+
+                <div class="kpi-row">
+                    <div class="kpi-card"><div class="kpi-label">Total Records</div><div class="kpi-value">12,483</div></div>
+                    <div class="kpi-card success"><div class="kpi-label">Completed</div><div class="kpi-value">4,812</div><div class="kpi-sub">38.5%</div></div>
+                    <div class="kpi-card"><div class="kpi-label">In Phase 2</div><div class="kpi-value">2,140</div><div class="kpi-sub">17.1%</div></div>
+                    <div class="kpi-card"><div class="kpi-label">In Phase 3 (S35)</div><div class="kpi-value">1,101</div><div class="kpi-sub">8.8%</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Not Started</div><div class="kpi-value">4,430</div><div class="kpi-sub">35.5%</div></div>
+                </div>
+
+                <div class="panel-grid">
+                    <div class="card">
+                        <div class="card-title mb-8">Progress by Control Point</div>
+                        <div class="chart-placeholder">[ Horizontal bar chart showing count of cases at each control point CP01&ndash;CP21 ]</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title mb-8">Completion Trend (Monthly)</div>
+                        <div class="chart-placeholder">[ Line chart: completed cases per month over past 12 months ]</div>
+                    </div>
+                </div>
+
+                <div class="data-table-wrap">
+                    <div class="table-header"><span class="table-title">Progress by Quaternary Catchment</span></div>
+                    <table>
+                        <thead><tr><th>QDR</th><th>Total</th><th>Completed</th><th>In Process</th><th>Not Started</th><th>% Complete</th></tr></thead>
+                        <tbody>
+                            <tr><td>J33A</td><td>2,345</td><td>1,204</td><td>812</td><td>329</td><td><div style="background:#e8f5e9;width:51%;padding:2px 6px;border-radius:3px;font-size:11px;">51.3%</div></td></tr>
+                            <tr><td>J33B</td><td>1,876</td><td>645</td><td>534</td><td>697</td><td><div style="background:#fff3e0;width:34%;padding:2px 6px;border-radius:3px;font-size:11px;">34.4%</div></td></tr>
+                            <tr><td>J34A</td><td>3,102</td><td>1,890</td><td>612</td><td>600</td><td><div style="background:#e8f5e9;width:61%;padding:2px 6px;border-radius:3px;font-size:11px;">60.9%</div></td></tr>
+                            <tr><td>J35A</td><td>2,890</td><td>423</td><td>567</td><td>1,900</td><td><div style="background:#ffebee;width:14%;padding:2px 6px;border-radius:3px;font-size:11px;">14.6%</div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ 12: AUDIT LOG ═══════════════════════ -->
+<div class="wireframe" id="wf-audit">
+    <div class="browser-bar">
+        <div class="browser-dot red"></div><div class="browser-dot yellow"></div><div class="browser-dot green"></div>
+        <div class="browser-url">https://vv.dws.gov.za/Audit/Log</div>
+    </div>
+    <div class="app-shell">
+        <div class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&V</span></div>
+            <div class="sidebar-section">Main</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Properties</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Cases</div>
+            <div class="sidebar-section">System</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Reports</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Notifications</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Admin</div>
+            <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Audit Log</div>
+        </div>
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left"><span class="breadcrumb"><a href="#">Home</a> / Audit Log</span></div>
+                <div class="top-bar-right"><div class="user-avatar">SA</div></div>
+            </div>
+            <div class="page-content">
+                <button class="btn-back" onclick="showIndex()">&#8592; Back to wireframe index</button>
+                <div class="page-title">Audit Log</div>
+                <div class="page-subtitle mb-16">Immutable record of all system actions (PAJA compliance)</div>
+
+                <div class="tab-bar">
+                    <div class="tab active">All Actions</div>
+                    <div class="tab">Workflow Transitions</div>
+                    <div class="tab">Letter Activity</div>
+                    <div class="tab">Data Changes</div>
+                    <div class="tab">Portal Activity</div>
+                </div>
+
+                <div class="filter-bar">
+                    <input type="date" class="form-input" style="width:140px;" value="2026-03-01">
+                    <span class="text-sm">to</span>
+                    <input type="date" class="form-input" style="width:140px;" value="2026-03-11">
+                    <select class="form-select"><option>All Users</option><option>J. Mokoena</option><option>A. Petersen</option><option>M. Naidoo</option></select>
+                    <select class="form-select"><option>All Actions</option><option>Create</option><option>Update</option><option>Delete</option><option>Sign</option><option>Transition</option><option>Login</option></select>
+                    <select class="form-select"><option>All Entities</option><option>FileMaster</option><option>FieldAndCrop</option><option>LetterIssuance</option><option>WorkflowInstance</option></select>
+                    <button class="btn btn-primary btn-sm">Filter</button>
+                </div>
+
+                <div class="data-table-wrap">
+                    <table>
+                        <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Entity ID</th><th>Description</th><th>IP</th><th>Details</th></tr></thead>
+                        <tbody>
+                            <tr><td style="white-space:nowrap;">11 Mar 08:14:23</td><td>A. Petersen</td><td><span class="badge badge-blue">Sign</span></td><td>LetterIssuance</td><td>LI-00412</td><td>Signed Letter 1 for BG-2024-0412</td><td style="font-family:monospace;font-size:10px;">10.0.12.45</td><td><button class="btn btn-sm btn-outline">View</button></td></tr>
+                            <tr><td style="white-space:nowrap;">10 Mar 16:45:12</td><td>J. Mokoena</td><td><span class="badge badge-green">Transition</span></td><td>WorkflowInstance</td><td>WI-0412</td><td>CP11 &rarr; CP12 (GIS Analysis &rarr; SAPWAT)</td><td style="font-family:monospace;font-size:10px;">10.0.12.78</td><td><button class="btn btn-sm btn-outline">View</button></td></tr>
+                            <tr><td style="white-space:nowrap;">10 Mar 16:30:05</td><td>J. Mokoena</td><td><span class="badge badge-orange">Create</span></td><td>FieldAndCrop</td><td>FC-00891</td><td>Added field F-008 (Lucerne, 42.0 ha)</td><td style="font-family:monospace;font-size:10px;">10.0.12.78</td><td><button class="btn btn-sm btn-outline">View</button></td></tr>
+                            <tr><td style="white-space:nowrap;">10 Mar 14:20:44</td><td>M. Naidoo</td><td><span class="badge badge-purple">Update</span></td><td>PropertyOwnership</td><td>PO-00345</td><td>Updated title deed date for Doornfontein 123</td><td style="font-family:monospace;font-size:10px;">10.0.12.91</td><td><button class="btn btn-sm btn-outline">View</button></td></tr>
+                            <tr><td style="white-space:nowrap;">10 Mar 09:00:01</td><td>SYSTEM</td><td><span class="badge badge-grey">Import</span></td><td>FileMaster</td><td>multiple</td><td>WARMS daily sync: 3 new records, 1 ownership change</td><td style="font-family:monospace;font-size:10px;">10.0.1.10</td><td><button class="btn btn-sm btn-outline">View</button></td></tr>
+                        </tbody>
+                    </table>
+                    <div style="padding: 10px 16px; font-size: 11px; color: #888; display: flex; justify-content: space-between; border-top: 1px solid #eee;">
+                        <span>Showing 1&ndash;50 of 12,891 entries</span>
+                        <span>Page: <a href="#" style="color:#003366;">1</a> 2 3 4 ... 258</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════ JAVASCRIPT ═══════════════════════ -->
+<script>
+function showWireframe(id) {
+    document.getElementById('indexPage').style.display = 'none';
+    document.querySelectorAll('.wireframe').forEach(w => w.classList.remove('active'));
+    document.getElementById('wf-' + id).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function showIndex() {
+    document.querySelectorAll('.wireframe').forEach(w => w.classList.remove('active'));
+    document.getElementById('indexPage').style.display = 'block';
+    window.scrollTo(0, 0);
+}
+</script>
+
+</body>
+</html>
