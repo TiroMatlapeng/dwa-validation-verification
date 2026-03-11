@@ -1,0 +1,54 @@
+erDiagram
+
+    %% ═══════════════════════════════════════════════════
+    %% ERD 1 of 6: GEOGRAPHY & ORGANISATION
+    %% DWA V&V System — Presentation View
+    %% ═══════════════════════════════════════════════════
+
+    Province {
+        Guid ProvinceId PK
+        string ProvinceName
+        string ProvinceCode
+    }
+
+    WaterManagementArea {
+        Guid WmaId PK
+        string WmaName
+        string WmaCode
+        Guid ProvinceId FK
+    }
+
+    OrganisationalUnit {
+        Guid OrgUnitId PK
+        string Name
+        string Type "National|Provincial|Regional|CMA"
+        Guid ProvinceId FK
+        Guid WmaId FK
+    }
+
+    Address {
+        Guid AddressId PK
+        string StreetAddress
+        string SuburbName
+        string CityName
+        string Province
+        decimal Longitude "decimal(9,6)"
+        decimal Latitude "decimal(9,6)"
+    }
+
+    ApplicationUser {
+        Guid ApplicationUserId PK
+        string EmailAddress
+        string FirstName
+        string LastName
+        string EmployeeNumber
+        DateOnly DateOfBirth
+        Guid OrgUnitId FK
+    }
+
+    %% ── Relationships ──
+
+    Province ||--o{ WaterManagementArea : "contains 19 WMAs"
+    Province ||--o{ OrganisationalUnit : "has offices in"
+    WaterManagementArea ||--o{ OrganisationalUnit : "covered by"
+    OrganisationalUnit ||--o{ ApplicationUser : "employs"

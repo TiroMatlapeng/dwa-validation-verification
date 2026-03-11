@@ -143,88 +143,104 @@ ApplicationDBContext --> SQL Server
 
 ## 3. User Roles & Access Control
 
-### 3.1 Internal Users (ApplicationUser - existing model, extends IdentityUser)
+### 3.1 Organisational Hierarchy
+
+DWS operates a tiered hierarchy that determines which cases a user can see and act on. Access is always scoped to the user's `OrganisationalUnit`. Users below `NationalManager` level cannot access cases outside their unit.
+
+```
+National DWS (Head Office — Pretoria)
+  └─ 9 Provincial DWS Offices
+       └─ Regional Offices / Water Management Areas (19 WMAs nationally)
+            └─ CMAs (Catchment Management Agencies, where established)
+                 └─ Service Providers / Consultants (contracted field work)
+```
+
+Entities: `Province`, `WaterManagementArea`, `OrganisationalUnit` (Type: National | Provincial | Regional | CMA).
+`ApplicationUser.OrgUnitId` FK determines the user's organisational scope.
+
+### 3.2 Internal Roles (ApplicationUser — extends IdentityUser)
 
 | Role | Description | Key Permissions |
 |------|-------------|-----------------|
-| **SystemAdmin** | IT administrator | Full system access, user management, configuration |
-| **ProjectManager** | V&V project lead | All V&V functions, reporting, workflow override |
-| **ValidationOfficer** | DWS/CMA official performing V&V | Create/edit files, run calculations, generate letters |
-| **CaptureClerk** | Data entry personnel | Capture property, field & crop, dam data |
-| **GISAnalyst** | Spatial analysis specialist | GIS analysis, field digitising, satellite image management |
-| **RegionalManager** | DWS Regional Office / CMA head | View/approve within region, signing authority for Section 35 letters |
-| **Auditor** | Read-only oversight | View all data, audit trail, reports |
+| **SystemAdmin** | IT administrator | Full system access, user management, reference data, system config |
+| **NationalManager** | National DWS manager | View all cases across all provinces; approve escalations |
+| **RegionalManager** | Provincial/regional office head | Approve control point transitions in their WMA; countersign Section 35 letters |
+| **Validator** | V&V practitioner (DWS official or delegated consultant) | Create `FileMaster` cases; capture all field data; initiate letter issuance |
+| **Capturer** | Data entry clerk | Capture and update field data on an existing case; cannot transition workflow or issue letters |
+| **ReadOnly** | Reviewer / auditor | View case data, audit trail, reports — no modifications |
 
-### 3.2 Public Users (NEW: PublicUser - separate identity store)
+**Authorisation rules:**
+- Only `Validator`+ may create a new `FileMaster` or advance a workflow control point.
+- Only `RegionalManager`+ may sign/approve Section 35 letters.
+- Letter 1 (S35(1)) must be served in person — `LetterIssuance.DeliveryMethod` must record the serving official.
+- `Capturer` may update field data on a case owned by their `OrganisationalUnit`.
+- Role scope is always filtered by `OrganisationalUnit` — no cross-office access below `NationalManager`.
+
+### 3.3 Public Users (PublicUser — separate identity store)
 
 | Role | Description | Key Permissions |
 |------|-------------|-----------------|
-| **WaterUser** | Property owner / water user | View own case, download letters, upload documents, sign letters electronically, update contact details |
-| **Intermediary** | Agent/representative acting for water user(s) | Same as WaterUser but for linked clients |
+| **WaterUser** | Property owner / registered water user | View own case status, download letters, upload documents, submit comments, lodge protests |
+| **Intermediary** | Agent/legal representative acting for water user(s) | Same as WaterUser but across all linked clients' cases |
 
-### 3.3 Public User Data Model (NEW)
+### 3.4 Public User Data Model
 
 ```csharp
-// NEW MODEL - Separate from ApplicationUser
+// Separate from ApplicationUser — does NOT extend IdentityUser
 public class PublicUser
 {
     public Guid PublicUserId { get; set; }
-
-    // Identity fields
-    public string EmailAddress { get; set; }        // Login credential
-    public string PasswordHash { get; set; }        // Managed by Identity
-    public string PhoneNumber { get; set; }
+    public required string EmailAddress { get; set; }   // Login credential
+    public required string PasswordHash { get; set; }
+    public required string FirstName { get; set; }
+    public required string LastName { get; set; }
+    public required string IdentityNumber { get; set; } // SA ID or Passport
+    public string? BusinessRegistrationNumber { get; set; }
+    public required string PhoneNumber { get; set; }
     public bool EmailConfirmed { get; set; }
-    public bool PhoneConfirmed { get; set; }
-
-    // Personal details
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string IdentityNumber { get; set; }      // SA ID or Passport
-    public string BusinessRegistrationNumber { get; set; } // Optional, for entities
-
-    // Link to existing domain
-    public Guid? PropertyOwnerId { get; set; }      // FK to PropertyOwner once verified
-    public PropertyOwner? PropertyOwner { get; set; }
-
-    // Account management
+    public bool MfaEnabled { get; set; }                // MFA is mandatory before case access
+    public string Status { get; set; }                  // Pending | Active | Suspended | Deactivated
     public DateTime RegistrationDate { get; set; }
-    public PublicUserStatus Status { get; set; }     // Pending, Active, Suspended
-    public PublicUserRole Role { get; set; }         // WaterUser, Intermediary
+
+    // Properties linked via PublicUserProperty (requires DWS approval)
+    public ICollection<PublicUserProperty> LinkedProperties { get; set; }
 }
 
-public enum PublicUserStatus { Pending, Active, Suspended, Deactivated }
-public enum PublicUserRole { WaterUser, Intermediary }
+public class PublicUserProperty
+{
+    public Guid Id { get; set; }
+    public Guid PublicUserId { get; set; }
+    public Guid PropertyId { get; set; }
+    public Guid? ApprovedByUserId { get; set; }     // DWS Validator who approved the link
+    public DateTime? ApprovedDate { get; set; }
+    public string Status { get; set; }              // Pending | Approved | Rejected
+}
 ```
 
-### 3.4 Authentication Architecture
+**Key rule:** A `PublicUser` cannot view any case data until a DWS `Validator`+ approves their `PublicUserProperty` link.
+
+### 3.5 Authentication Architecture
 
 ```
-INTERNAL USERS                         PUBLIC USERS
-+-----------------+                    +--------------------+
-| ASP.NET Identity|                    | ASP.NET Identity   |
-| (ApplicationUser|                    | (PublicUser store)  |
-| + Role claims)  |                    | + Role claims)     |
-+--------+--------+                    +---------+----------+
-         |                                       |
-    Cookie Auth                             Cookie Auth
-    /Admin area                             /Portal area
-         |                                       |
-+--------v--------+                    +---------v----------+
-| Internal MVC    |                    | Public Portal      |
-| Controllers     |                    | Controllers        |
-+-----------------+                    +--------------------+
-         |                                       |
-         +------ Shared Service Layer -----------+
-         |                                       |
-         +------ Shared Database ----------------+
+INTERNAL USERS                              PUBLIC USERS
++----------------------+                   +----------------------+
+| ASP.NET Identity     |                   | ASP.NET Identity     |
+| (ApplicationUser     |                   | (PublicUser store)   |
+|  + ASP.NET Roles)    |                   | MFA: TOTP / SMS OTP  |
+| Cookie: InternalScheme                   | Cookie: PublicScheme |
++----------+-----------+                   +----------+-----------+
+           |                                          |
+    /Admin, /Property                        /Portal/Login
+    /Validation, /Workflow                   /Portal/Dashboard
+    /Reports, /Letters                       /Portal/Cases
+           |                                /Portal/Protests
+           +------------ Shared Service Layer --------+
+                                 |
+                         Shared SQL Server DB
+                    (separate tables, shared EF context)
 ```
 
-**Key Design Decision:** Use two separate ASP.NET Core Identity user stores within the same database but different tables (`ApplicationUsers` for internal, `PublicUsers` for portal). This provides:
-- Complete isolation of credentials and roles
-- Different password policies (internal may require MFA, public uses email verification)
-- No risk of a public user accessing internal functions
-- Shared data layer for reading property/case data
+**Key Design Decision:** Two separate ASP.NET Core Identity user stores in the same database (`ApplicationUsers` / `PublicUsers`). MFA is mandatory for `PublicUser` before accessing case data. Sessions use separate cookie schemes — a public session cannot escalate to internal functions.
 
 ---
 
@@ -233,47 +249,51 @@ INTERNAL USERS                         PUBLIC USERS
 ### 4.1 Entity Relationship Summary
 
 ```
-PropertyOwner ----< PropertyOwnership >---- Property
-     |                                         |
-     |                                    +----+--------+------+------+
-     v                                    |    |        |      |      |
-  Address                           Entitlement |   FieldAndCrop |  Storing
-     ^                                    |    |        |      |      |
-     |                              Forestation |  Irrigation    |  DamCalc
-     +--- Property.PropertyAddress        |    |        |      |      |
-     +--- GovernmentWaterControlArea      v    v        v      v      v
-     +--- IrrigationBoard           EntitlementType  Crop  WaterSource River
-                                              |       |
-                                              v       v
-                                        (lookup)  CropType
+Province ──< WaterManagementArea ──< Property
+                    │                    │
+              OrganisationalUnit    PropertyOwnership >── PropertyOwner
+                    │                    │                     │
+             ApplicationUser          Address               Address
+                    │
+               FileMaster ──────────────────────────────── Entitlement
+                    │                                           │
+                    ├──> OrganisationalUnit               EntitlementType
+                    ├──> ValidationStatus (Appendix B)
+                    ├──> ApplicationUser (ValidatorId)
+                    ├──> ApplicationUser (CapturePersonId)
+                    ├──> WorkflowInstance ──> WorkflowState
+                    ├──< Validation ──> Period
+                    ├──< LetterIssuance ──> LetterType
+                    ├──< Authorisation ──> AuthorisationType
+                    ├──< AuditLog
+                    └──< (via Property) FieldAndCrop, Irrigation,
+                          Storing, Forestation, DamCalculation,
+                          SateliteImage
 
-FileMaster ----------> Property (core registration file)
-     |
-     +---> ApplicationUser (validated_by)
-     +---> ApplicationUser (captured_by)
-     +---> ValidationStatus
-
-Validation ----------> Property, Period, Entitlement
-LetterIssuance ------> PropertyOwner, LetterType
+Public Portal cluster (row-level isolated per PublicUser):
+  PublicUser ──< PublicUserProperty >── Property
+  FileMaster ──< CaseNotification, CaseComment, UploadedDocument, Protest
+  Protest ──< ProtestDocument >── UploadedDocument
 ```
 
-### 4.2 Missing Relationships to Add
+### 4.2 Design Decisions Reflected in the Model
 
-The following relationships are implied by the V&V process but not yet in the data model:
-
-| Entity | Missing Relationship | Purpose |
-|--------|---------------------|---------|
-| `FileMaster` | `ICollection<LetterIssuance>` | Track all letters issued per file |
-| `FileMaster` | `ICollection<Document>` | Attach uploaded documents (new entity) |
-| `Property` | `ICollection<SateliteImage>` | Link satellite images to properties |
-| `Validation` | `FileMaster` FK | Link validation case to its file |
-| `Validation` | `ApplicationUser AssignedTo` | Who is working on this case |
-| NEW: `WorkflowInstance` | Full workflow state tracking | See Section 5 |
-| NEW: `WorkflowStep` | Individual step completion | See Section 5 |
-| NEW: `Document` | File/document storage | For uploaded evidence |
-| NEW: `AuditLog` | Immutable action log | See Section 14 |
-| NEW: `Notification` | Notification queue | See Section 10 |
-| NEW: `DigitalSignature` | Signature records | See Section 11 |
+| Decision | Detail |
+|----------|--------|
+| **Entitlement lives on `FileMaster` only** | Removed from `Property`, `FieldAndCrop`, `Forestation`, `Validation`. `FieldAndCrop.SAPWATCalculationResult` feeds the ELU calculation; outcome stored once on `FileMaster.EntitlementId` |
+| **`Property.EntitlementId` removed** | Derive current entitlement from `FileMaster` (the case file is the authoritative record) |
+| **All enums converted to DB reference tables** | `ValidationStatus`, `WaterSourceType`, `CustomerTitle`, `Gender`, `DamCalculationStatus`, `VerificationScenario` — all seeded from Appendix B values |
+| **`AuthorisationType` restored; `Authorisation` added** | `Authorisation` is a proper entity with `FileMasterId` FK, `AuthorisationTypeId` FK, `ReferenceNumber`, `IssueDate`, `ExpiryDate` |
+| **`IssuedLetters` removed** | Letter reporting comes from `WorkflowState` transitions (e.g. state = `Letter1Issued`) plus the `LetterIssuance` table — the empty stub adds nothing |
+| **`WorkflowState` is a DB table** | Seeded with all phase/letter states; allows reporting on case distribution across states without a recompile |
+| **`FileMaster` validation fields cleaned up** | `ValidationStartDate` / `ValidationDescription` moved to `Validation` entity; `LatestLetterTypeIssued` removed (derive from `WorkflowInstance.CurrentWorkflowStateId`); `MyProperty` removed; typo `RegiteredForStoring` fixed |
+| **`Validation.FileMasterId` added** | Was orphaned — now properly linked |
+| **`LetterIssuance` fully specified** | Added `FileMasterId`, `IssuedByUserId`, `SignedByUserId`, `SignedDate`, `DueDate`, `DeliveryMethod`, `PostalRegistrationNumber`, `ResponseReceivedDate` |
+| **`SateliteImage` linked to `Property` + `Period`** | Was a standalone table; now `PropertyId` FK + `PeriodId` FK (qualifying vs current) |
+| **`DamCalculation.SateliteQualifyPeriod`** | Replaced string with `PeriodId` FK + `SateliteImageId` FK |
+| **`Forestation` + `Irrigation` get `PeriodId`** | Both cover qualifying and current periods — FK is now explicit |
+| **`PropertyOwner.IdentityDocumentNumber`** | Changed from `int` to `string` (SA IDs have leading zeros; passports have letters) |
+| **`Property.WaterManagementArea`** | Changed from free-text `string` to `WaterManagementAreaId` FK |
 
 ---
 

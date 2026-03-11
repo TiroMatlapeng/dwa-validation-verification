@@ -1,0 +1,120 @@
+erDiagram
+
+    %% ═══════════════════════════════════════════════════
+    %% ERD 5 of 6: LETTERS, SIGNATURES & DOCUMENTS
+    %% DWA V&V System — Presentation View
+    %% ═══════════════════════════════════════════════════
+
+    FileMaster {
+        Guid FileMasterId PK
+        string RegistrationNumber
+    }
+
+    PropertyOwner {
+        Guid OwnerId PK
+        string FirstName
+        string LastName
+    }
+
+    ApplicationUser {
+        Guid ApplicationUserId PK
+        string FirstName
+        string LastName
+    }
+
+    LetterType {
+        Guid LetterTypeId PK
+        string LetterName "Letter 1|1A|2|2A|3|4A|4-5"
+        string LetterDescription
+        string NWASection "S35(1)|S53(1)|S35(3)(a)|S35(4)"
+    }
+
+    LetterIssuance {
+        Guid LetterIssuanceId PK
+        Guid FileMasterId FK
+        Guid PropertyOwnerId FK
+        Guid LetterTypeId FK
+        DateOnly GeneratedDate
+        DateOnly SignedDate
+        Guid SignedById FK
+        Guid DigitalSignatureId FK
+        DateOnly IssuedDate
+        string IssueMethod "RegisteredPost|Email|InPerson"
+        DateOnly DueDate
+        string ResponseStatus "Pending|Agreed|NotAgreed|NoResponse|RTS"
+        DateOnly ResponseDate
+        bool AgreedWithFindings
+        string ResponseNotes
+        bool ReturnedToSender
+        string BatchNumber
+        Guid DocumentId FK
+        Guid ReissuedFromId FK "self-ref"
+        Guid EscalatedToId FK "self-ref"
+        bool AvailableInPortal "auto-set on issuance"
+        DateTime PortalFirstViewedDate "when user first opened"
+        DateTime PortalAcknowledgedDate "user clicked Acknowledge"
+        Guid PortalAcknowledgedByPublicUserId FK
+        string ServingOfficialName "for InPerson delivery"
+        DateOnly PhysicalDeliveryDate "hand-delivery date"
+    }
+
+    Document {
+        Guid DocumentId PK
+        Guid FileMasterId FK
+        string DocumentType "Letter|TitleDeed|GISMap|SG|Upload"
+        string FileName
+        string BlobPath
+        string ContentType
+        long FileSizeBytes
+        Guid UploadedByUserId FK
+        Guid UploadedByPublicUserId FK
+        DateTime UploadDate
+        string VirusScanStatus "Pending|Clean|Infected"
+        string DocumentHash "SHA-256"
+    }
+
+    DigitalSignature {
+        Guid SignatureId PK
+        Guid DocumentId FK
+        Guid ApplicationUserId FK
+        Guid PublicUserId FK
+        byte SignatureImage "PNG"
+        string SignatureHash "SHA-256"
+        DateTime SignedAt
+        string IPAddress
+        string UserAgent
+        string Reason "e.g. Section 35(4) Confirmation"
+        string DocumentHashAtSigning "integrity check"
+    }
+
+    SignatureRequest {
+        Guid Id PK
+        Guid DocumentId FK
+        Guid ApplicationUserId FK
+        Guid PublicUserId FK
+        string Reason
+        string Status "Pending|Completed|Declined|Expired"
+        DateTime RequestedDate
+        DateTime CompletedDate
+        Guid DigitalSignatureId FK
+    }
+
+    %% ── Relationships ──
+
+    LetterIssuance }o--|| FileMaster : "is for"
+    LetterIssuance }o--|| PropertyOwner : "sent to"
+    LetterIssuance }o--|| LetterType : "is of type"
+    LetterIssuance }o--o| ApplicationUser : "signed by"
+    LetterIssuance }o--o| DigitalSignature : "has signature"
+    LetterIssuance }o--o| Document : "has document"
+    LetterIssuance }o--o| LetterIssuance : "reissued from"
+
+    Document }o--o| FileMaster : "attached to"
+    Document }o--o| ApplicationUser : "uploaded by internal"
+
+    DigitalSignature }o--|| Document : "signs"
+    DigitalSignature }o--o| ApplicationUser : "signed by internal"
+
+    SignatureRequest }o--|| Document : "is for"
+    SignatureRequest }o--o| ApplicationUser : "requested of"
+    SignatureRequest }o--o| DigitalSignature : "fulfilled by"

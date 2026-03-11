@@ -1,0 +1,175 @@
+erDiagram
+
+    %% ═══════════════════════════════════════════════════
+    %% ERD 3 of 6: WATER USE & CALCULATIONS
+    %% DWA V&V System — Presentation View
+    %% ═══════════════════════════════════════════════════
+
+    Property {
+        Guid PropertyId PK
+        string SGCode
+        string QuaternaryDrainage
+    }
+
+    Period {
+        Guid PeriodId PK
+        string PeriodName "Qualifying|Current"
+    }
+
+    FieldAndCrop {
+        Guid FieldAndCropId PK
+        Guid PropertyId FK
+        Guid PeriodId FK
+        string FieldNumber
+        decimal FieldArea "ha - decimal(18,2)"
+        Guid CropId FK
+        DateOnly PlantDate
+        decimal RotationFactor "percent"
+        Guid IrrigationSystemId FK
+        Guid WaterSourceId FK
+        decimal CropArea "ha - decimal(18,2)"
+        decimal SAPWATCalculationResult "mm/ha/a"
+    }
+
+    Irrigation {
+        Guid IrrigationId PK
+        string IrrigationName
+        Guid PropertyId FK
+        Guid PeriodId FK
+        Guid VerificationScenarioId FK
+        DateOnly WaterDate
+        decimal WaterVolume "m3 - decimal(18,2)"
+        decimal WaterLandArea "ha"
+        decimal WaterCropArea "ha"
+        Guid WaterSourceId FK
+    }
+
+    Storing {
+        Guid StoringId PK
+        Guid PropertyId FK
+        Guid PeriodId FK
+        Guid VerificationScenarioId FK
+        int NumberOfDams
+        decimal Volume "m3 - decimal(18,2)"
+        Guid RiverOrStreamId FK
+    }
+
+    Forestation {
+        Guid ForestationId PK
+        Guid PropertyId FK
+        Guid PeriodId FK
+        bool WithinGWCA
+        decimal QualifyPeriodSFRAHectares "decimal(18,2)"
+        decimal CurrentPeriodSFRAHectares "decimal(18,2)"
+        decimal QualifyPeriodVolume "m3"
+        decimal RegisteredHectares "decimal(18,2)"
+        decimal RegisteredVolume "m3"
+        decimal ELUHectares "decimal(18,2)"
+        decimal ELUVolume "m3"
+        decimal UnlawfulHectares "decimal(18,2)"
+        decimal LawfulHectares "decimal(18,2)"
+        decimal Pre1972Hectares "decimal(18,2)"
+        string SFRAPermitNumber
+    }
+
+    DamCalculation {
+        Guid DamCalculationId PK
+        DateOnly CalculationDate
+        Guid PropertyId FK
+        Guid PeriodId FK
+        Guid SateliteImageId FK
+        string DamNumber
+        decimal DamCapacity "m3 - decimal(18,2)"
+        Guid RiverId FK
+        Guid DamCalculationStatusId FK
+    }
+
+    SateliteImage {
+        Guid ImageId PK
+        Guid PropertyId FK
+        Guid PeriodId FK
+        string ImageName
+        string FarmNumber
+        DateOnly MapCompilation
+        DateOnly ImageDate
+        string ImageNumber
+    }
+
+    %% ── Lookup Tables ──
+
+    Crop {
+        Guid CropId PK
+        string CropName
+        Guid CropTypeId FK
+    }
+
+    CropType {
+        Guid CropTypeId PK
+        string CropTypeName
+    }
+
+    IrrigationSystem {
+        Guid IrrigationSystemId PK
+        string IrrigationSystemName
+        string IrrigationSystemModel
+    }
+
+    WaterSourceType {
+        Guid WaterSourceTypeId PK
+        string WaterSourceTypeName
+    }
+
+    WaterSource {
+        Guid WaterSourceId PK
+        string WaterSourceName
+        Guid WaterSourceTypeId FK
+    }
+
+    River {
+        Guid RiverId PK
+        string RiverName
+    }
+
+    VerificationScenario {
+        Guid VerificationScenarioId PK
+        string ScenarioName
+        int DisplayOrder
+    }
+
+    DamCalculationStatus {
+        Guid DamCalculationStatusId PK
+        string StatusName
+    }
+
+    %% ── Relationships ──
+
+    FieldAndCrop }o--|| Property : "is on"
+    FieldAndCrop }o--|| Period : "is for"
+    FieldAndCrop }o--|| Crop : "grows"
+    FieldAndCrop }o--|| IrrigationSystem : "uses"
+    FieldAndCrop }o--|| WaterSource : "uses"
+
+    Irrigation }o--|| Property : "is for"
+    Irrigation }o--|| Period : "is for"
+    Irrigation }o--|| VerificationScenario : "is"
+    Irrigation }o--|| WaterSource : "uses"
+
+    Storing }o--|| Property : "is on"
+    Storing }o--|| Period : "is for"
+    Storing }o--|| VerificationScenario : "has scenario"
+    Storing }o--|| River : "is on"
+
+    Forestation }o--|| Property : "is on"
+    Forestation }o--|| Period : "is for"
+
+    DamCalculation }o--|| Property : "is for"
+    DamCalculation }o--|| Period : "is for"
+    DamCalculation }o--|| SateliteImage : "uses"
+    DamCalculation }o--|| River : "is on"
+    DamCalculation }o--|| DamCalculationStatus : "has status"
+
+    SateliteImage }o--|| Property : "is for"
+    SateliteImage }o--|| Period : "is in"
+
+    Crop }o--|| CropType : "is a"
+    WaterSource }o--|| WaterSourceType : "is of type"

@@ -9,17 +9,17 @@ graph TB
 
     subgraph Clients["User Interfaces"]
         InternalApp["Internal MVC App\n(DWS/CMA Officials)\n/Admin, /Property, /Validation\n/Workflow, /Reports, /Letters"]
-        PublicPortal["Public Portal\n(Water Users)\n/Portal/Login, /Portal/Dashboard\n/Portal/Cases, /Portal/Letters"]
+        PublicPortal["Public Portal\n(Water Users)\n/Portal/Login, /Portal/Dashboard\n/Portal/Cases, /Portal/Protests\n/Portal/Documents"]
     end
 
     subgraph Services["Service Layer"]
-        WE["Workflow Engine"]
+        WE["Workflow Engine\n(WorkflowState DB table\n+ ITransitionGuard)"]
         CE["Calculator Engine\n(SAPWAT, Dam, ELU, SFRA)"]
         LS["Letter Service\n(Generate, Track, Batch)"]
         NS["Notification Service\n(Email + In-App)"]
         SS["Signature Service\n(Capture + Verify)"]
         IS["Integration Service\n(WARMS, eWULAAS, SG, Deeds)"]
-        AS["Audit Service\n(Immutable Log)"]
+        AS["Audit Service\n(Immutable AuditLog)"]
         RS["Reporting Service"]
     end
 
@@ -32,10 +32,12 @@ graph TB
     end
 
     subgraph Database["SQL Server Database"]
-        CoreDB["Core Domain\nProperties, Owners\nFileMasters, Irrigation\nStoring, Forestation\nFieldAndCrop, DamCalc"]
-        WorkflowDB["Workflow\nWorkflowInstances\nWorkflowSteps\nAuditLog"]
-        CorrespDB["Correspondence\nLetterIssuances\nDocuments\nDigitalSignatures"]
-        PortalDB["Portal\nPublicUsers\nNotifications"]
+        CoreDB["Core Domain\nProperties, Owners\nFileMasters\nIrrigation, Storing\nForestation, FieldAndCrop\nDamCalculation"]
+        RefDB["Reference Tables\nValidationStatus, WaterSourceType\nVerificationScenario, CustomerTitle\nGender, DamCalculationStatus\nEntitlementType, AuthorisationType\nLetterType, Period"]
+        OrgDB["Organisation\nProvinces\nWaterManagementAreas\nOrganisationalUnits"]
+        WorkflowDB["Workflow\nWorkflowStates\nWorkflowInstances\nWorkflowStepRecords\nAuditLog"]
+        CorrespDB["Correspondence\nLetterIssuances\nAuthorisations\nUploadedDocuments\nDigitalSignatures"]
+        PortalDB["Public Portal\nPublicUsers\nPublicUserProperties\nCaseNotifications\nCaseComments\nProtests\nProtestDocuments"]
     end
 
     InternalApp --> Services

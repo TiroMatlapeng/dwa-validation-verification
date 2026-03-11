@@ -1,0 +1,42 @@
+flowchart TB
+    PDF[/"Letter PDF Generated\n(by LetterService)"/]
+    PDF --> SigReq[("SignatureRequest created\nDocumentId, Reason\nStatus = Pending")]
+
+    SigReq --> InternalPath & PublicPath
+
+    subgraph InternalPath["Internal User Path (ApplicationUser)"]
+        InApp_Notif["In-App Notification\n(LetterReadyForSigning)"]
+        InApp_Page["Internal Signing Page\n(/Letters/{id}/Sign)"]
+        InApp_Notif --> InApp_Page
+    end
+
+    subgraph PublicPath["Public Portal User Path (PublicUser)"]
+        Portal_Notif["Portal Notification\n(SignatureRequired)"]
+        Portal_Page["Portal Signing Page\n(/Portal/Cases/{id}/Sign)"]
+        Portal_Notif --> Portal_Page
+    end
+
+    subgraph CaptureFlow["Signature Capture (ISignatureService)"]
+        SignPad["SignaturePad.js\n(draw signature on HTML canvas)"]
+        Capture["Capture payload:\n• Signature image (PNG)\n• Timestamp (signed at)\n• IP address\n• User agent\n• Document hash at time of signing"]
+    end
+
+    subgraph StorageFlow["Signature Storage & Embedding"]
+        StoreSig[("DigitalSignature record\nSignatureHash (SHA-256)\nDocumentHashAtSigning\nfor integrity verification)")]
+        EmbedSig["Embed signature image\ninto PDF document"]
+        MarkSigned[("LetterIssuance updated:\nSignedDate\nSignedById / PublicUserId\nDigitalSignatureId\nStatus → Signed")]
+    end
+
+    InApp_Page --> SignPad
+    Portal_Page --> SignPad
+    SignPad --> Capture --> StoreSig
+    StoreSig --> EmbedSig
+    EmbedSig --> SignedPDF[/"Signed PDF\n(stored in UploadedDocument)"/]
+    SignedPDF --> MarkSigned
+    MarkSigned --> NextNotif["NotificationService triggers\nnext step notification"]
+    NextNotif --> IssueLetter["LetterService.IssueLetter()\n→ Post / Email / In-Person / Other"]
+
+    style InternalPath fill:#e6f3ff,stroke:#0066cc
+    style PublicPath fill:#f9e6ff,stroke:#6600cc
+    style CaptureFlow fill:#e6ffe6,stroke:#006600
+    style StorageFlow fill:#e6e6ff,stroke:#0000cc

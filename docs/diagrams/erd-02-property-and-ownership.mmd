@@ -1,0 +1,83 @@
+erDiagram
+
+    %% ═══════════════════════════════════════════════════
+    %% ERD 2 of 6: PROPERTY & OWNERSHIP
+    %% DWA V&V System — Presentation View
+    %% ═══════════════════════════════════════════════════
+
+    Property {
+        Guid PropertyId PK
+        string PropertyReferenceNumber
+        Guid AddressId FK
+        int PropertySize "hectares"
+        DateOnly ProclamationDate
+        DateOnly RegistrationDate
+        string SGCode "Surveyor General code"
+        string QuaternaryDrainage
+        Guid WaterManagementAreaId FK
+        decimal Longitude "decimal(9,6)"
+        decimal Latitude "decimal(9,6)"
+    }
+
+    Address {
+        Guid AddressId PK
+        string StreetAddress
+        string SuburbName
+        string CityName
+        string Province
+        decimal Longitude "decimal(9,6)"
+        decimal Latitude "decimal(9,6)"
+    }
+
+    PropertyOwner {
+        Guid OwnerId PK
+        string FirstName
+        string LastName
+        DateOnly DateOfBirth
+        Guid CustomerTypeId FK
+        Guid CustomerTitleId FK
+        string IdentityDocumentNumber "SA ID or Passport"
+        string EmailAddress
+        Guid AddressId FK
+        Guid GenderId FK
+    }
+
+    PropertyOwnership {
+        Guid Id PK
+        Guid PropertyId FK
+        Guid PropertyOwnerId FK
+        string TitleDeedNumber
+        DateOnly TitleDeedDate
+    }
+
+    CustomerType {
+        Guid CustomerTypeId PK
+        string CustomerTypeName
+    }
+
+    CustomerTitle {
+        Guid CustomerTitleId PK
+        string TitleName
+    }
+
+    Gender {
+        Guid GenderId PK
+        string GenderName
+    }
+
+    WaterManagementArea {
+        Guid WmaId PK
+        string WmaName
+        string WmaCode
+    }
+
+    %% ── Relationships ──
+
+    Property ||--o{ PropertyOwnership : "has"
+    PropertyOwner ||--o{ PropertyOwnership : "owns via title deed"
+    Property }o--|| Address : "located at"
+    Property }o--|| WaterManagementArea : "within"
+    PropertyOwner }o--|| Address : "resides at"
+    PropertyOwner }o--|| CustomerType : "is a"
+    PropertyOwner }o--|| CustomerTitle : "has title"
+    PropertyOwner }o--|| Gender : "is"

@@ -1,0 +1,70 @@
+flowchart TB
+    subgraph Inputs["External Inputs"]
+        WARMS_DB[("WARMS Database\n(latest extract)")]
+        Satellite[("Satellite Imagery\n(current period)")]
+    end
+
+    subgraph CP01_box["CP01: WARMS Audit"]
+        CP01["Compare WARMS vs V&V DB\nIdentify new records\nDetect ownership changes\nDetect title deed changes"]
+    end
+
+    subgraph CP02_box["CP02: Identify Unregistered Users"]
+        CP02["GIS overlay: property boundaries\non current satellite imagery\nCompare with WARMS registrations\nFlag unregistered water use"]
+    end
+
+    subgraph CP03_box["CP03: V&V Database Analysis"]
+        CP03["Categorise all FileMaster records:\n• Completed (validated)\n• Verification complete, awaiting validation\n• In Section 35 process (incomplete)\n• Not yet started"]
+    end
+
+    subgraph CP04_box["CP04: Project Inception Report"]
+        CP04["Compile report:\n• Scope of catchment\n• Total records, new records, status breakdown\n• Resource plan and timeline\nSigned off by Regional Manager"]
+    end
+
+    subgraph CP05_box["CP05: Public Participation Session 1"]
+        CP05["Large-scale WMA-level launch\nMedia, industry, organised agriculture\nInform stakeholders of process & timelines\nIndividual & opening sessions"]
+    end
+
+    subgraph DataWritten["Data Written to Database"]
+        NewFM[("New FileMaster records\n(from WARMS audit)")]
+        UnregFM[("New FileMaster records\n(PropertyIndex = Unregistered)")]
+        AllFM[("All FileMaster records\n(ValidationStatus assigned per Appendix B)")]
+        Dashboard[("Dashboard metrics\n(category counts per catchment)")]
+    end
+
+    subgraph Documents["Documents Produced"]
+        AuditRpt[/"Audit Report\n(reviewed & approved)"/]
+        UnregList[/"Unregistered Users List"/]
+        StatusRpt[/"Status Report\n(per category & catchment)"/]
+        InceptionDoc[/"Project Inception Report\n(signed by Regional Manager)"/]
+        Minutes[/"Attendance Registers\n& Session Minutes"/]
+    end
+
+    Stakeholders(["Stakeholders\n(media, industry,\nagriculture unions)"])
+
+    WARMS_DB --> CP01
+    CP01 --> AuditRpt & NewFM
+
+    Satellite --> CP02
+    NewFM --> CP02
+    CP02 --> UnregList & UnregFM
+
+    AllFM --> CP03
+    CP03 --> StatusRpt & Dashboard
+
+    AuditRpt & UnregList & StatusRpt --> CP04
+    CP04 --> InceptionDoc
+
+    InceptionDoc --> CP05
+    Stakeholders --> CP05
+    CP05 --> Minutes
+
+    Minutes --> Phase2([">>> Transition to Phase 2\n(per property)"])
+
+    style Inputs fill:#ffe6e6,stroke:#cc0000
+    style Documents fill:#e6e6ff,stroke:#0000cc
+    style DataWritten fill:#e6e6ff,stroke:#0000cc
+    style CP01_box fill:#e6f3ff,stroke:#0066cc
+    style CP02_box fill:#e6f3ff,stroke:#0066cc
+    style CP03_box fill:#e6f3ff,stroke:#0066cc
+    style CP04_box fill:#e6f3ff,stroke:#0066cc
+    style CP05_box fill:#e6f3ff,stroke:#0066cc

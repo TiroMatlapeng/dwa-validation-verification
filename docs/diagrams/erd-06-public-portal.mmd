@@ -1,0 +1,121 @@
+erDiagram
+
+    %% ═══════════════════════════════════════════════════
+    %% ERD 6 of 6: PUBLIC PORTAL
+    %% DWA V&V System — Presentation View
+    %% ═══════════════════════════════════════════════════
+
+    PublicUser {
+        Guid PublicUserId PK
+        string EmailAddress "login credential"
+        string PasswordHash
+        string FirstName
+        string LastName
+        string IdentityNumber "SA ID or Passport"
+        string BusinessRegistrationNumber
+        string PhoneNumber
+        bool EmailConfirmed
+        bool MfaEnabled "mandatory before case access"
+        string Status "Pending|Active|Suspended|Deactivated"
+        DateTime RegistrationDate
+    }
+
+    Property {
+        Guid PropertyId PK
+        string SGCode
+        string PropertyReferenceNumber
+    }
+
+    FileMaster {
+        Guid FileMasterId PK
+        string RegistrationNumber
+    }
+
+    ApplicationUser {
+        Guid ApplicationUserId PK
+        string FirstName
+        string LastName
+    }
+
+    PublicUserProperty {
+        Guid Id PK
+        Guid PublicUserId FK
+        Guid PropertyId FK
+        Guid ApprovedByUserId FK "DWS Validator"
+        DateTime ApprovedDate
+        string Status "Pending|Approved|Rejected"
+    }
+
+    Document {
+        Guid DocumentId PK
+        string DocumentType
+        string FileName
+        string BlobPath
+    }
+
+    CaseComment {
+        Guid CommentId PK
+        Guid FileMasterId FK
+        Guid PublicUserId FK "nullable - external author"
+        Guid ApplicationUserId FK "nullable - DWS author"
+        string AuthorType "PublicUser|DWSOfficial"
+        Guid ParentCommentId FK "nullable - for threading"
+        string CommentText
+        DateTime SubmittedDate
+        DateTime ReadByDWSDate "set when DWS first views"
+        DateTime ReadByPublicUserDate "set when user first views reply"
+    }
+
+    Protest {
+        Guid ProtestId PK
+        Guid FileMasterId FK
+        Guid PublicUserId FK
+        DateTime LodgedDate
+        string Status "Lodged|UnderReview|Resolved|Dismissed"
+        string ResolutionNotes
+    }
+
+    ProtestDocument {
+        Guid Id PK
+        Guid ProtestId FK
+        Guid DocumentId FK
+    }
+
+    Notification {
+        Guid NotificationId PK
+        Guid ApplicationUserId FK "internal user - nullable"
+        Guid PublicUserId FK "external user - nullable"
+        Guid FileMasterId FK "nullable - case context"
+        string NotificationType "WorkflowStep|Letter|CaseStatus|Comment|Upload|Protest|System"
+        string Subject
+        string Body
+        string ActionUrl "deep link"
+        DateTime CreatedDate
+        DateTime ReadDate
+        bool IsRead
+        bool EmailSent
+        DateTime EmailSentDate
+        bool SmsSent "for critical notifications"
+        DateTime SmsSentDate
+    }
+
+    %% ── Relationships ──
+
+    PublicUser ||--o{ PublicUserProperty : "has linked properties"
+    Property ||--o{ PublicUserProperty : "linked to"
+    PublicUserProperty }o--|| ApplicationUser : "approved by DWS"
+
+    CaseComment }o--|| FileMaster : "is on"
+    CaseComment }o--o| PublicUser : "posted by external"
+    CaseComment }o--o| ApplicationUser : "posted by DWS"
+    CaseComment }o--o| CaseComment : "reply to (threaded)"
+
+    Protest }o--|| FileMaster : "is against"
+    Protest }o--|| PublicUser : "lodged by"
+    Protest ||--o{ ProtestDocument : "has supporting docs"
+    ProtestDocument }o--|| Document : "is"
+
+    Notification }o--o| PublicUser : "sent to external"
+    Notification }o--o| ApplicationUser : "sent to internal"
+
+    Document }o--o| PublicUser : "uploaded by external"

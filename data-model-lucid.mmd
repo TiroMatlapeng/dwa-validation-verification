@@ -1,4 +1,30 @@
 erDiagram
+
+    %% ─────────────────────────────────────────────
+    %% GEOGRAPHY & ORGANISATION
+    %% ─────────────────────────────────────────────
+
+    Province {
+        Guid ProvinceId
+        string ProvinceName
+        string ProvinceCode
+    }
+
+    WaterManagementArea {
+        Guid WmaId
+        string WmaName
+        string WmaCode
+        Guid ProvinceId
+    }
+
+    OrganisationalUnit {
+        Guid OrgUnitId
+        string Name
+        string Type
+        Guid ProvinceId
+        Guid WmaId
+    }
+
     Address {
         Guid AddressId
         string StreetAddress
@@ -16,48 +42,127 @@ erDiagram
         string LastName
         string EmployeeNumber
         DateOnly DateOfBirth
+        Guid OrgUnitId
     }
 
-Crop {
-        Guid CropId
-        string CropName
-        Guid CropTypeId
+    %% ─────────────────────────────────────────────
+    %% PROPERTY & OWNERSHIP
+    %% ─────────────────────────────────────────────
+
+    CustomerType {
+        Guid CustomerTypeId
+        string CustomerTypeName
+    }
+
+    CustomerTitle {
+        Guid CustomerTitleId
+        string TitleName
+    }
+
+    Gender {
+        Guid GenderId
+        string GenderName
+    }
+
+    Property {
+        Guid PropertyId
+        string PropertyReferenceNumber
+        Guid AddressId
+        int PropertySize
+        DateOnly ProclamationDate
+        DateOnly RegistrationDate
+        string SGCode
+        string QuaternaryDrainage
+        Guid WaterManagementAreaId
+        decimal Longitude
+        decimal Latitude
+    }
+
+    PropertyOwner {
+        Guid OwnerId
+        string FirstName
+        string LastName
+        DateOnly DateOfBirth
+        Guid CustomerTypeId
+        Guid CustomerTitleId
+        string IdentityDocumentNumber
+        string EmailAddress
+        Guid AddressId
+        Guid GenderId
+    }
+
+    PropertyOwnership {
+        Guid Id
+        Guid PropertyId
+        Guid PropertyOwnerId
+        string TitleDeedNumber
+        DateOnly TitleDeedDate
+    }
+
+    %% ─────────────────────────────────────────────
+    %% WATER USE — LOOKUPS
+    %% ─────────────────────────────────────────────
+
+    Period {
+        Guid PeriodId
+        string PeriodName
+    }
+
+    WaterSourceType {
+        Guid WaterSourceTypeId
+        string WaterSourceTypeName
+    }
+
+    WaterSource {
+        Guid WaterSourceId
+        string WaterSourceName
+        Guid WaterSourceTypeId
+    }
+
+    River {
+        Guid RiverId
+        string RiverName
+    }
+
+    IrrigationSystem {
+        Guid IrrigationSystemId
+        string IrrigationSystemName
+        string IrrigationSystemDescription
+        string IrrigationSystemModel
     }
 
     CropType {
         Guid CropTypeId
         string CropTypeName
-        string CropTypeDecription
+        string CropTypeDescription
     }
 
-    CustomerType {
-        Guid Id
-        string CustomerTypeName
+    Crop {
+        Guid CropId
+        string CropName
+        Guid CropTypeId
     }
 
-    DamCalculation {
-        Guid DamCalculationId
-        DateOnly CalculationDate
+    VerificationScenario {
+        Guid VerificationScenarioId
+        string ScenarioName
+        string ScenarioDescription
+        int DisplayOrder
+    }
+
+    %% ─────────────────────────────────────────────
+    %% WATER USE — DATA
+    %% ─────────────────────────────────────────────
+
+    SateliteImage {
+        Guid ImageId
         Guid PropertyId
-        string SateliteQualifyPeriod
-        DateOnly SateliteSurveyDate
-        string DamNumber
-        decimal DamCapacity
-        Guid RiverId
-        DamCalculationStatus DamCalculationStatus
-    }
-
-    Entitlement {
-        Guid EntitlementId
-        string Name
-        decimal Volume
-        Guid EntitlementTypeId
-    }
-
-    EntitlementType {
-        Guid EntitlementTypeId
-        string EntitlementName
-        string EntitlementDescription
+        Guid PeriodId
+        string ImageName
+        string FarmNumber
+        DateOnly MapCompilation
+        DateOnly ImageDate
+        string ImageNumber
     }
 
     FieldAndCrop {
@@ -73,52 +178,35 @@ Crop {
         Guid WaterSourceId
         decimal CropArea
         decimal SAPWATCalculationResult
-        Guid EntitlementId
     }
 
-    FileMaster {
-        Guid Id
-        string RegistrationNumber
+    Irrigation {
+        Guid IrrigationId
+        string IrrigationName
         Guid PropertyId
-        string SurveyorGeneralCode
-        string PrimaryCatchment
-        string QuaternaryCatchment
-        string FarmName
-        int FarmNumber
-        string RegistrationDivision
-        string FarmPortion
-        string Notes
-        decimal Latitude
-        decimal Longitude
-        string NameUpdate
-        string PropertyIndex
-        string RegistrationStatusPrePublicParticipation
-        string RegistrationStatusPostPublicParticipation
-        string WarmsApplicant
-        string FileNumber
-        DateOnly FileCreatedDate
-        string FileStatus
-        string RequirementDescription
-        string WARMSPrintsReceived
-        string Group
-        string LegalTypeGroup
-        string RiparianFarm
-        bool RegisteredForTakingWater
-        bool RegiteredForStoring
-        bool RegisteredForForestation
-        string BatchDescription
-        string LatestLetterTypeIssued
-        ValidationStatus GetValidationStatus
-        string ValidationPersonId
-        DateOnly ValidationStartDate
-        string ValidationDescription
-        string CapturePersonId
-        int MyProperty
+        Guid PeriodId
+        Guid VerificationScenarioId
+        DateOnly WaterDate
+        decimal WaterVolume
+        decimal WaterLandArea
+        decimal WaterCropArea
+        Guid WaterSourceId
+    }
+
+    Storing {
+        Guid StoringId
+        Guid PropertyId
+        Guid PeriodId
+        Guid VerificationScenarioId
+        int NumberOfDams
+        decimal Volume
+        Guid RiverOrStreamId
     }
 
     Forestation {
         Guid ForestationId
         Guid PropertyId
+        Guid PeriodId
         bool WithinGWCA
         decimal QualifyPeriodSFRAHectares
         decimal CurrentPeriodSFRAHectares
@@ -143,8 +231,65 @@ Crop {
         string SFRAPermitNumber
         decimal SFRAPermitHectares
         string CommentsOnData
-        Guid EntitlementId
     }
+
+    DamCalculationStatus {
+        Guid DamCalculationStatusId
+        string StatusName
+    }
+
+    DamCalculation {
+        Guid DamCalculationId
+        DateOnly CalculationDate
+        Guid PropertyId
+        Guid PeriodId
+        Guid SateliteImageId
+        string DamNumber
+        decimal DamCapacity
+        Guid RiverId
+        Guid DamCalculationStatusId
+    }
+
+    %% ─────────────────────────────────────────────
+    %% ENTITLEMENT
+    %% ─────────────────────────────────────────────
+
+    EntitlementType {
+        Guid EntitlementTypeId
+        string EntitlementName
+        string EntitlementDescription
+    }
+
+    Entitlement {
+        Guid EntitlementId
+        string Name
+        decimal Volume
+        Guid EntitlementTypeId
+    }
+
+    %% ─────────────────────────────────────────────
+    %% AUTHORISATION
+    %% ─────────────────────────────────────────────
+
+    AuthorisationType {
+        Guid AuthorisationTypeId
+        string AuthorisationTypeName
+        string Description
+    }
+
+    Authorisation {
+        Guid AuthorisationId
+        Guid FileMasterId
+        Guid AuthorisationTypeId
+        string ReferenceNumber
+        DateOnly IssueDate
+        DateOnly ExpiryDate
+        string Notes
+    }
+
+    %% ─────────────────────────────────────────────
+    %% CONTEXTUAL BODIES
+    %% ─────────────────────────────────────────────
 
     GovernmentWaterControlArea {
         Guid WaterControlAreaId
@@ -158,17 +303,6 @@ Crop {
         string WaterSchemeName
     }
 
-    Irrigation {
-        Guid IrrigationId
-        string IrrigationName
-        Guid PropertyId
-        DateOnly WaterDate
-        decimal WaterVolume
-        decimal WaterLandArea
-        decimal WaterCropArea
-        Guid WaterSourceId
-    }
-
     IrrigationBoard {
         Guid IrrigationBoardId
         string IrrigationBoardName
@@ -177,140 +311,307 @@ Crop {
         Guid IrrigationBoardAddressId
     }
 
-    IrrigationSystem {
-        Guid IrrigationSystemId
-        string IrrigationSystemName
-        string IrrigationSystemDescription
-        string IrrigationSystemModel
+    %% ─────────────────────────────────────────────
+    %% CASE MANAGEMENT
+    %% ─────────────────────────────────────────────
+
+    ValidationStatus {
+        Guid ValidationStatusId
+        string StatusName
+        string StatusDescription
     }
 
-    IssuedLetters {
-        Guid Id
-    }
-
-    LetterIssuance {
-        Guid Id
-        Guid PropertyOwnerId
-        Guid LetterTypeId
-        DateOnly LetterDate
-    }
-
-    LetterType {
-        Guid Id
-        string LetterName
-        string LetterDescription
-    }
-
-    Period {
-        Guid PeriodId
-        string PeriodName
-    }
-
-    Property {
+    FileMaster {
+        Guid FileMasterId
+        string RegistrationNumber
         Guid PropertyId
-        string PropertyReferenceNumber
-        Guid PropertyAddressId
-        int PropertySize
-        DateOnly ProclamationDate
-        DateOnly RegistrationDate
-        string SGCode
-        string QuatenaryDrainage
-        string WaterManagementArea
-        decimal Longitude
+        Guid OrgUnitId
+        string SurveyorGeneralCode
+        string PrimaryCatchment
+        string QuaternaryCatchment
+        string FarmName
+        int FarmNumber
+        string RegistrationDivision
+        string FarmPortion
+        string Notes
         decimal Latitude
+        decimal Longitude
+        string NameUpdate
+        string PropertyIndex
+        string RegistrationStatusPrePublicParticipation
+        string RegistrationStatusPostPublicParticipation
+        string WarmsApplicant
+        string FileNumber
+        DateOnly FileCreatedDate
+        string FileStatus
+        string RequirementDescription
+        string WARMSPrintsReceived
+        string Group
+        string LegalTypeGroup
+        string RiparianFarm
+        bool RegisteredForTakingWater
+        bool RegisteredForStoring
+        bool RegisteredForForestation
+        string BatchDescription
+        Guid ValidationStatusId
+        Guid ValidatorId
+        Guid CapturePersonId
         Guid EntitlementId
-    }
-
-    PropertyOwner {
-        Guid OwnerId
-        string FirstName
-        string LastName
-        DateOnly DateOfBirth
-        Guid CustomerTypeId
-        CustomerTitle CustomerTitle
-        int IdentityDocumentNumber
-        string EmailAddress
-        Guid AddressId
-        Gender OwnerGender
-    }
-
-    PropertyOwnership {
-        Guid Id
-        Guid PropertyId
-        Guid PropertyOwnerId
-        string TitleDeedNumber
-        DateOnly TitleDeedDate
-    }
-
-    River {
-        Guid RiverId
-        string RiverName
-    }
-
-    SateliteImage {
-        Guid ImageId
-        string ImageName
-        string FarmNumber
-        DateOnly MapCompilation
-        DateOnly ImageDate
-        string ImageNumber
-    }
-
-    Storing {
-        Guid StoringId
-        Guid PropertyId
-        int NumberOfDams
-        decimal Volume
-        Guid RiverOrStreamId
-        VerifactionScenario VerifactionScenario
-        Guid PeriodId
     }
 
     Validation {
-        Guid Id
-        ValidationStatus ValidationStatus
-        DateOnly ValidationStartDate
+        Guid ValidationId
+        Guid FileMasterId
         Guid PropertyId
         Guid PeriodId
-        Guid EntitlementId
+        Guid ValidationStatusId
+        DateOnly ValidationStartDate
+        string ValidationDescription
+        Guid AssignedToId
     }
 
-    WaterSource {
-        Guid WaterSourceId
-        string WaterSourceName
-        WaterSourceType WaterSourceType
+    %% ─────────────────────────────────────────────
+    %% LETTERS & CORRESPONDENCE
+    %% ─────────────────────────────────────────────
+
+    LetterType {
+        Guid LetterTypeId
+        string LetterName
+        string LetterDescription
+        string NWASection
     }
-    
+
+    LetterIssuance {
+        Guid LetterIssuanceId
+        Guid FileMasterId
+        Guid PropertyOwnerId
+        Guid LetterTypeId
+        Guid IssuedByUserId
+        Guid SignedByUserId
+        DateOnly LetterDate
+        DateOnly SignedDate
+        DateOnly DueDate
+        string DeliveryMethod
+        string PostalRegistrationNumber
+        DateOnly ResponseReceivedDate
+    }
+
+    %% ─────────────────────────────────────────────
+    %% WORKFLOW ENGINE
+    %% ─────────────────────────────────────────────
+
+    WorkflowState {
+        Guid WorkflowStateId
+        string StateName
+        string Phase
+        int DisplayOrder
+        bool IsTerminal
+    }
+
+    WorkflowInstance {
+        Guid WorkflowInstanceId
+        Guid FileMasterId
+        Guid CurrentWorkflowStateId
+        string Status
+        Guid AssignedToId
+        DateTime CreatedDate
+        DateTime CompletedDate
+    }
+
+    WorkflowStepRecord {
+        Guid WorkflowStepRecordId
+        Guid WorkflowInstanceId
+        Guid WorkflowStateId
+        Guid CompletedById
+        DateTime CompletedDate
+        string Notes
+    }
+
+    AuditLog {
+        Guid AuditLogId
+        Guid FileMasterId
+        Guid UserId
+        string Action
+        string OldValue
+        string NewValue
+        DateTime Timestamp
+    }
+
+    %% ─────────────────────────────────────────────
+    %% PUBLIC PORTAL
+    %% ─────────────────────────────────────────────
+
+    PublicUser {
+        Guid PublicUserId
+        string EmailAddress
+        string PasswordHash
+        string FirstName
+        string LastName
+        string IdentityNumber
+        string BusinessRegistrationNumber
+        string PhoneNumber
+        bool EmailConfirmed
+        bool MfaEnabled
+        string Status
+        DateTime RegistrationDate
+    }
+
+    PublicUserProperty {
+        Guid Id
+        Guid PublicUserId
+        Guid PropertyId
+        Guid ApprovedByUserId
+        DateTime ApprovedDate
+        string Status
+    }
+
+    CaseNotification {
+        Guid NotificationId
+        Guid FileMasterId
+        Guid PublicUserId
+        string NotificationType
+        string Message
+        DateTime SentDate
+        DateTime ReadDate
+    }
+
+    CaseComment {
+        Guid CommentId
+        Guid FileMasterId
+        Guid PublicUserId
+        string CommentText
+        DateTime SubmittedDate
+        DateTime ReadByDWSDate
+    }
+
+    UploadedDocument {
+        Guid DocumentId
+        Guid FileMasterId
+        Guid PublicUserId
+        string DocumentType
+        string FileName
+        string BlobPath
+        DateTime UploadDate
+        string VirusScanStatus
+    }
+
+    Protest {
+        Guid ProtestId
+        Guid FileMasterId
+        Guid PublicUserId
+        DateTime LodgedDate
+        string Status
+        string ResolutionNotes
+    }
+
+    ProtestDocument {
+        Guid Id
+        Guid ProtestId
+        Guid DocumentId
+    }
+
+    %% ─────────────────────────────────────────────
+    %% RELATIONSHIPS
+    %% ─────────────────────────────────────────────
+
+    %% Geography
+    Province ||--o{ WaterManagementArea : contains
+    Province ||--o{ OrganisationalUnit : has
+    WaterManagementArea ||--o{ OrganisationalUnit : covers
+    WaterManagementArea ||--o{ Property : contains
+
+    %% Organisation
+    OrganisationalUnit ||--o{ ApplicationUser : employs
+    OrganisationalUnit ||--o{ FileMaster : owns
+
+    %% Property
     Property ||--o{ PropertyOwnership : has
     PropertyOwner ||--o{ PropertyOwnership : owns
     Property }o--|| Address : located_at
-    Property }o--|| Entitlement : has
     PropertyOwner }o--|| Address : resides_at
     PropertyOwner }o--|| CustomerType : is_a
-    DamCalculation }o--|| Property : is_for
-    DamCalculation }o--|| River : is_on
+    PropertyOwner }o--|| CustomerTitle : has_title
+    PropertyOwner }o--|| Gender : is
+
+    %% Water use — lookups
+    WaterSource }o--|| WaterSourceType : is_of_type
+    Crop }o--|| CropType : is_a
+
+    %% Water use — data
+    SateliteImage }o--|| Property : is_for
+    SateliteImage }o--|| Period : is_in
     FieldAndCrop }o--|| Property : is_on
     FieldAndCrop }o--|| Period : is_for
     FieldAndCrop }o--|| Crop : grows
     FieldAndCrop }o--|| IrrigationSystem : uses
     FieldAndCrop }o--|| WaterSource : uses
-    FieldAndCrop }o--|| Entitlement : consumes
-    Forestation }o--|| Property : is_on
-    Forestation }o--|| Entitlement : relates_to
     Irrigation }o--|| Property : is_for
+    Irrigation }o--|| Period : is_for
+    Irrigation }o--|| VerificationScenario : is
     Irrigation }o--|| WaterSource : uses
     Storing }o--|| Property : is_on
-    Storing }o--|| River : is_on
     Storing }o--|| Period : is_for
-    LetterIssuance }o--|| PropertyOwner : is_for
-    LetterIssuance }o--|| LetterType : is_of_type
-    Validation }o--|| Property : validates
-    Validation }o--|| Period : is_for
-    Validation }o--|| Entitlement : validates
+    Storing }o--|| VerificationScenario : has_scenario
+    Storing }o--|| River : is_on
+    Forestation }o--|| Property : is_on
+    Forestation }o--|| Period : is_for
+    DamCalculation }o--|| Property : is_for
+    DamCalculation }o--|| Period : is_for
+    DamCalculation }o--|| SateliteImage : uses
+    DamCalculation }o--|| River : is_on
+    DamCalculation }o--|| DamCalculationStatus : has_status
+
+    %% Entitlement
     Entitlement }o--|| EntitlementType : is_of_type
-    Crop ||--|{ CropType : is_a
+
+    %% Authorisation
+    Authorisation }o--|| FileMaster : is_for
+    Authorisation }o--|| AuthorisationType : is_of_type
+
+    %% Contextual bodies
     GovernmentWaterControlArea }o--|| Address : is_at
     IrrigationBoard }o--|| Address : is_at
+
+    %% Case management
+    FileMaster }o--|| Property : is_for
+    FileMaster }o--|| OrganisationalUnit : belongs_to
+    FileMaster }o--|| ValidationStatus : has_status
+    FileMaster }o--|| Entitlement : has_elu
     FileMaster }o--|| ApplicationUser : validated_by
     FileMaster }o--|| ApplicationUser : captured_by
-    FileMaster }o--|| Property : is_for
+    Validation }o--|| FileMaster : is_for
+    Validation }o--|| Property : validates
+    Validation }o--|| Period : is_for
+    Validation }o--|| ValidationStatus : has_status
+    Validation }o--|| ApplicationUser : assigned_to
+
+    %% Letters
+    LetterIssuance }o--|| FileMaster : is_for
+    LetterIssuance }o--|| PropertyOwner : is_sent_to
+    LetterIssuance }o--|| LetterType : is_of_type
+    LetterIssuance }o--|| ApplicationUser : issued_by
+    LetterIssuance }o--|| ApplicationUser : signed_by
+
+    %% Workflow
+    WorkflowInstance ||--|| FileMaster : tracks
+    WorkflowInstance }o--|| WorkflowState : current_state
+    WorkflowInstance }o--|| ApplicationUser : assigned_to
+    WorkflowStepRecord }o--|| WorkflowInstance : belongs_to
+    WorkflowStepRecord }o--|| WorkflowState : transitioned_to
+    WorkflowStepRecord }o--|| ApplicationUser : completed_by
+    AuditLog }o--|| FileMaster : is_for
+
+    %% Public portal
+    PublicUser ||--o{ PublicUserProperty : has
+    Property ||--o{ PublicUserProperty : linked_to
+    PublicUserProperty }o--|| ApplicationUser : approved_by
+    CaseNotification }o--|| FileMaster : is_for
+    CaseNotification }o--|| PublicUser : sent_to
+    CaseComment }o--|| FileMaster : is_on
+    CaseComment }o--|| PublicUser : posted_by
+    UploadedDocument }o--|| FileMaster : attached_to
+    UploadedDocument }o--|| PublicUser : uploaded_by
+    Protest }o--|| FileMaster : is_against
+    Protest }o--|| PublicUser : lodged_by
+    ProtestDocument }o--|| Protest : supports
+    ProtestDocument }o--|| UploadedDocument : is

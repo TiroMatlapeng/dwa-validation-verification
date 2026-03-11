@@ -1,0 +1,52 @@
+erDiagram
+    Province ||--o{ WaterManagementArea : contains
+    Province ||--o{ OrganisationalUnit : "has"
+    WaterManagementArea ||--o{ Property : "has"
+    WaterManagementArea ||--o{ OrganisationalUnit : "scopes"
+
+    OrganisationalUnit ||--o{ ApplicationUser : "employs"
+
+    Property ||--o{ PropertyOwnership : "owned via"
+    PropertyOwnership }o--|| PropertyOwner : "references"
+    PropertyOwner ||--o| Address : "has"
+    Property ||--o| Address : "has"
+
+    Property ||--o{ SateliteImage : "has"
+    Property ||--o{ FieldAndCrop : "has"
+    Property ||--o{ Irrigation : "has"
+    Property ||--o{ Storing : "has"
+    Property ||--o{ Forestation : "has"
+    Property ||--o{ DamCalculation : "has"
+
+    FileMaster ||--|| Property : "covers"
+    FileMaster ||--o| Entitlement : "determines"
+    FileMaster ||--|| OrganisationalUnit : "belongs to"
+    FileMaster ||--o| ApplicationUser : "assigned validator"
+    FileMaster ||--|| WorkflowInstance : "drives"
+    FileMaster ||--o{ Validation : "has"
+    FileMaster ||--o{ LetterIssuance : "has"
+    FileMaster ||--o{ Authorisation : "has"
+    FileMaster ||--o{ AuditLog : "records"
+
+    Entitlement }o--|| EntitlementType : "typed by"
+    Authorisation }o--|| AuthorisationType : "typed by"
+    LetterIssuance }o--|| LetterType : "typed by"
+    LetterIssuance ||--o| DigitalSignature : "signed with"
+    LetterIssuance ||--o| UploadedDocument : "stored as"
+
+    WorkflowInstance ||--o{ WorkflowStepRecord : "contains"
+    WorkflowInstance }o--|| WorkflowState : "current state"
+
+    FieldAndCrop }o--|| Crop : "grows"
+    FieldAndCrop }o--|| IrrigationSystem : "uses"
+    Irrigation }o--|| Period : "covers"
+    Forestation }o--|| Period : "covers"
+    SateliteImage }o--|| Period : "from"
+
+    PublicUser ||--o{ PublicUserProperty : "linked via"
+    PublicUserProperty }o--|| Property : "links to"
+    FileMaster ||--o{ CaseNotification : "generates"
+    FileMaster ||--o{ CaseComment : "receives"
+    FileMaster ||--o{ Protest : "subject to"
+    Protest ||--o{ ProtestDocument : "supported by"
+    ProtestDocument }o--|| UploadedDocument : "references"

@@ -1,0 +1,42 @@
+flowchart TB
+    subgraph OrgHierarchy["Organisational Hierarchy"]
+        National["National DWS\n(Head Office — Pretoria)"]
+        Provincial["9 Provincial DWS Offices"]
+        Regional["Regional Offices /\nWater Management Areas\n(19 WMAs nationally)"]
+        CMA["CMAs\n(Catchment Management Agencies)"]
+        SP["Service Providers /\nConsultants (contracted field work)"]
+
+        National --> Provincial --> Regional --> CMA --> SP
+    end
+
+    subgraph InternalRoles["Internal Roles (ApplicationUser extends IdentityUser)"]
+        SystemAdmin["SystemAdmin\nFull system access\nUser & config management"]
+        NatMgr["NationalManager\nView all cases across all provinces\nApprove escalations"]
+        RegMgr["RegionalManager\nApprove CP transitions in their WMA\nCountersign Section 35 letters"]
+        Validator["Validator\nCreate FileMaster cases\nCapture all field data\nInitiate letter issuance"]
+        Capturer["Capturer\nCapture & update field data only\nCannot transition workflow\nor issue letters"]
+        ReadOnly["ReadOnly\nView case data, audit trail\n& reports — no modifications"]
+    end
+
+    subgraph AuthRules["Key Authorisation Rules"]
+        Rule1["Only Validator+ may create\na new FileMaster or advance a\nworkflow control point"]
+        Rule2["Only RegionalManager+ may\nsign/approve Section 35 letters"]
+        Rule3["Letter 1 (S35(1)) must be\nserved in person — serving\nofficial must be recorded"]
+        Rule4["Capturer may update field data\non a case in their OrgUnit only"]
+        Rule5["All queries filtered by\nOrganisationalUnit — no\ncross-office access below NationalManager"]
+    end
+
+    subgraph PublicRoles["Public Portal Roles (PublicUser — separate identity store)"]
+        WaterUser["WaterUser\nView own case status\nDownload & sign letters\nUpload supporting documents\nSubmit comments, lodge protests"]
+        Intermediary["Intermediary\nAgent / legal representative\nSame permissions as WaterUser\nbut across all linked clients' cases"]
+    end
+
+    National -.->|"scope"| SystemAdmin & NatMgr
+    Provincial & Regional -.->|"scope"| RegMgr
+    Regional & CMA -.->|"scope"| Validator
+    SP -.->|"scope"| Validator & Capturer
+
+    style OrgHierarchy fill:#e6f3ff,stroke:#0066cc
+    style InternalRoles fill:#e6ffe6,stroke:#006600
+    style AuthRules fill:#fff3e6,stroke:#cc6600
+    style PublicRoles fill:#f9e6ff,stroke:#6600cc

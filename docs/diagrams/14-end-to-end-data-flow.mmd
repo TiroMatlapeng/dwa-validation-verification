@@ -1,0 +1,74 @@
+flowchart TB
+    subgraph ExtSys["External Systems"]
+        WARMS["WARMS"]
+        eWULAAS["eWULAAS"]
+        SG["Surveyor General\n(DRDLR)"]
+        Deeds["Deeds Office\n(DRDLR)"]
+        GISStore["Satellite /\nGIS Store"]
+    end
+
+    ExtSys <--> IntegSvc["Integration Service Layer\n(IIntegrationService)"]
+
+    IntegSvc --> P1 & P2 & P3
+
+    subgraph P1["Phase 1: Project Inception (CP01–CP05)"]
+        P1A["WARMS Audit → New FileMaster records\nUnregistered User GIS Identification\nDatabase Status Analysis\nInception Report + Public Participation 1"]
+    end
+
+    subgraph P2["Phase 2: Verification per Property (CP06–CP16)"]
+        P2A["WARMS Evaluation → Irrigation / Storing / Forestation\nSpatial Info → SateliteImage / Property\nSupportive Info → FileMaster\nProperty & Source Eval → Property / PropertyOwner / WaterSource\nAdditional Info → Authorisation / Entitlement\nGIS Analysis → FieldAndCrop / DamCalculation\nSAPWAT → FieldAndCrop.SAPWATCalculationResult\nELU → Irrigation (9 scenarios) / Entitlement\nDam Volumes → DamCalculation / Storing\nSFRA → Forestation"]
+    end
+
+    subgraph P3["Phase 3: Validation / Section 35 (CP17–CP21)"]
+        P3A["Public Participation Session 2\nField Visit Letter Dissemination\nSection 35 Correspondence Tracking\nLetter State Machine (L1→L3/Enforcement)\nProject Control Reporting"]
+    end
+
+    P1 & P2 & P3 --> WFEngine
+
+    subgraph EngineLayer["Engine Layer"]
+        WFEngine["Workflow Engine\n(IWorkflowEngine)\nState machine — CP transitions\nGuards, role checks\nEvery transition audited"]
+        CalcEng["Calculator Engine\n(ICalculatorEngine)\nSAPWAT · Dam Volumes · ELU · SFRA"]
+        LetterSvc["Letter Service\n(ILetterService)\nGenerate · Sign · Issue · Batch · Track"]
+        NotifSvc["Notification Engine\n(INotificationService)\nIn-App · Email · Background reminders"]
+        SigSvc["Signature Service\n(ISignatureService)\nSignaturePad.js capture · SHA-256 verify"]
+        AuditSvc["Audit Service\n(IAuditService)\nImmutable AuditLog — who, what, when"]
+    end
+
+    WFEngine --> CalcEng & LetterSvc & NotifSvc & SigSvc & AuditSvc
+
+    EngineLayer --> SvcLayer
+
+    subgraph SvcLayer["Service Layer"]
+        Svcs["PropertyService · ValidationService · FileMasterService\nForestationService · IrrigationService · StoringService\nReportingService · PublicCaseService · IntegrationService"]
+    end
+
+    SvcLayer --> RepoLayer
+
+    subgraph RepoLayer["Repository Layer (EF Core)"]
+        Repos["PropertyRepo · FileMasterRepo · WorkflowRepo\nLetterIssuanceRepo · AddressRepo · ForestationRepo\nFieldAndCropRepo · DamCalculationRepo · ValidationRepo · …"]
+    end
+
+    RepoLayer --> DB
+
+    subgraph DB["SQL Server Database (dwa_val_ver)"]
+        CoreDomain["Core Domain (dbo)\nProperties · PropertyOwners · FileMasters\nIrrigation · Storing · Forestation\nFieldAndCrop · DamCalculation · Entitlements\nWaterSources · Rivers · Crops · SateliteImages"]
+        OrgRef["Organisation & Reference\nProvinces · WaterManagementAreas\nOrganisationalUnits · ApplicationUsers\nValidationStatus · EntitlementType · Period"]
+        WorkflowSchema["Workflow Schema\nWorkflowInstances · WorkflowStepRecords\nWorkflowStates · AuditLog"]
+        CorrSchema["Correspondence Schema\nLetterIssuances · LetterTypes\nDigitalSignatures · SignatureRequests\nUploadedDocuments · Authorisations"]
+        PortalSchema["Portal Schema\nPublicUsers · PublicUserProperties\nNotifications · CaseComments\nProtests · ProtestDocuments"]
+    end
+
+    DB --> InternalApp & PublicPortal
+
+    InternalApp["Internal App (DWS/CMA Staff)\nMVC Controllers + Razor Views\n/Property · /Validation · /Workflow\n/Letters · /GIS · /Reports"]
+
+    PublicPortal["Public Portal (Water Users)\nSeparate Area + Auth Cookie\n/Portal/Dashboard · /Portal/Cases\n/Portal/Protests · /Portal/Documents"]
+
+    style ExtSys fill:#ffe6e6,stroke:#cc0000
+    style P1 fill:#e6f3ff,stroke:#0066cc
+    style P2 fill:#e6ffe6,stroke:#006600
+    style P3 fill:#fff3e6,stroke:#cc6600
+    style EngineLayer fill:#e6ffe6,stroke:#006600
+    style SvcLayer fill:#e6ffe6,stroke:#006600
+    style RepoLayer fill:#fff3e6,stroke:#cc6600
+    style DB fill:#e6e6ff,stroke:#0000cc

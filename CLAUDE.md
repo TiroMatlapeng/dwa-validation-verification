@@ -215,3 +215,157 @@ SAPWAT is the model used to estimate crop water requirements (output: mm/ha/a, s
 | `AuditService` | Immutable audit trail of all V&V actions |
 | `IntegrationService` | WARMS and eWULAAS data sync (both on C#/ASP.NET/SQL Server) |
 | Public Portal | Separate Razor Pages/Blazor area for water users to track cases and sign letters |
+
+## Organisational Hierarchy
+
+DWS operates a national-to-regional hierarchy that maps directly onto the case management access model:
+
+```
+National DWS (Head Office — Pretoria)
+  └─ 9 Provincial DWS Offices
+       └─ Regional Offices / Water Management Areas (19 WMAs nationally)
+            └─ CMAs (Catchment Management Agencies, where established)
+                 └─ Service Providers / Consultants (contracted field work)
+```
+
+A `FileMaster` case belongs to a **WMA/Regional Office**, and access to it is scoped by organisational unit. When a user is assigned to a province or WMA, they can only see and operate on cases in that scope, unless they hold a national-level role.
+
+Key entities to model:
+- `Province` (9 provinces)
+- `WaterManagementArea` (19 WMAs, already partially in `Property` as `WaterManagementArea` string — needs FK)
+- `OrganisationalUnit` — an office (provincial, regional, CMA) with province + WMA scope
+- `ApplicationUser.OrganisationalUnitId` — which office this DWS staff member belongs to
+
+## Internal Role / Privilege Levels
+
+Roles map to what actions a user may perform on a FileMaster case:
+
+| Role | Description | Key Permissions |
+|------|-------------|-----------------|
+| `SystemAdmin` | IT/system administrator | Manage all users, reference data, system config |
+| `NationalManager` | National DWS manager | View all cases across all provinces; approve escalations |
+| `RegionalManager` | Provincial/regional office head | Approve control point transitions in their WMA; countersign Section 35 letters |
+| `Validator` | V&V practitioner (DWS official or delegated consultant) | Create `FileMaster` cases; capture all field data; initiate letter issuance |
+| `Capturer` | Data entry clerk | Capture and update field data only; cannot transition control points or issue letters |
+| `ReadOnly` | Reviewer / auditor | View case data, no modifications |
+
+**Key authorisation rules**:
+- Only `Validator`+ may create a new `FileMaster` case or transition a control point.
+- Only `RegionalManager`+ may approve/sign Section 35 letters (signatory delegation per NWA).
+- Letter 1 (S35(1)) must be served in person — the system must record the serving official.
+- `Capturer` may update field data on a case already created by a `Validator`.
+- Role scope is always filtered by `OrganisationalUnit` — no cross-office access below `NationalManager`.
+
+## State Machine — V&V Workflow
+
+The `WorkflowEngine` is the core of the system. It enforces that a `FileMaster` case advances through control points in order, with guards and role checks at each transition. The state is stored on `FileMaster` as a `WorkflowState` (enum → DB table).
+
+### Control Point 1 — Project Inception (has internal sequential sub-steps)
+
+CP1 is the only control point with mandatory internal sub-steps that must complete in order before the case can advance to CP2:
+
+| Step | Activity | Guard / Evidence Required |
+|------|----------|---------------------------|
+| 1.1 | WARMS data obtained and imported | WARMS export date recorded |
+| 1.2 | Satellite imagery obtained (qualifying period + current) | `SateliteImage` records present |
+| 1.3 | Database audit complete | New records identified, ownership changes flagged |
+| 1.4 | Unregistered users identified (GIS analysis on current imagery) | Count of unregistered users captured |
+| 1.5 | Database analysis complete (record status per Appendix B assigned) | All records have `ValidationStatus` |
+| 1.6 | Inception Report drafted and approved | Document upload confirmed |
+| 1.7 | Public Participation Session 1 complete | Session date, venue, attendance count captured |
+
+### Control Points 2–9 (single-step transitions)
+
+| CP | Activity | Key Guard |
+|----|----------|-----------|
+| CP2 | Supporting spatial information obtained (SG boundaries, catchments, rivers) | `River` + `Property` SG codes confirmed |
+| CP3 | WARMS evaluation complete (volumes, crops, hectares, irrigation methods reviewed) | WARMS comparison recorded on `FileMaster` |
+| CP4 | Additional information obtained (permits, S32/33 approvals, transfers, GA) | `Authorisation` records captured |
+| CP5 | GIS analysis + field digitising complete (crop fields + dams for qualifying + current periods) | `SateliteImage` GIS layer confirmed |
+| CP6 | Field, Crop + SAPWAT complete | `FieldAndCrop` records with `SAPWATCalculationResult` present |
+| CP7 | ELU calculated (Lawful / Unlawful / Possible Unlawful increase/decrease) | `Validation` record with ELU volumes set |
+| CP8 | Dam volumes calculated (if applicable) | `DamCalculation` present, or explicitly marked N/A |
+| CP9 | SFRA / Forestation calculated (if applicable) | `Forestation` present, or explicitly marked N/A |
+
+### Section 35 Letter State Machine (post-CP9)
+
+After CP9 the case enters the **Validation (Section 35)** sub-process. This is a separate state machine nested within the overall workflow:
+
+```
+[CP9 Complete]
+    → Letter1Issued  (S35(1) — served in person)
+        → Letter1Responded   (response received within statutory period)
+        → Letter1ARequired   (no response — issue S53(1) directive)
+            → Letter1AIssued
+                → Letter1AResponded
+    → AdditionalInfoRequired
+        → Letter2Issued      (S35(3)(a) — request additional info)
+            → Letter2Responded
+            → Letter2ARequired  (S35(1) directive for non-responsive)
+                → Letter2AIssued
+    → ELUConfirmed
+        → Letter3Issued      (S35(4) ELU certificate — lawful use confirmed)
+        → UnlawfulUseFound
+            → Letter4AIssued  (S53(1) — notice of intent to stop unlawful use)
+                → Letter4And5Issued  (S53(1) directive to stop)
+    → [Closed / Archived]
+```
+
+Each letter transition must record: `IssuedDate`, `IssuedByUserId`, `SignedByUserId`, `DeliveryMethod`, `PostalRegistrationNumber` (if registered post), `DueDate`, `ResponseReceivedDate`.
+
+### WorkflowEngine Design Notes
+
+- `FileMaster.WorkflowStateId` FK → `WorkflowState` table (seeded with all state names above).
+- Every state transition is written to an immutable `AuditEntry` table (who, what, when, previous state, new state).
+- The engine exposes `CanTransition(user, fileMaster, targetState)` — returns `bool` + reason string.
+- Guards are defined per transition as a list of `ITransitionGuard` implementations (checked in order).
+- Notifications are triggered as domain events on successful transitions.
+
+## External User Portal (Separate Security Realm)
+
+External stakeholders (water users, landowners, legal representatives) access a **separate portal** with its own identity regime, isolated from the internal DWS staff system.
+
+### Identity and Security
+
+- `ExternalUser` is a **separate entity** — does **not** inherit from `ApplicationUser` or `IdentityUser`.
+- External users **self-register** (name, email, ID number, contact details) and verify via email confirmation link.
+- **MFA is mandatory** (TOTP authenticator app or SMS OTP) before accessing any case data.
+- External sessions have a shorter timeout than internal sessions.
+- The external portal runs under a **separate authentication cookie scheme** (e.g. `ExternalScheme`) so internal and external sessions cannot overlap.
+
+### Data Isolation (Row-Level Security)
+
+- Each `ExternalUser` is linked to one or more `Property` records via `ExternalUserProperty` join table (established during registration, verified by a DWS official).
+- All data queries in the external portal are **always scoped by `ExternalUserId`** — an external user can never retrieve records for a property not linked to their account.
+- External users **cannot see other users' cases, comments, or documents**.
+
+### External Portal Capabilities
+
+| Feature | Description |
+|---------|-------------|
+| Case Status View | Read-only view of their `FileMaster` case status, current workflow state, and history |
+| Notifications | Email notification when case state changes (letter issued, ELU confirmed, etc.); in-app notification bell |
+| Document Upload | Upload supporting documents (title deeds, permits, field survey evidence) attached to their case |
+| Comments / Responses | Submit a written response to a Section 35 letter or provide additional information |
+| Protest Lodging | Lodge a formal protest against an ELU determination; a `Protest` record is created |
+| Protest Documents | Upload documents supporting their protest (affidavits, legal opinions, counter-evidence) |
+
+### Key External Portal Entities
+
+| Entity | Purpose |
+|--------|---------|
+| `ExternalUser` | Self-registered water user; holds MFA credentials separate from `ApplicationUser` |
+| `ExternalUserProperty` | Join table linking external users to their `Property` records (must be approved by DWS) |
+| `CaseNotification` | Per-case notification record (type, message, sent date, read date, `ExternalUserId`) |
+| `CaseComment` | Comment or letter response from an external user (FK to `FileMaster`, timestamp, read by DWS flag) |
+| `UploadedDocument` | File attachment on a case (FK to `FileMaster`, uploader, upload date, document type, blob path) |
+| `Protest` | Formal protest record (FK to `FileMaster`, `ExternalUserId`, lodged date, status, resolution notes) |
+| `ProtestDocument` | Documents supporting a protest (FK to `Protest`, FK to `UploadedDocument`) |
+
+### Implementation Notes
+
+- File storage: use Azure Blob Storage or filesystem path — store only the path/URL in `UploadedDocument.BlobPath`.
+- Virus scanning on all uploads before making them accessible.
+- All external-facing controllers live in a separate MVC Area (`/Areas/ExternalPortal/`).
+- DWS staff can view (but not modify) external comments and uploads from within the internal portal.
+- A DWS `Validator`+ must approve the `ExternalUserProperty` link before the external user can see any case data.

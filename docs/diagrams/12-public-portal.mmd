@@ -1,0 +1,50 @@
+flowchart TB
+    subgraph RegFlow["Registration & Identity Verification Flow"]
+        Visit["Water User visits\n/Portal/Register"]
+        Form["Enter: Name, ID Number\nEmail, Phone\nProperty Reference (optional)"]
+        EmailSent["Email verification link sent"]
+        Confirmed["User clicks verification link"]
+        Pending[("PublicUser created\nStatus = Pending\nMFA not yet enabled")]
+        Match{"System: auto-match\nPublicUser to existing\nPropertyOwner\n(by ID number / email)"}
+        AutoLink["Auto-link PublicUser\nto PropertyOwner"]
+        ManualReview["Manual review by DWS Officer\n(no auto-match found)"]
+        OfficerAction["Officer links to existing\nor creates new PropertyOwner\n(PublicUserProperty Status = Approved)"]
+        Active[("PublicUser Status = Active\nMFA mandatory before case access")]
+        Dashboard["User accesses Dashboard\n(cases now visible)"]
+
+        Visit --> Form --> EmailSent --> Confirmed --> Pending --> Match
+        Match -->|"Match found"| AutoLink --> Active
+        Match -->|"No match"| ManualReview --> OfficerAction --> Active
+        Active --> Dashboard
+    end
+
+    subgraph DashFlow["Dashboard Data Flow"]
+        Login["PublicUser logs in\n(MFA — TOTP or SMS OTP required)"]
+        LoadOwner["Load linked PropertyOwner\n(via PublicUserProperty — Approved only)"]
+        LoadOwnerships["Load PropertyOwnerships\nfor this owner"]
+        ForEach["For each Property"]
+        LoadFM["Load FileMaster\n(V&V status, ValidationStatus)"]
+        LoadWF["Load WorkflowInstance\n(CurrentPhase, CurrentStep)"]
+        LoadLetters["Load LetterIssuances\n(correspondence history)"]
+        LoadValidation["Load Validation\n(status, ELU determination)"]
+        Render["Render Dashboard:\n• Property name & SG code\n• V&V status & current step\n• Pending actions (signature, upload)\n• Latest notifications"]
+
+        Login --> LoadOwner --> LoadOwnerships --> ForEach
+        ForEach --> LoadFM & LoadWF & LoadLetters & LoadValidation --> Render
+    end
+
+    subgraph PortalCaps["Portal Capabilities (Data Isolation: always scoped to PublicUserId)"]
+        ViewCase["View Case Status\n(read-only: FileMaster, WorkflowInstance,\nLetterIssuance history)"]
+        DownloadLetter["Download Letters\n(only letters for their property)"]
+        SignLetter["Sign Letter Electronically\n(SignaturePad.js → DigitalSignature)"]
+        UploadDoc["Upload Supporting Documents\n(virus-scanned before storage)"]
+        SubmitComment["Submit Written Response\n(CaseComment record)"]
+        LodgeProtest["Lodge Formal Protest\n(Protest record + ProtestDocument)"]
+        ViewNotifs["View Notifications\n(CaseNotification — mark as read)"]
+    end
+
+    Dashboard --> ViewCase & DownloadLetter & SignLetter & UploadDoc & SubmitComment & LodgeProtest & ViewNotifs
+
+    style RegFlow fill:#e6f3ff,stroke:#0066cc
+    style DashFlow fill:#fff3e6,stroke:#cc6600
+    style PortalCaps fill:#f9e6ff,stroke:#6600cc

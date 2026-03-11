@@ -1,0 +1,169 @@
+erDiagram
+
+    %% ═══════════════════════════════════════════════════
+    %% ERD 4 of 6: CASE MANAGEMENT & WORKFLOW
+    %% DWA V&V System — Presentation View
+    %% ═══════════════════════════════════════════════════
+
+    FileMaster {
+        Guid FileMasterId PK
+        string RegistrationNumber
+        Guid PropertyId FK
+        Guid OrgUnitId FK
+        string SurveyorGeneralCode
+        string PrimaryCatchment
+        string QuaternaryCatchment
+        string FarmName
+        int FarmNumber
+        string RegistrationDivision
+        string FarmPortion
+        string PropertyIndex "WARMS Registration Index"
+        string WarmsApplicant
+        string FileNumber
+        DateOnly FileCreatedDate
+        string FileStatus
+        bool RegisteredForTakingWater
+        bool RegisteredForStoring
+        bool RegisteredForForestation
+        string BatchDescription
+        Guid ValidationStatusId FK
+        Guid ValidatorId FK
+        Guid CapturePersonId FK
+        Guid EntitlementId FK
+    }
+
+    Property {
+        Guid PropertyId PK
+        string SGCode
+    }
+
+    OrganisationalUnit {
+        Guid OrgUnitId PK
+        string Name
+        string Type
+    }
+
+    ValidationStatus {
+        Guid ValidationStatusId PK
+        string StatusName "Appendix B values"
+        string StatusDescription
+    }
+
+    Entitlement {
+        Guid EntitlementId PK
+        string Name
+        decimal Volume "m3 - decimal(18,2)"
+        Guid EntitlementTypeId FK
+    }
+
+    EntitlementType {
+        Guid EntitlementTypeId PK
+        string EntitlementName
+        string EntitlementDescription
+    }
+
+    Validation {
+        Guid ValidationId PK
+        Guid FileMasterId FK
+        Guid PropertyId FK
+        Guid PeriodId FK
+        Guid ValidationStatusId FK
+        DateOnly ValidationStartDate
+        string ValidationDescription
+        Guid AssignedToId FK
+    }
+
+    ApplicationUser {
+        Guid ApplicationUserId PK
+        string FirstName
+        string LastName
+        string EmployeeNumber
+        Guid OrgUnitId FK
+    }
+
+    Authorisation {
+        Guid AuthorisationId PK
+        Guid FileMasterId FK
+        Guid AuthorisationTypeId FK
+        string ReferenceNumber
+        DateOnly IssueDate
+        DateOnly ExpiryDate
+        string Notes
+    }
+
+    AuthorisationType {
+        Guid AuthorisationTypeId PK
+        string AuthorisationTypeName "Permit|S32-33|Transfer|GA|etc"
+        string Description
+    }
+
+    WorkflowState {
+        Guid WorkflowStateId PK
+        string StateName
+        string Phase "Inception|Verification|Validation"
+        int DisplayOrder
+        bool IsTerminal
+    }
+
+    WorkflowInstance {
+        Guid WorkflowInstanceId PK
+        Guid FileMasterId FK
+        Guid CurrentWorkflowStateId FK
+        string Status "Active|Paused|Completed|Cancelled"
+        Guid AssignedToId FK
+        DateTime CreatedDate
+        DateTime CompletedDate
+    }
+
+    WorkflowStepRecord {
+        Guid WorkflowStepRecordId PK
+        Guid WorkflowInstanceId FK
+        Guid WorkflowStateId FK
+        string StepStatus "Pending|InProgress|Completed|Skipped"
+        DateTime StartedDate
+        DateTime CompletedDate
+        Guid CompletedById FK
+        string Notes
+        string ValidationErrors "JSON"
+    }
+
+    AuditLog {
+        Guid AuditLogId PK
+        string EntityType
+        string EntityId
+        Guid ApplicationUserId FK
+        string UserName
+        string Action
+        string OldValues "JSON"
+        string NewValues "JSON"
+        string Description
+        string IPAddress
+        DateTime Timestamp
+    }
+
+    %% ── Relationships ──
+
+    FileMaster }o--|| Property : "is for"
+    FileMaster }o--|| OrganisationalUnit : "belongs to"
+    FileMaster }o--|| ValidationStatus : "has status"
+    FileMaster }o--|| Entitlement : "has ELU"
+    FileMaster }o--|| ApplicationUser : "validated by"
+    FileMaster }o--|| ApplicationUser : "captured by"
+
+    Entitlement }o--|| EntitlementType : "is of type"
+
+    Validation }o--|| FileMaster : "is for"
+    Validation }o--|| Property : "validates"
+    Validation }o--|| ValidationStatus : "has status"
+    Validation }o--|| ApplicationUser : "assigned to"
+
+    Authorisation }o--|| FileMaster : "is for"
+    Authorisation }o--|| AuthorisationType : "is of type"
+
+    WorkflowInstance ||--|| FileMaster : "tracks"
+    WorkflowInstance }o--|| WorkflowState : "current state"
+    WorkflowInstance }o--|| ApplicationUser : "assigned to"
+    WorkflowInstance ||--o{ WorkflowStepRecord : "has steps"
+
+    WorkflowStepRecord }o--|| WorkflowState : "transitioned to"
+    WorkflowStepRecord }o--o| ApplicationUser : "completed by"

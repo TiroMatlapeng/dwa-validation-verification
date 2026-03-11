@@ -1,0 +1,617 @@
+classDiagram
+    direction TB
+
+    %% ═════════════════════════════════════════════
+    %% PRESENTATION LAYER — Controllers
+    %% ═════════════════════════════════════════════
+
+    class HomeController {
+        -ILogger logger
+        +Index() ViewResult
+        +Privacy() ViewResult
+        +Error() ViewResult
+    }
+
+    class PropertyController {
+        -IPropertyService propertyService
+        -IWorkflowEngine workflowEngine
+        +Index() ViewResult
+        +Details(Guid id) ViewResult
+        +Register() ViewResult
+        +Register(PropertyViewModel) IActionResult
+        +Edit(Guid id) ViewResult
+        +Delete(Guid id) IActionResult
+    }
+
+    class FileMasterController {
+        -IFileMasterService fileMasterService
+        -IWorkflowEngine workflowEngine
+        -IAuditService auditService
+        +Index() ViewResult
+        +Details(Guid id) ViewResult
+        +Create() ViewResult
+        +Create(FileMasterViewModel) IActionResult
+        +Edit(Guid id) ViewResult
+    }
+
+    class ValidationController {
+        -IValidationService validationService
+        -ICalculatorEngine calculatorEngine
+        +Index() ViewResult
+        +Details(Guid id) ViewResult
+        +CalculateELU(Guid fileMasterId) IActionResult
+    }
+
+    class OwnerController {
+        -IPropertyOwnerService ownerService
+        +Index() ViewResult
+        +Register() ViewResult
+        +Register(OwnerViewModel) IActionResult
+        +Details(Guid id) ViewResult
+    }
+
+    class WorkflowController {
+        -IWorkflowEngine workflowEngine
+        -IAuditService auditService
+        +Dashboard() ViewResult
+        +StepDetails(Guid workflowInstanceId) ViewResult
+        +AdvanceStep(Guid instanceId, string notes) IActionResult
+        +AssignStep(Guid instanceId, Guid userId) IActionResult
+    }
+
+    class LetterController {
+        -ILetterService letterService
+        -ISignatureService signatureService
+        -INotificationService notificationService
+        +Index() ViewResult
+        +Generate(Guid fileMasterId, string letterType) IActionResult
+        +GenerateBatch(BatchLetterRequest) IActionResult
+        +SubmitForSigning(Guid letterIssuanceId) IActionResult
+        +RecordResponse(Guid id, ResponseViewModel) IActionResult
+        +OverdueLetters() ViewResult
+    }
+
+    class ReportController {
+        -IReportingService reportingService
+        +CatchmentProgress(Guid wmaId) ViewResult
+        +LetterTracking() ViewResult
+        +ValidationSummary() ViewResult
+        +UserActivity() ViewResult
+    }
+
+    class PortalAccountController {
+        -IPublicUserService publicUserService
+        +Register() ViewResult
+        +Register(PublicRegistrationModel) IActionResult
+        +Login() ViewResult
+        +Login(LoginModel) IActionResult
+        +Profile() ViewResult
+    }
+
+    class PortalDashboardController {
+        -IPublicCaseService publicCaseService
+        +Index() ViewResult
+    }
+
+    class PortalCaseController {
+        -IPublicCaseService publicCaseService
+        -ISignatureService signatureService
+        +Details(Guid caseId) ViewResult
+        +Letters(Guid caseId) ViewResult
+        +SignLetter(Guid letterIssuanceId) IActionResult
+        +UploadDocument(Guid caseId, IFormFile file) IActionResult
+        +SubmitComment(Guid caseId, string text) IActionResult
+        +LodgeProtest(Guid caseId, ProtestModel) IActionResult
+    }
+
+    %% ═════════════════════════════════════════════
+    %% SERVICE LAYER — Interfaces
+    %% ═════════════════════════════════════════════
+
+    class IWorkflowEngine {
+        <<interface>>
+        +CreateWorkflow(Guid fileMasterId, Guid assignedToId) WorkflowInstance
+        +AdvanceStep(Guid instanceId, Guid userId, string notes) WorkflowStepRecord
+        +CanAdvance(Guid instanceId, Guid userId) TransitionResult
+        +GetCurrentStep(Guid instanceId) WorkflowStepRecord
+        +GetBlockingIssues(Guid instanceId) ICollection~string~
+        +GetInstanceByFileMaster(Guid fileMasterId) WorkflowInstance
+    }
+
+    class ICalculatorEngine {
+        <<interface>>
+        +CalculateSapwat(SapwatInput) SapwatResult
+        +CalculateElu(EluInput) EluResult
+        +CalculateDamVolume(DamVolumeInput) DamVolumeResult
+        +CalculateSfra(SfraInput) SfraResult
+        +CalculateIrrigationVolume(IrrigationVolumeInput) IrrigationVolumeResult
+    }
+
+    class ILetterService {
+        <<interface>>
+        +GenerateLetter(Guid fileMasterId, string letterType) Document
+        +GenerateLetterBatch(ICollection~Guid~ ids, string type, string batch) ICollection~Document~
+        +SubmitForSigning(Guid letterIssuanceId, Guid signerId) LetterIssuance
+        +IssueLetter(Guid id, string method, DateOnly dueDate) LetterIssuance
+        +RecordResponse(Guid id, string status, bool agreed, string notes) LetterIssuance
+        +GetOverdueLetters(int daysOverdue) ICollection~LetterIssuance~
+    }
+
+    class INotificationService {
+        <<interface>>
+        +SendToUser(Guid userId, string type, string subject, string body) Task
+        +SendToPublicUser(Guid publicUserId, string type, string subject, string body) Task
+        +ProcessOverdueReminders() Task
+        +ProcessWorkflowReminders() Task
+        +GetUnread(Guid userId, string userType) ICollection~Notification~
+        +MarkAsRead(Guid notificationId) Task
+    }
+
+    class ISignatureService {
+        <<interface>>
+        +RequestSignature(Guid documentId, Guid signerId, string reason) SignatureRequest
+        +RequestPublicSignature(Guid documentId, Guid publicUserId, string reason) SignatureRequest
+        +CaptureSignature(Guid requestId, byte[] image, string ip) DigitalSignature
+        +VerifySignature(Guid signatureId) bool
+        +GetPendingRequests(Guid userId, string userType) ICollection~SignatureRequest~
+    }
+
+    class IAuditService {
+        <<interface>>
+        +LogAction(AuditLog entry) Task
+        +GetAuditTrail(string entityType, string entityId) ICollection~AuditLog~
+        +GetEntityHistory(string entityType, string entityId) ICollection~AuditLog~
+    }
+
+    class IIntegrationService {
+        <<interface>>
+        +GetWarmsRegistration(string regNumber) WarmsPropertyData
+        +UpdateWarmsWithElu(Guid fileMasterId, EluResult result) Task
+        +GetWarmsAuditDelta(DateTime sinceDate) ICollection~WarmsRecord~
+        +PrePopulateLicenceApplication(Guid fileMasterId) Task
+        +GetSgPropertyData(string sgCode) SgPropertyData
+        +GetDeedsData(string titleDeedNumber) DeedsData
+    }
+
+    class IReportingService {
+        <<interface>>
+        +GetCatchmentProgress(Guid wmaId) CatchmentProgressReport
+        +GetLetterTrackingReport() LetterTrackingReport
+        +GetValidationSummary() ValidationSummaryReport
+        +GetUserActivityReport() UserActivityReport
+    }
+
+    class IPublicCaseService {
+        <<interface>>
+        +GetCase(Guid publicUserId, Guid fileMasterId) CaseViewModel
+        +GetCasesForUser(Guid publicUserId) ICollection~CaseViewModel~
+        +GetLettersForCase(Guid publicUserId, Guid fileMasterId) ICollection~LetterIssuance~
+        +UploadDocument(Guid publicUserId, Guid fileMasterId, DocumentUpload) Document
+        +SubmitComment(Guid publicUserId, Guid fileMasterId, string text) CaseComment
+        +LodgeProtest(Guid publicUserId, Guid fileMasterId, ProtestModel) Protest
+    }
+
+    %% ═════════════════════════════════════════════
+    %% SERVICE LAYER — Implementations
+    %% ═════════════════════════════════════════════
+
+    class WorkflowEngine {
+        -IWorkflowRepository workflowRepo
+        -IAuditService auditService
+        -INotificationService notificationService
+        -ICollection~ITransitionGuard~ guards
+    }
+
+    class CalculatorEngine {
+        -ISapwatDataService sapwatData
+    }
+
+    class LetterService {
+        -ILetterIssuanceRepository letterRepo
+        -IDocumentRepository documentRepo
+        -INotificationService notificationService
+        -ISignatureService signatureService
+    }
+
+    class NotificationService {
+        -INotificationRepository notificationRepo
+        -IEmailSender emailSender
+    }
+
+    class SignatureService {
+        -ISignatureRepository signatureRepo
+        -IDocumentRepository documentRepo
+    }
+
+    class AuditService {
+        -IAuditRepository auditRepo
+    }
+
+    class IntegrationService {
+        -HttpClient warmsClient
+        -HttpClient ewulaasClient
+        -HttpClient sgClient
+        -HttpClient deedsClient
+    }
+
+    class ReportingService {
+        -ApplicationDBContext context
+    }
+
+    class PublicCaseService {
+        -ApplicationDBContext context
+        -INotificationService notificationService
+    }
+
+    %% ═════════════════════════════════════════════
+    %% DOMAIN SERVICES — Business logic helpers
+    %% ═════════════════════════════════════════════
+
+    class IPropertyService {
+        <<interface>>
+        +GetProperty(Guid id) Property
+        +ListByWMA(Guid wmaId) ICollection~Property~
+        +ListByProvince(Guid provinceId) ICollection~Property~
+        +TransferOwnership(Guid propertyId, ICollection~PropertyOwner~) Task
+    }
+
+    class IFileMasterService {
+        <<interface>>
+        +GetFileMaster(Guid id) FileMaster
+        +CreateFileMaster(FileMaster) FileMaster
+        +UpdateFileMaster(FileMaster) FileMaster
+        +ListByOrgUnit(Guid orgUnitId) ICollection~FileMaster~
+        +ListByValidationStatus(Guid statusId) ICollection~FileMaster~
+    }
+
+    class IValidationService {
+        <<interface>>
+        +GetValidation(Guid id) Validation
+        +CreateValidation(Validation) Validation
+        +UpdateValidation(Validation) Validation
+        +ListByFileMaster(Guid fileMasterId) ICollection~Validation~
+    }
+
+    class PropertyService {
+        -IPropertyRepository propertyRepo
+        -IAddressRepository addressRepo
+    }
+
+    class FileMasterService {
+        -IFileMasterRepository fileMasterRepo
+        -IWorkflowEngine workflowEngine
+        -IAuditService auditService
+    }
+
+    class ValidationService {
+        -IValidationRepository validationRepo
+    }
+
+    %% ═════════════════════════════════════════════
+    %% REPOSITORY LAYER — Interfaces
+    %% ═════════════════════════════════════════════
+
+    class IPropertyRepository {
+        <<interface>>
+        +AddProperty(Property) Property
+        +UpdateProperty(Property) Property
+        +DeleteProperty(Guid) Property
+        +ListAll() ICollection~Property~
+        +ListByProvince(string) ICollection~Property~
+        +ListByWMA(Guid wmaId) ICollection~Property~
+        +GetById(Guid) Property
+    }
+
+    class IAddressRepository {
+        <<interface>>
+        +AddAddress(Address) Address
+        +UpdateAddress(Address) Address
+    }
+
+    class IFileMasterRepository {
+        <<interface>>
+        +Add(FileMaster) FileMaster
+        +Update(FileMaster) FileMaster
+        +GetById(Guid) FileMaster
+        +ListByProperty(Guid propertyId) ICollection~FileMaster~
+        +ListByOrgUnit(Guid orgUnitId) ICollection~FileMaster~
+        +ListByStatus(Guid statusId) ICollection~FileMaster~
+    }
+
+    class IWorkflowRepository {
+        <<interface>>
+        +AddInstance(WorkflowInstance) WorkflowInstance
+        +UpdateInstance(WorkflowInstance) WorkflowInstance
+        +GetByFileMaster(Guid fileMasterId) WorkflowInstance
+        +AddStepRecord(WorkflowStepRecord) WorkflowStepRecord
+        +GetStepRecords(Guid instanceId) ICollection~WorkflowStepRecord~
+    }
+
+    class ILetterIssuanceRepository {
+        <<interface>>
+        +Add(LetterIssuance) LetterIssuance
+        +Update(LetterIssuance) LetterIssuance
+        +GetById(Guid) LetterIssuance
+        +ListByFileMaster(Guid) ICollection~LetterIssuance~
+        +ListOverdue(int daysOverdue) ICollection~LetterIssuance~
+    }
+
+    class IDocumentRepository {
+        <<interface>>
+        +Add(Document) Document
+        +GetById(Guid) Document
+        +ListByFileMaster(Guid) ICollection~Document~
+    }
+
+    class IForestationRepository {
+        <<interface>>
+        +RegisterForestation(Forestation) Forestation
+        +UpdateForestation(Forestation) Forestation
+        +ListAll() ICollection~Forestation~
+    }
+
+    class IFieldAndCropRepository {
+        <<interface>>
+        +AddFieldAndCrop(FieldAndCrop) FieldAndCrop
+        +UpdateFieldAndCrop(FieldAndCrop) FieldAndCrop
+        +ListAll() ICollection~FieldAndCrop~
+        +ListByProperty(Guid propertyId) ICollection~FieldAndCrop~
+    }
+
+    class IDamCalculationRepository {
+        <<interface>>
+        +AddCalculation(DamCalculation) DamCalculation
+        +UpdateCalculation(DamCalculation) DamCalculation
+        +ListByProperty(Guid propertyId) ICollection~DamCalculation~
+    }
+
+    class IValidationRepository {
+        <<interface>>
+        +Add(Validation) Validation
+        +Update(Validation) Validation
+        +GetById(Guid) Validation
+        +ListByFileMaster(Guid) ICollection~Validation~
+    }
+
+    class INotificationRepository {
+        <<interface>>
+        +Add(Notification) Notification
+        +GetUnread(Guid userId) ICollection~Notification~
+        +MarkAsRead(Guid) Task
+    }
+
+    class ISignatureRepository {
+        <<interface>>
+        +AddRequest(SignatureRequest) SignatureRequest
+        +AddSignature(DigitalSignature) DigitalSignature
+        +GetPendingRequests(Guid userId) ICollection~SignatureRequest~
+    }
+
+    class IAuditRepository {
+        <<interface>>
+        +Add(AuditLog) Task
+        +GetByEntity(string type, string id) ICollection~AuditLog~
+    }
+
+    %% ═════════════════════════════════════════════
+    %% REPOSITORY LAYER — Implementations
+    %% ═════════════════════════════════════════════
+
+    class PropertyRepository {
+        -ApplicationDBContext context
+    }
+
+    class AddressRepository {
+        -ApplicationDBContext context
+    }
+
+    class FileMasterRepository {
+        -ApplicationDBContext context
+    }
+
+    class WorkflowRepository {
+        -ApplicationDBContext context
+    }
+
+    class LetterIssuanceRepository {
+        -ApplicationDBContext context
+    }
+
+    class DocumentRepository {
+        -ApplicationDBContext context
+    }
+
+    class ForestationRepository {
+        -ApplicationDBContext context
+    }
+
+    class FieldAndCropRepository {
+        -ApplicationDBContext context
+    }
+
+    class DamCalculationRepository {
+        -ApplicationDBContext context
+    }
+
+    class ValidationRepository {
+        -ApplicationDBContext context
+    }
+
+    class NotificationRepository {
+        -ApplicationDBContext context
+    }
+
+    class SignatureRepository {
+        -ApplicationDBContext context
+    }
+
+    class AuditRepository {
+        -ApplicationDBContext context
+    }
+
+    %% ═════════════════════════════════════════════
+    %% DATA LAYER
+    %% ═════════════════════════════════════════════
+
+    class ApplicationDBContext {
+        +DbSet~Property~ Properties
+        +DbSet~FileMaster~ FileMasters
+        +DbSet~Validation~ Validations
+        +DbSet~WorkflowInstance~ WorkflowInstances
+        +DbSet~WorkflowStepRecord~ WorkflowStepRecords
+        +DbSet~WorkflowState~ WorkflowStates
+        +DbSet~LetterIssuance~ LetterIssuances
+        +DbSet~Document~ Documents
+        +DbSet~DigitalSignature~ DigitalSignatures
+        +DbSet~SignatureRequest~ SignatureRequests
+        +DbSet~Notification~ Notifications
+        +DbSet~AuditLog~ AuditLogs
+        +DbSet~PublicUser~ PublicUsers
+        +DbSet~Entitlement~ Entitlements
+        +DbSet~Forestation~ Forestations
+        +DbSet~Irrigation~ Irrigations
+        +DbSet~FieldAndCrop~ FieldAndCrops
+        +DbSet~DamCalculation~ DamCalculations
+        +DbSet~Storing~ Storings
+        +OnModelCreating(ModelBuilder) void
+    }
+
+    %% ═════════════════════════════════════════════
+    %% TRANSITION GUARD PATTERN (Workflow Engine)
+    %% ═════════════════════════════════════════════
+
+    class ITransitionGuard {
+        <<interface>>
+        +CanTransition(WorkflowInstance, WorkflowState target) TransitionResult
+    }
+
+    class TransitionResult {
+        +bool Allowed
+        +string Reason
+    }
+
+    class WarmsAuditGuard {
+        -ApplicationDBContext context
+    }
+
+    class SateliteImageGuard {
+        -ApplicationDBContext context
+    }
+
+    class FieldAndCropGuard {
+        -ApplicationDBContext context
+    }
+
+    class RoleGuard {
+        -IHttpContextAccessor httpContext
+    }
+
+    %% ═════════════════════════════════════════════
+    %% RELATIONSHIPS — Controller → Service
+    %% ═════════════════════════════════════════════
+
+    PropertyController --> IPropertyService
+    PropertyController --> IWorkflowEngine
+    FileMasterController --> IFileMasterService
+    FileMasterController --> IWorkflowEngine
+    FileMasterController --> IAuditService
+    ValidationController --> IValidationService
+    ValidationController --> ICalculatorEngine
+    WorkflowController --> IWorkflowEngine
+    WorkflowController --> IAuditService
+    LetterController --> ILetterService
+    LetterController --> ISignatureService
+    LetterController --> INotificationService
+    ReportController --> IReportingService
+    PortalAccountController ..> IPublicCaseService : uses
+    PortalDashboardController --> IPublicCaseService
+    PortalCaseController --> IPublicCaseService
+    PortalCaseController --> ISignatureService
+
+    %% ═════════════════════════════════════════════
+    %% RELATIONSHIPS — Service implements Interface
+    %% ═════════════════════════════════════════════
+
+    WorkflowEngine ..|> IWorkflowEngine
+    CalculatorEngine ..|> ICalculatorEngine
+    LetterService ..|> ILetterService
+    NotificationService ..|> INotificationService
+    SignatureService ..|> ISignatureService
+    AuditService ..|> IAuditService
+    IntegrationService ..|> IIntegrationService
+    ReportingService ..|> IReportingService
+    PublicCaseService ..|> IPublicCaseService
+    PropertyService ..|> IPropertyService
+    FileMasterService ..|> IFileMasterService
+    ValidationService ..|> IValidationService
+
+    %% ═════════════════════════════════════════════
+    %% RELATIONSHIPS — Service → Repository
+    %% ═════════════════════════════════════════════
+
+    PropertyService --> IPropertyRepository
+    PropertyService --> IAddressRepository
+    FileMasterService --> IFileMasterRepository
+    FileMasterService --> IWorkflowEngine
+    FileMasterService --> IAuditService
+    ValidationService --> IValidationRepository
+
+    WorkflowEngine --> IWorkflowRepository
+    WorkflowEngine --> IAuditService
+    WorkflowEngine --> INotificationService
+    WorkflowEngine --> ITransitionGuard
+
+    LetterService --> ILetterIssuanceRepository
+    LetterService --> IDocumentRepository
+    LetterService --> INotificationService
+    LetterService --> ISignatureService
+
+    NotificationService --> INotificationRepository
+    SignatureService --> ISignatureRepository
+    SignatureService --> IDocumentRepository
+    AuditService --> IAuditRepository
+
+    %% ═════════════════════════════════════════════
+    %% RELATIONSHIPS — Repository implements Interface
+    %% ═════════════════════════════════════════════
+
+    PropertyRepository ..|> IPropertyRepository
+    AddressRepository ..|> IAddressRepository
+    FileMasterRepository ..|> IFileMasterRepository
+    WorkflowRepository ..|> IWorkflowRepository
+    LetterIssuanceRepository ..|> ILetterIssuanceRepository
+    DocumentRepository ..|> IDocumentRepository
+    ForestationRepository ..|> IForestationRepository
+    FieldAndCropRepository ..|> IFieldAndCropRepository
+    DamCalculationRepository ..|> IDamCalculationRepository
+    ValidationRepository ..|> IValidationRepository
+    NotificationRepository ..|> INotificationRepository
+    SignatureRepository ..|> ISignatureRepository
+    AuditRepository ..|> IAuditRepository
+
+    %% ═════════════════════════════════════════════
+    %% RELATIONSHIPS — Repository → DbContext
+    %% ═════════════════════════════════════════════
+
+    PropertyRepository --> ApplicationDBContext
+    AddressRepository --> ApplicationDBContext
+    FileMasterRepository --> ApplicationDBContext
+    WorkflowRepository --> ApplicationDBContext
+    LetterIssuanceRepository --> ApplicationDBContext
+    DocumentRepository --> ApplicationDBContext
+    ForestationRepository --> ApplicationDBContext
+    FieldAndCropRepository --> ApplicationDBContext
+    DamCalculationRepository --> ApplicationDBContext
+    ValidationRepository --> ApplicationDBContext
+    NotificationRepository --> ApplicationDBContext
+    SignatureRepository --> ApplicationDBContext
+    AuditRepository --> ApplicationDBContext
+
+    %% ═════════════════════════════════════════════
+    %% RELATIONSHIPS — Transition Guards
+    %% ═════════════════════════════════════════════
+
+    WarmsAuditGuard ..|> ITransitionGuard
+    SateliteImageGuard ..|> ITransitionGuard
+    FieldAndCropGuard ..|> ITransitionGuard
+    RoleGuard ..|> ITransitionGuard

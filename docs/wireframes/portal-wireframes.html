@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DWA V&V Public Portal — Wireframes</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
+
+        /* Navigation between wireframes */
+        .wireframe-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: #1a3a5c; color: white; padding: 12px 24px;
+            display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+        }
+        .wireframe-nav h1 { font-size: 16px; font-weight: 600; margin-right: 20px; }
+        .wireframe-nav button {
+            background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white;
+            padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px;
+        }
+        .wireframe-nav button:hover, .wireframe-nav button.active {
+            background: rgba(255,255,255,0.2); border-color: white;
+        }
+        .wireframe-nav .label { font-size: 11px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Wireframe container */
+        .wireframe { display: none; margin-top: 60px; padding: 24px; }
+        .wireframe.active { display: block; }
+        .wireframe-title {
+            text-align: center; padding: 16px; margin-bottom: 24px;
+            background: #fff3cd; border: 2px dashed #ffc107; border-radius: 8px;
+            font-size: 14px; color: #856404;
+        }
+
+        /* Simulated browser frame */
+        .browser-frame {
+            max-width: 1100px; margin: 0 auto; background: white;
+            border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); overflow: hidden;
+        }
+        .browser-bar {
+            background: #e8eaed; padding: 8px 16px; display: flex; align-items: center; gap: 8px;
+        }
+        .browser-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .browser-dot.r { background: #ff5f57; }
+        .browser-dot.y { background: #ffbd2e; }
+        .browser-dot.g { background: #28c840; }
+        .browser-url {
+            flex: 1; margin-left: 12px; background: white; border-radius: 16px;
+            padding: 4px 12px; font-size: 12px; color: #666;
+        }
+
+        /* Portal header */
+        .portal-header {
+            background: #1a3a5c; color: white; padding: 12px 24px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .portal-header .logo { display: flex; align-items: center; gap: 12px; }
+        .portal-header .logo-icon {
+            width: 36px; height: 36px; background: #2e86de; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;
+        }
+        .portal-header .logo-text h2 { font-size: 15px; font-weight: 600; }
+        .portal-header .logo-text span { font-size: 11px; opacity: 0.7; }
+        .portal-header .user-area { display: flex; align-items: center; gap: 16px; font-size: 13px; }
+        .portal-header .notification-bell {
+            position: relative; cursor: pointer; font-size: 18px;
+        }
+        .portal-header .badge {
+            position: absolute; top: -6px; right: -8px; background: #e74c3c; color: white;
+            border-radius: 50%; width: 16px; height: 16px; font-size: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Sidebar */
+        .portal-body { display: flex; min-height: 600px; }
+        .sidebar {
+            width: 220px; background: #f8f9fa; border-right: 1px solid #e0e0e0; padding: 16px 0;
+        }
+        .sidebar a {
+            display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+            text-decoration: none; color: #555; font-size: 13px; border-left: 3px solid transparent;
+        }
+        .sidebar a:hover { background: #e8f0fe; color: #1a3a5c; }
+        .sidebar a.active { background: #e8f0fe; color: #1a3a5c; border-left-color: #2e86de; font-weight: 600; }
+        .sidebar .icon { width: 18px; text-align: center; }
+
+        /* Main content */
+        .main-content { flex: 1; padding: 24px; background: #fafafa; }
+        .page-title { font-size: 20px; font-weight: 600; color: #1a3a5c; margin-bottom: 4px; }
+        .page-subtitle { font-size: 13px; color: #888; margin-bottom: 20px; }
+
+        /* Cards */
+        .card {
+            background: white; border-radius: 8px; border: 1px solid #e0e0e0;
+            padding: 16px; margin-bottom: 16px;
+        }
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0;
+        }
+        .card-header h3 { font-size: 14px; font-weight: 600; color: #1a3a5c; }
+
+        /* Status badges */
+        .badge-status {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: 600;
+        }
+        .badge-green { background: #d4edda; color: #155724; }
+        .badge-blue { background: #cce5ff; color: #004085; }
+        .badge-orange { background: #fff3cd; color: #856404; }
+        .badge-red { background: #f8d7da; color: #721c24; }
+        .badge-grey { background: #e9ecef; color: #495057; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #f8f9fa; text-align: left; padding: 8px 12px; font-weight: 600; color: #555; border-bottom: 2px solid #dee2e6; }
+        td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; }
+        tr:hover td { background: #f8f9fa; }
+
+        /* Buttons */
+        .btn {
+            display: inline-block; padding: 6px 14px; border-radius: 4px;
+            font-size: 12px; font-weight: 500; cursor: pointer; text-decoration: none; border: none;
+        }
+        .btn-primary { background: #2e86de; color: white; }
+        .btn-outline { background: white; color: #2e86de; border: 1px solid #2e86de; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+        /* Progress timeline */
+        .timeline {
+            display: flex; align-items: center; margin: 16px 0; gap: 0;
+        }
+        .timeline-step {
+            flex: 1; text-align: center; position: relative;
+        }
+        .timeline-step .dot {
+            width: 28px; height: 28px; border-radius: 50%; margin: 0 auto 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: bold; color: white;
+        }
+        .timeline-step .dot.done { background: #28a745; }
+        .timeline-step .dot.current { background: #2e86de; box-shadow: 0 0 0 4px rgba(46,134,222,0.3); }
+        .timeline-step .dot.pending { background: #dee2e6; color: #999; }
+        .timeline-step .label { font-size: 10px; color: #666; }
+        .timeline-step .label.current { color: #2e86de; font-weight: 600; }
+        .timeline-line {
+            height: 3px; flex: 0.5; margin-top: -18px;
+        }
+        .timeline-line.done { background: #28a745; }
+        .timeline-line.pending { background: #dee2e6; }
+
+        /* Tabs */
+        .tabs { display: flex; border-bottom: 2px solid #e0e0e0; margin-bottom: 16px; }
+        .tab {
+            padding: 10px 20px; font-size: 13px; color: #666; cursor: pointer;
+            border-bottom: 2px solid transparent; margin-bottom: -2px;
+        }
+        .tab:hover { color: #1a3a5c; }
+        .tab.active { color: #2e86de; border-bottom-color: #2e86de; font-weight: 600; }
+        .tab .tab-badge {
+            display: inline-block; background: #e74c3c; color: white; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 10px; text-align: center; line-height: 18px;
+            margin-left: 6px;
+        }
+
+        /* Comments */
+        .comment {
+            display: flex; gap: 12px; margin-bottom: 16px; padding: 12px;
+            border-radius: 8px;
+        }
+        .comment.external { background: #e8f0fe; margin-right: 60px; }
+        .comment.internal { background: #f0f0f0; margin-left: 60px; }
+        .comment .avatar {
+            width: 32px; height: 32px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 12px;
+            font-weight: bold; color: white; flex-shrink: 0;
+        }
+        .comment.external .avatar { background: #2e86de; }
+        .comment.internal .avatar { background: #6c757d; }
+        .comment .comment-body { flex: 1; }
+        .comment .comment-meta { font-size: 11px; color: #888; margin-bottom: 4px; }
+        .comment .comment-text { font-size: 13px; line-height: 1.5; }
+
+        /* Form elements */
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 4px; }
+        .form-control {
+            width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px;
+            font-size: 13px;
+        }
+        textarea.form-control { resize: vertical; min-height: 80px; }
+
+        /* Upload area */
+        .upload-zone {
+            border: 2px dashed #ccc; border-radius: 8px; padding: 32px;
+            text-align: center; color: #999; cursor: pointer;
+        }
+        .upload-zone:hover { border-color: #2e86de; color: #2e86de; }
+
+        /* Notification list */
+        .notif-item {
+            display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #f0f0f0;
+            align-items: flex-start;
+        }
+        .notif-item.unread { background: #f0f7ff; }
+        .notif-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+        .notif-dot.unread { background: #2e86de; }
+        .notif-dot.read { background: transparent; }
+        .notif-body { flex: 1; }
+        .notif-body .notif-title { font-size: 13px; font-weight: 500; }
+        .notif-body .notif-desc { font-size: 12px; color: #888; margin-top: 2px; }
+        .notif-time { font-size: 11px; color: #aaa; white-space: nowrap; }
+
+        /* Login page */
+        .login-container { max-width: 420px; margin: 40px auto; }
+        .login-card { background: white; border-radius: 8px; padding: 32px; border: 1px solid #e0e0e0; }
+        .login-logo { text-align: center; margin-bottom: 24px; }
+        .login-logo .icon { width: 56px; height: 56px; background: #1a3a5c; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold; }
+        .login-logo h2 { font-size: 18px; color: #1a3a5c; }
+        .login-logo p { font-size: 12px; color: #888; margin-top: 4px; }
+
+        /* Responsive note */
+        .mobile-note { display: none; }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .mobile-note { display: block; padding: 8px; background: #e8f0fe; text-align: center; font-size: 11px; }
+        }
+
+        /* Print */
+        @media print {
+            .wireframe-nav { display: none; }
+            .wireframe { display: block !important; page-break-after: always; margin-top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="wireframe-nav">
+    <h1>DWA V&V Portal Wireframes</h1>
+    <span class="label">Screens:</span>
+    <button class="active" onclick="showWireframe('login')">1. Login</button>
+    <button onclick="showWireframe('register')">2. Register</button>
+    <button onclick="showWireframe('dashboard')">3. Dashboard</button>
+    <button onclick="showWireframe('case-detail')">4. Case Detail</button>
+    <button onclick="showWireframe('correspondence')">5. Correspondence</button>
+    <button onclick="showWireframe('comments')">6. Comments</button>
+    <button onclick="showWireframe('documents')">7. Documents</button>
+    <button onclick="showWireframe('notifications')">8. Notifications</button>
+    <button onclick="showWireframe('protest')">9. Lodge Protest</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- WIREFRAME 1: LOGIN -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="login" class="wireframe active">
+    <div class="wireframe-title">WIREFRAME 1 of 9 — Login Page &nbsp;|&nbsp; /Portal/Account/Login</div>
+    <div class="browser-frame">
+        <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-url">https://vv.dws.gov.za/Portal/Account/Login</span>
+        </div>
+        <div style="background: #1a3a5c; padding: 16px 24px; text-align: center; color: white;">
+            <div style="font-size: 18px; font-weight: 600;">Department of Water and Sanitation</div>
+            <div style="font-size: 12px; opacity: 0.7;">Republic of South Africa</div>
+        </div>
+        <div style="padding: 40px 24px; background: #f8f9fa; min-height: 500px;">
+            <div class="login-container">
+                <div class="login-card">
+                    <div class="login-logo">
+                        <div class="icon">V&V</div>
+                        <h2>Water Use Validation Portal</h2>
+                        <p>Track your water use validation case</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="text" class="form-control" placeholder="your.email@example.co.za">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" class="form-control" placeholder="Enter your password">
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <button class="btn btn-primary" style="width: 100%; padding: 10px;">Sign In</button>
+                    </div>
+                    <div style="text-align: center; font-size: 12px; color: #888;">
+                        <a href="#" style="color: #2e86de;">Forgot password?</a>
+                        &nbsp;&middot;&nbsp;
+                        <a href="#" style="color: #2e86de;">Register for an account</a>
+                    </div>
+                    <div style="margin-top: 20px; padding: 12px; background: #e8f0fe; border-radius: 4px; font-size: 11px; color: #004085; text-align: center;">
+                        MFA verification will be required after sign-in (TOTP or SMS)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- WIREFRAME 2: REGISTRATION -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="register" class="wireframe">
+    <div class="wireframe-title">WIREFRAME 2 of 9 — Registration Page &nbsp;|&nbsp; /Portal/Account/Register</div>
+    <div class="browser-frame">
+        <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-url">https://vv.dws.gov.za/Portal/Account/Register</span>
+        </div>
+        <div style="background: #1a3a5c; padding: 12px 24px; text-align: center; color: white;">
+            <div style="font-size: 16px; font-weight: 600;">DWS Water Use Validation Portal</div>
+        </div>
+        <div style="padding: 24px; background: #f8f9fa; min-height: 500px;">
+            <div style="max-width: 600px; margin: 0 auto;">
+                <div class="card">
+                    <div class="card-header"><h3>Create Your Account</h3></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group"><label>First Name *</label><input class="form-control" placeholder="John"></div>
+                        <div class="form-group"><label>Last Name *</label><input class="form-control" placeholder="Botha"></div>
+                        <div class="form-group"><label>SA ID / Passport Number *</label><input class="form-control" placeholder="8501015800084"></div>
+                        <div class="form-group"><label>Business Registration (if company)</label><input class="form-control" placeholder="Optional"></div>
+                        <div class="form-group"><label>Email Address *</label><input class="form-control" placeholder="john@example.co.za"></div>
+                        <div class="form-group"><label>Phone Number *</label><input class="form-control" placeholder="082 123 4567"></div>
+                    </div>
+                    <div class="form-group" style="margin-top: 8px;">
+                        <label>Property Reference / WARMS Registration Number (optional)</label>
+                        <input class="form-control" placeholder="e.g. W12345 — helps us link your account faster">
+                    </div>
+                    <div style="padding: 12px; background: #fff3cd; border-radius: 4px; font-size: 12px; color: #856404; margin: 12px 0;">
+                        After registration, a DWS official will verify and link your account to your property. You will receive email confirmation once approved.
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%; padding: 10px;">Register</button>
+                    <div style="text-align: center; margin-top: 12px; font-size: 12px;">
+                        Already have an account? <a href="#" style="color: #2e86de;">Sign In</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- WIREFRAME 3: DASHBOARD -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="dashboard" class="wireframe">
+    <div class="wireframe-title">WIREFRAME 3 of 9 — Dashboard &nbsp;|&nbsp; /Portal/Dashboard</div>
+    <div class="browser-frame">
+        <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-url">https://vv.dws.gov.za/Portal/Dashboard</span>
+        </div>
+        <div class="portal-header">
+            <div class="logo">
+                <div class="logo-icon">V&V</div>
+                <div class="logo-text"><h2>DWS Water Use Portal</h2><span>Validation & Verification</span></div>
+            </div>
+            <div class="user-area">
+                <div class="notification-bell">&#128276;<span class="badge">3</span></div>
+                <span>John Botha</span>
+                <span style="opacity: 0.6;">|</span>
+                <a href="#" style="color: rgba(255,255,255,0.8); font-size: 12px;">Sign Out</a>
+            </div>
+        </div>
+        <div class="portal-body">
+            <div class="sidebar">
+                <a href="#" class="active"><span class="icon">&#127968;</span> Dashboard</a>
+                <a href="#"><span class="icon">&#128196;</span> My Cases</a>
+                <a href="#"><span class="icon">&#128276;</span> Notifications <span class="badge-status badge-red" style="margin-left: auto; font-size: 10px;">3</span></a>
+                <a href="#"><span class="icon">&#128100;</span> My Profile</a>
+                <a href="#"><span class="icon">&#128274;</span> Security</a>
+            </div>
+            <div class="main-content">
+                <div class="page-title">My Dashboard</div>
+                <div class="page-subtitle">Welcome back, John. Here is the status of your properties.</div>
+
+                <!-- Summary cards -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
+                    <div class="card" style="text-align: center; border-left: 4px solid #2e86de;">
+                        <div style="font-size: 28px; font-weight: bold; color: #2e86de;">2</div>
+                        <div style="font-size: 11px; color: #888;">My Properties</div>
+                    </div>
+                    <div class="card" style="text-align: center; border-left: 4px solid #ffc107;">
+                        <div style="font-size: 28px; font-weight: bold; color: #ffc107;">1</div>
+                        <div style="font-size: 11px; color: #888;">Pending Actions</div>
+                    </div>
+                    <div class="card" style="text-align: center; border-left: 4px solid #e74c3c;">
+                        <div style="font-size: 28px; font-weight: bold; color: #e74c3c;">1</div>
+                        <div style="font-size: 11px; color: #888;">Letters Awaiting Signature</div>
+                    </div>
+                    <div class="card" style="text-align: center; border-left: 4px solid #28a745;">
+                        <div style="font-size: 28px; font-weight: bold; color: #28a745;">3</div>
+                        <div style="font-size: 11px; color: #888;">Unread Notifications</div>
+                    </div>
+                </div>
+
+                <!-- Property 1 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Farm Rietfontein 234/5 &nbsp;&nbsp;<span class="badge-status badge-blue">In Verification</span></h3>
+                        <a href="#" class="btn btn-outline btn-sm">View Details</a>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; font-size: 12px; color: #666; margin-bottom: 12px;">
+                        <div><strong>SG Code:</strong> T0IQ00000000023400005</div>
+                        <div><strong>WARMS Reg:</strong> W12345</div>
+                        <div><strong>WMA:</strong> Limpopo</div>
+                        <div><strong>Last Updated:</strong> 2026-03-08</div>
+                    </div>
+                    <div class="timeline">
+                        <div class="timeline-step"><div class="dot done">&#10003;</div><div class="label">Inception</div></div>
+                        <div class="timeline-line done"></div>
+                        <div class="timeline-step"><div class="dot current">2</div><div class="label current">Verification</div></div>
+                        <div class="timeline-line pending"></div>
+                        <div class="timeline-step"><div class="dot pending">3</div><div class="label">Validation</div></div>
+                    </div>
+                    <div style="font-size: 12px; color: #555; text-align: center;">
+                        Current Step: <strong>CP12 — Field & Crop + SAPWAT Modelling</strong> &nbsp;|&nbsp; Assigned to: J. van der Merwe (DWS Limpopo)
+                    </div>
+                </div>
+
+                <!-- Property 2 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Farm Klipfontein 567/8 &nbsp;&nbsp;<span class="badge-status badge-orange">Section 35 — Letter 1 Issued</span></h3>
+                        <div>
+                            <a href="#" class="btn btn-success btn-sm">&#9997; Sign Letter</a>
+                            <a href="#" class="btn btn-outline btn-sm">View Details</a>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; font-size: 12px; color: #666; margin-bottom: 12px;">
+                        <div><strong>SG Code:</strong> T0IQ00000000056700008</div>
+                        <div><strong>WARMS Reg:</strong> W67890</div>
+                        <div><strong>WMA:</strong> Olifants</div>
+                        <div><strong>Last Updated:</strong> 2026-03-01</div>
+                    </div>
+                    <div class="timeline">
+                        <div class="timeline-step"><div class="dot done">&#10003;</div><div class="label">Inception</div></div>
+                        <div class="timeline-line done"></div>
+                        <div class="timeline-step"><div class="dot done">&#10003;</div><div class="label">Verification</div></div>
+                        <div class="timeline-line done"></div>
+                        <div class="timeline-step"><div class="dot current">3</div><div class="label current">Validation</div></div>
+                    </div>
+                    <div style="font-size: 12px; text-align: center; padding: 8px; background: #fff3cd; border-radius: 4px; margin-top: 8px;">
+                        &#9888; <strong>Action Required:</strong> Letter 1 (S35(1)) issued on 2026-02-15. Response due by <strong>2026-04-16</strong>. Please sign and return.
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card">
+                    <div class="card-header"><h3>Recent Activity</h3></div>
+                    <div style="font-size: 12px;">
+                        <div style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">&#128276; <strong>Letter 1 issued</strong> for Farm Klipfontein 567/8 — <span style="color: #888;">2026-03-01</span></div>
+                        <div style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">&#128172; <strong>DWS replied</strong> to your comment on Farm Rietfontein 234/5 — <span style="color: #888;">2026-02-28</span></div>
+                        <div style="padding: 8px 0;">&#128196; <strong>Case status changed</strong> to "Field & Crop Modelling" for Farm Rietfontein 234/5 — <span style="color: #888;">2026-02-25</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- WIREFRAME 4: CASE DETAIL (Overview Tab) -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="case-detail" class="wireframe">
+    <div class="wireframe-title">WIREFRAME 4 of 9 — Case Detail (Overview) &nbsp;|&nbsp; /Portal/Cases/{caseId}</div>
+    <div class="browser-frame">
+        <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-url">https://vv.dws.gov.za/Portal/Cases/3f2a7c1b-...</span>
+        </div>
+        <div class="portal-header">
+            <div class="logo"><div class="logo-icon">V&V</div><div class="logo-text"><h2>DWS Water Use Portal</h2></div></div>
+            <div class="user-area"><div class="notification-bell">&#128276;<span class="badge">3</span></div><span>John Botha</span></div>
+        </div>
+        <div class="portal-body">
+            <div class="sidebar">
+                <a href="#"><span class="icon">&#127968;</span> Dashboard</a>
+                <a href="#" class="active"><span class="icon">&#128196;</span> My Cases</a>
+                <a href="#"><span class="icon">&#128276;</span> Notifications</a>
+                <a href="#"><span class="icon">&#128100;</span> My Profile</a>
+            </div>
+            <div class="main-content">
+                <div style="font-size: 12px; color: #888; margin-bottom: 8px;"><a href="#" style="color: #2e86de;">Dashboard</a> &gt; <a href="#" style="color: #2e86de;">My Cases</a> &gt; Farm Klipfontein 567/8</div>
+                <div class="page-title">Farm Klipfontein 567/8 &nbsp;<span class="badge-status badge-orange">Section 35 — Letter 1 Issued</span></div>
+                <div class="page-subtitle">WARMS Registration: W67890 &nbsp;|&nbsp; File: FM-2025-067890</div>
+
+                <!-- Tabs -->
+                <div class="tabs">
+                    <div class="tab active">Overview</div>
+                    <div class="tab">Correspondence <span class="tab-badge">1</span></div>
+                    <div class="tab">Documents</div>
+                    <div class="tab">Comments</div>
+                    <div class="tab">Protest</div>
+                </div>
+
+                <!-- Property Details -->
+                <div class="card">
+                    <div class="card-header"><h3>Property Details</h3></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; font-size: 13px;">
+                        <div><span style="color: #888;">Farm Name:</span><br><strong>Klipfontein</strong></div>
+                        <div><span style="color: #888;">SG Code:</span><br><strong>T0IQ00000000056700008</strong></div>
+                        <div><span style="color: #888;">Property Size:</span><br><strong>245 ha</strong></div>
+                        <div><span style="color: #888;">Quaternary Drainage:</span><br><strong>B31A</strong></div>
+                        <div><span style="color: #888;">WMA:</span><br><strong>Olifants</strong></div>
+                        <div><span style="color: #888;">Coordinates:</span><br><strong>S24.7231, E30.1452</strong></div>
+                    </div>
+                </div>
+
+                <!-- Owner Details -->
+                <div class="card">
+                    <div class="card-header"><h3>Owner Details</h3><a href="#" class="btn btn-outline btn-sm">Update Contact Details</a></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; font-size: 13px;">
+                        <div><span style="color: #888;">Name:</span><br><strong>John Botha</strong></div>
+                        <div><span style="color: #888;">ID Number:</span><br><strong>850101****084</strong></div>
+                        <div><span style="color: #888;">Email:</span><br><strong>john@example.co.za</strong></div>
+                        <div><span style="color: #888;">Phone:</span><br><strong>082 123 4567</strong></div>
+                        <div><span style="color: #888;">Title Deed:</span><br><strong>T12345/2015</strong></div>
+                    </div>
+                </div>
+
+                <!-- V&V Status Timeline -->
+                <div class="card">
+                    <div class="card-header"><h3>V&V Progress</h3></div>
+                    <div class="timeline" style="margin: 20px 0;">
+                        <div class="timeline-step"><div class="dot done">&#10003;</div><div class="label">CP01<br>WARMS Audit</div></div>
+                        <div class="timeline-line done"></div>
+                        <div class="timeline-step"><div class="dot done">&#10003;</div><div class="label">CP05<br>Public Session</div></div>
+                        <div class="timeline-line done"></div>
+                        <div class="timeline-step"><div class="dot done">&#10003;</div><div class="label">CP06-CP12<br>Verification</div></div>
+                        <div class="timeline-line done"></div>
+                        <div class="timeline-step"><div class="dot done">&#10003;</div><div class="label">CP13<br>ELU Calc</div></div>
+                        <div class="timeline-line done"></div>
+                        <div class="timeline-step"><div class="dot current">&#9993;</div><div class="label current">Section 35<br>Letter 1</div></div>
+                        <div class="timeline-line pending"></div>
+                        <div class="timeline-step"><div class="dot pending">&#10003;</div><div class="label">ELU<br>Confirmed</div></div>
+                    </div>
+                    <div style="text-align: center; font-size: 12px; color: #555;">
+                        Assigned to: <strong>J. van der Merwe</strong> (DWS Limpopo Regional Office) &nbsp;|&nbsp; Started: 2025-06-15
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- WIREFRAME 5: CORRESPONDENCE TAB -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="correspondence" class="wireframe">
+    <div class="wireframe-title">WIREFRAME 5 of 9 — Correspondence Tab &nbsp;|&nbsp; /Portal/Cases/{caseId}/Letters</div>
+    <div class="browser-frame">
+        <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-url">https://vv.dws.gov.za/Portal/Cases/3f2a7c1b-.../Letters</span>
+        </div>
+        <div class="portal-header">
+            <div class="logo"><div class="logo-icon">V&V</div><div class="logo-text"><h2>DWS Water Use Portal</h2></div></div>
+            <div class="user-area"><div class="notification-bell">&#128276;<span class="badge">3</span></div><span>John Botha</span></div>
+        </div>
+        <div class="portal-body">
+            <div class="sidebar">
+                <a href="#"><span class="icon">&#127968;</span> Dashboard</a>
+                <a href="#" class="active"><span class="icon">&#128196;</span> My Cases</a>
+                <a href="#"><span class="icon">&#128276;</span> Notifications</a>
+            </div>
+            <div class="main-content">
+                <div class="page-title">Farm Klipfontein 567/8 — Correspondence</div>
+                <div class="tabs">
+                    <div class="tab">Overview</div>
+                    <div class="tab active">Correspondence <span class="tab-badge">1</span></div>
+                    <div class="tab">Documents</div>
+                    <div class="tab">Comments</div>
+                    <div class="tab">Protest</div>
+                </div>
+
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Letter</th>
+                                <th>NWA Section</th>
+                                <th>Delivery</th>
+                                <th>Status</th>
+                                <th>Response Due</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background: #fff8e1;">
+                                <td>2026-02-15</td>
+                                <td><strong>Letter 1</strong> — Notice to apply for verification</td>
+                                <td>S35(1)</td>
+                                <td>In Person<br><span style="font-size: 11px; color: #888;">Delivered by: P. Nkosi</span></td>
+                                <td><span class="badge-status badge-orange">Awaiting Response</span></td>
+                                <td><strong style="color: #e74c3c;">2026-04-16</strong></td>
+                                <td>
+                                    <a href="#" class="btn btn-outline btn-sm">&#128196; Download</a>
+                                    <a href="#" class="btn btn-success btn-sm">&#9997; Sign & Return</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Letter detail expanded -->
+                <div class="card">
+                    <div class="card-header"><h3>Letter 1 — Detail</h3></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+                        <div><span style="color: #888;">Generated:</span><br><strong>2026-02-10</strong></div>
+                        <div><span style="color: #888;">Signed by:</span><br><strong>M. Mabaso (Regional Manager)</strong></div>
+                        <div><span style="color: #888;">Delivered:</span><br><strong>2026-02-15 — In Person by P. Nkosi</strong></div>
+                        <div><span style="color: #888;">Response Due:</span><br><strong style="color: #e74c3c;">2026-04-16 (36 days remaining)</strong></div>
+                        <div><span style="color: #888;">Portal First Viewed:</span><br><strong>2026-02-20 14:32</strong></div>
+                        <div><span style="color: #888;">Portal Acknowledged:</span><br><strong style="color: #e74c3c;">Not yet acknowledged</strong></div>
+                    </div>
+                    <div style="margin-top: 16px; padding: 12px; background: #e8f0fe; border-radius: 4px; text-align: center;">
+                        <button class="btn btn-primary">&#10003; I Acknowledge Receipt of This Letter</button>
+                        <div style="font-size: 11px; color: #666; margin-top: 6px;">Acknowledging receipt does not constitute agreement with findings</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- WIREFRAME 6: COMMENTS TAB -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="comments" class="wireframe">
+    <div class="wireframe-title">WIREFRAME 6 of 9 — Comments (Threaded) &nbsp;|&nbsp; /Portal/Cases/{caseId}/Comments</div>
+    <div class="browser-frame">
+        <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-url">https://vv.dws.gov.za/Portal/Cases/3f2a7c1b-.../Comments</span>
+        </div>
+        <div class="portal-header">
+            <div class="logo"><div class="logo-icon">V&V</div><div class="logo-text"><h2>DWS Water Use Portal</h2></div></div>
+            <div class="user-area"><span>John Botha</span></div>
+        </div>
+        <div class="portal-body">
+            <div class="sidebar">
+                <a href="#"><span class="icon">&#127968;</span> Dashboard</a>
+                <a href="#" class="active"><span class="icon">&#128196;</span> My Cases</a>
+            </div>
+            <div class="main-content">
+                <div class="page-title">Farm Klipfontein 567/8 — Comments</div>
+                <div class="tabs">
+                    <div class="tab">Overview</div>
+                    <div class="tab">Correspondence</div>
+                    <div class="tab">Documents</div>
+                    <div class="tab active">Comments</div>
+                    <div class="tab">Protest</div>
+                </div>
+
+                <!-- Threaded comments -->
+                <div class="card">
+                    <div class="card-header"><h3>Case Discussion</h3><span style="font-size: 11px; color: #888;">3 messages</span></div>
+
+                    <div class="comment external">
+                        <div class="avatar">JB</div>
+                        <div class="comment-body">
+                            <div class="comment-meta"><strong>John Botha</strong> (You) &middot; 2026-02-20 09:15 &middot; <span style="color: #28a745;">Read by DWS</span></div>
+                            <div class="comment-text">Good morning. I received Letter 1 regarding my farm Klipfontein. I would like to know what information I need to submit with my response. I have the original title deed and a recent survey from 2024.</div>
+                        </div>
+                    </div>
+
+                    <div class="comment internal">
+                        <div class="avatar">JM</div>
+                        <div class="comment-body">
+                            <div class="comment-meta"><strong>J. van der Merwe</strong> (DWS Limpopo) &middot; 2026-02-22 11:30</div>
+                            <div class="comment-text">Good day Mr Botha. Thank you for your query. Please submit the following with your response:<br>
+                            1. Copy of your title deed<br>
+                            2. The 2024 survey report<br>
+                            3. Any water use permits you may hold<br>
+                            You can upload these documents in the "Documents" tab above. Please do not hesitate to contact our office if you need further assistance.</div>
+                        </div>
+                    </div>
+
+                    <div class="comment external">
+                        <div class="avatar">JB</div>
+                        <div class="comment-body">
+                            <div class="comment-meta"><strong>John Botha</strong> (You) &middot; 2026-02-25 08:42 &middot; <span style="color: #28a745;">Read by DWS</span></div>
+                            <div class="comment-text">Thank you, Mr van der Merwe. I have uploaded the title deed and survey report. I do not hold any water use permits. The borehole on the property has been in use since before 1998.</div>
+                        </div>
+                    </div>
+
+                    <!-- New comment form -->
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
+                        <div class="form-group">
+                            <label>Add a Comment</label>
+                            <textarea class="form-control" placeholder="Type your message here..."></textarea>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 11px; color: #888;">Your comment will be visible to DWS officials assigned to this case</span>
+                            <button class="btn btn-primary">Submit Comment</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- WIREFRAME 7: DOCUMENTS TAB -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="documents" class="wireframe">
+    <div class="wireframe-title">WIREFRAME 7 of 9 — Documents Tab &nbsp;|&nbsp; /Portal/Cases/{caseId}/Documents</div>
+    <div class="browser-frame">
+        <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-url">https://vv.dws.gov.za/Portal/Cases/3f2a7c1b-.../Documents</span>
+        </div>
+        <div class="portal-header">
+            <div class="logo"><div class="logo-icon">V&V</div><div class="logo-text"><h2>DWS Water Use Portal</h2></div></div>
+            <div class="user-area"><span>John Botha</span></div>
+        </div>
+        <div class="portal-body">
+            <div class="sidebar">
+                <a href="#"><span class="icon">&#127968;</span> Dashboard</a>
+                <a href="#" class="active"><span class="icon">&#128196;</span> My Cases</a>
+            </div>
+            <div class="main-content">
+                <div class="page-title">Farm Klipfontein 567/8 — Documents</div>
+                <div class="tabs">
+                    <div class="tab">Overview</div>
+                    <div class="tab">Correspondence</div>
+                    <div class="tab active">Documents</div>
+                    <div class="tab">Comments</div>
+                    <div class="tab">Protest</div>
+                </div>
+
+                <!-- Upload zone -->
+                <div class="card">
+                    <div class="card-header"><h3>Upload Supporting Document</h3></div>
+                    <div class="upload-zone">
+                        &#128206; <strong>Drag and drop files here</strong> or click to browse<br>
+                        <span style="font-size: 11px;">Allowed: PDF, JPEG, PNG, TIFF, DOC, DOCX &middot; Max 25 MB per file</span>
+                    </div>
+                    <div style="margin-top: 12px; display: flex; gap: 12px; align-items: flex-end;">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label>Document Type</label>
+                            <select class="form-control">
+                                <option>Title Deed</option>
+                                <option>SG Diagram</option>
+                                <option>Water Use Permit</option>
+                                <option>Survey Report</option>
+                                <option>Letter Response</option>
+                                <option>Other Supporting Document</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary">Upload</button>
+                    </div>
+                </div>
+
+                <!-- Document list -->
+                <div class="card">
+                    <div class="card-header"><h3>Case Documents</h3></div>
+                    <table>
+                        <thead>
+                            <tr><th>Date</th><th>Document</th><th>Type</th><th>Uploaded By</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2026-02-25</td>
+                                <td>Title_Deed_T12345_2015.pdf</td>
+                                <td>Title Deed</td>
+                                <td><span class="badge-status badge-blue">You</span></td>
+                                <td><span class="badge-status badge-green">Scanned — Clean</span></td>
+                                <td><a href="#" class="btn btn-outline btn-sm">Download</a></td>
+                            </tr>
+                            <tr>
+                                <td>2026-02-25</td>
+                                <td>Survey_Report_2024.pdf</td>
+                                <td>Survey Report</td>
+                                <td><span class="badge-status badge-blue">You</span></td>
+                                <td><span class="badge-status badge-green">Scanned — Clean</span></td>
+                                <td><a href="#" class="btn btn-outline btn-sm">Download</a></td>
+                            </tr>
+                            <tr>
+                                <td>2026-02-15</td>
+                                <td>Letter_1_S35_Klipfontein.pdf</td>
+                                <td>Section 35 Letter</td>
+                                <td><span class="badge-status badge-grey">DWS</span></td>
+                                <td><span class="badge-status badge-green">Available</span></td>
+                                <td><a href="#" class="btn btn-outline btn-sm">Download</a></td>
+                            </tr>
+                            <tr>
+                                <td>2026-01-20</td>
+                                <td>GIS_Map_Qualifying_Period.pdf</td>
+                                <td>GIS Map</td>
+                                <td><span class="badge-status badge-grey">DWS</span></td>
+                                <td><span class="badge-status badge-green">Available</span></td>
+                                <td><a href="#" class="btn btn-outline btn-sm">Download</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- WIREFRAME 8: NOTIFICATIONS -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="notifications" class="wireframe">
+    <div class="wireframe-title">WIREFRAME 8 of 9 — Notifications &nbsp;|&nbsp; /Portal/Notifications</div>
+    <div class="browser-frame">
+        <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-url">https://vv.dws.gov.za/Portal/Notifications</span>
+        </div>
+        <div class="portal-header">
+            <div class="logo"><div class="logo-icon">V&V</div><div class="logo-text"><h2>DWS Water Use Portal</h2></div></div>
+            <div class="user-area"><div class="notification-bell">&#128276;<span class="badge">3</span></div><span>John Botha</span></div>
+        </div>
+        <div class="portal-body">
+            <div class="sidebar">
+                <a href="#"><span class="icon">&#127968;</span> Dashboard</a>
+                <a href="#"><span class="icon">&#128196;</span> My Cases</a>
+                <a href="#" class="active"><span class="icon">&#128276;</span> Notifications</a>
+                <a href="#"><span class="icon">&#128100;</span> My Profile</a>
+            </div>
+            <div class="main-content">
+                <div class="page-title">Notifications</div>
+                <div class="page-subtitle">All notifications across your cases</div>
+
+                <div class="card" style="padding: 0;">
+                    <div class="notif-item unread">
+                        <div class="notif-dot unread"></div>
+                        <div class="notif-body">
+                            <div class="notif-title">&#128233; Letter 1 (S35(1)) issued for Farm Klipfontein 567/8</div>
+                            <div class="notif-desc">A Section 35(1) notice has been issued. Please review and respond by 2026-04-16. <a href="#" style="color: #2e86de;">View Letter</a></div>
+                        </div>
+                        <div class="notif-time">2026-03-01<br>09:15</div>
+                    </div>
+                    <div class="notif-item unread">
+                        <div class="notif-dot unread"></div>
+                        <div class="notif-body">
+                            <div class="notif-title">&#128172; DWS replied to your comment — Farm Klipfontein 567/8</div>
+                            <div class="notif-desc">J. van der Merwe responded to your query about required documents. <a href="#" style="color: #2e86de;">View Comment</a></div>
+                        </div>
+                        <div class="notif-time">2026-02-22<br>11:30</div>
+                    </div>
+                    <div class="notif-item unread">
+                        <div class="notif-dot unread"></div>
+                        <div class="notif-body">
+                            <div class="notif-title">&#128196; Case status changed — Farm Rietfontein 234/5</div>
+                            <div class="notif-desc">Your case has progressed to: Field & Crop + SAPWAT Modelling (CP12). <a href="#" style="color: #2e86de;">View Case</a></div>
+                        </div>
+                        <div class="notif-time">2026-02-25<br>14:20</div>
+                    </div>
+                    <div class="notif-item">
+                        <div class="notif-dot read"></div>
+                        <div class="notif-body">
+                            <div class="notif-title">&#10003; Account approved — Property linked</div>
+                            <div class="notif-desc">Your account has been verified and linked to Farm Klipfontein 567/8 and Farm Rietfontein 234/5.</div>
+                        </div>
+                        <div class="notif-time">2026-01-15<br>10:00</div>
+                    </div>
+                    <div class="notif-item">
+                        <div class="notif-dot read"></div>
+                        <div class="notif-body">
+                            <div class="notif-title">&#128274; MFA enabled successfully</div>
+                            <div class="notif-desc">Two-factor authentication has been activated on your account.</div>
+                        </div>
+                        <div class="notif-time">2026-01-14<br>16:45</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- WIREFRAME 9: LODGE PROTEST -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="protest" class="wireframe">
+    <div class="wireframe-title">WIREFRAME 9 of 9 — Lodge Protest &nbsp;|&nbsp; /Portal/Cases/{caseId}/Protest</div>
+    <div class="browser-frame">
+        <div class="browser-bar">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-url">https://vv.dws.gov.za/Portal/Cases/3f2a7c1b-.../Protest</span>
+        </div>
+        <div class="portal-header">
+            <div class="logo"><div class="logo-icon">V&V</div><div class="logo-text"><h2>DWS Water Use Portal</h2></div></div>
+            <div class="user-area"><span>John Botha</span></div>
+        </div>
+        <div class="portal-body">
+            <div class="sidebar">
+                <a href="#"><span class="icon">&#127968;</span> Dashboard</a>
+                <a href="#" class="active"><span class="icon">&#128196;</span> My Cases</a>
+            </div>
+            <div class="main-content">
+                <div class="page-title">Farm Klipfontein 567/8 — Protest</div>
+                <div class="tabs">
+                    <div class="tab">Overview</div>
+                    <div class="tab">Correspondence</div>
+                    <div class="tab">Documents</div>
+                    <div class="tab">Comments</div>
+                    <div class="tab active">Protest</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h3>Lodge a Formal Protest</h3></div>
+                    <div style="padding: 12px; background: #f8d7da; border-radius: 4px; font-size: 12px; color: #721c24; margin-bottom: 16px;">
+                        <strong>Important:</strong> A formal protest is a legal objection to the ELU determination made by DWS.
+                        This should only be used if you disagree with the findings in your Section 35 letter.
+                        For general queries, please use the Comments tab instead.
+                    </div>
+                    <div class="form-group">
+                        <label>Reason for Protest *</label>
+                        <select class="form-control">
+                            <option value="">-- Select reason --</option>
+                            <option>Disagree with determined ELU volume</option>
+                            <option>Disagree with crop/hectare calculations</option>
+                            <option>Disagree with lawfulness determination</option>
+                            <option>Incorrect property/owner information</option>
+                            <option>New evidence not considered</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Detailed Description of Protest *</label>
+                        <textarea class="form-control" style="min-height: 120px;" placeholder="Please describe in detail why you are protesting the determination. Include specific references to volumes, hectares, or findings you dispute..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Supporting Documents</label>
+                        <div class="upload-zone" style="padding: 20px;">
+                            &#128206; Attach supporting evidence (affidavits, legal opinions, counter-evidence)<br>
+                            <span style="font-size: 11px;">PDF, JPEG, PNG, DOC &middot; Max 25 MB per file</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                        <div style="font-size: 11px; color: #888;">
+                            <input type="checkbox" id="confirm"> <label for="confirm" style="display: inline;">I confirm this protest is made in good faith and the information provided is true</label>
+                        </div>
+                        <button class="btn btn-warning">Submit Protest</button>
+                    </div>
+                </div>
+
+                <!-- Existing protests -->
+                <div class="card">
+                    <div class="card-header"><h3>Protest History</h3></div>
+                    <div style="text-align: center; padding: 24px; color: #888; font-size: 13px;">
+                        No protests have been lodged for this case.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showWireframe(id) {
+        document.querySelectorAll('.wireframe').forEach(w => w.classList.remove('active'));
+        document.querySelectorAll('.wireframe-nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.target.classList.add('active');
+        window.scrollTo(0, 0);
+    }
+</script>
+
+</body>
+</html>

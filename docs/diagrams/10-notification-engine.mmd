@@ -1,0 +1,60 @@
+flowchart TB
+    subgraph Triggers["Trigger Events"]
+        WF_Assigned["Workflow step assigned\nto officer"]
+        WF_Overdue["Workflow step overdue\n(> configured SLA)"]
+        WF_Complete["Workflow step completed"]
+        L_Sign["Letter ready\nfor signing"]
+        L_Issued["Letter issued\nto water user"]
+        L_OverduePre["Response due in 7 days\n(advance warning)"]
+        L_OverdueOn["Response due today\n(on due date)"]
+        L_RespRecv["Letter response received"]
+        L3_Issued["Letter 3 issued\n(ELU confirmed)"]
+        Status_Changed["Case status changed"]
+        Unreg_Found["Unregistered user identified"]
+        Import_Done["Data import completed"]
+    end
+
+    subgraph NotifSvc["Notification Service (INotificationService)"]
+        InApp["In-App Notification\n(bell icon + notification drawer)"]
+        EmailQ["Email Queue\n(SMTP / SendGrid)"]
+    end
+
+    subgraph BgJobs["Background Jobs (Hangfire / BackgroundService)"]
+        Every15["Every 15 min\nProcess email send queue"]
+        EveryHr["Every hour\nCheck overdue workflow steps\nGenerate overdue notifications"]
+        Daily["Daily at 06:00\nLetter due-date warnings (7-day)\nLetters past due date\nDaily summaries for Project Managers\nDaily summaries for Regional Managers"]
+        Weekly["Weekly Monday 08:00\nCatchment progress report\nSend to all managers"]
+    end
+
+    subgraph Recipients["Notification Recipients"]
+        Officer["Assigned Officer\n(Validator / Capturer)"]
+        RegMgr["Regional Manager"]
+        NatMgr["National Manager"]
+        PublicU["Water User\n(Public Portal)"]
+    end
+
+    subgraph Store["Notification Record"]
+        NotifRec[("Notification\n(ApplicationUserId or PublicUserId,\nType, Subject, Body, ActionUrl\nIsRead, EmailSent)")]
+    end
+
+    WF_Assigned --> InApp & EmailQ --> Officer
+    WF_Overdue --> InApp & EmailQ --> Officer & RegMgr
+    WF_Complete --> InApp --> Officer
+    L_Sign --> InApp & EmailQ --> RegMgr
+    L_Issued --> EmailQ --> PublicU
+    L_OverduePre --> InApp --> Officer
+    L_OverdueOn --> InApp & EmailQ --> Officer & RegMgr
+    L_RespRecv --> InApp & EmailQ --> Officer
+    L3_Issued --> EmailQ --> PublicU
+    Status_Changed --> EmailQ --> PublicU
+    Unreg_Found --> InApp --> RegMgr
+    Import_Done --> InApp --> RegMgr & NatMgr
+
+    BgJobs --> NotifSvc
+    InApp & EmailQ --> NotifRec
+
+    style Triggers fill:#ffe6e6,stroke:#cc0000
+    style NotifSvc fill:#e6ffe6,stroke:#006600
+    style BgJobs fill:#fff3e6,stroke:#cc6600
+    style Recipients fill:#e6f3ff,stroke:#0066cc
+    style Store fill:#e6e6ff,stroke:#0000cc

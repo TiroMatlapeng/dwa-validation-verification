@@ -1,0 +1,1537 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<meta name="Originator" content="Microsoft Word 15">
+<!--[if gte mso 9]>
+<xml>
+<o:DocumentProperties>
+  <o:Title>DWA V&amp;V System — Solution Design Document</o:Title>
+  <o:Author>Department of Water and Sanitation</o:Author>
+</o:DocumentProperties>
+<o:OfficeDocumentSettings>
+  <o:AllowPNG/>
+</o:OfficeDocumentSettings>
+<w:WordDocument>
+  <w:View>Print</w:View>
+  <w:Zoom>100</w:Zoom>
+  <w:SpellingState>Clean</w:SpellingState>
+  <w:GrammarState>Clean</w:GrammarState>
+  <w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+/* ── Page Setup ── */
+@page {
+    size: A4;
+    margin: 2.5cm 2cm 2.5cm 2.5cm;
+}
+@page :first {
+    margin-top: 0;
+}
+
+/* ── Base Typography ── */
+body {
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+    margin: 0;
+    padding: 0;
+}
+
+/* ── Cover Page ── */
+.cover-page {
+    page-break-after: always;
+    text-align: center;
+    padding-top: 6cm;
+}
+.cover-logo-area {
+    margin-bottom: 3cm;
+}
+.cover-logo-text {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #003366;
+    letter-spacing: 2pt;
+    text-transform: uppercase;
+    padding: 10pt 0;
+    border-top: 3pt solid #003366;
+    border-bottom: 3pt solid #003366;
+}
+.cover-title {
+    font-size: 26pt;
+    font-weight: bold;
+    color: #003366;
+    margin-top: 2cm;
+    line-height: 1.2;
+}
+.cover-subtitle {
+    font-size: 14pt;
+    color: #555;
+    margin-top: 0.5cm;
+    font-style: italic;
+}
+.cover-meta {
+    margin-top: 4cm;
+    font-size: 10pt;
+    color: #444;
+}
+.cover-meta table {
+    margin: 0 auto;
+    border-collapse: collapse;
+    text-align: left;
+}
+.cover-meta td {
+    padding: 3pt 12pt;
+    vertical-align: top;
+}
+.cover-meta .label {
+    font-weight: bold;
+    color: #003366;
+    width: 140pt;
+}
+
+/* ── Document Control ── */
+.doc-control {
+    page-break-after: always;
+}
+.doc-control h2 {
+    font-size: 14pt;
+    color: #003366;
+    border-bottom: 1pt solid #003366;
+    padding-bottom: 4pt;
+    margin-top: 24pt;
+}
+.doc-control table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8pt;
+    font-size: 10pt;
+}
+.doc-control th {
+    background-color: #003366;
+    color: white;
+    padding: 6pt 8pt;
+    text-align: left;
+    font-weight: bold;
+}
+.doc-control td {
+    padding: 5pt 8pt;
+    border: 1pt solid #ccc;
+}
+.doc-control tr:nth-child(even) td {
+    background-color: #f5f7fa;
+}
+
+/* ── Table of Contents ── */
+.toc {
+    page-break-after: always;
+}
+.toc h2 {
+    font-size: 18pt;
+    color: #003366;
+    margin-bottom: 16pt;
+}
+.toc-entry {
+    display: block;
+    padding: 3pt 0;
+    text-decoration: none;
+    color: #1a1a1a;
+    font-size: 11pt;
+}
+.toc-entry:hover {
+    color: #003366;
+}
+.toc-l1 {
+    font-weight: bold;
+    margin-top: 6pt;
+}
+.toc-l2 {
+    padding-left: 24pt;
+}
+.toc-l3 {
+    padding-left: 48pt;
+    font-size: 10pt;
+    color: #444;
+}
+.toc-number {
+    display: inline-block;
+    width: 40pt;
+}
+.toc-number-l2 {
+    display: inline-block;
+    width: 48pt;
+}
+
+/* ── Headings ── */
+h1 {
+    font-size: 20pt;
+    color: #003366;
+    border-bottom: 2pt solid #003366;
+    padding-bottom: 6pt;
+    margin-top: 36pt;
+    margin-bottom: 12pt;
+    page-break-before: always;
+}
+h1:first-of-type {
+    page-break-before: avoid;
+}
+h2 {
+    font-size: 15pt;
+    color: #003366;
+    margin-top: 24pt;
+    margin-bottom: 8pt;
+    border-bottom: 1pt solid #d0d7e0;
+    padding-bottom: 4pt;
+}
+h3 {
+    font-size: 12pt;
+    color: #1a3a5c;
+    margin-top: 18pt;
+    margin-bottom: 6pt;
+}
+h4 {
+    font-size: 11pt;
+    color: #1a3a5c;
+    font-style: italic;
+    margin-top: 14pt;
+    margin-bottom: 4pt;
+}
+
+/* ── Paragraphs ── */
+p {
+    margin: 6pt 0;
+    text-align: justify;
+}
+
+/* ── Tables ── */
+table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10pt 0 16pt 0;
+    font-size: 10pt;
+}
+table.data-table th {
+    background-color: #003366;
+    color: white;
+    padding: 6pt 8pt;
+    text-align: left;
+    font-weight: bold;
+    font-size: 10pt;
+}
+table.data-table td {
+    padding: 5pt 8pt;
+    border: 1pt solid #ccc;
+    vertical-align: top;
+}
+table.data-table tr:nth-child(even) td {
+    background-color: #f5f7fa;
+}
+table.data-table .col-narrow {
+    width: 80pt;
+}
+
+/* ── Callout Boxes ── */
+.callout {
+    border-left: 4pt solid #003366;
+    background-color: #f0f4f8;
+    padding: 10pt 14pt;
+    margin: 12pt 0;
+    font-size: 10.5pt;
+}
+.callout-title {
+    font-weight: bold;
+    color: #003366;
+    margin-bottom: 4pt;
+}
+.callout-warn {
+    border-left-color: #cc6600;
+    background-color: #fff8f0;
+}
+.callout-success {
+    border-left-color: #006600;
+    background-color: #f0fff0;
+}
+
+/* ── Diagram Placeholders ── */
+.diagram-container {
+    border: 1pt solid #d0d7e0;
+    background-color: #fafbfc;
+    padding: 14pt;
+    margin: 14pt 0;
+    text-align: center;
+    page-break-inside: avoid;
+}
+.diagram-label {
+    font-size: 9pt;
+    color: #666;
+    font-style: italic;
+    margin-top: 8pt;
+}
+.diagram-title {
+    font-weight: bold;
+    color: #003366;
+    font-size: 10pt;
+    margin-bottom: 8pt;
+}
+
+/* ── Pre-formatted (for ASCII diagrams) ── */
+pre {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 9pt;
+    line-height: 1.3;
+    background-color: #f5f7fa;
+    border: 1pt solid #d0d7e0;
+    padding: 10pt;
+    margin: 10pt 0;
+    overflow-x: auto;
+    white-space: pre;
+    page-break-inside: avoid;
+}
+
+/* ── Lists ── */
+ul, ol {
+    margin: 6pt 0 6pt 18pt;
+    padding: 0;
+}
+li {
+    margin: 3pt 0;
+}
+
+/* ── Figure numbering ── */
+.figure-ref {
+    font-style: italic;
+    color: #555;
+}
+
+/* ── Footer ── */
+.footer {
+    font-size: 8pt;
+    color: #999;
+    text-align: center;
+    border-top: 1pt solid #ddd;
+    padding-top: 4pt;
+    margin-top: 24pt;
+}
+
+/* ── Page breaks ── */
+.page-break {
+    page-break-before: always;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- COVER PAGE                                                  -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="cover-page">
+
+    <div class="cover-logo-area">
+        <div class="cover-logo-text">Department of Water and Sanitation</div>
+    </div>
+
+    <div class="cover-title">
+        Validation &amp; Verification System<br>
+        Solution Design Document
+    </div>
+
+    <div class="cover-subtitle">
+        Electronic Information Management System for V&amp;V of<br>
+        Existing Lawful Water Use and Compulsory Licensing
+    </div>
+
+    <div class="cover-meta">
+        <table>
+            <tr><td class="label">Document Reference:</td><td>DWA-VV-SDD-2026-001</td></tr>
+            <tr><td class="label">Version:</td><td>1.0</td></tr>
+            <tr><td class="label">Date:</td><td>11 March 2026</td></tr>
+            <tr><td class="label">Classification:</td><td>Confidential</td></tr>
+            <tr><td class="label">Legislative Basis:</td><td>National Water Act (Act 38 of 1998), Sections 32&ndash;35</td></tr>
+            <tr><td class="label">Reference Document:</td><td>Requirements for Verifying the Lawfulness of Existing Water Use and Extent of Existing Lawful Water Use, Edition 3, July 2024 (DWS)</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- DOCUMENT CONTROL                                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="doc-control">
+
+    <h2>Document Control</h2>
+    <table>
+        <tr><th>Item</th><th>Detail</th></tr>
+        <tr><td>Document Title</td><td>DWA V&amp;V System &mdash; Solution Design Document</td></tr>
+        <tr><td>Document Number</td><td>DWA-VV-SDD-2026-001</td></tr>
+        <tr><td>Version</td><td>1.0</td></tr>
+        <tr><td>Status</td><td>Draft for Review</td></tr>
+        <tr><td>Prepared By</td><td>[Author Name]</td></tr>
+        <tr><td>Reviewed By</td><td>[Reviewer Name]</td></tr>
+        <tr><td>Approved By</td><td>[Approver Name]</td></tr>
+    </table>
+
+    <h2>Revision History</h2>
+    <table>
+        <tr><th>Version</th><th>Date</th><th>Author</th><th>Description</th></tr>
+        <tr><td>0.1</td><td>17 Feb 2026</td><td>[Author]</td><td>Initial draft &mdash; architecture and data model</td></tr>
+        <tr><td>0.2</td><td>28 Feb 2026</td><td>[Author]</td><td>Added workflow engine, calculator engine, letter service design</td></tr>
+        <tr><td>0.3</td><td>05 Mar 2026</td><td>[Author]</td><td>Added public portal, legal framework, ERD sub-diagrams</td></tr>
+        <tr><td>1.0</td><td>11 Mar 2026</td><td>[Author]</td><td>Consolidated design document for submission</td></tr>
+    </table>
+
+    <h2>Distribution List</h2>
+    <table>
+        <tr><th>Name</th><th>Role</th><th>Organisation</th></tr>
+        <tr><td>[Name]</td><td>Project Manager</td><td>DWS</td></tr>
+        <tr><td>[Name]</td><td>Solution Architect</td><td>[Company]</td></tr>
+        <tr><td>[Name]</td><td>Technical Lead</td><td>[Company]</td></tr>
+        <tr><td>[Name]</td><td>Business Analyst</td><td>DWS</td></tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TABLE OF CONTENTS                                           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="toc">
+    <h2>Table of Contents</h2>
+
+    <span class="toc-entry toc-l1"><span class="toc-number">1.</span> Executive Summary</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">2.</span> Business Context and Problem Statement</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">2.1</span> Legislative Mandate</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">2.2</span> The V&amp;V Process in Context</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">2.3</span> Current State and Challenges</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">2.4</span> Target State</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">3.</span> Legal Framework</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">3.1</span> Water Use Authorisation Types</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">3.2</span> Sections 32&ndash;35: The Legal Chain</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">3.3</span> Section 53: Enforcement Directives</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">3.4</span> The Qualifying Period</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">3.5</span> ELU Determination Logic</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">3.6</span> PAJA Compliance</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">4.</span> Solution Overview</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">4.1</span> Solution Architecture</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">4.2</span> Technology Stack</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">4.3</span> Deployment Architecture</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">5.</span> Organisational Model and Access Control</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">5.1</span> Organisational Hierarchy</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">5.2</span> Internal Roles and Permissions</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">5.3</span> Key Authorisation Rules</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">6.</span> V&amp;V Workflow Engine</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">6.1</span> Three-Phase Process</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">6.2</span> Phase 1: Project Inception (CP01&ndash;CP05)</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">6.3</span> Phase 2: Verification per Property (CP06&ndash;CP16)</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">6.4</span> Phase 3: Validation / Section 35 (CP17&ndash;CP21)</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">6.5</span> Workflow Engine Design</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">7.</span> Calculator Engine</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">7.1</span> Purpose and Scope</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">7.2</span> SAPWAT Calculator</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">7.3</span> ELU Calculator</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">7.4</span> Dam Volume Calculator</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">7.5</span> SFRA Calculator</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">8.</span> Letter and Correspondence Engine</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">8.1</span> Letter Types and Legal Basis</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">8.2</span> Section 35 Letter State Machine</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">8.3</span> Service of Documents</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">8.4</span> Tracking and Response Management</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">9.</span> Notification Engine</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">10.</span> Electronic Signature Service</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">11.</span> Public Portal</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">11.1</span> Purpose and Scope</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">11.2</span> Registration and Identity Verification</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">11.3</span> Portal Capabilities</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">11.4</span> Security and Data Isolation</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">12.</span> External System Integrations</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">13.</span> Data Model</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">13.1</span> Domain Overview</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">13.2</span> Geography and Organisation</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">13.3</span> Property and Ownership</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">13.4</span> Water Use and Calculations</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">13.5</span> Case Management and Workflow</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">13.6</span> Letters, Signatures and Documents</span>
+    <span class="toc-entry toc-l2"><span class="toc-number-l2">13.7</span> Public Portal</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">14.</span> Audit and Compliance</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">15.</span> Implementation Roadmap</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">16.</span> Risks and Mitigations</span>
+    <span class="toc-entry toc-l1"><span class="toc-number">17.</span> Appendices</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 1. EXECUTIVE SUMMARY                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>1. Executive Summary</h1>
+
+<p>The Department of Water and Sanitation (DWS) requires an electronic information management system to support the Validation and Verification (V&amp;V) of existing lawful water use (ELU) across South Africa, as mandated by Sections 32&ndash;35 of the National Water Act (Act 38 of 1998). This document presents the solution design for the <strong>DWA V&amp;V System</strong>.</p>
+
+<p>The system will manage approximately <strong>500,000 property records</strong> distributed across DWS provincial offices, regional offices, Water Management Areas (WMAs), Catchment Management Agencies (CMAs), and contracted service providers. The national target for completing all verification is <strong>2026</strong>.</p>
+
+<p>The solution delivers the following core capabilities:</p>
+
+<ul>
+    <li><strong>Workflow Engine</strong> &mdash; A state machine that drives each property through 21 control points across three phases: Project Inception, Verification, and Validation (Section 35). The engine enforces role-based guards, evidence requirements, and sequential processing.</li>
+    <li><strong>Calculator Engine</strong> &mdash; A dedicated, parameterised calculation module that performs SAPWAT crop water requirement modelling, ELU volume determination, dam volume calculation (Appendix D formulas), and stream flow reduction activity (SFRA) assessment.</li>
+    <li><strong>Letter and Correspondence Engine</strong> &mdash; Generates, tracks, and manages all seven Section 35 letter types, including electronic signature capture, batch processing, and statutory deadline management.</li>
+    <li><strong>Public Portal</strong> &mdash; A secure, externally-facing portal through which water users can view their case status, receive notifications, respond to letters, upload supporting documents, and lodge formal protests.</li>
+    <li><strong>External System Integrations</strong> &mdash; Bi-directional integration with WARMS (Water Authorisation and Registration Management System), eWULAAS (licence applications), the Surveyor General, and the Deeds Office.</li>
+    <li><strong>Audit and Compliance</strong> &mdash; An immutable audit trail that records every action, state transition, and decision, ensuring compliance with the Promotion of Administrative Justice Act (PAJA).</li>
+</ul>
+
+<p>The system is built on <strong>ASP.NET Core 10.0</strong> with <strong>Entity Framework Core 10.0</strong> and <strong>SQL Server 2022</strong>, aligning with DWS's existing technology environment (both WARMS and eWULAAS run on C#/ASP.NET/SQL Server). The architecture follows a layered pattern (Controllers &rarr; Services &rarr; Repositories &rarr; Database) with clear separation of concerns and dependency injection throughout.</p>
+
+<div class="callout">
+    <div class="callout-title">Key Business Outcome</div>
+    The system replaces the current fragmented approach &mdash; Microsoft Access databases, Excel spreadsheets, and paper-based correspondence &mdash; with a single, centralised platform that provides real-time visibility across all provinces and WMAs, enforces statutory procedures, and produces legally defensible ELU certificates.
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 2. BUSINESS CONTEXT AND PROBLEM STATEMENT                   -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>2. Business Context and Problem Statement</h1>
+
+<h2>2.1 Legislative Mandate</h2>
+
+<p>The National Water Act (Act 38 of 1998) fundamentally restructured water law in South Africa. Under the previous Water Act of 1956, water rights were tied to land ownership through the <em>riparian principle</em> &mdash; if you owned land alongside a river, you had rights to that water. The NWA decoupled water from land, making the Minister of Water Affairs and Forestry the custodian of all water resources.</p>
+
+<p>However, it was impractical to force every water user to immediately apply for a new licence. The NWA therefore created a transitional mechanism: water uses that were lawful before the Act commenced could continue as <strong>Existing Lawful Water Use (ELU)</strong> &mdash; a special entitlement with the same legal force as a licence &mdash; until replaced through compulsory licensing.</p>
+
+<p>The V&amp;V process is the mechanism through which DWS verifies which water uses qualify as ELU and determines the extent (volume) of each entitlement. It is governed by Sections 32&ndash;35 of the NWA and enforced through Section 53 directives.</p>
+
+<h2>2.2 The V&amp;V Process in Context</h2>
+
+<p>V&amp;V is Phase 1 of a broader water reform process:</p>
+
+<table class="data-table">
+    <tr><th>Phase</th><th>Process</th><th>Objective</th></tr>
+    <tr><td><strong>Phase 1</strong></td><td>Validation &amp; Verification (V&amp;V)</td><td>Determine who has ELU and how much &mdash; <em>this system</em></td></tr>
+    <tr><td><strong>Phase 2</strong></td><td>Compulsory Licensing</td><td>In water-stressed catchments, require all users (including ELU holders) to apply for new licences</td></tr>
+    <tr><td><strong>Phase 3</strong></td><td>Water Allocation</td><td>Allocate available water among applicants, considering the Reserve, equity, transformation, and international obligations</td></tr>
+</table>
+
+<p>The accuracy of V&amp;V directly affects compulsory licensing outcomes. An incorrect ELU determination does not just affect the individual water user &mdash; it distorts the entire water allocation for the catchment.</p>
+
+<h2>2.3 Current State and Challenges</h2>
+
+<p>The current V&amp;V process relies on:</p>
+
+<ul>
+    <li><strong>Microsoft Access databases</strong> maintained per catchment or per service provider, with no centralised view</li>
+    <li><strong>Excel spreadsheets</strong> for calculation tracking and progress reporting</li>
+    <li><strong>Paper-based correspondence</strong> for Section 35 letters, with manual tracking of delivery, due dates, and responses</li>
+    <li><strong>WARMS</strong> as the registration database, but with no direct integration to V&amp;V data</li>
+    <li><strong>No public-facing capability</strong> &mdash; water users have no visibility into their case status unless they contact DWS directly</li>
+</ul>
+
+<p>This fragmentation creates several risks:</p>
+
+<ul>
+    <li>No consolidated national view of V&amp;V progress across all 19 WMAs</li>
+    <li>Inconsistent application of the process between regional offices and service providers</li>
+    <li>Difficulty demonstrating PAJA compliance when ELU determinations are challenged at the Water Tribunal</li>
+    <li>Loss of institutional knowledge when staff or service providers change</li>
+    <li>Missed statutory deadlines for letter responses, leading to legal exposure</li>
+</ul>
+
+<h2>2.4 Target State</h2>
+
+<p>The DWA V&amp;V System will provide:</p>
+
+<ul>
+    <li>A <strong>single centralised platform</strong> accessible to all DWS offices, CMAs, and service providers</li>
+    <li><strong>Workflow enforcement</strong> ensuring every property follows the mandated 21-step process</li>
+    <li><strong>Automated calculations</strong> reducing manual error in ELU, dam volume, and SFRA determinations</li>
+    <li><strong>Digital correspondence</strong> with full lifecycle tracking from generation through delivery to response</li>
+    <li><strong>Public transparency</strong> through a secure portal giving water users direct visibility into their cases</li>
+    <li><strong>Complete audit trail</strong> providing defensible evidence for Water Tribunal proceedings</li>
+    <li><strong>Real-time reporting</strong> across all provinces and WMAs</li>
+</ul>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 3. LEGAL FRAMEWORK                                          -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>3. Legal Framework</h1>
+
+<p>Every decision the system records, every letter it generates, and every calculation it performs traces back to specific provisions of the National Water Act. This section establishes the legal foundation that governs the system's design.</p>
+
+<h2>3.1 Water Use Authorisation Types</h2>
+
+<p>Under the NWA, all water use must fall into one of four categories, forming a hierarchy from least to most regulated:</p>
+
+<table class="data-table">
+    <tr><th>#</th><th>Type</th><th>Description</th><th>Registration?</th><th>Licence?</th></tr>
+    <tr><td>1</td><td><strong>Schedule 1 Use</strong></td><td>Small domestic use: washing, cooking, drinking, small food gardens, non-commercial livestock</td><td>No</td><td>No</td></tr>
+    <tr><td>2</td><td><strong>General Authorisation</strong></td><td>Volumes above Schedule 1 but within limits set per catchment by Government Gazette</td><td>May be required</td><td>No</td></tr>
+    <tr><td>3</td><td><strong>Existing Lawful Use (ELU)</strong></td><td>Water use lawful before the NWA, exercised during the qualifying period. A S35(4) certificate = licence</td><td>Required (WARMS)</td><td>No (until compulsory licensing)</td></tr>
+    <tr><td>4</td><td><strong>Licensed Water Use</strong></td><td>Any use exceeding GA, or any use after compulsory licensing replaces ELU</td><td>Yes</td><td>Yes</td></tr>
+</table>
+
+<div class="callout callout-success">
+    <div class="callout-title">Key Point</div>
+    An ELU certificate issued under Section 35(4) carries the <strong>same legal weight as a licence</strong>. It is not a lesser entitlement &mdash; it is a full, legally recognised authorisation to use water.
+</div>
+
+<h2>3.2 Sections 32&ndash;35: The Legal Chain</h2>
+
+<p>These four sections work together as a logical chain, each building on the previous one:</p>
+
+<h3>Section 32 &mdash; Definition of ELU</h3>
+<p>Defines existing lawful water use as a water use which has taken place <em>at any time during a period of two years immediately before the date of commencement of this Act</em>, and which was authorised by or under any law in force immediately before that date. This covers permits issued under the 1956 Water Act as well as uses that did not require permits (irrigation, dams, forestry).</p>
+
+<h3>Section 33 &mdash; Declaration of ELU (Safety Net)</h3>
+<p>Extends ELU to cover two specific situations where water use did <strong>not</strong> happen during the qualifying period:</p>
+
+<ol>
+    <li><strong>Discontinued for good reason</strong>: The use was lawful but was stopped before or during the qualifying period for a legitimate reason (financial hardship, equipment breakdown, death of owner, drought). The test is restrictive and objective.</li>
+    <li><strong>Steps taken in good faith</strong>: The use never actually happened, but it would have been lawful, and the person took reasonable, demonstrable steps toward implementing it before the NWA commenced (e.g., installing irrigation equipment, establishing plantations).</li>
+</ol>
+
+<p>Section 33 is <strong>not</strong> a mechanism to revive long-abandoned water use or to create new entitlements. Each application is assessed on its own merits.</p>
+
+<h3>Section 34 &mdash; Authority to Continue</h3>
+<p>Provides the legal bridge: a person with ELU may continue using water under the same conditions until that use is replaced by a licence. Without Section 34, there would be a gap between the old and new systems.</p>
+
+<h3>Section 35 &mdash; Verification Process</h3>
+<p>This is the operational section that the system implements. It empowers DWS to require persons claiming ELU to apply for verification. It determines both the <strong>existence</strong> and <strong>extent</strong> (volume) of the ELU. Persons who do not apply when requested may not continue to use the water. Successful verification results in a <strong>Section 35(4) certificate</strong>. Dissatisfied water users may appeal to the Water Tribunal.</p>
+
+<h2>3.3 Section 53: Enforcement Directives</h2>
+
+<p>Section 53 is separate from the verification process &mdash; it is the <strong>enforcement mechanism</strong> that gives DWS the power to compel compliance through directives. In the V&amp;V context:</p>
+
+<table class="data-table">
+    <tr><th>Situation</th><th>DWS Action</th><th>Legal Basis</th></tr>
+    <tr><td>Water user ignores Letter 1 (notice to apply)</td><td>Issue Letter 1A &mdash; directive compelling the user to apply</td><td>S53(1)</td></tr>
+    <tr><td>Water user ignores Letter 2 (request for information)</td><td>Issue Letter 2A &mdash; directive compelling the user to provide information</td><td>S35(1) read with S53(1)</td></tr>
+    <tr><td>Verification reveals unlawful water use</td><td>Issue Letter 4A &mdash; notice of intent to direct the user to stop</td><td>S53(1)</td></tr>
+    <tr><td>After Letter 4A notice period expires</td><td>Issue Letters 4 &amp; 5 &mdash; directive to cease unlawful use</td><td>S53(1)</td></tr>
+</table>
+
+<div class="callout">
+    <div class="callout-title">The Distinction</div>
+    Section 35 is the process. Section 53 is the enforcement mechanism. Section 35 asks. Section 53 compels.
+</div>
+
+<h2>3.4 The Qualifying Period</h2>
+
+<p>The qualifying period is the 2-year window immediately before the NWA commenced on 1 October 1998:</p>
+
+<table class="data-table">
+    <tr><th>Water Source</th><th>Qualifying Period</th><th>Rationale</th></tr>
+    <tr><td><strong>Surface water</strong> (rivers, dams, irrigation)</td><td>1 October 1997 &ndash; 1 October 1999</td><td>Section 32(1) &mdash; 2 years before commencement</td></tr>
+    <tr><td><strong>Groundwater</strong> (boreholes)</td><td>1 October 1996 &ndash; 1 October 1998</td><td>Groundwater outside proclaimed areas was "private water" under the 1956 Act</td></tr>
+</table>
+
+<p>The qualifying period is the evidentiary anchor for every V&amp;V determination. All satellite imagery evidence must originate from or relate to this window. GIS digitising compares qualifying-period fields and dams against current-period fields and dams. The delta between qualifying and current use determines what is lawful, what is unlawful, and what represents an increase or decrease.</p>
+
+<div class="callout callout-warn">
+    <div class="callout-title">Critical Rule</div>
+    Only circumstances and factors that existed prior to the commencement of the NWA (1 October 1998) may be considered in determining whether a water use qualifies as ELU. Subsequent behaviour by a water user is irrelevant to the determination.
+</div>
+
+<h2>3.5 ELU Determination Logic</h2>
+
+<p>The system determines the lawfulness and extent of water use for each property through the following decision process:</p>
+
+<pre>
+    Property under investigation
+              |
+              v
+    Was water use exercised during the qualifying period?
+         |                    |
+        YES                  NO
+         |                    |
+    Section 32          Was it discontinued for good reason? (S33)
+    ELU by              OR were steps taken in good faith? (S33)
+    definition               |                    |
+         |                  YES                  NO
+         |                   |                    |
+         |              Section 33           NOT ELU
+         |              ELU by               Unlawful use
+         |              declaration
+         |                   |
+         +-------+-----------+
+                 |
+        Determine EXTENT of ELU (volume)
+        - GIS analysis (qualifying vs current)
+        - SAPWAT modelling
+        - Dam volumes
+        - SFRA calculations
+                 |
+        Compare qualifying period use vs current use
+         |              |              |
+       Same          Increase       Decrease
+         |              |              |
+    ELU confirmed   Possible       Reduced use
+         |          unlawful           |
+    Letter 3       increase       Letter 3
+    S35(4)         Letters        S35(4)
+    Certificate    4A --> 4&5     (reduced volume)
+</pre>
+
+<h2>3.6 PAJA Compliance</h2>
+
+<p>The Promotion of Administrative Justice Act (PAJA, Act 3 of 2000) governs all administrative decisions in South Africa, including ELU determinations. Every ELU determination is an administrative action that must be <strong>lawful, reasonable, and procedurally fair</strong>. Water users whose rights are adversely affected have a constitutional right to be given reasons.</p>
+
+<p>Court and tribunal cases against DWS have mostly been lost due to <strong>procedural failures</strong>, not substantive errors. The system must therefore:</p>
+
+<ul>
+    <li>Record every state transition, letter issuance, and decision in an immutable audit log</li>
+    <li>Provide the water user with opportunity to respond at each stage</li>
+    <li>Support the appeal process (Water Tribunal referral)</li>
+    <li>Maintain traceable calculations and evidence to reconstruct how every ELU volume was determined</li>
+</ul>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 4. SOLUTION OVERVIEW                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>4. Solution Overview</h1>
+
+<h2>4.1 Solution Architecture</h2>
+
+<p>The system follows a layered architecture with clear separation between presentation, business logic, data access, and persistence:</p>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 1: Solution Architecture</div>
+<pre>
+   +-----------------------------------------------------------+
+   |                    USER INTERFACES                         |
+   |  +-------------------------+  +--------------------------+ |
+   |  | Internal MVC App        |  | Public Portal            | |
+   |  | (DWS/CMA Officials)     |  | (Water Users)            | |
+   |  | /Property /Validation   |  | /Portal/Dashboard        | |
+   |  | /Workflow /Letters       |  | /Portal/Cases            | |
+   |  | /Reports /GIS           |  | /Portal/Protests         | |
+   |  +-------------------------+  +--------------------------+ |
+   +----------------------------+------------------------------+
+                                |
+   +----------------------------v------------------------------+
+   |                     ENGINE LAYER                           |
+   |  +----------------+ +----------------+ +-----------------+ |
+   |  | Workflow Engine | | Calculator     | | Letter Service  | |
+   |  | (State Machine,| | Engine (SAPWAT,| | (Generate, Sign,| |
+   |  |  Guards, Roles) | | Dam, ELU, SFRA)| | Issue, Track)  | |
+   |  +----------------+ +----------------+ +-----------------+ |
+   |  +----------------+ +----------------+ +-----------------+ |
+   |  | Notification   | | Signature      | | Audit Service   | |
+   |  | Service (Email,| | Service (Pad.js| | (Immutable      | |
+   |  |  In-App, SMS)  | |  SHA-256)      | |  AuditLog)      | |
+   |  +----------------+ +----------------+ +-----------------+ |
+   +----------------------------+------------------------------+
+                                |
+   +----------------------------v------------------------------+
+   |                    SERVICE LAYER                           |
+   |  PropertyService  FileMasterService  ValidationService     |
+   |  IrrigationService  StoringService  ForestationService     |
+   |  ReportingService  PublicCaseService  IntegrationService   |
+   +----------------------------+------------------------------+
+                                |
+   +----------------------------v------------------------------+
+   |                   REPOSITORY LAYER (EF Core)               |
+   |  PropertyRepo  FileMasterRepo  WorkflowRepo  LetterRepo   |
+   |  AddressRepo  ForestationRepo  FieldAndCropRepo  ...      |
+   +----------------------------+------------------------------+
+                                |
+   +----------------------------v------------------------------+
+   |               SQL SERVER DATABASE (dwa_val_ver)            |
+   |  Core Domain | Organisation | Workflow | Correspondence    |
+   |  Properties  | Provinces    | States   | Letters           |
+   |  Owners      | WMAs         | Steps    | Signatures        |
+   |  FileMasters | OrgUnits     | AuditLog | Documents         |
+   |  Water Use   | Users        |          | Portal            |
+   +-----------------------------------------------------------+
+                                |
+   +----------------------------v------------------------------+
+   |                  EXTERNAL SYSTEMS                          |
+   |  WARMS      eWULAAS     Surveyor General    Deeds Office  |
+   |  (daily     (on         (on demand          (on demand    |
+   |   batch)    demand)      at CP09)            at CP09)     |
+   +-----------------------------------------------------------+
+</pre>
+    <div class="diagram-label">Refer to Appendix A, Figure A.1 for the detailed Mermaid diagram (01-system-architecture.mmd)</div>
+</div>
+
+<h2>4.2 Technology Stack</h2>
+
+<table class="data-table">
+    <tr><th>Layer</th><th>Technology</th><th>Rationale</th></tr>
+    <tr><td>Web Framework</td><td>ASP.NET Core 10.0 (MVC + Razor Views)</td><td>Aligns with DWS existing technology estate (WARMS, eWULAAS)</td></tr>
+    <tr><td>ORM</td><td>Entity Framework Core 10.0</td><td>Code-first migrations, LINQ queries, strong typing</td></tr>
+    <tr><td>Database</td><td>SQL Server 2022</td><td>Enterprise-grade, familiar to DWS IT, supports row-level security</td></tr>
+    <tr><td>PDF Generation</td><td>QuestPDF</td><td>Open-source, .NET-native, production-quality PDF output</td></tr>
+    <tr><td>Signature Capture</td><td>SignaturePad.js + SHA-256</td><td>Canvas-based drawing with cryptographic integrity verification</td></tr>
+    <tr><td>Background Jobs</td><td>Hangfire / BackgroundService</td><td>Email queue processing, SLA monitoring, scheduled reports</td></tr>
+    <tr><td>Authentication</td><td>ASP.NET Core Identity</td><td>Separate cookie schemes for internal and external users</td></tr>
+    <tr><td>File Storage</td><td>Azure Blob Storage / filesystem</td><td>Scalable document storage with virus scanning</td></tr>
+</table>
+
+<h2>4.3 Deployment Architecture</h2>
+
+<p>The system is designed for deployment on DWS infrastructure or Azure Government cloud. SQL Server runs in a Docker container during development and on dedicated infrastructure in production. The internal MVC application and the public portal share the same codebase but operate under separate authentication schemes and MVC Areas.</p>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 5. ORGANISATIONAL MODEL AND ACCESS CONTROL                  -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>5. Organisational Model and Access Control</h1>
+
+<h2>5.1 Organisational Hierarchy</h2>
+
+<p>DWS operates a national-to-regional hierarchy that maps directly onto the case management access model:</p>
+
+<pre>
+    National DWS (Head Office - Pretoria)
+      |
+      +-- 9 Provincial DWS Offices
+            |
+            +-- Regional Offices / Water Management Areas (19 WMAs nationally)
+                  |
+                  +-- CMAs (Catchment Management Agencies, where established)
+                        |
+                        +-- Service Providers / Consultants (contracted field work)
+</pre>
+
+<p>A FileMaster case belongs to a <strong>WMA/Regional Office</strong>, and access is scoped by organisational unit. When a user is assigned to a province or WMA, they can only see and operate on cases in that scope, unless they hold a national-level role.</p>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 2: Organisational Hierarchy and Role Mapping</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.5 (05-org-hierarchy-and-roles.mmd)</div>
+</div>
+
+<h2>5.2 Internal Roles and Permissions</h2>
+
+<table class="data-table">
+    <tr><th>Role</th><th>Scope</th><th>Key Permissions</th></tr>
+    <tr><td><strong>SystemAdmin</strong></td><td>National</td><td>Manage all users, reference data, system configuration</td></tr>
+    <tr><td><strong>NationalManager</strong></td><td>National</td><td>View all cases across all provinces; approve escalations</td></tr>
+    <tr><td><strong>RegionalManager</strong></td><td>Province / WMA</td><td>Approve control point transitions in their WMA; countersign Section 35 letters</td></tr>
+    <tr><td><strong>Validator</strong></td><td>WMA / CMA</td><td>Create FileMaster cases; capture all field data; initiate letter issuance</td></tr>
+    <tr><td><strong>Capturer</strong></td><td>WMA / CMA</td><td>Capture and update field data only; cannot transition workflow or issue letters</td></tr>
+    <tr><td><strong>ReadOnly</strong></td><td>Any</td><td>View case data, audit trail, and reports &mdash; no modifications</td></tr>
+</table>
+
+<h2>5.3 Key Authorisation Rules</h2>
+
+<ul>
+    <li>Only <strong>Validator or above</strong> may create a new FileMaster case or advance a workflow control point</li>
+    <li>Only <strong>RegionalManager or above</strong> may approve/sign Section 35 letters (signatory delegation per NWA)</li>
+    <li>Letter 1 (S35(1)) must be served in person &mdash; the system must record the serving official</li>
+    <li>Capturer may update field data on a case already created by a Validator, but only within their own organisational unit</li>
+    <li>All queries are filtered by <strong>OrganisationalUnit</strong> &mdash; no cross-office access below NationalManager</li>
+</ul>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 6. V&V WORKFLOW ENGINE                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>6. V&amp;V Workflow Engine</h1>
+
+<h2>6.1 Three-Phase Process</h2>
+
+<p>The V&amp;V process is structured into three phases with 21 control points. Phase 1 operates at the catchment level (all properties together). Phase 2 operates per individual property. Phase 3 is the formal Section 35 validation process.</p>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 3: V&amp;V Workflow &mdash; Three Phases, 21 Control Points</div>
+<pre>
+  Phase 1: Project Inception (Catchment-level)
+  =============================================
+  CP01  Obtain WARMS Database &amp; Perform Audit
+  CP02  Identify Unregistered Users (GIS analysis)
+  CP03  V&amp;V Database Analysis &amp; Record Status
+  CP04  Project Inception Report
+  CP05  Public Participation Session 1
+        |
+        v
+  Phase 2: Verification (Per property)
+  =============================================
+  CP06  Evaluate WARMS Registration Information
+  CP07  Obtain Supportive Spatial Information
+  CP08  Obtain Other Supportive Information
+  CP09  Property &amp; Source Evaluation
+  CP10  Evaluate Additional Information
+  CP11  GIS Analysis &amp; Field Digitising
+  CP12  Field &amp; Crop + SAPWAT Modelling
+  CP13  Calculate ELU / Lawful / Unlawful
+  CP14  Update V&amp;V Database
+  CP15  Calculate Dam Volumes (if applicable)
+  CP16  Calculate Stream Flow Reduction (if applicable)
+        |
+        v
+  Phase 3: Validation / Section 35
+  =============================================
+  CP17  Public Participation Session 2
+  CP18  Field Visit &amp; Letter Dissemination
+  CP19  Section 35 Correspondence
+  CP20  Section 35 Process Tracking (Letter state machine)
+  CP21  Project Control &amp; Reporting
+</pre>
+    <div class="diagram-label">Refer to Appendix A, Figure A.2 (02-workflow-phases.mmd)</div>
+</div>
+
+<h2>6.2 Phase 1: Project Inception (CP01&ndash;CP05)</h2>
+
+<p>Phase 1 establishes the scope and baseline for the V&amp;V project within a catchment area. It processes all properties collectively before individual verification begins.</p>
+
+<table class="data-table">
+    <tr><th>CP</th><th>Activity</th><th>Key Outputs</th><th>Evidence Required</th></tr>
+    <tr><td>CP01</td><td>WARMS Database Audit</td><td>New FileMaster records created; ownership changes flagged</td><td>WARMS export date recorded</td></tr>
+    <tr><td>CP02</td><td>Identify Unregistered Users</td><td>Unregistered water use flagged via GIS analysis on current satellite imagery</td><td>Count of unregistered users captured</td></tr>
+    <tr><td>CP03</td><td>Database Analysis &amp; Record Status</td><td>All records categorised per Appendix B validation statuses</td><td>All FileMasters have a ValidationStatus</td></tr>
+    <tr><td>CP04</td><td>Project Inception Report</td><td>Scope, totals, status breakdown, resource plan</td><td>Report signed by Regional Manager</td></tr>
+    <tr><td>CP05</td><td>Public Participation Session 1</td><td>Stakeholder notification; media, industry, agriculture informed</td><td>Attendance registers and session minutes captured</td></tr>
+</table>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 4: Phase 1 Data Flow</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.7 (07-phase1-data-flow.mmd)</div>
+</div>
+
+<h2>6.3 Phase 2: Verification per Property (CP06&ndash;CP16)</h2>
+
+<p>Phase 2 is the core technical work. For each property, the system gathers evidence, performs calculations, and determines the ELU volume.</p>
+
+<table class="data-table">
+    <tr><th>CP</th><th>Activity</th><th>Data Written</th></tr>
+    <tr><td>CP06</td><td>Evaluate WARMS registration information</td><td>FileMaster, Irrigation, Storing, Forestation</td></tr>
+    <tr><td>CP07</td><td>Obtain supportive spatial information (SG boundaries, satellite imagery)</td><td>SateliteImage, Property (SG code verified)</td></tr>
+    <tr><td>CP08</td><td>Obtain other supportive information (field surveys, GWCA, Irrigation Board)</td><td>FileMaster (supportive info flags)</td></tr>
+    <tr><td>CP09</td><td>Property and source evaluation (title deeds, SG diagram, owner verification)</td><td>Property, PropertyOwner, PropertyOwnership, WaterSource</td></tr>
+    <tr><td>CP10</td><td>Evaluate additional information (permits, S32/33, transfers, GA)</td><td>Authorisation, Entitlement</td></tr>
+    <tr><td>CP11</td><td>GIS analysis and field digitising</td><td>FieldAndCrop, DamCalculation</td></tr>
+    <tr><td>CP12</td><td>Field and crop + SAPWAT modelling</td><td>FieldAndCrop.SAPWATCalculationResult</td></tr>
+    <tr><td>CP13</td><td>Calculate ELU (all 9 scenarios: lawful, unlawful, increase/decrease)</td><td>Irrigation (9 scenarios), Entitlement (volume confirmed)</td></tr>
+    <tr><td>CP14</td><td>Update V&amp;V database</td><td>All calculated data linked to WARMS registration number</td></tr>
+    <tr><td>CP15</td><td>Calculate dam volumes (Appendix D formulas)</td><td>DamCalculation (capacity), Storing (volumes)</td></tr>
+    <tr><td>CP16</td><td>Calculate stream flow reduction (SFRA/forestry)</td><td>Forestation (qualifying, current, ELU, lawful, unlawful)</td></tr>
+</table>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 5: Phase 2 Data Flow per Property</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.4 (04-data-flow-per-property.mmd)</div>
+</div>
+
+<h2>6.4 Phase 3: Validation / Section 35 (CP17&ndash;CP21)</h2>
+
+<p>Phase 3 is the formal legal process. After the technical verification work is complete, the case enters the Section 35 letter state machine, where findings are communicated to the water user and their response is managed.</p>
+
+<table class="data-table">
+    <tr><th>CP</th><th>Activity</th><th>Description</th></tr>
+    <tr><td>CP17</td><td>Public Participation Session 2</td><td>Field visits per small area; individual sessions with users; present findings</td></tr>
+    <tr><td>CP18</td><td>Field Visit &amp; Letter Dissemination</td><td>Present findings to users; issue Letter 1 (must be served in person)</td></tr>
+    <tr><td>CP19</td><td>Section 35 Correspondence</td><td>Post letters to non-attendees; track responses and statutory deadlines</td></tr>
+    <tr><td>CP20</td><td>Section 35 Process Tracking</td><td>Letter state machine manages escalation paths (1 &rarr; 1A &rarr; 2 &rarr; 3 &rarr; 4A &rarr; 4&amp;5)</td></tr>
+    <tr><td>CP21</td><td>Project Control &amp; Reporting</td><td>Progress reports; letter tracking summary; catchment-wide status</td></tr>
+</table>
+
+<h2>6.5 Workflow Engine Design</h2>
+
+<p>The workflow engine is implemented as a state machine with the following characteristics:</p>
+
+<ul>
+    <li><strong>State storage</strong>: FileMaster.WorkflowStateId (FK) &rarr; WorkflowState table (seeded with all 21 control points + Section 35 letter states)</li>
+    <li><strong>Transition guards</strong>: Each state transition is governed by a list of <code>ITransitionGuard</code> implementations that check evidence requirements and role permissions</li>
+    <li><strong>Audit</strong>: Every state transition writes to the immutable AuditLog (who, what, when, previous state, new state, notes)</li>
+    <li><strong>API</strong>: The engine exposes <code>CanTransition(user, fileMaster, targetState)</code> which returns a boolean and a reason string</li>
+    <li><strong>Notifications</strong>: Domain events fire on successful transitions, triggering the Notification Service</li>
+</ul>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 7. CALCULATOR ENGINE                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>7. Calculator Engine</h1>
+
+<h2>7.1 Purpose and Scope</h2>
+
+<p>The Calculator Engine is a dedicated, parameterised module that performs all scientific and volumetric calculations required by the V&amp;V process. It is implemented as a separate service (<code>ICalculatorEngine</code>) for the following reasons:</p>
+
+<ul>
+    <li><strong>Maintainability</strong>: Calculation logic changes independently of workflow or UI logic. Formula updates (e.g., revised shape factors, new SAPWAT calibrations) can be deployed without affecting other modules.</li>
+    <li><strong>Parameterisation</strong>: All constants (shape factors, catchment calibration data, scenario definitions) are stored as configuration, not hard-coded.</li>
+    <li><strong>Testability</strong>: Calculations can be unit-tested in isolation with known inputs and expected outputs.</li>
+    <li><strong>Auditability</strong>: Every calculation run is logged with its inputs, parameters, and outputs, providing a traceable evidence chain for Water Tribunal proceedings.</li>
+    <li><strong>Reusability</strong>: The same calculation logic serves both the internal application (batch processing) and the public portal (read-only result display).</li>
+</ul>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 6: Calculator Engine &mdash; Inputs and Outputs</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.8 (08-calculator-engine.mmd)</div>
+</div>
+
+<h2>7.2 SAPWAT Calculator</h2>
+
+<p>SAPWAT is the industry-standard model for estimating crop water requirements in South Africa. The calculator takes crop type, irrigation system, and field area as inputs and produces a water requirement in mm/ha/a, which is then converted to total cubic metres.</p>
+
+<table class="data-table">
+    <tr><th>Input</th><th>Source</th></tr>
+    <tr><td>Field area (hectares)</td><td>FieldAndCrop (from GIS digitising)</td></tr>
+    <tr><td>Crop type</td><td>CropType lookup table</td></tr>
+    <tr><td>Irrigation system</td><td>IrrigationSystem lookup table</td></tr>
+    <tr><td>Plant date / rotation factor</td><td>FieldAndCrop</td></tr>
+    <tr><td>Climate zone calibration</td><td>Catchment-based parameter table</td></tr>
+</table>
+
+<p><strong>Output</strong>: SAPWATCalculationResult (mm/ha/a) stored on each FieldAndCrop record, plus the derived total volume in m&sup3;.</p>
+
+<h2>7.3 ELU Calculator</h2>
+
+<p>The ELU Calculator determines the lawfulness and volume of water use by building all nine scenario categories (per the DWS requirements, Section 4.1&ndash;4.9) and comparing qualifying-period use against current-period use:</p>
+
+<table class="data-table">
+    <tr><th>Row</th><th>Category</th><th>Period</th></tr>
+    <tr><td>4.1</td><td>Proclamation Date / Previous Surveys</td><td>Historical</td></tr>
+    <tr><td>4.2</td><td>Possible Existing</td><td>Qualifying period</td></tr>
+    <tr><td>4.3</td><td>Possible Lawful</td><td>Qualifying period (with authorisation evidence)</td></tr>
+    <tr><td>4.4</td><td>Possible Existing Lawful (ELU)</td><td>Intersection of 4.2 and 4.3</td></tr>
+    <tr><td>4.5</td><td>Possible Unlawful</td><td>Use without authorisation</td></tr>
+    <tr><td>4.6</td><td>Registration (WARMS)</td><td>Self-reported registration</td></tr>
+    <tr><td>4.7</td><td>Present Day Use</td><td>Current satellite analysis</td></tr>
+    <tr><td>4.8</td><td>Possible Unlawful Increase / Decrease</td><td>Delta between current (4.7) and ELU (4.4)</td></tr>
+    <tr><td>4.9</td><td>General Authorisation</td><td>GA-covered use</td></tr>
+</table>
+
+<h2>7.4 Dam Volume Calculator</h2>
+
+<p>Two calculation methods are supported, per Appendix D of the DWS requirements:</p>
+
+<table class="data-table">
+    <tr><th>Method</th><th>Formula</th><th>When Used</th></tr>
+    <tr><td><strong>Method 1 (Wall Length)</strong></td><td>Slope = R1/C1; Depth = Fetch/Slope; Capacity = Wall Length &times; Fetch &times; Depth &times; Factor / 2</td><td>When wall length and contour data are available</td></tr>
+    <tr><td><strong>Method 2 (Area)</strong></td><td>Capacity = Area(ha) &times; Depth(m) &times; Factor &times; 1000</td><td>When dam surface area is known from GIS</td></tr>
+</table>
+
+<p><strong>Shape Factors</strong>: Triangle/ravine = 0.33; More square with bends = 0.4; More circular = 0.5</p>
+
+<h2>7.5 SFRA Calculator</h2>
+
+<p>Calculates stream flow reduction from forestry activities. Compares qualifying-period hectares and volumes against current-period hectares and volumes. Forestry that existed within the qualifying period has ELU regardless of whether it had a forestry permit (confirmed by 2024 Constitutional Court ruling).</p>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 8. LETTER AND CORRESPONDENCE ENGINE                         -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>8. Letter and Correspondence Engine</h1>
+
+<h2>8.1 Letter Types and Legal Basis</h2>
+
+<table class="data-table">
+    <tr><th>Letter</th><th>NWA Section</th><th>Purpose</th><th>Delivery</th></tr>
+    <tr><td><strong>Letter 1</strong></td><td>S35(1)</td><td>Notice to water user to apply for verification of their ELU</td><td><strong>Must be served in person</strong> (S162)</td></tr>
+    <tr><td><strong>Letter 1A</strong></td><td>S53(1)</td><td>Directive compelling the user to apply (non-responsive)</td><td>Registered post or as agreed</td></tr>
+    <tr><td><strong>Letter 2</strong></td><td>S35(3)(a)</td><td>Request for additional information</td><td>As agreed with user</td></tr>
+    <tr><td><strong>Letter 2A</strong></td><td>S53(1)</td><td>Directive to provide the requested information</td><td>Registered post or as agreed</td></tr>
+    <tr><td><strong>Letter 3</strong></td><td>S35(4)</td><td>ELU Certificate &mdash; formal confirmation of lawful water use extent</td><td>Registered post or as agreed</td></tr>
+    <tr><td><strong>Letter 4A</strong></td><td>S53(1)</td><td>Notice of intent to issue directive to stop unlawful use</td><td>Registered post</td></tr>
+    <tr><td><strong>Letters 4 &amp; 5</strong></td><td>S53(1)</td><td>Directive to cease unlawful water use</td><td>Registered post</td></tr>
+</table>
+
+<h2>8.2 Section 35 Letter State Machine</h2>
+
+<p>After the technical verification work is complete (CP16), the case enters the Section 35 letter state machine. This is a separate state machine nested within the overall workflow:</p>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 7: Section 35 Letter State Machine</div>
+<pre>
+  [CP16 Complete]
+       |
+       v
+  Letter 1 Issued (S35(1) - served in person)
+       |
+       +-- Response received (Agreed) ---------> Proceed to Letter 3
+       |
+       +-- Response received (Not Agreed) -----> Letter 2 (request info)
+       |                                              |
+       |                                              +-- Info returned --> Re-evaluate --> Letter 3
+       |                                              +-- No response --> Letter 2A (S53(1) directive)
+       |                                                                      |
+       |                                                                      +--> Proceed with available data
+       +-- No response (past due date) --------> Letter 1A (S53(1) directive)
+       |                                              |
+       |                                              +-- Complied --> Proceed to Letter 3
+       |                                              +-- Still no response --> enforcement
+       |
+       +-- Return to Sender -------------------> Investigate &amp; Reissue
+       |
+       v
+  Letter 3 Issued (S35(4) - ELU Certificate)
+       |
+       +-- All use lawful -----------> Update WARMS &amp; eWULAAS --> Case Complete
+       |
+       +-- Unlawful use found -------> Letter 4A (S53(1) - notice of intent)
+                                             |
+                                             v
+                                        Letters 4 &amp; 5 (S53(1) - directive to stop)
+                                             |
+                                             v
+                                        Enforcement Complete
+</pre>
+    <div class="diagram-label">Refer to Appendix A, Figure A.3 (03-section35-letter-statemachine.mmd)</div>
+</div>
+
+<h2>8.3 Service of Documents</h2>
+
+<p>The NWA Section 162 prescribes how legal notices must be served. Letter 1 has the strictest requirements:</p>
+
+<h3>For a Natural Person:</h3>
+<ol>
+    <li>Hand delivery to the person</li>
+    <li>If not possible &rarr; hand delivery to a responsible individual at their business or residential address</li>
+    <li>If not possible &rarr; registered mail</li>
+    <li>If address unknown &rarr; publish in the Government Gazette and a local newspaper</li>
+</ol>
+
+<h3>For a Juristic Person:</h3>
+<ol>
+    <li>Hand delivery to a responsible individual at the registered address or principal place of business</li>
+    <li>If not possible &rarr; conspicuously attach to the main entrance</li>
+    <li>If not possible &rarr; hand delivery to any member of the board of directors</li>
+</ol>
+
+<p>The system records the serving official's name, the physical delivery date, and the agreed method for subsequent communication.</p>
+
+<h2>8.4 Tracking and Response Management</h2>
+
+<p>For every letter issued, the system records:</p>
+
+<table class="data-table">
+    <tr><th>Field</th><th>Purpose</th></tr>
+    <tr><td>IssuedDate, SignedDate</td><td>When the letter was generated and signed</td></tr>
+    <tr><td>SignedByUserId</td><td>Which official signed (RegionalManager+ for S35 letters)</td></tr>
+    <tr><td>IssueMethod</td><td>InPerson, RegisteredPost, Email</td></tr>
+    <tr><td>ServingOfficialName</td><td>For in-person delivery: who served it</td></tr>
+    <tr><td>PhysicalDeliveryDate</td><td>When it was handed over</td></tr>
+    <tr><td>DueDate</td><td>Statutory response deadline</td></tr>
+    <tr><td>ResponseStatus</td><td>Agreed, NotAgreed, NoResponse, ReturnedToSender</td></tr>
+    <tr><td>AvailableInPortal</td><td>Whether the letter is visible in the public portal</td></tr>
+    <tr><td>PortalFirstViewedDate</td><td>When the user first opened it online</td></tr>
+    <tr><td>PortalAcknowledgedDate</td><td>When the user clicked "Acknowledge"</td></tr>
+</table>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 9. NOTIFICATION ENGINE                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>9. Notification Engine</h1>
+
+<p>The Notification Service manages both internal (DWS staff) and external (water user) notifications across multiple delivery channels.</p>
+
+<h3>Trigger Events</h3>
+
+<table class="data-table">
+    <tr><th>Event</th><th>Recipients</th><th>Channels</th></tr>
+    <tr><td>Workflow step assigned to officer</td><td>Assigned officer</td><td>In-app + email</td></tr>
+    <tr><td>Workflow step overdue (past SLA)</td><td>Officer + Regional Manager</td><td>In-app + email</td></tr>
+    <tr><td>Letter ready for signing</td><td>Regional Manager</td><td>In-app + email</td></tr>
+    <tr><td>Letter issued to water user</td><td>Water user (public portal)</td><td>Email + portal notification</td></tr>
+    <tr><td>Response due in 7 days (advance warning)</td><td>Assigned officer</td><td>In-app</td></tr>
+    <tr><td>Response due today</td><td>Officer + Regional Manager</td><td>In-app + email</td></tr>
+    <tr><td>Letter response received</td><td>Assigned officer</td><td>In-app + email</td></tr>
+    <tr><td>Letter 3 issued (ELU confirmed)</td><td>Water user</td><td>Email + SMS + portal</td></tr>
+    <tr><td>Case status changed</td><td>Water user</td><td>Email + portal</td></tr>
+    <tr><td>Unregistered user identified</td><td>Regional Manager</td><td>In-app</td></tr>
+</table>
+
+<h3>Background Jobs</h3>
+
+<table class="data-table">
+    <tr><th>Schedule</th><th>Job</th></tr>
+    <tr><td>Every 15 minutes</td><td>Process email send queue</td></tr>
+    <tr><td>Every hour</td><td>Check overdue workflow steps; generate overdue notifications</td></tr>
+    <tr><td>Daily at 06:00</td><td>Letter due-date warnings; daily summaries for managers</td></tr>
+    <tr><td>Weekly Monday 08:00</td><td>Catchment progress report to all managers</td></tr>
+</table>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 8: Notification Engine</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.10 (10-notification-engine.mmd)</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 10. ELECTRONIC SIGNATURE SERVICE                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>10. Electronic Signature Service</h1>
+
+<p>The Signature Service provides legally sound electronic signature capture for Section 35 letters. The process flow is:</p>
+
+<ol>
+    <li>Letter Service generates a PDF document</li>
+    <li>A <code>SignatureRequest</code> is created, targeting either an internal user (RegionalManager) or a public portal user</li>
+    <li>The recipient is notified and presented with a signing page</li>
+    <li><strong>SignaturePad.js</strong> captures the signature on an HTML canvas</li>
+    <li>The system records: signature image (PNG), timestamp, IP address, user agent, and the SHA-256 hash of the document at the time of signing</li>
+    <li>A <code>DigitalSignature</code> record is created with the signature hash for integrity verification</li>
+    <li>The signature image is embedded into the PDF, and the letter's status advances to "Signed"</li>
+</ol>
+
+<p>This approach provides cryptographic proof that the document has not been modified after signing (by comparing the document hash at signing against the current document hash).</p>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 9: Signature Capture and Verification Flow</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.11 (11-signature-flow.mmd)</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 11. PUBLIC PORTAL                                           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>11. Public Portal</h1>
+
+<h2>11.1 Purpose and Scope</h2>
+
+<p>The Public Portal is a secure, externally-facing module that gives water users direct visibility into how their validation case is being handled. It replaces the current practice of water users having to contact DWS by telephone or in writing to learn the status of their case.</p>
+
+<p>The portal operates under a <strong>separate security realm</strong> from the internal application, with its own identity store, authentication cookie scheme, and session management.</p>
+
+<h2>11.2 Registration and Identity Verification</h2>
+
+<p>External users follow a controlled registration process:</p>
+
+<ol>
+    <li>User visits the registration page and enters: name, ID number, email, phone, and optionally a property reference</li>
+    <li>System sends an email verification link; user confirms their email</li>
+    <li>System auto-matches the user to an existing PropertyOwner record (by ID number or email)</li>
+    <li>If no auto-match is found, a DWS officer manually reviews and links the account</li>
+    <li><strong>MFA is mandatory</strong> (TOTP authenticator app or SMS OTP) before the user can access any case data</li>
+    <li>User's account is activated and they can see their linked properties on the dashboard</li>
+</ol>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 10: Public Portal Registration and Data Flow</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.12 (12-public-portal.mmd)</div>
+</div>
+
+<h2>11.3 Portal Capabilities</h2>
+
+<table class="data-table">
+    <tr><th>Feature</th><th>Description</th></tr>
+    <tr><td><strong>Case Status View</strong></td><td>Read-only view of FileMaster case status, current workflow state, and history. Includes a visual progress timeline.</td></tr>
+    <tr><td><strong>Letter Access</strong></td><td>Download and view issued Section 35 letters. System tracks when the user first viewed each letter and when they acknowledged it.</td></tr>
+    <tr><td><strong>Electronic Signature</strong></td><td>Sign letters electronically through SignaturePad.js when a signature request is outstanding.</td></tr>
+    <tr><td><strong>Document Upload</strong></td><td>Upload supporting documents (title deeds, permits, field survey evidence). All uploads are virus-scanned before storage.</td></tr>
+    <tr><td><strong>Comments / Responses</strong></td><td>Submit written responses to Section 35 letters. Comments are bidirectional and threaded &mdash; both DWS officials and external users can participate. Read receipts tracked for both parties.</td></tr>
+    <tr><td><strong>Notifications</strong></td><td>Email notification when case state changes; in-app notification bell; SMS for critical notifications (e.g., Letter 3 issuance).</td></tr>
+    <tr><td><strong>Protest Lodging</strong></td><td>Lodge a formal protest against an ELU determination with supporting documents (affidavits, legal opinions, counter-evidence).</td></tr>
+</table>
+
+<h2>11.4 Security and Data Isolation</h2>
+
+<ul>
+    <li><strong>Separate identity store</strong>: PublicUser is a separate entity, not inheriting from ApplicationUser or IdentityUser</li>
+    <li><strong>Separate authentication cookie</strong>: Internal and external sessions cannot overlap</li>
+    <li><strong>Row-level data isolation</strong>: All portal queries are always scoped by PublicUserId &mdash; an external user can never see records for a property not linked to their account</li>
+    <li><strong>MFA mandatory</strong>: No case data is accessible without multi-factor authentication</li>
+    <li><strong>Shorter session timeout</strong>: External sessions expire faster than internal sessions</li>
+    <li><strong>DWS must approve links</strong>: A DWS Validator or above must approve the PublicUserProperty link before the user can see any case data</li>
+</ul>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 12. EXTERNAL SYSTEM INTEGRATIONS                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>12. External System Integrations</h1>
+
+<p>The V&amp;V System integrates with four external systems, all of which operate within the DWS/DRDLR technology ecosystem:</p>
+
+<table class="data-table">
+    <tr><th>System</th><th>Direction</th><th>Pattern</th><th>Trigger</th></tr>
+    <tr><td><strong>WARMS</strong></td><td>WARMS &rarr; V&amp;V</td><td>Daily batch (API or file extract)</td><td>Scheduled &mdash; new records and ownership changes</td></tr>
+    <tr><td><strong>WARMS</strong></td><td>V&amp;V &rarr; WARMS</td><td>Real-time API</td><td>On Letter 3 issuance &mdash; update registration with confirmed ELU volumes</td></tr>
+    <tr><td><strong>eWULAAS</strong></td><td>V&amp;V &rarr; eWULAAS</td><td>Real-time API</td><td>On demand &mdash; pre-populate licence application with property, owner, and ELU data</td></tr>
+    <tr><td><strong>Surveyor General</strong></td><td>SG &rarr; V&amp;V</td><td>On-demand query</td><td>At CP09 &mdash; retrieve farm boundaries and subdivision data by SG code</td></tr>
+    <tr><td><strong>Deeds Office</strong></td><td>Deeds &rarr; V&amp;V</td><td>On-demand query</td><td>At CP09 &mdash; retrieve owner and title deed data by title deed number</td></tr>
+</table>
+
+<p>Both WARMS and eWULAAS run on the same technology stack (C#/ASP.NET/SQL Server), which simplifies integration. The Surveyor General and Deeds Office integrations operate through DRDLR APIs.</p>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 11: External System Integration Patterns</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.13 (13-external-integrations.mmd)</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 13. DATA MODEL                                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>13. Data Model</h1>
+
+<h2>13.1 Domain Overview</h2>
+
+<p>The data model comprises approximately 50 entities organised into six logical groups. Each group is presented as a separate Entity Relationship Diagram (ERD) for clarity. All primary keys are GUIDs. Decimal columns use <code>decimal(18,2)</code> for volumes/areas and <code>decimal(9,6)</code> for geographic coordinates.</p>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 12: End-to-End Data Flow Across All Phases</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.14 (14-end-to-end-data-flow.mmd)</div>
+</div>
+
+<h2>13.2 ERD 1: Geography and Organisation</h2>
+
+<p>This group defines the spatial and organisational structure within which V&amp;V operates.</p>
+
+<table class="data-table">
+    <tr><th>Entity</th><th>Purpose</th><th>Key Fields</th></tr>
+    <tr><td><strong>Province</strong></td><td>9 South African provinces</td><td>ProvinceId, ProvinceName, ProvinceCode</td></tr>
+    <tr><td><strong>WaterManagementArea</strong></td><td>19 WMAs nationally</td><td>WmaId, WmaName, WmaCode, ProvinceId (FK)</td></tr>
+    <tr><td><strong>OrganisationalUnit</strong></td><td>DWS office (provincial, regional, CMA)</td><td>OrgUnitId, Name, Type, ProvinceId, WmaId</td></tr>
+    <tr><td><strong>ApplicationUser</strong></td><td>Internal DWS/CMA staff user</td><td>ApplicationUserId, EmployeeNumber, OrgUnitId (FK)</td></tr>
+</table>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 13: ERD 1 &mdash; Geography and Organisation</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.E1 (erd-01-geography-and-organisation.mmd)</div>
+</div>
+
+<h2>13.3 ERD 2: Property and Ownership</h2>
+
+<table class="data-table">
+    <tr><th>Entity</th><th>Purpose</th><th>Key Fields</th></tr>
+    <tr><td><strong>Property</strong></td><td>Farm / land parcel &mdash; central entity</td><td>SGCode, QuaternaryDrainage, WmaId, Latitude/Longitude, PropertySize</td></tr>
+    <tr><td><strong>PropertyOwner</strong></td><td>Natural or juristic person who owns property</td><td>IdentityNumber, CustomerTypeId, GenderId</td></tr>
+    <tr><td><strong>PropertyOwnership</strong></td><td>Many-to-many between owners and properties</td><td>TitleDeedNumber, TitleDeedDate</td></tr>
+    <tr><td><strong>Address</strong></td><td>Street address with Province and coordinates</td><td>Province, Latitude/Longitude</td></tr>
+</table>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 14: ERD 2 &mdash; Property and Ownership</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.E2 (erd-02-property-and-ownership.mmd)</div>
+</div>
+
+<h2>13.4 ERD 3: Water Use and Calculations</h2>
+
+<table class="data-table">
+    <tr><th>Entity</th><th>Purpose</th></tr>
+    <tr><td><strong>FieldAndCrop</strong></td><td>Per-field crop data: field area, crop type, plant date, rotation factor, irrigation system, SAPWAT result (mm/ha/a)</td></tr>
+    <tr><td><strong>Irrigation</strong></td><td>Water taking data: volume (m&sup3;), land area, crop area, all 9 scenario categories</td></tr>
+    <tr><td><strong>Storing</strong></td><td>Water storage: dam count, volumes per scenario</td></tr>
+    <tr><td><strong>Forestation</strong></td><td>SFRA data: qualifying vs current hectares, lawful/unlawful volumes, Pre-1972 flag</td></tr>
+    <tr><td><strong>DamCalculation</strong></td><td>Dam capacity calculation (Method 1 or 2, shape factor, capacity in m&sup3;)</td></tr>
+    <tr><td><strong>SateliteImage</strong></td><td>Satellite imagery metadata for qualifying and current periods</td></tr>
+    <tr><td><strong>Entitlement</strong></td><td>The outcome &mdash; verified ELU volume and type</td></tr>
+</table>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 15: ERD 3 &mdash; Water Use and Calculations</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.E3 (erd-03-water-use-and-calculations.mmd)</div>
+</div>
+
+<h2>13.5 ERD 4: Case Management and Workflow</h2>
+
+<table class="data-table">
+    <tr><th>Entity</th><th>Purpose</th></tr>
+    <tr><td><strong>FileMaster</strong></td><td>The V&amp;V case file per property &mdash; central to the workflow. Links to Property, WARMS registration, validation status, assigned validator.</td></tr>
+    <tr><td><strong>Validation</strong></td><td>Tracks a validation event (status, period, entitlement, property, assigned to)</td></tr>
+    <tr><td><strong>WorkflowState</strong></td><td>Reference table of all 21+ states (CP01&ndash;CP21 + Section 35 letter states)</td></tr>
+    <tr><td><strong>WorkflowInstance</strong></td><td>Tracks the active workflow for a FileMaster (current state, assigned to, status)</td></tr>
+    <tr><td><strong>WorkflowStepRecord</strong></td><td>Immutable record of each completed step (who, when, notes, validation errors)</td></tr>
+    <tr><td><strong>Authorisation</strong></td><td>Additional information records (permits, S32/33, transfers, GA, court decisions)</td></tr>
+    <tr><td><strong>AuditLog</strong></td><td>Immutable audit trail of all V&amp;V actions</td></tr>
+</table>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 16: ERD 4 &mdash; Case Management and Workflow</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.E4 (erd-04-case-management-and-workflow.mmd)</div>
+</div>
+
+<h2>13.6 ERD 5: Letters, Signatures and Documents</h2>
+
+<table class="data-table">
+    <tr><th>Entity</th><th>Purpose</th></tr>
+    <tr><td><strong>LetterType</strong></td><td>Reference: Letter 1, 1A, 2, 2A, 3, 4A, 4&amp;5 with NWA section references</td></tr>
+    <tr><td><strong>LetterIssuance</strong></td><td>Each letter issued for a case: generation, signing, delivery, response tracking, portal viewing, and acknowledgment</td></tr>
+    <tr><td><strong>Document</strong></td><td>File attachment (letter PDF, title deed, GIS map, upload) with virus scan status and SHA-256 hash</td></tr>
+    <tr><td><strong>DigitalSignature</strong></td><td>Cryptographic signature record: image, hash, IP, user agent, document hash at signing</td></tr>
+    <tr><td><strong>SignatureRequest</strong></td><td>Pending signature request linking a document to a user with status tracking</td></tr>
+</table>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 17: ERD 5 &mdash; Letters, Signatures and Documents</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.E5 (erd-05-letters-signatures-documents.mmd)</div>
+</div>
+
+<h2>13.7 ERD 6: Public Portal</h2>
+
+<table class="data-table">
+    <tr><th>Entity</th><th>Purpose</th></tr>
+    <tr><td><strong>PublicUser</strong></td><td>Self-registered water user: email, password hash, ID number, MFA status, registration date</td></tr>
+    <tr><td><strong>PublicUserProperty</strong></td><td>Join table linking public users to their properties (must be approved by DWS)</td></tr>
+    <tr><td><strong>CaseComment</strong></td><td>Bidirectional threaded comments: AuthorType (PublicUser or DWSOfficial), read receipts for both parties</td></tr>
+    <tr><td><strong>Protest</strong></td><td>Formal protest record: FileMasterId, PublicUserId, lodged date, status, resolution notes</td></tr>
+    <tr><td><strong>ProtestDocument</strong></td><td>Supporting documents for a protest (linked to Document)</td></tr>
+    <tr><td><strong>Notification</strong></td><td>Unified notification record for both internal and external users, supporting email, in-app, and SMS channels</td></tr>
+</table>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 18: ERD 6 &mdash; Public Portal</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.E6 (erd-06-public-portal.mmd)</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 14. AUDIT AND COMPLIANCE                                    -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>14. Audit and Compliance</h1>
+
+<p>Given the PAJA requirements and the likelihood of Water Tribunal challenges, the system implements a comprehensive, immutable audit trail:</p>
+
+<table class="data-table">
+    <tr><th>Aspect</th><th>Implementation</th></tr>
+    <tr><td><strong>Entity changes</strong></td><td>Every create, update, and delete on audited entities writes an AuditLog record with old and new values (JSON), the user, timestamp, and IP address</td></tr>
+    <tr><td><strong>Workflow transitions</strong></td><td>Every state change records the previous state, new state, who triggered it, when, and any notes or validation errors</td></tr>
+    <tr><td><strong>Letter lifecycle</strong></td><td>Generation, signing, issuance, delivery, response &mdash; each stage is timestamped and attributed to a user</td></tr>
+    <tr><td><strong>Calculation runs</strong></td><td>Every Calculator Engine execution records its inputs, parameters, and outputs for reproducibility</td></tr>
+    <tr><td><strong>Portal activity</strong></td><td>Document uploads, comment submissions, protest lodgings, letter views, and acknowledgments are all recorded</td></tr>
+    <tr><td><strong>Immutability</strong></td><td>AuditLog records can only be inserted, never updated or deleted. The database schema enforces this through permissions.</td></tr>
+</table>
+
+<div class="callout">
+    <div class="callout-title">Tribunal Defence</div>
+    When an ELU determination is challenged at the Water Tribunal, the system must be able to reconstruct the complete decision chain: what evidence was gathered, what calculations were performed, what communications were sent, what responses were received, and who made each decision at each step. The audit trail provides this.
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 15. IMPLEMENTATION ROADMAP                                  -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>15. Implementation Roadmap</h1>
+
+<p>The implementation is structured into eight phases over approximately 36 weeks:</p>
+
+<table class="data-table">
+    <tr><th>Phase</th><th>Duration</th><th>Focus</th><th>Key Deliverables</th></tr>
+    <tr><td><strong>Phase A</strong><br>Foundation</td><td>Weeks 1&ndash;4<br>Feb&ndash;Mar 2026</td><td>Data model, repository layer, DI registration</td><td>All entity models created; all repositories and interfaces; bug fixes; PropertyService and FileMasterController complete</td></tr>
+    <tr><td><strong>Phase B</strong><br>Workflow Engine</td><td>Weeks 5&ndash;8<br>Mar&ndash;Apr 2026</td><td>State machine, control points, guards</td><td>IWorkflowEngine; CP01&ndash;CP05 (Phase 1); CP06&ndash;CP16 (Phase 2); WorkflowController with gate rules</td></tr>
+    <tr><td><strong>Phase C</strong><br>Calculator Engine</td><td>Weeks 9&ndash;12<br>Apr&ndash;May 2026</td><td>SAPWAT, dam volumes, ELU, SFRA</td><td>All four calculators; integrated into workflow; FieldAndCrop, Dam, Storing, Forestation views</td></tr>
+    <tr><td><strong>Phase D</strong><br>Letter Engine</td><td>Weeks 13&ndash;16<br>May&ndash;Jun 2026</td><td>PDF generation, Section 35 state machine</td><td>QuestPDF templates; all 7 letter types; letter state machine; batch processing; LetterController</td></tr>
+    <tr><td><strong>Phase E</strong><br>Notify &amp; Sign</td><td>Weeks 17&ndash;20<br>Jun&ndash;Jul 2026</td><td>Notifications, electronic signatures</td><td>Notification model and service; email sending; background jobs; SignaturePad.js; digital signature storage and verification</td></tr>
+    <tr><td><strong>Phase F</strong><br>Public Portal</td><td>Weeks 21&ndash;26<br>Jul&ndash;Aug 2026</td><td>External-facing portal</td><td>PublicUser identity; registration flow; dashboard; case detail; document upload; comments; protests; security hardening; penetration testing</td></tr>
+    <tr><td><strong>Phase G</strong><br>Integration</td><td>Weeks 27&ndash;32<br>Aug&ndash;Sep 2026</td><td>External systems, reporting, data migration</td><td>WARMS bi-directional; eWULAAS; SG and Deeds; reporting service; MS Access data migration tools</td></tr>
+    <tr><td><strong>Phase H</strong><br>Stabilisation</td><td>Weeks 33&ndash;36<br>Oct&ndash;Nov 2026</td><td>Testing, optimisation, deployment</td><td>End-to-end testing with migrated data; performance optimisation; UAT with DWS offices; training; production go-live</td></tr>
+</table>
+
+<div class="diagram-container">
+    <div class="diagram-title">Figure 19: Implementation Roadmap (Gantt)</div>
+    <div class="diagram-label">Refer to Appendix A, Figure A.15 (15-implementation-roadmap.mmd)</div>
+</div>
+
+<div class="callout callout-success">
+    <div class="callout-title">Target Go-Live</div>
+    <strong>November 2026</strong> &mdash; aligning with the DWS national target for completing V&amp;V.
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 16. RISKS AND MITIGATIONS                                   -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>16. Risks and Mitigations</h1>
+
+<table class="data-table">
+    <tr><th>Risk</th><th>Impact</th><th>Likelihood</th><th>Mitigation</th></tr>
+    <tr><td>WARMS and eWULAAS APIs are not documented or unstable</td><td>High</td><td>Medium</td><td>Engage DWS IT early in Phase A to obtain API specifications; build adapter pattern for integration layer to isolate changes</td></tr>
+    <tr><td>Existing MS Access V&amp;V databases have inconsistent schemas across service providers</td><td>High</td><td>High</td><td>Allocate dedicated Phase G time for data migration tooling; build flexible import mappers; validate migrated data against business rules</td></tr>
+    <tr><td>SAPWAT calibration data not available for all catchments</td><td>Medium</td><td>Medium</td><td>Calculator Engine parameterisation allows catchment-specific overrides; flag uncalibrated catchments for manual review</td></tr>
+    <tr><td>Resistance from regional offices to adopt centralised system</td><td>Medium</td><td>Medium</td><td>Include regional office stakeholders in UAT; respect existing workflow while adding consistency; provide training and support</td></tr>
+    <tr><td>Public portal security breach exposes water user personal data</td><td>Very High</td><td>Low</td><td>Separate identity store; MFA mandatory; row-level data isolation; penetration testing in Phase F; POPIA compliance</td></tr>
+    <tr><td>Water Tribunal challenges ELU determinations and system cannot produce evidence chain</td><td>Very High</td><td>Low</td><td>Immutable audit trail from day one; every calculation logged with inputs and outputs; complete letter lifecycle tracking</td></tr>
+    <tr><td>DWS network infrastructure limits performance for remote regional offices</td><td>Medium</td><td>Medium</td><td>Optimise for low-bandwidth; progressive loading; consider offline-capable mobile companion for field visits</td></tr>
+</table>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 17. APPENDICES                                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h1>17. Appendices</h1>
+
+<h2>Appendix A: Diagram Reference</h2>
+
+<p>All diagrams are maintained as Mermaid (.mmd) files in the project repository under <code>docs/diagrams/</code>. They can be rendered using any Mermaid-compatible tool (LucidChart, Mermaid Live Editor, VS Code extensions, or GitHub's built-in Mermaid rendering).</p>
+
+<table class="data-table">
+    <tr><th>Figure</th><th>File</th><th>Description</th></tr>
+    <tr><td>A.1</td><td>01-system-architecture.mmd</td><td>Solution architecture &mdash; layers, components, external systems</td></tr>
+    <tr><td>A.2</td><td>02-workflow-phases.mmd</td><td>V&amp;V workflow &mdash; three phases, 21 control points</td></tr>
+    <tr><td>A.3</td><td>03-section35-letter-statemachine.mmd</td><td>Section 35 letter state machine (post-CP16)</td></tr>
+    <tr><td>A.4</td><td>04-data-flow-per-property.mmd</td><td>Phase 2 data flow per property</td></tr>
+    <tr><td>A.5</td><td>05-org-hierarchy-and-roles.mmd</td><td>Organisational hierarchy and role mapping</td></tr>
+    <tr><td>A.6</td><td>06-domain-model-erd.mmd</td><td>High-level domain model ERD</td></tr>
+    <tr><td>A.7</td><td>07-phase1-data-flow.mmd</td><td>Phase 1 Project Inception data flow</td></tr>
+    <tr><td>A.8</td><td>08-calculator-engine.mmd</td><td>Calculator Engine inputs and outputs</td></tr>
+    <tr><td>A.9</td><td>09-letter-generation.mmd</td><td>Letter generation, signing, issuance, and tracking flow</td></tr>
+    <tr><td>A.10</td><td>10-notification-engine.mmd</td><td>Notification triggers, channels, recipients, and schedules</td></tr>
+    <tr><td>A.11</td><td>11-signature-flow.mmd</td><td>Electronic signature capture and verification flow</td></tr>
+    <tr><td>A.12</td><td>12-public-portal.mmd</td><td>Public portal registration, identity verification, and capabilities</td></tr>
+    <tr><td>A.13</td><td>13-external-integrations.mmd</td><td>External system integration patterns</td></tr>
+    <tr><td>A.14</td><td>14-end-to-end-data-flow.mmd</td><td>Complete end-to-end data flow through all phases</td></tr>
+    <tr><td>A.15</td><td>15-implementation-roadmap.mmd</td><td>Implementation roadmap (Gantt chart)</td></tr>
+    <tr><td>A.16</td><td>16-object-model.mmd</td><td>C# class diagram (controllers, services, repositories)</td></tr>
+</table>
+
+<h2>Appendix B: Entity Relationship Diagrams</h2>
+
+<table class="data-table">
+    <tr><th>ERD</th><th>File</th><th>Scope</th></tr>
+    <tr><td>E1</td><td>erd-01-geography-and-organisation.mmd</td><td>Province, WMA, OrganisationalUnit, ApplicationUser</td></tr>
+    <tr><td>E2</td><td>erd-02-property-and-ownership.mmd</td><td>Property, PropertyOwner, PropertyOwnership, Address</td></tr>
+    <tr><td>E3</td><td>erd-03-water-use-and-calculations.mmd</td><td>FieldAndCrop, Irrigation, Storing, Forestation, DamCalculation, SateliteImage</td></tr>
+    <tr><td>E4</td><td>erd-04-case-management-and-workflow.mmd</td><td>FileMaster, Validation, WorkflowInstance/State/Step, Authorisation, AuditLog</td></tr>
+    <tr><td>E5</td><td>erd-05-letters-signatures-documents.mmd</td><td>LetterIssuance, LetterType, Document, DigitalSignature, SignatureRequest</td></tr>
+    <tr><td>E6</td><td>erd-06-public-portal.mmd</td><td>PublicUser, PublicUserProperty, CaseComment, Protest, ProtestDocument, Notification</td></tr>
+    <tr><td>Full</td><td>data-model.mmd (project root)</td><td>Holistic ERD &mdash; all ~50 entities and relationships</td></tr>
+</table>
+
+<h2>Appendix C: Validation Status Values (Appendix B of DWS Requirements)</h2>
+
+<table class="data-table">
+    <tr><th>Status</th><th>Description</th></tr>
+    <tr><td>Not Commenced</td><td>V&amp;V has not yet started for this property</td></tr>
+    <tr><td>In Process</td><td>V&amp;V is underway</td></tr>
+    <tr><td>Compl require client interaction</td><td>Verification complete; awaiting water user response</td></tr>
+    <tr><td>Completed</td><td>V&amp;V fully complete</td></tr>
+    <tr><td>Compl Not Client Interaction</td><td>Complete without client interaction (no response received)</td></tr>
+    <tr><td>Compl Post Interact Processing</td><td>Complete after processing client response</td></tr>
+    <tr><td>Q. Outside</td><td>Property falls outside the quaternary catchment under study</td></tr>
+    <tr><td>Consolidated</td><td>Multiple registrations merged into one</td></tr>
+</table>
+
+<h2>Appendix D: WARMS Registration Index Values</h2>
+
+<table class="data-table">
+    <tr><th>Index</th><th>Description</th></tr>
+    <tr><td>0</td><td>WARMS Registration (Active)</td></tr>
+    <tr><td>1</td><td>Unregistered Water Uses</td></tr>
+    <tr><td>2</td><td>Other Water User (Industrial)</td></tr>
+    <tr><td>3</td><td>Water Scheme</td></tr>
+    <tr><td>4</td><td>Schedule 1 Use</td></tr>
+    <tr><td>5</td><td>Cancelled &mdash; No water use</td></tr>
+    <tr><td>6</td><td>Cancelled &mdash; Duplicate</td></tr>
+    <tr><td>7</td><td>Closed &mdash; New Owner</td></tr>
+    <tr><td>8</td><td>Cancelled &mdash; Property consolidated</td></tr>
+    <tr><td>9</td><td>License</td></tr>
+    <tr><td>10</td><td>Temporary Transfer permit</td></tr>
+    <tr><td>33</td><td>Section 33 applicant</td></tr>
+    <tr><td>35</td><td>Section 35 applicant</td></tr>
+</table>
+
+<h2>Appendix E: Related Documents</h2>
+
+<table class="data-table">
+    <tr><th>Document</th><th>Description</th></tr>
+    <tr><td>LEGAL-FRAMEWORK.md</td><td>Detailed legal analysis of Sections 32&ndash;35, Section 53, qualifying period, and ELU determination criteria</td></tr>
+    <tr><td>DATA-FLOW-AND-WORKFLOW-DESIGN.md</td><td>Detailed technical design covering all 18 system components</td></tr>
+    <tr><td>portal-wireframes.html</td><td>Interactive HTML wireframes for the Public Portal (9 screens)</td></tr>
+    <tr><td>data-model.mmd</td><td>Holistic Mermaid ERD with all ~50 entities</td></tr>
+    <tr><td>DWS Requirements Document, Ed. 3, July 2024</td><td>Governing requirements document (PDF in project root)</td></tr>
+</table>
+
+<br><br>
+
+<div class="footer">
+    DWA V&amp;V System &mdash; Solution Design Document &mdash; Version 1.0 &mdash; 11 March 2026 &mdash; Confidential
+</div>
+
+</body>
+</html>

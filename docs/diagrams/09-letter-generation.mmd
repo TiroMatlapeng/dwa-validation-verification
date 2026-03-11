@@ -1,0 +1,67 @@
+flowchart TB
+    subgraph DataSources["Data Sources"]
+        FM_Data["FileMaster\n(registration flags, validation status,\nWARMS registration number)"]
+        PO_Data["PropertyOwner\n(name, contact details)"]
+        PROP_Data["Property\n(SGCode, WMA, size, coordinates)"]
+        IRR_Data["Irrigation\n(ELU volumes per scenario)"]
+        STOR_Data["Storing\n(dam volumes)"]
+        FOR_Data["Forestation\n(SFRA volumes)"]
+        ENT_Data["Entitlement\n(type, total ELU volume m³)"]
+    end
+
+    subgraph LetterTypes["Letter Types (NWA Sections)"]
+        L1["Letter 1 — S35(1)\nNotice to apply for verification"]
+        L1A["Letter 1A — S53(1)\nDirective to apply (non-responsive)"]
+        L2["Letter 2 — S35(3)(a)\nRequest for additional information"]
+        L2A["Letter 2A — S53(1)\nDirective to provide additional info"]
+        L3["Letter 3 — S35(4)\nELU confirmation certificate"]
+        L4A["Letter 4A — S53(1)\nNotice of intent to stop unlawful use"]
+        L45["Letter 4&5 — S53(1)\nDirective to stop unlawful use"]
+    end
+
+    subgraph LetterSvc["Letter Service (ILetterService)"]
+        Generate["GenerateLetter()\nor GenerateLetterBatch()"]
+        Template["Template Engine (QuestPDF)\nMerge property & owner data\ninto letter template"]
+    end
+
+    subgraph SigningFlow["Signing Flow (ISignatureService)"]
+        SubmitSign["SubmitForSigning()\n→ notify RegionalManager"]
+        SigPad["SignaturePad.js\n(draw signature on canvas)"]
+        StoreSig[("DigitalSignature record\nSignatureHash (SHA-256)\nDocumentHashAtSigning")]
+        EmbedSig["Embed signature image\ninto PDF"]
+    end
+
+    subgraph IssuanceFlow["Issuance & Tracking"]
+        IssueLetter["IssueLetter()\nmethod + due date set"]
+        Post["Registered Post\n(PostalRegistrationNumber tracked)"]
+        Email["Email\n(delivery confirmed)"]
+        InPerson["In Person\n(serving official recorded —\nmandatory for Letter 1)"]
+        Other["Other method"]
+        Track["Track Response\n(NotificationService reminders start)"]
+        RecordResp["RecordResponse()\nResponseStatus, AgreedWithFindings\nResponseDate, Notes"]
+        NextState["Section 35\nState Machine\n→ 03-section35-letter-statemachine.mmd"]
+    end
+
+    subgraph Stores["Stored Records"]
+        LI[("LetterIssuance record\nGeneratedDate, IssuedDate\nDueDate, IssueMethod\nResponseStatus, BatchNumber")]
+        DocStore[("UploadedDocument\n(PDF blob path)")]
+    end
+
+    FM_Data & PO_Data & PROP_Data & IRR_Data & STOR_Data & FOR_Data & ENT_Data --> Generate
+    L1 & L1A & L2 & L2A & L3 & L4A & L45 --> Generate
+
+    Generate --> Template
+    Template --> PDF[/"Document (PDF)"/]
+    PDF --> LI & DocStore
+
+    LI --> SubmitSign --> SigPad --> StoreSig --> EmbedSig
+    EmbedSig --> SignedPDF[/"Signed PDF"/]
+    SignedPDF --> IssueLetter
+
+    IssueLetter --> Post & Email & InPerson & Other --> Track --> RecordResp --> NextState
+
+    style DataSources fill:#ffe6e6,stroke:#cc0000
+    style LetterSvc fill:#e6ffe6,stroke:#006600
+    style SigningFlow fill:#e6ffe6,stroke:#006600
+    style IssuanceFlow fill:#fff3e6,stroke:#cc6600
+    style Stores fill:#e6e6ff,stroke:#0000cc

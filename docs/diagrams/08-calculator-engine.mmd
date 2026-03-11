@@ -1,0 +1,59 @@
+flowchart TB
+    subgraph SAPWAT_Inputs["SAPWAT Inputs (CP12)"]
+        FC_Data["FieldAndCrop\n(field area, plant date,\nrotation factor)"]
+        Crop_Data["CropType +\nIrrigationSystem"]
+        Climate["Climate Zone\n(catchment-based calibration)"]
+    end
+
+    subgraph ELU_Inputs["ELU Inputs (CP13)"]
+        WARMS_Data["WARMS Registration\n(registered volumes,\ncrop types, hectares)"]
+        GIS_Data["GIS Analysis\n(digitised fields & dams)"]
+        Context["Context Flags\n(GWCA, IB, GWS, Permit,\nRiparian status)"]
+        Permit_Data["Authorisation records\n(Permits, S32/33 approvals,\ntransfers, GA)"]
+    end
+
+    subgraph Dam_Inputs["Dam Volume Inputs (CP15)"]
+        GIS_Dam["GIS Dam Identification\n(wall length, fetch)"]
+        Contour["Contour Data\n(river distance R1,\ncontour difference C1)"]
+    end
+
+    subgraph SFRA_Inputs["SFRA Inputs (CP16)"]
+        For_Data["Forestation data\n(qualify & current hectares)"]
+        GWCA_Status["GWCA Status"]
+    end
+
+    subgraph CalcEngine["Calculator Engine (ICalculatorEngine)"]
+        SAPWAT_Calc["SAPWAT Calculator\nCropType + IrrigationSystem + Area\n→ mm/ha/a → Total m³"]
+        ELU_Builder["ELU Scenario Builder\nBuilds all 9 scenario inputs\n(Proclamation, PreviousSurveys,\nPossibleExisting, PossibleLawful,\nRegistration, PresentDay, GA)"]
+        ELU_Calc["ELU Calculator\nDetermines per scenario\n(surface + borehole):\nLandHa, CropHa, VolumeM3, Source\n→ PossibleExistingLawful,\nPossibleUnlawful,\nPossibleUnlawfulIncrease/Decrease"]
+        Dam_Calc["Dam Volume Calculator\nMethod 1 (Wall): WallLength × Fetch × Depth × Factor / 2\nSlope = R1/C1 → Depth = Fetch/Slope\nMethod 2 (Area): AreaHa × DepthM × Factor × 1000\nShapeFactors: Triangle=0.33 Square=0.4 Circle=0.5"]
+        SFRA_Calc["SFRA Calculator\nQualify period hectares & volume\nCurrent period hectares & volume\nRegistered vs actual\nELU, unlawful, lawful, Pre-1972"]
+    end
+
+    subgraph Outputs["Database Outputs"]
+        FC_Result[("FieldAndCrop\nSAPWATCalculationResult\n(mm/ha/a + total m³)")]
+        IRR_Result[("Irrigation\nAll 9 scenario fields populated\n(surface + borehole each)")]
+        ENT_Result[("Entitlement\nVolume determined\nType confirmed")]
+        DAM_Result[("DamCalculation\nCapacity m³\nCalculation method")]
+        STOR_Result[("Storing\nVolumes per scenario")]
+        FOR_Result[("Forestation\nAll volume fields\n(qualify, current, ELU,\nlawful, unlawful, Pre-1972)")]
+    end
+
+    FC_Data & Crop_Data & Climate --> SAPWAT_Calc --> FC_Result
+
+    FC_Result --> ELU_Builder
+    WARMS_Data & GIS_Data & Context & Permit_Data --> ELU_Builder
+    ELU_Builder --> ELU_Calc
+    ELU_Calc --> IRR_Result & ENT_Result
+
+    GIS_Dam & Contour --> Dam_Calc
+    Dam_Calc --> DAM_Result & STOR_Result
+
+    For_Data & GWCA_Status --> SFRA_Calc --> FOR_Result
+
+    style SAPWAT_Inputs fill:#ffe6e6,stroke:#cc0000
+    style ELU_Inputs fill:#ffe6e6,stroke:#cc0000
+    style Dam_Inputs fill:#ffe6e6,stroke:#cc0000
+    style SFRA_Inputs fill:#ffe6e6,stroke:#cc0000
+    style CalcEngine fill:#e6ffe6,stroke:#006600
+    style Outputs fill:#e6e6ff,stroke:#0000cc
