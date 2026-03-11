@@ -153,18 +153,21 @@ public class ApplicationDBContext : DbContext
         modelBuilder.Entity<PropertyOwnership>()
             .HasOne(po => po.Property)
             .WithMany(p => p.PropertyOwnerships)
-            .HasForeignKey(po => po.PropertyId);
+            .HasForeignKey(po => po.PropertyId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<PropertyOwnership>()
             .HasOne(po => po.PropertyOwner)
             .WithMany(po => po.PropertyOwnerships)
-            .HasForeignKey(po => po.PropertyOwnerId);
+            .HasForeignKey(po => po.PropertyOwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // FileMaster → Property
         modelBuilder.Entity<FileMaster>()
             .HasOne(fm => fm.Property)
             .WithMany(p => p.FileMasters)
-            .HasForeignKey(fm => fm.PropertyId);
+            .HasForeignKey(fm => fm.PropertyId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // FileMaster → OrgUnit
         modelBuilder.Entity<FileMaster>()
@@ -196,27 +199,31 @@ public class ApplicationDBContext : DbContext
 
         // Authorisation → FileMaster
         modelBuilder.Entity<Authorisation>()
-            .HasOne<FileMaster>()
+            .HasOne(a => a.FileMaster)
             .WithMany(fm => fm.Authorisations)
-            .HasForeignKey(a => a.FileMasterId);
+            .HasForeignKey(a => a.FileMasterId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Authorisation → AuthorisationType
         modelBuilder.Entity<Authorisation>()
             .HasOne(a => a.AuthorisationType)
             .WithMany()
-            .HasForeignKey(a => a.AuthorisationTypeId);
+            .HasForeignKey(a => a.AuthorisationTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // LetterIssuance → FileMaster
         modelBuilder.Entity<LetterIssuance>()
-            .HasOne<FileMaster>()
+            .HasOne(li => li.FileMaster)
             .WithMany(fm => fm.LetterIssuances)
-            .HasForeignKey(li => li.FileMasterId);
+            .HasForeignKey(li => li.FileMasterId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // LetterIssuance → LetterType
         modelBuilder.Entity<LetterIssuance>()
             .HasOne(li => li.LetterType)
             .WithMany()
-            .HasForeignKey(li => li.LetterTypeId);
+            .HasForeignKey(li => li.LetterTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // LetterIssuance → PropertyOwner
         modelBuilder.Entity<LetterIssuance>()
@@ -255,7 +262,7 @@ public class ApplicationDBContext : DbContext
 
         // Document → FileMaster
         modelBuilder.Entity<Document>()
-            .HasOne<FileMaster>()
+            .HasOne(d => d.FileMaster)
             .WithMany(fm => fm.Documents)
             .HasForeignKey(d => d.FileMasterId)
             .OnDelete(DeleteBehavior.SetNull);
@@ -278,7 +285,8 @@ public class ApplicationDBContext : DbContext
         modelBuilder.Entity<DigitalSignature>()
             .HasOne(ds => ds.Document)
             .WithMany()
-            .HasForeignKey(ds => ds.DocumentId);
+            .HasForeignKey(ds => ds.DocumentId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // DigitalSignature → ApplicationUser
         modelBuilder.Entity<DigitalSignature>()
@@ -298,7 +306,8 @@ public class ApplicationDBContext : DbContext
         modelBuilder.Entity<SignatureRequest>()
             .HasOne(sr => sr.Document)
             .WithMany()
-            .HasForeignKey(sr => sr.DocumentId);
+            .HasForeignKey(sr => sr.DocumentId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // SignatureRequest → ApplicationUser
         modelBuilder.Entity<SignatureRequest>()
@@ -323,9 +332,10 @@ public class ApplicationDBContext : DbContext
 
         // CaseComment → FileMaster
         modelBuilder.Entity<CaseComment>()
-            .HasOne<FileMaster>()
+            .HasOne(cc => cc.FileMaster)
             .WithMany(fm => fm.CaseComments)
-            .HasForeignKey(cc => cc.FileMasterId);
+            .HasForeignKey(cc => cc.FileMasterId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // CaseComment → PublicUser
         modelBuilder.Entity<CaseComment>()
@@ -344,37 +354,41 @@ public class ApplicationDBContext : DbContext
         // CaseComment self-referencing (threading)
         modelBuilder.Entity<CaseComment>()
             .HasOne(cc => cc.ParentComment)
-            .WithMany()
+            .WithMany(cc => cc.Replies)
             .HasForeignKey(cc => cc.ParentCommentId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Protest → FileMaster
         modelBuilder.Entity<Protest>()
-            .HasOne<FileMaster>()
+            .HasOne(p => p.FileMaster)
             .WithMany()
-            .HasForeignKey(p => p.FileMasterId);
+            .HasForeignKey(p => p.FileMasterId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Protest → PublicUser
         modelBuilder.Entity<Protest>()
             .HasOne(p => p.PublicUser)
             .WithMany()
-            .HasForeignKey(p => p.PublicUserId);
+            .HasForeignKey(p => p.PublicUserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // ProtestDocument → Protest
         modelBuilder.Entity<ProtestDocument>()
             .HasOne(pd => pd.Protest)
             .WithMany(p => p.ProtestDocuments)
-            .HasForeignKey(pd => pd.ProtestId);
+            .HasForeignKey(pd => pd.ProtestId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // ProtestDocument → Document
         modelBuilder.Entity<ProtestDocument>()
             .HasOne(pd => pd.Document)
             .WithMany()
-            .HasForeignKey(pd => pd.DocumentId);
+            .HasForeignKey(pd => pd.DocumentId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Notification → FileMaster
         modelBuilder.Entity<Notification>()
-            .HasOne<FileMaster>()
+            .HasOne(n => n.FileMaster)
             .WithMany(fm => fm.Notifications)
             .HasForeignKey(n => n.FileMasterId)
             .OnDelete(DeleteBehavior.SetNull);
@@ -396,14 +410,16 @@ public class ApplicationDBContext : DbContext
         // PublicUserProperty → PublicUser
         modelBuilder.Entity<PublicUserProperty>()
             .HasOne(pup => pup.PublicUser)
-            .WithMany()
-            .HasForeignKey(pup => pup.PublicUserId);
+            .WithMany(pu => pu.PublicUserProperties)
+            .HasForeignKey(pup => pup.PublicUserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // PublicUserProperty → Property
         modelBuilder.Entity<PublicUserProperty>()
             .HasOne(pup => pup.Property)
             .WithMany()
-            .HasForeignKey(pup => pup.PropertyId);
+            .HasForeignKey(pup => pup.PropertyId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // PublicUserProperty → ApprovedBy (ApplicationUser)
         modelBuilder.Entity<PublicUserProperty>()
@@ -416,25 +432,29 @@ public class ApplicationDBContext : DbContext
         modelBuilder.Entity<WorkflowInstance>()
             .HasOne(wi => wi.FileMaster)
             .WithMany()
-            .HasForeignKey(wi => wi.FileMasterId);
+            .HasForeignKey(wi => wi.FileMasterId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // WorkflowInstance → CurrentState
         modelBuilder.Entity<WorkflowInstance>()
             .HasOne(wi => wi.CurrentWorkflowState)
             .WithMany()
-            .HasForeignKey(wi => wi.CurrentWorkflowStateId);
+            .HasForeignKey(wi => wi.CurrentWorkflowStateId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // WorkflowStepRecord → WorkflowInstance
         modelBuilder.Entity<WorkflowStepRecord>()
             .HasOne(wsr => wsr.WorkflowInstance)
-            .WithMany()
-            .HasForeignKey(wsr => wsr.WorkflowInstanceId);
+            .WithMany(wi => wi.StepRecords)
+            .HasForeignKey(wsr => wsr.WorkflowInstanceId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // WorkflowStepRecord → WorkflowState
         modelBuilder.Entity<WorkflowStepRecord>()
             .HasOne(wsr => wsr.WorkflowState)
             .WithMany()
-            .HasForeignKey(wsr => wsr.WorkflowStateId);
+            .HasForeignKey(wsr => wsr.WorkflowStateId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // WorkflowStepRecord → CompletedBy (ApplicationUser)
         modelBuilder.Entity<WorkflowStepRecord>()
@@ -447,13 +467,15 @@ public class ApplicationDBContext : DbContext
         modelBuilder.Entity<Validation>()
             .HasOne(v => v.FileMaster)
             .WithMany()
-            .HasForeignKey(v => v.FileMasterId);
+            .HasForeignKey(v => v.FileMasterId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Validation → Property
         modelBuilder.Entity<Validation>()
             .HasOne(v => v.Property)
             .WithMany()
-            .HasForeignKey(v => v.PropertyId);
+            .HasForeignKey(v => v.PropertyId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Validation → AssignedTo (ApplicationUser)
         modelBuilder.Entity<Validation>()
@@ -495,6 +517,15 @@ public class ApplicationDBContext : DbContext
             .HasOne(wma => wma.Province)
             .WithMany(p => p.WaterManagementAreas)
             .HasForeignKey(wma => wma.ProvinceId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ── Global: disable cascade delete for all relationships ──
+        // SQL Server does not allow multiple cascade paths; Restrict is safer
+        // and forces explicit deletion in correct order.
+        foreach (var relationship in modelBuilder.Model.GetEntityTypes()
+            .SelectMany(e => e.GetForeignKeys()))
+        {
+            relationship.DeleteBehavior = DeleteBehavior.Restrict;
+        }
     }
 }
