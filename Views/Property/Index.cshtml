@@ -4,103 +4,73 @@
     ViewData["Title"] = "Properties";
 }
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card m3 p2">
-                <h6 class="card-title text-center">Total Properties #</h6>
-                <h1 class="card-text text-center">1200</h1>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card m3 p2">
-                <h6 class="card-title text-center">Properties with pending validation #</h6>
-                <h1 class="card-text text-center">250</h1>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card m3 p2">
-                <h6 class="card-title text-center">Properties with outstanding issues #</h6>
-                <h1 class="card-text text-center">50</h1>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card m3 p2">
-                <h6 class="card-title text-center">Properties under investigation #</h6>
-                <h1 class="card-text text-center">10</h1>
-            </div>
-        </div>
+<div class="flex-between mb-16">
+    <div>
+        <div class="page-title">Properties</div>
+        <div class="page-subtitle">@Model.Count() properties found</div>
     </div>
-
-    <div class="m-4">
-        <a class="btn btn-primary"
-           inputmode="button"
-           asp-controller="Property"
-           asp-action="Register"
-        >Register Property</a>
+    <div style="display:flex; gap:8px;">
+        <button class="btn btn-outline">Export CSV</button>
+        <a asp-controller="Property" asp-action="Register" class="btn btn-primary">+ New Property</a>
     </div>
+</div>
 
-        <h1>Properties</h1>
-    
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>
-                            @Html.DisplayNameFor(model => model.PropertyReferenceNumber)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.PropertySize)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.ProclamationDate)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.RegistrationDate)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.SGCode)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.QuaternaryDrainage)
-                        </th>
-                        <th>
-                            @Html.DisplayNameFor(model => model.WaterManagementArea)
-                        </th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model) {
-                        <tr>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.PropertyReferenceNumber)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.PropertySize)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.ProclamationDate)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.RegistrationDate)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.SGCode)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.QuaternaryDrainage)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.WaterManagementArea)
-                            </td>
-                            <td>
-                                <a asp-action="Edit" asp-route-id="@item.PropertyId" class="btn btn-sm btn-primary">Edit</a> |
-                                <a asp-action="Details" asp-route-id="@item.PropertyId" class="btn btn-sm btn-info">Details</a> |
-                                <a asp-action="Delete" asp-route-id="@item.PropertyId" class="btn btn-sm btn-danger">Delete</a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div></div>
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <select class="form-select" style="width:auto; min-width:150px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;">
+        <option>All WMAs</option>
+    </select>
+    <select class="form-select" style="width:auto; min-width:150px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;">
+        <option>All Statuses</option>
+        <option>Not Commenced</option>
+        <option>In Process</option>
+        <option>Completed</option>
+    </select>
+    <select class="form-select" style="width:auto; min-width:150px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;">
+        <option>All Water Use</option>
+        <option>Irrigation</option>
+        <option>Storage</option>
+        <option>Forestation</option>
+    </select>
+    <input type="text" class="form-input" style="width:200px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;" placeholder="SG Code or Farm Name..." />
+    <button class="btn btn-primary btn-sm">Filter</button>
+    <button class="btn btn-outline btn-sm">Clear</button>
+</div>
+
+<!-- Data Table -->
+<div class="data-table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>SG Code</th>
+                <th>Farm Name</th>
+                <th>WMA</th>
+                <th>Quaternary Drainage</th>
+                <th>Property Size</th>
+                <th>V&amp;V Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="sg-code">@item.SGCode</td>
+                    <td>@item.PropertyReferenceNumber</td>
+                    <td>@item.WaterManagementArea?.WmaName</td>
+                    <td>@item.QuaternaryDrainage</td>
+                    <td>@item.PropertySize</td>
+                    <td><span class="badge badge-grey">Not Commenced</span></td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.PropertyId" class="btn btn-sm btn-outline">Edit</a>
+                        <a asp-action="Details" asp-route-id="@item.PropertyId" class="btn btn-sm btn-outline">Details</a>
+                        <a asp-action="Delete" asp-route-id="@item.PropertyId" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <div class="table-pagination">
+        <span>Showing @Model.Count() properties</span>
+    </div>
+</div>

@@ -1,142 +1,180 @@
-﻿
-<div class="container">
-  <div class="row">
-    <div class="col-md-3">
-      <div class="card m3 p2">
-        <h6 class="card-title text-center">Validations #</h6>
-         <h1 class="card-text text-center">110</h1>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card m3 p2">
-        <h6 class="card-title text-center">ELU Estimate #</h6>
-         <h1 class="card-text text-center">3500 kL</h1>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card m3 p2">
-        <h6 class="card-title text-center">Outstanding Validations #</h6>
-         <h1 class="card-text text-center">15000</h1>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card m3 p2">
-        <h6 class="card-title text-center">Investigations #</h6>
-         <h1 class="card-text text-center">23</h1>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card m3 p2">
-        <h6 class="card-title text-center">Property Management</h6>
-         <a asp-controller="Property" asp-action="Index" class="card-text text-center">Go to Properties</a>
-      </div>
-    </div>
-    
-  </div>
-    <div class="row mb-2">
-      
-        <div class="col-md-6 m2">
-            <canvas id="myChart"></canvas>
-        </div>
-        <div class="col-md-6 m2">
-            <canvas id="myLineChart"></canvas>
-        </div>
-     <div>
-      <div class="row m-2">
-        <div class="col-md-4">
-           <canvas id="pieChart" height="300"></canvas>
-        </div>
+@{
+    ViewData["Title"] = "Dashboard";
+}
 
-        <div class="col-md-4" >
-           <canvas id="comboChart" height="300"></canvas>
-        </div>
-
-        <div class="col-md-4">
-           <canvas id="scatterChart" height="300"></canvas>
-        </div>
-
-      </div>
-    
+<div class="flex-between mb-16">
+    <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle">National Overview &mdash; 11 March 2026</div>
     </div>
 </div>
 
+<!-- KPI Row -->
+<div class="kpi-row">
+    <div class="kpi-card">
+        <div class="kpi-label">Total Properties</div>
+        <div class="kpi-value">12,483</div>
+        <div class="kpi-sub">across all WMAs</div>
+    </div>
+    <div class="kpi-card success">
+        <div class="kpi-label">Completed</div>
+        <div class="kpi-value">4,812</div>
+        <div class="kpi-sub">38.5% of total</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">In Process</div>
+        <div class="kpi-value">3,241</div>
+        <div class="kpi-sub">Phase 1: 2,140 | Phase 2: 1,101</div>
+    </div>
+    <div class="kpi-card warn">
+        <div class="kpi-label">Overdue Tasks</div>
+        <div class="kpi-value">67</div>
+        <div class="kpi-sub">23 letters, 44 workflow steps</div>
+    </div>
+    <div class="kpi-card alert-kpi">
+        <div class="kpi-label">Letters Pending Response</div>
+        <div class="kpi-value">189</div>
+        <div class="kpi-sub">34 past due date</div>
+    </div>
+</div>
+
+<!-- V&V Progress + Letter Status -->
+<div class="panel-grid">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">V&amp;V Progress by Phase</span>
+        </div>
+        <div style="height: 220px;">
+            <canvas id="myChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Letter Status Summary</span>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Letter Type</th><th>Issued</th><th>Awaiting</th><th>Overdue</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Letter 1 &mdash; S35(1)</td><td>1,204</td><td>89</td><td><span class="badge badge-red">12</span></td></tr>
+                <tr><td>Letter 1A &mdash; S53(1)</td><td>156</td><td>34</td><td><span class="badge badge-red">8</span></td></tr>
+                <tr><td>Letter 2 &mdash; S35(3)(a)</td><td>312</td><td>45</td><td><span class="badge badge-orange">6</span></td></tr>
+                <tr><td>Letter 3 &mdash; S35(4)</td><td>4,812</td><td>&mdash;</td><td>&mdash;</td></tr>
+                <tr><td>Letter 4A &mdash; S53(1)</td><td>23</td><td>11</td><td><span class="badge badge-red">3</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Recent Activity + My Tasks -->
+<div class="panel-grid">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Recent Activity</span>
+        </div>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-date">10 Mar, 14:32</div>
+                <div class="timeline-text">J. Mokoena completed CP6 (SAPWAT) for <strong>Farm Rietfontein 234</strong></div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">10 Mar, 11:15</div>
+                <div class="timeline-text">Letter 3 issued to <strong>P.J. van der Merwe</strong> &mdash; ELU confirmed 45,200 m&sup3;</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">10 Mar, 09:40</div>
+                <div class="timeline-text">M. Naidoo uploaded title deed for <strong>Erf 1145 Stellenbosch</strong></div>
+            </div>
+            <div class="timeline-item grey">
+                <div class="timeline-date">09 Mar, 16:22</div>
+                <div class="timeline-text">WARMS daily sync completed &mdash; 3 new records, 1 ownership change</div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">My Assigned Tasks</span>
+            <span class="badge badge-blue">7 pending</span>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Case</th><th>Task</th><th>Due</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>BG-2024-0412</td><td>Complete CP5 (GIS Analysis)</td><td><span class="badge badge-red">Overdue</span></td></tr>
+                <tr><td>BG-2024-0567</td><td>Sign Letter 1 for issuance</td><td><span class="badge badge-orange">Today</span></td></tr>
+                <tr><td>BG-2024-0891</td><td>Record Letter 1 response</td><td>14 Mar</td></tr>
+                <tr><td>BG-2024-1023</td><td>Review uploaded documents</td><td>16 Mar</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="panel-grid">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Water Use Distribution</span>
+        </div>
+        <div style="height: 250px;">
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Irrigation vs Storage</span>
+        </div>
+        <div style="height: 250px;">
+            <canvas id="comboChart"></canvas>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-  const ctx = document.getElementById('myChart');
-
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['January', 'February', 'March', 'April', 'May', 'June'],
-      datasets: [{
-        label: '# of Validations',
-        data: [12, 19, 3, 5, 2, 3],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true
+    // V&V Progress bar chart
+    const ctx = document.getElementById('myChart');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Not Started', 'Phase 1', 'Phase 2', 'S35 Letters', 'Complete'],
+            datasets: [{
+                label: 'Properties',
+                data: [4430, 2140, 1101, 189, 4812],
+                backgroundColor: ['#dee2e6', '#003366', '#7db8e0', '#f39c12', '#27ae60'],
+                borderWidth: 0,
+                borderRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
         }
-      }
-    }
-  });
-</script>
+    });
 
-<script>
-  const contex = document.getElementById('myLineChart');
-
-  new Chart(contex, {
-    type: 'line',
-    data: {
-      labels: ['January', 'February', 'March', 'April', 'May', 'June'],
-      datasets: [{
-        label: '# of ELU cases',
-        data: [12, 19, 3, 5, 2, 3],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
-  });
-</script>
-<script>
-    /* =========================
-       1. PIE CHART
-    ========================== */
+    // Pie chart
     const pieCtx = document.getElementById('pieChart');
-
     new Chart(pieCtx, {
         type: 'pie',
         data: {
             labels: ['Commercial', 'Small & Emerging', 'Undefined', 'Household'],
             datasets: [{
                 data: [55, 25, 10, 10],
-                backgroundColor: [
-                    '#0d6efd',
-                    '#198754',
-                    '#ffc107',
-                    '#dc3545'
-                ]
+                backgroundColor: ['#003366', '#27ae60', '#f39c12', '#e74c3c']
             }]
         },
         options: {
-            responsive: true
+            responsive: true,
+            maintainAspectRatio: false
         }
     });
 
-    /* =========================
-       2. COMBO CHART (BAR + LINE)
-    ========================== */
+    // Combo chart
     const comboCtx = document.getElementById('comboChart');
-
     new Chart(comboCtx, {
         data: {
             labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
@@ -145,13 +183,14 @@
                     type: 'bar',
                     label: 'Irrigation',
                     data: [120, 190, 300, 250, 220],
-                    backgroundColor: '#0d6efd'
+                    backgroundColor: '#003366',
+                    borderRadius: 3
                 },
                 {
                     type: 'line',
                     label: 'Storage',
                     data: [30, 50, 80, 60, 70],
-                    borderColor: '#dc3545',
+                    borderColor: '#e74c3c',
                     borderWidth: 2,
                     fill: false,
                     tension: 0.3
@@ -160,53 +199,9 @@
         },
         options: {
             responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-
-    /* =========================
-       3. SCATTER CHART
-    ========================== */
-    const scatterCtx = document.getElementById('scatterChart');
-
-    new Chart(scatterCtx, {
-        type: 'scatter',
-        data: {
-            datasets: [{
-                label: 'Water Volumes per Hectare',
-                data: [
-                    { x: 60, y: 165 },
-                    { x: 65, y: 170 },
-                    { x: 70, y: 175 },
-                    { x: 75, y: 180 },
-                    { x: 80, y: 185 }
-                ],
-                backgroundColor: '#198754'
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Hectare (km2)'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Water volume (kL)'
-                    }
-                }
-            }
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
         }
     });
 </script>
-
-
-</div>
+}

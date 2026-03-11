@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+@{
+    var controllerName = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var actionName = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -10,47 +14,100 @@
     <link rel="stylesheet" href="~/dwa_ver_val.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Dashboard</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Owner" asp-action="Index">Owners Management</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Property" asp-action="Index">Property Management</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Validation" asp-action="Index">Validation & Verification</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-logo">DWA <span>V&amp;V</span></div>
+
+            <div class="sidebar-section">Main</div>
+            <a asp-controller="Home" asp-action="Index"
+               class="sidebar-item @(controllerName == "Home" && actionName == "Index" ? "active" : "")">
+                <span class="sidebar-icon">&#9632;</span> Dashboard
+            </a>
+            <a asp-controller="Property" asp-action="Index"
+               class="sidebar-item @(controllerName == "Property" ? "active" : "")">
+                <span class="sidebar-icon">&#9632;</span> Properties
+            </a>
+            <a asp-controller="Home" asp-action="Index"
+               class="sidebar-item @(controllerName == "FileMaster" ? "active" : "")">
+                <span class="sidebar-icon">&#9632;</span> Cases
+                <span class="sidebar-badge">247</span>
+            </a>
+            <a asp-controller="Home" asp-action="Index"
+               class="sidebar-item @(controllerName == "Workflow" ? "active" : "")">
+                <span class="sidebar-icon">&#9632;</span> Workflow
+            </a>
+
+            <div class="sidebar-section">Operations</div>
+            <a asp-controller="Home" asp-action="Index"
+               class="sidebar-item @(controllerName == "Letter" ? "active" : "")">
+                <span class="sidebar-icon">&#9632;</span> Letters
+                <span class="sidebar-badge">12</span>
+            </a>
+            <a asp-controller="Validation" asp-action="Index"
+               class="sidebar-item @(controllerName == "Validation" ? "active" : "")">
+                <span class="sidebar-icon">&#9632;</span> Validation
+            </a>
+            <a asp-controller="Home" asp-action="Index"
+               class="sidebar-item @(controllerName == "Calculator" ? "active" : "")">
+                <span class="sidebar-icon">&#9632;</span> Calculator
+            </a>
+
+            <div class="sidebar-section">System</div>
+            <a asp-controller="Home" asp-action="Index"
+               class="sidebar-item @(controllerName == "Report" ? "active" : "")">
+                <span class="sidebar-icon">&#9632;</span> Reports
+            </a>
+            <a asp-controller="Home" asp-action="Index"
+               class="sidebar-item @(controllerName == "Notification" ? "active" : "")">
+                <span class="sidebar-icon">&#9632;</span> Notifications
+                <span class="sidebar-badge">5</span>
+            </a>
+            <a asp-controller="Owner" asp-action="Index"
+               class="sidebar-item @(controllerName == "Owner" ? "active" : "")">
+                <span class="sidebar-icon">&#9632;</span> Admin
+            </a>
+            <a asp-controller="Home" asp-action="Index"
+               class="sidebar-item @(controllerName == "Audit" ? "active" : "")">
+                <span class="sidebar-icon">&#9632;</span> Audit Log
+            </a>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <span class="breadcrumb">
+                        <a asp-controller="Home" asp-action="Index">Home</a> /
+                        @if (controllerName != "Home")
+                        {
+                            <span>@controllerName</span>
+                            @if (!string.IsNullOrEmpty(actionName) && actionName != "Index")
+                            {
+                                <span> / @actionName</span>
+                            }
+                        }
+                        else
+                        {
+                            <span>Dashboard</span>
+                        }
+                    </span>
+                    <input type="text" class="global-search" placeholder="Search properties, cases, WARMS reg..." />
+                </div>
+                <div class="top-bar-right">
+                    <div class="notif-bell">&#128276;<span class="notif-count">5</span></div>
+                    <div class="user-avatar">TM</div>
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                @RenderBody()
+            </div>
+        </div>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container text-center">
-            &copy; 2025 - DWA Validation And Verification - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
