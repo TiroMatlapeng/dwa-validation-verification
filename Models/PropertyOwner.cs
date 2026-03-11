@@ -3,14 +3,15 @@ public class PropertyOwner
     public Guid OwnerId { get; set; }
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
-    public required DateOnly DateOfBirth  { get; set; }
-    public required CustomerType CustomerType { get; set; }
-    public required CustomerTitle CustomerTitle { get; set; }
-    public required int IdentityDocumentNumber { get; set; }
-    public required string EmailAddress { get; set; }
-    public Guid AddressId { get; set; } 
-    public Address? Address  { get; set; }
-    public required Gender OwnerGender  { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
+    public Guid? CustomerTypeId { get; set; }
+    public CustomerType? CustomerType { get; set; }
+    public string? Title { get; set; }
+    public string? IdentityDocumentNumber { get; set; }
+    public string? EmailAddress { get; set; }
+    public Guid? AddressId { get; set; }
+    public Address? Address { get; set; }
+    public string? Gender { get; set; }
+    public string? PhoneNumber { get; set; }
     public ICollection<PropertyOwnership> PropertyOwnerships { get; set; } = new List<PropertyOwnership>();
-
 }

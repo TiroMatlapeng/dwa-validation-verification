@@ -7,6 +7,8 @@ public class Irrigation
     public required string IrrigationName { get; set;}
     public required Property Property { get; set; }
     public Guid PropertyId { get; set; }
+    public Guid? FileMasterId { get; set; }
+    public FileMaster? FileMaster { get; set; }
     public DateOnly WaterDate { get; set; }
     [Column(TypeName = "decimal(18, 2)")]
     public decimal WaterVolume  { get; set; }
@@ -16,5 +18,6 @@ public class Irrigation
     public decimal WaterCropArea { get; set; }
     public Guid WaterSourceId {get; set;}
     public WaterSource WaterSource { get; set; }
-
+    public Guid? PeriodId { get; set; }
+    public Period? Period { get; set; }
 }

@@ -3,7 +3,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 public class Forestation
 {
     public Guid ForestationId { get; set; }
+    public Guid PropertyId { get; set; }
     public required Property Property { get; set;}
+    public Guid? PeriodId { get; set; }
+    public Period? Period { get; set; }
     public bool? WithinGWCA { get; set; }
     [Column(TypeName = "decimal(18, 2)")]
     public decimal? QualifyPeriodSFRAHectares { get; set; }
@@ -12,7 +15,7 @@ public class Forestation
     [Column(TypeName = "decimal(18, 2)")]
     public decimal QualifyPeriodVolume { get; set; }
     public string? Specie { get; set; }
-    public string? WaterResource { get; set; } 
+    public string? WaterResource { get; set; }
     [Column(TypeName = "decimal(18, 2)")]
     public required decimal RegisteredHectares { get; set; }
     [Column(TypeName = "decimal(18, 2)")]
@@ -43,8 +46,4 @@ public class Forestation
     [Column(TypeName = "decimal(18, 2)")]
     public decimal SFRAPermitHectares { get; set;}
     public string? CommentsOnData { get; set; }
-
-    public Entitlement Entitlement {get; set;}
-
-
 }

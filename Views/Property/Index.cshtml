@@ -47,7 +47,7 @@
                 <thead>
                     <tr>
                         <th>
-                            @Html.DisplayNameFor(model => model.PropertyNumber)
+                            @Html.DisplayNameFor(model => model.PropertyReferenceNumber)
                         </th>
                         <th>
                             @Html.DisplayNameFor(model => model.PropertySize)
@@ -62,7 +62,7 @@
                             @Html.DisplayNameFor(model => model.SGCode)
                         </th>
                         <th>
-                            @Html.DisplayNameFor(model => model.QuatenaryDrainage)
+                            @Html.DisplayNameFor(model => model.QuaternaryDrainage)
                         </th>
                         <th>
                             @Html.DisplayNameFor(model => model.WaterManagementArea)
@@ -74,7 +74,7 @@
                     @foreach (var item in Model) {
                         <tr>
                             <td>
-                                @Html.DisplayFor(modelItem => item.PropertyNumber)
+                                @Html.DisplayFor(modelItem => item.PropertyReferenceNumber)
                             </td>
                             <td>
                                 @Html.DisplayFor(modelItem => item.PropertySize)
@@ -89,7 +89,7 @@
                                 @Html.DisplayFor(modelItem => item.SGCode)
                             </td>
                             <td>
-                                @Html.DisplayFor(modelItem => item.QuatenaryDrainage)
+                                @Html.DisplayFor(modelItem => item.QuaternaryDrainage)
                             </td>
                             <td>
                                 @Html.DisplayFor(modelItem => item.WaterManagementArea)

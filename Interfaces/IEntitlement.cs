@@ -1,9 +1,6 @@
-using System.Collections;
-
-public interface Entitlement 
+public interface IEntitlement
 {
-    public Entitlement AddEntitlement(Entitlement entitlement);
-    public Entitlement UpdateEntitlement(Entitlement entitlement);
-
-    public ICollection<Entitlement> ListEntitlements();
+    Task<Entitlement> AddEntitlement(Entitlement entitlement);
+    Task<Entitlement> UpdateEntitlement(Entitlement entitlement);
+    Task<ICollection<Entitlement>> ListEntitlements();
 }

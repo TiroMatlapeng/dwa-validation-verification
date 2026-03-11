@@ -50,7 +50,8 @@ public class PropertyRepository : IPropertyInterface
     public ICollection<Property> ListPropertyByProvince(string provinceName)
     {
         return _context.Properties
-            .Where(p => p.PropertyAddress != null && p.PropertyAddress.Province == provinceName)
+            .Include(p => p.Address)
+            .Where(p => p.Address != null && p.Address.Province == provinceName)
             .ToList();
     }
 

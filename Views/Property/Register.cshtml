@@ -13,9 +13,9 @@
             <form asp-action="Register">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="mb-3">
-                    <label asp-for="PropertyNumber" class="form-label"></label>
-                    <input asp-for="PropertyNumber" class="form-control" />
-                    <span asp-validation-for="PropertyNumber" class="text-danger small"></span>
+                    <label asp-for="PropertyReferenceNumber" class="form-label"></label>
+                    <input asp-for="PropertyReferenceNumber" class="form-control" />
+                    <span asp-validation-for="PropertyReferenceNumber" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
                     <label asp-for="PropertySize" class="form-label"></label>
@@ -38,14 +38,14 @@
                     <span asp-validation-for="SGCode" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="QuatenaryDrainage" class="form-label"></label>
-                    <input asp-for="QuatenaryDrainage" class="form-control" />
-                    <span asp-validation-for="QuatenaryDrainage" class="text-danger small"></span>
+                    <label asp-for="QuaternaryDrainage" class="form-label"></label>
+                    <input asp-for="QuaternaryDrainage" class="form-control" />
+                    <span asp-validation-for="QuaternaryDrainage" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="WaterManagementArea" class="form-label"></label>
-                    <input asp-for="WaterManagementArea" class="form-control" />
-                    <span asp-validation-for="WaterManagementArea" class="text-danger small"></span>
+                    <label asp-for="WmaId" class="form-label">Water Management Area</label>
+                    <input asp-for="WmaId" class="form-control" />
+                    <span asp-validation-for="WmaId" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
                     <label asp-for="Longitude" class="form-label"></label>
@@ -61,34 +61,34 @@
                 <div class="mb-3">
                     <h4>Property Address</h4>
                     <div class="mb-3">
-                        <label asp-for="PropertyAddress.StreetAddress" class="form-label"></label>
-                        <input asp-for="PropertyAddress.StreetAddress" class="form-control" />
-                        <span asp-validation-for="PropertyAddress.StreetAddress" class="text-danger small"></span>
+                        <label asp-for="Address.StreetAddress" class="form-label"></label>
+                        <input asp-for="Address.StreetAddress" class="form-control" />
+                        <span asp-validation-for="Address.StreetAddress" class="text-danger small"></span>
                     </div>
                     <div class="mb-3">
-                        <label asp-for="PropertyAddress.SuburbName" class="form-label"></label>
-                        <input asp-for="PropertyAddress.SuburbName" class="form-control" />
-                        <span asp-validation-for="PropertyAddress.SuburbName" class="text-danger small"></span>
+                        <label asp-for="Address.SuburbName" class="form-label"></label>
+                        <input asp-for="Address.SuburbName" class="form-control" />
+                        <span asp-validation-for="Address.SuburbName" class="text-danger small"></span>
                     </div>
                     <div class="mb-3">
-                        <label asp-for="PropertyAddress.CityName" class="form-label"></label>
-                        <input asp-for="PropertyAddress.CityName" class="form-control" />
-                        <span asp-validation-for="PropertyAddress.CityName" class="text-danger small"></span>
+                        <label asp-for="Address.CityName" class="form-label"></label>
+                        <input asp-for="Address.CityName" class="form-control" />
+                        <span asp-validation-for="Address.CityName" class="text-danger small"></span>
                     </div>
                     <div class="mb-3">
-                        <label asp-for="PropertyAddress.Province" class="form-label"></label>
-                        <input asp-for="PropertyAddress.Province" class="form-control" />
-                        <span asp-validation-for="PropertyAddress.Province" class="text-danger small"></span>
+                        <label asp-for="Address.Province" class="form-label"></label>
+                        <input asp-for="Address.Province" class="form-control" />
+                        <span asp-validation-for="Address.Province" class="text-danger small"></span>
                     </div>
                     <div class="mb-3">
-                        <label asp-for="PropertyAddress.Longitude" class="form-label"></label>
-                        <input asp-for="PropertyAddress.Longitude" class="form-control" />
-                        <span asp-validation-for="PropertyAddress.Longitude" class="text-danger small"></span>
+                        <label asp-for="Address.Longitude" class="form-label"></label>
+                        <input asp-for="Address.Longitude" class="form-control" />
+                        <span asp-validation-for="Address.Longitude" class="text-danger small"></span>
                     </div>
                     <div class="mb-3">
-                        <label asp-for="PropertyAddress.Latitude" class="form-label"></label>
-                        <input asp-for="PropertyAddress.Latitude" class="form-control" />
-                        <span asp-validation-for="PropertyAddress.Latitude" class="text-danger small"></span>
+                        <label asp-for="Address.Latitude" class="form-label"></label>
+                        <input asp-for="Address.Latitude" class="form-control" />
+                        <span asp-validation-for="Address.Latitude" class="text-danger small"></span>
                     </div>
                 </div>
 
