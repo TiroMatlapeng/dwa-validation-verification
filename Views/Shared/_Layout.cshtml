@@ -7,9 +7,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DWA - V&V Application</title>
+    <title>DWA - V&V System</title>
     <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/dwa_ver_val.styles.css" asp-append-version="true" />
 </head>
@@ -17,59 +16,35 @@
     <div class="app-shell">
         <!-- Sidebar -->
         <nav class="sidebar">
-            <div class="sidebar-logo">DWA <span>V&amp;V</span></div>
+            <div class="sidebar-logo">
+                <div style="font-size:15px; font-weight:700; letter-spacing:0.5px;">DWA <span style="color:var(--dws-sky);">V&amp;V</span></div>
+                <div style="font-size:10px; color:rgba(255,255,255,0.5); margin-top:2px;">Water Use Management</div>
+            </div>
 
             <div class="sidebar-section">Main</div>
             <a asp-controller="Home" asp-action="Index"
-               class="sidebar-item @(controllerName == "Home" && actionName == "Index" ? "active" : "")">
+               class="sidebar-item @(controllerName == "Home" ? "active" : "")">
                 <span class="sidebar-icon">&#9632;</span> Dashboard
             </a>
             <a asp-controller="Property" asp-action="Index"
                class="sidebar-item @(controllerName == "Property" ? "active" : "")">
                 <span class="sidebar-icon">&#9632;</span> Properties
             </a>
-            <a asp-controller="Home" asp-action="Index"
+            <a asp-controller="FileMaster" asp-action="Index"
                class="sidebar-item @(controllerName == "FileMaster" ? "active" : "")">
-                <span class="sidebar-icon">&#9632;</span> Cases
-                <span class="sidebar-badge">247</span>
-            </a>
-            <a asp-controller="Home" asp-action="Index"
-               class="sidebar-item @(controllerName == "Workflow" ? "active" : "")">
-                <span class="sidebar-icon">&#9632;</span> Workflow
+                <span class="sidebar-icon">&#9632;</span> V&amp;V Cases
             </a>
 
             <div class="sidebar-section">Operations</div>
-            <a asp-controller="Home" asp-action="Index"
-               class="sidebar-item @(controllerName == "Letter" ? "active" : "")">
-                <span class="sidebar-icon">&#9632;</span> Letters
-                <span class="sidebar-badge">12</span>
-            </a>
             <a asp-controller="Validation" asp-action="Index"
                class="sidebar-item @(controllerName == "Validation" ? "active" : "")">
                 <span class="sidebar-icon">&#9632;</span> Validation
             </a>
-            <a asp-controller="Home" asp-action="Index"
-               class="sidebar-item @(controllerName == "Calculator" ? "active" : "")">
-                <span class="sidebar-icon">&#9632;</span> Calculator
-            </a>
 
             <div class="sidebar-section">System</div>
-            <a asp-controller="Home" asp-action="Index"
-               class="sidebar-item @(controllerName == "Report" ? "active" : "")">
-                <span class="sidebar-icon">&#9632;</span> Reports
-            </a>
-            <a asp-controller="Home" asp-action="Index"
-               class="sidebar-item @(controllerName == "Notification" ? "active" : "")">
-                <span class="sidebar-icon">&#9632;</span> Notifications
-                <span class="sidebar-badge">5</span>
-            </a>
             <a asp-controller="Owner" asp-action="Index"
                class="sidebar-item @(controllerName == "Owner" ? "active" : "")">
                 <span class="sidebar-icon">&#9632;</span> Admin
-            </a>
-            <a asp-controller="Home" asp-action="Index"
-               class="sidebar-item @(controllerName == "Audit" ? "active" : "")">
-                <span class="sidebar-icon">&#9632;</span> Audit Log
             </a>
         </nav>
 
@@ -96,7 +71,6 @@
                     <input type="text" class="global-search" placeholder="Search properties, cases, WARMS reg..." />
                 </div>
                 <div class="top-bar-right">
-                    <div class="notif-bell">&#128276;<span class="notif-count">5</span></div>
                     <div class="user-avatar">TM</div>
                 </div>
             </div>

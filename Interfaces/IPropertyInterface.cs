@@ -2,11 +2,10 @@ using System.Threading.Tasks;
 
 public interface IPropertyInterface
 {
-    void TransferOwnership(ICollection<PropertyOwner> propertyOwners);
-    public Property UpdateProperty(Property property);
-    public Task<Property?> DeleteProperty(Guid PropertyId);
-    public ICollection<Property> ListPropertyByOwner(PropertyOwner propertyOwner);
-    public ICollection<Property> ListPropertyByProvince(string provinceName);
-    public ICollection<Property> ListAll();
-    public Property AddProperty(Property Property);
+    Task<Property> AddAsync(Property property);
+    Task<Property?> GetByIdAsync(Guid id);
+    Task<ICollection<Property>> ListAllAsync();
+    Task<ICollection<Property>> ListByProvinceAsync(string provinceName);
+    Task<Property> UpdateAsync(Property property);
+    Task<Property?> DeleteAsync(Guid id);
 }

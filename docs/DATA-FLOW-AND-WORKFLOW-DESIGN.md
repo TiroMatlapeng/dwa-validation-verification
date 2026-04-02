@@ -480,15 +480,15 @@ Stakeholders <---- [CP05: Public] <-- Presentation materials
 
 ---
 
-## 6. V&V Workflow Engine - Phase 2: Verification Process
+## 6. V&V Workflow Engine — Phase 2: Validation & Phase 3: Verification
 
-### 6.1 Phase 2 Workflow: Study Implementation (per property)
+### 6.1 Phase 2 (Validation) & Phase 3 (Verification) Workflow (per property)
 
-This phase runs **per FileMaster record** (per property). Each property moves through control points CP06-CP16 independently.
+Phase 2 (Validation) determines whether water use **existed** during the qualifying period and estimates **extent** (technical, GIS-based). Phase 3 (Verification) determines whether the water use was **lawful** by checking the authorising instrument (legal, instrument-based). This runs **per FileMaster record** (per property). Each property moves through control points CP02–CP09 independently.
 
 ```
 +===========================================================+
-|  PHASE 2: VERIFICATION (per FileMaster / Property)         |
+|  PHASE 2: VALIDATION & PHASE 3: VERIFICATION (per property)|
 +===========================================================+
 |                                                            |
 |  CP06: Evaluate WARMS Registration Information             |

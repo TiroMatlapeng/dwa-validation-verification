@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWA V&amp;V System — Solution Look and Feel</title>
+<style>
+  @page {
+    size: A4;
+    margin: 2cm 2.5cm;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Calibri', system-ui, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #1a1f2b;
+    background: #fff;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 2cm 2.5cm;
+  }
+
+  /* ── Cover Page ── */
+  .cover {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 90vh;
+    text-align: center;
+  }
+  .cover-stripe {
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(90deg, #002855, #0066b3, #7db8e0, #00838f, #2e7d32);
+    border-radius: 4px;
+    margin-bottom: 3rem;
+  }
+  .cover h1 {
+    font-size: 28pt;
+    font-weight: 700;
+    color: #002855;
+    margin-bottom: 0.3rem;
+  }
+  .cover h2 {
+    font-size: 16pt;
+    font-weight: 400;
+    color: #0066b3;
+    margin-bottom: 2rem;
+  }
+  .cover-meta {
+    font-size: 10pt;
+    color: #555d6e;
+    line-height: 2;
+  }
+  .cover-meta strong { color: #002855; }
+  .cover-footer {
+    margin-top: 4rem;
+    font-size: 9pt;
+    color: #8892a0;
+  }
+
+  /* ── Headings ── */
+  h1 { font-size: 20pt; color: #002855; margin: 2rem 0 0.8rem; page-break-after: avoid; }
+  h2 { font-size: 15pt; color: #002855; margin: 1.8rem 0 0.6rem; border-bottom: 2px solid #7db8e0; padding-bottom: 0.3rem; page-break-after: avoid; }
+  h3 { font-size: 12pt; color: #0066b3; margin: 1.4rem 0 0.5rem; page-break-after: avoid; }
+  h4 { font-size: 11pt; color: #00838f; margin: 1rem 0 0.4rem; }
+
+  p { margin-bottom: 0.8rem; text-align: justify; }
+  ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+  li { margin-bottom: 0.3rem; }
+
+  /* ── Screenshot figures ── */
+  figure {
+    margin: 1.5rem 0;
+    page-break-inside: avoid;
+  }
+  figure img {
+    width: 100%;
+    border: 1px solid #d0d5db;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,40,85,0.10);
+  }
+  figcaption {
+    font-size: 9pt;
+    color: #555d6e;
+    text-align: center;
+    margin-top: 0.4rem;
+    font-style: italic;
+  }
+
+  /* ── Callout boxes ── */
+  .callout {
+    background: #f0f6fc;
+    border-left: 4px solid #0066b3;
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 10pt;
+  }
+  .callout-title {
+    font-weight: 600;
+    color: #002855;
+    margin-bottom: 0.3rem;
+  }
+
+  /* ── Colour swatches ── */
+  .palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 1rem 0 1.5rem;
+  }
+  .swatch {
+    width: 80px;
+    text-align: center;
+    font-size: 8pt;
+  }
+  .swatch-colour {
+    width: 80px;
+    height: 48px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.1);
+    margin-bottom: 4px;
+  }
+  .swatch-label { font-weight: 600; color: #1a1f2b; }
+  .swatch-hex { color: #8892a0; }
+
+  /* ── Table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 10pt;
+  }
+  th {
+    background: #002855;
+    color: #fff;
+    text-align: left;
+    padding: 0.5rem 0.8rem;
+    font-weight: 600;
+  }
+  td {
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid #e2e6ea;
+  }
+  tr:nth-child(even) td { background: #f8f9fa; }
+
+  .page-break { page-break-before: always; }
+
+  /* ── Print adjustments ── */
+  @media print {
+    body { padding: 0; }
+    .cover { min-height: 100vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     COVER PAGE
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-stripe"></div>
+  <h1>DWA Validation &amp; Verification System</h1>
+  <h2>Solution Look and Feel</h2>
+  <p style="font-size:12pt; color:#555d6e; margin-bottom:3rem;">
+    User Interface Design Specification &amp; Visual Language
+  </p>
+  <div class="cover-meta">
+    <strong>Client:</strong> Department of Water and Sanitation (DWS)<br>
+    <strong>Project:</strong> Electronic V&amp;V Information Management System<br>
+    <strong>Version:</strong> 1.0 &mdash; MVP Phase<br>
+    <strong>Date:</strong> 25 March 2026<br>
+    <strong>Classification:</strong> Internal &mdash; For Client Review
+  </div>
+  <div class="cover-footer">
+    Prepared in support of the Requirements for Verifying the Lawfulness of Existing Water Use<br>
+    and Extent of Existing Lawful Water Use, Edition 3, July 2024 (DWS)
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+     ════════════════════════════════════════════════════════════════════ -->
+<h1>Table of Contents</h1>
+<ol style="font-size:11pt; line-height:2.2;">
+  <li><a href="#intro" style="color:#0066b3; text-decoration:none;">Introduction</a></li>
+  <li><a href="#principles" style="color:#0066b3; text-decoration:none;">Design Principles</a></li>
+  <li><a href="#brand" style="color:#0066b3; text-decoration:none;">Brand Identity &amp; Colour Palette</a></li>
+  <li><a href="#layout" style="color:#0066b3; text-decoration:none;">Application Shell &amp; Navigation</a></li>
+  <li><a href="#dashboard" style="color:#0066b3; text-decoration:none;">Screen: Dashboard</a></li>
+  <li><a href="#properties-list" style="color:#0066b3; text-decoration:none;">Screen: Properties List</a></li>
+  <li><a href="#property-register" style="color:#0066b3; text-decoration:none;">Screen: Property Registration</a></li>
+  <li><a href="#property-details" style="color:#0066b3; text-decoration:none;">Screen: Property Details (Current MVP)</a></li>
+  <li><a href="#workflow" style="color:#0066b3; text-decoration:none;">Screen: Workflow Overview</a></li>
+  <li><a href="#letters" style="color:#0066b3; text-decoration:none;">Screen: Letter Management</a></li>
+  <li><a href="#letter-sign" style="color:#0066b3; text-decoration:none;">Screen: Letter Signing</a></li>
+  <li><a href="#typography" style="color:#0066b3; text-decoration:none;">Typography, Spacing &amp; Components</a></li>
+  <li><a href="#responsive" style="color:#0066b3; text-decoration:none;">Responsive Behaviour</a></li>
+  <li><a href="#accessibility" style="color:#0066b3; text-decoration:none;">Accessibility Considerations</a></li>
+  <li><a href="#next" style="color:#0066b3; text-decoration:none;">Next Steps</a></li>
+</ol>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     1. INTRODUCTION
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="intro" class="page-break">1. Introduction</h1>
+
+<p>
+  This document describes the visual design language, interaction patterns, and user interface conventions adopted for the
+  DWA Validation &amp; Verification (V&amp;V) System. It is intended as a companion to the functional requirements
+  specification and the system architecture documentation, giving the client and project stakeholders a clear picture of
+  how the system will look and feel in day-to-day use.
+</p>
+
+<p>
+  The V&amp;V System is an enterprise-grade information management platform that will be used by approximately
+  500,000 property records across DWS head office, nine provincial offices, regional offices, and Catchment Management
+  Agencies (CMAs). The user base comprises validators, data capturers, regional managers, and national administrators &mdash;
+  many of whom work in field conditions with varying levels of technical proficiency. The interface must therefore
+  prioritise <strong>clarity, efficiency, and trustworthiness</strong> above visual novelty.
+</p>
+
+<p>
+  The wireframes presented here represent the current MVP (Minimum Viable Product) iteration. They are working designs
+  that will be refined through client feedback sessions. There are in excess of 100 screens planned across the internal
+  staff portal and the external water-user portal; this document samples the most representative screens to illustrate
+  the overall design direction.
+</p>
+
+<div class="callout">
+  <div class="callout-title">Note on Iteration</div>
+  All screens shown are subject to change based on client review. The design system (colours, spacing, component
+  patterns) is stable; individual screen layouts will evolve as business rules are finalised.
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     2. DESIGN PRINCIPLES
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="principles">2. Design Principles</h1>
+
+<p>Five principles guide every design decision in the V&amp;V System:</p>
+
+<h3>2.1 Government Appropriate</h3>
+<p>
+  The system serves a regulatory function under the National Water Act. The visual tone must convey authority,
+  reliability, and impartiality. We avoid trendy consumer-facing aesthetics and instead adopt a professional,
+  restrained palette drawn directly from the Department of Water and Sanitation's official brand identity.
+</p>
+
+<h3>2.2 Data-Dense but Legible</h3>
+<p>
+  Validators work with large data sets &mdash; property records, WARMS registrations, crop calculations, dam volumes,
+  and legal correspondence. The interface uses compact data tables with clear column headers, inline status badges,
+  and contextual filters so that users can scan hundreds of records without losing orientation.
+</p>
+
+<h3>2.3 Process-Driven</h3>
+<p>
+  The V&amp;V process follows a defined sequence of nine control points. The interface surfaces workflow state
+  prominently on every relevant screen, with a visual stepper that shows completed, in-progress, and upcoming
+  steps. Users should always know <em>where</em> a case stands and <em>what</em> needs to happen next.
+</p>
+
+<h3>2.4 Role-Aware</h3>
+<p>
+  Different users see different capabilities. A data capturer sees input forms; a regional manager sees approval
+  queues and signature panels; a national manager sees aggregate dashboards and cross-provincial reports. The
+  interface adapts to the user's role, hiding actions they cannot perform rather than showing disabled controls.
+</p>
+
+<h3>2.5 Accessible and Inclusive</h3>
+<p>
+  The system must be usable by staff with varying levels of digital literacy and across different hardware &mdash;
+  from high-resolution desktop monitors in Pretoria to standard laptops in regional offices. All colour choices
+  meet WCAG 2.1 AA contrast requirements. Form labels are explicit, and error messages are descriptive.
+</p>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     3. BRAND IDENTITY & COLOUR PALETTE
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="brand" class="page-break">3. Brand Identity &amp; Colour Palette</h1>
+
+<p>
+  The colour palette is derived from the official Department of Water and Sanitation (DWS) website and brand
+  guidelines. No generic framework default colours are used. Every colour in the system maps to either the DWS
+  corporate identity or to standard semantic conventions (green for success, amber for warning, red for error).
+</p>
+
+<h3>3.1 Primary Palette</h3>
+<p>
+  The primary palette anchors the navigation, headers, and key interactive elements. DWS Navy provides the
+  authoritative foundation colour, while DWS Blue and Sky provide visual hierarchy and interactive affordance.
+</p>
+<div class="palette">
+  <div class="swatch">
+    <div class="swatch-colour" style="background:#002855;"></div>
+    <div class="swatch-label">Navy</div>
+    <div class="swatch-hex">#002855</div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-colour" style="background:#0066b3;"></div>
+    <div class="swatch-label">Blue</div>
+    <div class="swatch-hex">#0066b3</div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-colour" style="background:#7db8e0;"></div>
+    <div class="swatch-label">Sky</div>
+    <div class="swatch-hex">#7db8e0</div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-colour" style="background:#d6eaf8;"></div>
+    <div class="swatch-label">Sky Pale</div>
+    <div class="swatch-hex">#d6eaf8</div>
+  </div>
+</div>
+
+<h3>3.2 Semantic &amp; Accent Colours</h3>
+<p>
+  Accent colours communicate status and category. Teal is used for operations and workflow elements, green for
+  completed/success states, gold for warnings and pending items, and red for errors and urgent actions. These
+  colours are applied consistently across badges, progress indicators, and notification elements.
+</p>
+<div class="palette">
+  <div class="swatch">
+    <div class="swatch-colour" style="background:#00838f;"></div>
+    <div class="swatch-label">Teal</div>
+    <div class="swatch-hex">#00838f</div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-colour" style="background:#2e7d32;"></div>
+    <div class="swatch-label">Green</div>
+    <div class="swatch-hex">#2e7d32</div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-colour" style="background:#c49000;"></div>
+    <div class="swatch-label">Gold</div>
+    <div class="swatch-hex">#c49000</div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-colour" style="background:#c62828;"></div>
+    <div class="swatch-label">Red</div>
+    <div class="swatch-hex">#c62828</div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-colour" style="background:#e65100;"></div>
+    <div class="swatch-label">Orange</div>
+    <div class="swatch-hex">#e65100</div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-colour" style="background:#6a1b9a;"></div>
+    <div class="swatch-label">Purple</div>
+    <div class="swatch-hex">#6a1b9a</div>
+  </div>
+</div>
+
+<h3>3.3 Neutral &amp; Background Colours</h3>
+<p>
+  The application background uses a soft neutral (#f0f2f5) that reduces eye strain during extended work sessions.
+  Cards and panels sit on white (#ffffff) with subtle shadows to create visual layering without harsh borders.
+  Text uses a near-black (#1a1f2b) for primary content, with secondary (#555d6e) and muted (#8892a0) tones for
+  supporting information.
+</p>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     4. APPLICATION SHELL & NAVIGATION
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="layout">4. Application Shell &amp; Navigation</h1>
+
+<p>
+  The application uses a fixed sidebar-plus-topbar shell pattern &mdash; a layout proven in enterprise and
+  government systems for its stability, scalability, and ease of orientation. The sidebar remains visible at all
+  times, giving the user a persistent sense of where they are in the application.
+</p>
+
+<h3>4.1 Sidebar Navigation</h3>
+<p>
+  The left sidebar uses a gradient from deep navy (#001a3a) at the top to a lighter navy (#003d7a) at the bottom,
+  providing visual depth while staying firmly within the DWS brand. Navigation items are grouped into three
+  sections:
+</p>
+<ul>
+  <li><strong>Main</strong> &mdash; Dashboard, Properties, Cases (core data navigation)</li>
+  <li><strong>Operations</strong> &mdash; Validation, Workflow, Letters, Calculator (process-driven tools)</li>
+  <li><strong>System</strong> &mdash; Reports, Notifications, Admin, Audit Log (administrative functions)</li>
+</ul>
+<p>
+  The active page is highlighted with a left accent bar in DWS Sky (#7db8e0) and a slightly lighter background,
+  providing clear visual feedback. At the bottom of the sidebar, the logged-in user's name and role are displayed,
+  giving immediate context about who is operating the system and at what privilege level.
+</p>
+
+<h3>4.2 Top Bar</h3>
+<p>
+  The top bar serves three functions: breadcrumb navigation (showing the current location as
+  <em>Home / Controller / Action</em>), a global search field, and a user avatar/profile link. The breadcrumb
+  trail ensures that users always have a clear path back to higher-level views, while the global search allows
+  quick lookup of properties, cases, or WARMS registration numbers from any page.
+</p>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     5. DASHBOARD
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="dashboard" class="page-break">5. Screen: Dashboard</h1>
+
+<p>
+  The Dashboard is the landing page for all internal users. It provides a high-level operational overview of the
+  V&amp;V programme, aggregating key metrics across the user's organisational scope (national, provincial, or
+  regional, depending on role). The goal is to answer the question: <em>"What is the current state of V&amp;V
+  across my area of responsibility?"</em>
+</p>
+
+<figure>
+  <img src="wireframes/screenshots/image2.png" alt="Dashboard screen showing summary statistics, V&V progress chart, letter status summary, recent activity, and assigned tasks">
+  <figcaption>Figure 1 &mdash; Dashboard: Operational overview with summary cards, progress charts, and task lists</figcaption>
+</figure>
+
+<h3>5.1 Summary Statistics Cards</h3>
+<p>
+  The top row presents six key performance indicators in card format: total properties, properties in V&amp;V,
+  in-progress cases, completed cases, overdue tasks, and active letters. Each card shows the headline number in
+  large type with a supporting descriptor below. The cards use colour-coded left borders &mdash; blue for
+  informational metrics, green for completed work, gold for pending items, and red for overdue or attention-required
+  counts. This allows a manager to assess programme health at a glance without reading a single label.
+</p>
+
+<h3>5.2 V&amp;V Progress by Phase</h3>
+<p>
+  A bar chart breaks down case counts by workflow phase (Not Started, Phase 1, Phase 2, and Section 35 Completion).
+  This chart directly maps to the control point structure defined in the DWS requirements document, giving
+  management visibility into bottlenecks. If, for example, a large number of cases are stalled at Phase 2 while
+  Phase 1 completion is high, it signals a resource constraint in field verification.
+</p>
+
+<h3>5.3 Letter Status Summary</h3>
+<p>
+  A tabular summary shows the count of each Section 35 letter type (Letter 1 through Letter 5), broken down by
+  status: issued, awaiting response, and overdue. Letters are the primary regulatory instrument in the V&amp;V
+  process, and overdue responses require escalation. The red "Overdue" badges draw immediate attention to cases
+  that need follow-up action.
+</p>
+
+<h3>5.4 Recent Activity &amp; My Assigned Tasks</h3>
+<p>
+  Two panels at the bottom of the dashboard provide personal context. "Recent Activity" shows the latest actions
+  taken across the user's cases (e.g., "Validator completed CP6 for Farm Rietkuil 234"). "My Assigned Tasks"
+  lists outstanding work items with due dates, allowing the user to prioritise their day directly from the
+  dashboard.
+</p>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     6. PROPERTIES LIST
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="properties-list" class="page-break">6. Screen: Properties List</h1>
+
+<p>
+  The Properties List is the primary data management screen. With approximately 500,000 property records
+  anticipated across the national programme, this screen must handle large data volumes without overwhelming the
+  user. It is the entry point for all property-related operations: viewing details, creating V&amp;V cases,
+  assigning validators, and exporting data.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots/image4.png" alt="Properties list with filters, sortable columns, status badges, and bulk action controls">
+  <figcaption>Figure 2 &mdash; Properties List: Filterable, sortable data table with inline status indicators and batch actions</figcaption>
+</figure>
+
+<h3>6.1 Filter Bar</h3>
+<p>
+  Above the data table, a row of filter controls allows users to narrow the displayed properties by Water
+  Management Area (WMA), province, validation status, water use type, and free-text search on SG Code or farm
+  name. Filters can be combined &mdash; for example, a regional manager might filter to "Limpopo" + "In Process"
+  to see only active cases in their province. The active filter count is displayed so users know when filters
+  are applied and can clear them quickly.
+</p>
+
+<h3>6.2 Data Table</h3>
+<p>
+  The table displays key property attributes in a dense but readable format: SG Code, farm name, WMA, quaternary
+  drainage region, property size (hectares), validation status, and registration status. Columns are sortable by
+  clicking the header. Each row uses a colour-coded status badge:
+</p>
+<ul>
+  <li><strong>Green</strong> &mdash; Completed (V&amp;V process finalised)</li>
+  <li><strong>Blue</strong> &mdash; In Process (actively being worked)</li>
+  <li><strong>Gold</strong> &mdash; Pending (awaiting action or response)</li>
+  <li><strong>Red</strong> &mdash; Overdue or Unregistered (requires attention)</li>
+  <li><strong>Grey</strong> &mdash; Not Commenced (not yet started)</li>
+</ul>
+
+<h3>6.3 Batch Operations</h3>
+<p>
+  Checkboxes on each row allow multi-select for batch operations: assigning a validator to multiple properties,
+  exporting selected records to CSV/Excel, or bulk-updating a status field. This is essential for programme
+  managers who need to assign 50+ properties to a consultant in a single action rather than editing each record
+  individually. The "Export CSV" and "Export Excel" buttons in the top-right corner export the current filtered
+  view, not the entire dataset, ensuring exports are relevant and manageable.
+</p>
+
+<h3>6.4 Register Property</h3>
+<p>
+  The prominent "Register Property" button in the top-right corner provides a single entry point for adding new
+  properties to the system. This action is role-restricted to Validator and above.
+</p>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     7. PROPERTY REGISTRATION
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="property-register" class="page-break">7. Screen: Property Registration</h1>
+
+<p>
+  The Property Registration screen is a multi-step guided form that walks the user through capturing all required
+  data for a new property record. Rather than presenting a single overwhelming form with 30+ fields, the process
+  is divided into five logical steps presented as a horizontal stepper: (1) Property Info, (2) Location,
+  (3) Ownership, (4) Water Use, and (5) Review. This mirrors the physical process of gathering property data
+  from title deeds, SG diagrams, and WARMS records.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots/image5.png" alt="Property registration form with multi-step stepper showing Step 2 (Location) with fields for SG Code, farm name, property size, WMA, province, and quaternary drainage">
+  <figcaption>Figure 3 &mdash; Property Registration: Multi-step form (Step 2 &mdash; Location &amp; Catchment)</figcaption>
+</figure>
+
+<h3>7.1 Step Indicator</h3>
+<p>
+  The horizontal stepper at the top of the form shows all five steps with the current step highlighted in DWS Blue
+  and completed steps marked with a green tick. This gives the user a clear sense of progress and what remains.
+  Users can click on a completed step to return to it and make corrections before final submission. The stepper
+  uses a numbered circle design that is intuitive regardless of screen size.
+</p>
+
+<h3>7.2 Property Identification Fields</h3>
+<p>
+  The first section captures the core identifiers that link the property to external systems: SG Code (the 21-digit
+  Surveyor General code, e.g., C03900000000234000000), Property Reference / Farm Name, Farm Number, Portion Number,
+  and Property Size in hectares. The WARMS Registration Number field provides the link to the national water
+  registration system. Each field includes a helper text below the input (e.g., "21-digit Surveyor General code")
+  to guide users who may not be familiar with the expected format.
+</p>
+
+<h3>7.3 Location &amp; Catchment</h3>
+<p>
+  The second section captures the geographic and hydrological context: Province (dropdown of 9 provinces), Water
+  Management Area (dropdown filtered by province), Quaternary Drainage Region, and Magisterial District. These
+  fields determine the organisational unit responsible for the V&amp;V case and the applicable water resource
+  context. The WMA dropdown is a critical field &mdash; it drives the assignment of the case to the correct
+  regional office.
+</p>
+
+<h3>7.4 Save as Draft</h3>
+<p>
+  Users can save a partially completed registration as a draft at any point. This is important because field
+  workers may begin registration with available information (e.g., from a site visit) and return later with
+  additional data (e.g., from the Deeds Office). The "Save as Draft" button is always visible alongside the
+  primary "Register Property" button, which is only enabled once all mandatory fields are completed.
+</p>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     8. PROPERTY DETAILS (CURRENT MVP)
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="property-details" class="page-break">8. Screen: Property Details (Current MVP)</h1>
+
+<p>
+  The Property Details screen in the current MVP is a focused, form-based view that displays and allows editing
+  of core property data. While the full wireframe designs envision a rich details page with tabbed sections for
+  ownership, water use, and linked cases, the MVP implementation provides the essential data capture functionality
+  that underpins all subsequent V&amp;V work.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots/image1.png" alt="Property details form showing Property Details section with fields for reference number, SG Code, property size, quaternary drainage, dates, WMA, coordinates, and Property Address section with street address, suburb, city, and province">
+  <figcaption>Figure 4 &mdash; Property Details (MVP): Core property data and address capture form</figcaption>
+</figure>
+
+<h3>8.1 Property Details Section</h3>
+<p>
+  The upper portion of the screen presents the primary property attributes in a two-column layout that makes
+  efficient use of screen width. Fields include Property Reference Number, SG Code, Property Size (in hectares),
+  Quaternary Drainage code, Proclamation Date, Registration Date, and the Water Management Area dropdown. The
+  geographic coordinates (Longitude and Latitude) enable integration with GIS mapping tools that are central to
+  the V&amp;V process &mdash; particularly for digitising crop fields and dam boundaries during Control Points
+  5 and 6.
+</p>
+
+<h3>8.2 Property Address Section</h3>
+<p>
+  Below the property details, the address section captures the physical location: Street Address, Suburb Name,
+  City Name, and Province. This information is used for correspondence (Section 35 letters must be delivered to
+  a physical address) and for organisational filtering (properties are scoped by province and WMA for access
+  control purposes).
+</p>
+
+<h3>8.3 Section Dividers</h3>
+<p>
+  Each form section is visually separated by a section heading with a blue underline rule. This convention is
+  used throughout the system to break long forms into scannable groups. The section headers use the DWS Blue
+  colour to maintain brand consistency while providing clear visual hierarchy.
+</p>
+
+<div class="callout">
+  <div class="callout-title">MVP vs. Target State</div>
+  The current MVP property form captures the minimum data required to support V&amp;V case creation. Future
+  iterations will add tabbed sections for Ownership (title deed data, PropertyOwner links), Water Use (linked
+  Irrigation and FieldAndCrop records), Satellite Images, and a Case Timeline showing the workflow history for
+  all V&amp;V cases associated with this property.
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     9. WORKFLOW OVERVIEW
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="workflow" class="page-break">9. Screen: Workflow Overview</h1>
+
+<p>
+  The Workflow Overview screen is the operational heart of the V&amp;V System. It provides both a macro view
+  (how many cases are at each control point across the programme) and a micro view (the detailed step-by-step
+  progression of an individual case). The design directly maps to the nine control points defined in the DWS
+  requirements document, ensuring that the system's visual language aligns with the regulatory process that
+  users are already trained on.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots/image7.png" alt="Workflow overview showing case pipeline distribution across control points as horizontal bars, and individual case detail with control point stepper showing completed, in-progress, and pending steps">
+  <figcaption>Figure 5 &mdash; Workflow Overview: Case pipeline distribution and individual case control point progression</figcaption>
+</figure>
+
+<h3>9.1 Case Pipeline</h3>
+<p>
+  The top section displays the distribution of all active cases across the nine control points as horizontal
+  progress indicators. Each control point shows the count of cases currently at that stage. This pipeline view
+  immediately reveals where cases are concentrating &mdash; a critical management tool for identifying resource
+  bottlenecks. For example, if CP6 (Field, Crop &amp; SAPWAT) shows significantly more cases than CP7 (ELU
+  Calculation), it suggests a need for additional SAPWAT modelling capacity.
+</p>
+
+<h3>9.2 Individual Case Workflow</h3>
+<p>
+  Below the pipeline, the detail section shows a specific case's journey through all nine control points using
+  a vertical stepper. Each control point displays:
+</p>
+<ul>
+  <li>A <strong>status icon</strong>: green tick (completed), blue spinner (in progress), or grey circle (pending)</li>
+  <li>The <strong>control point name</strong> and a one-line description of the activity</li>
+  <li>The <strong>completion date</strong> or expected target date</li>
+  <li>The <strong>responsible person</strong> who completed or is assigned to the step</li>
+</ul>
+<p>
+  This design ensures that anyone reviewing a case &mdash; whether the assigned validator, a regional manager
+  conducting quality assurance, or a national manager reviewing programme progress &mdash; can immediately
+  understand the case's history and current position without navigating through multiple screens.
+</p>
+
+<h3>9.3 Transition Guards</h3>
+<p>
+  The workflow engine enforces business rules (transition guards) at each control point. If a user attempts to
+  advance a case to the next control point without satisfying all prerequisites, the system displays a clear
+  message listing the outstanding requirements. For example, advancing from CP5 to CP6 requires that satellite
+  imagery GIS layers have been confirmed &mdash; if they haven't, the user sees: <em>"Cannot advance: GIS
+  analysis layers not confirmed for qualifying and current periods."</em>
+</p>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     10. LETTER MANAGEMENT
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="letters" class="page-break">10. Screen: Letter Management</h1>
+
+<p>
+  Letter management is one of the most critical operational screens in the system. The Section 35 letter process
+  is the legal mechanism by which DWS communicates with water users about their validation status, requests
+  additional information, confirms existing lawful use, or directs cessation of unlawful use. Each letter type
+  has statutory requirements for delivery method, response periods, and escalation paths.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots/image6.png" alt="Letter management screen showing summary statistics for letter types, filter bar, and data table with letter details including case number, property, letter type, status, dates, and response tracking">
+  <figcaption>Figure 6 &mdash; Letter Management: Summary statistics, filterable letter list with status tracking</figcaption>
+</figure>
+
+<h3>10.1 Letter Statistics</h3>
+<p>
+  The top row displays aggregate counts: total letters issued, pending responses, overdue responses, responses
+  received, and letters requiring escalation. These cards use the same colour-coding convention as the Dashboard
+  &mdash; green for received, gold for pending, red for overdue. A regional manager can open this screen and
+  immediately know how many of their letters require follow-up action.
+</p>
+
+<h3>10.2 Letter List</h3>
+<p>
+  The data table lists individual letters with key tracking fields: case number, property reference, letter type
+  (Letter 1 through Letter 5), issue date, due date, delivery method, status, and the response received date.
+  Filters allow narrowing by letter type, province, status, and date range. The "No Response" badge in red
+  highlights letters where the statutory response period has elapsed without acknowledgement &mdash; these cases
+  may require escalation to the next letter in the Section 35 sequence (e.g., from Letter 1 to Letter 1A).
+</p>
+
+<h3>10.3 Issue New Letter</h3>
+<p>
+  The "Issue New Letter" button initiates the letter generation workflow, which includes selecting the letter type,
+  confirming the recipient details, generating the PDF from the QuestPDF template, and routing it for signature
+  by the authorised regional manager. Letter 1 has a special requirement &mdash; it must be served in person
+  &mdash; so the system prompts for the serving official's details and records the hand-delivery confirmation.
+</p>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     11. LETTER SIGNING
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="letter-sign" class="page-break">11. Screen: Letter Signing</h1>
+
+<p>
+  The Letter Signing screen is where the authorised signatory (typically a Regional Manager or delegated official)
+  reviews and electronically signs a Section 35 letter before it is issued to the water user. This screen
+  combines a document preview with signature capture, ensuring that the signatory has reviewed the content before
+  applying their signature.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots/image3.png" alt="Letter signing screen showing PDF preview on the left, letter metadata on the right, and electronic signature capture panel with reason for signing and signature pad">
+  <figcaption>Figure 7 &mdash; Letter Signing: Document preview with electronic signature capture</figcaption>
+</figure>
+
+<h3>11.1 Document Preview</h3>
+<p>
+  The left panel displays a rendered preview of the letter as it will appear when printed or delivered as a PDF.
+  The preview shows the DWS letterhead, the statutory references (e.g., "Notice in terms of Section 35(1) of the
+  National Water Act"), the recipient details, property identification, and the body text. The signatory can
+  review the full content, download the PDF for offline review, or print a hard copy if required.
+</p>
+
+<h3>11.2 Letter Details Panel</h3>
+<p>
+  The right panel summarises the letter metadata: letter type and statutory reference, issue date, the property
+  and case it relates to, the requesting validator, and the delivery method (registered post, hand delivery, or
+  electronic). This gives the signatory the context they need to confirm that the letter is correct, addressed
+  to the right person, and relates to the right property.
+</p>
+
+<h3>11.3 Electronic Signature</h3>
+<p>
+  Below the letter details, the signature panel allows the authorised official to capture their electronic
+  signature. The system uses a signature pad interface (powered by SignaturePad.js) where the user draws their
+  signature with a mouse or stylus. Before signing, they must confirm the reason for signing (a dropdown
+  selecting their authorisation basis) and enter their name. The captured signature is embedded into the PDF
+  and the signing event is recorded in the immutable audit trail with a timestamp and the signatory's user ID.
+</p>
+
+<div class="callout">
+  <div class="callout-title">Legal Validity</div>
+  Electronic signatures in the V&amp;V System comply with the Electronic Communications and Transactions Act
+  (ECTA), Act 25 of 2002. Each signature is accompanied by a server-side X.509 verification and a tamper-evident
+  audit record linking the signatory, the document hash, and the timestamp.
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     12. TYPOGRAPHY, SPACING & COMPONENTS
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="typography" class="page-break">12. Typography, Spacing &amp; Components</h1>
+
+<h3>12.1 Typography</h3>
+<p>
+  The system uses <strong>Segoe UI</strong> as the primary typeface, falling back to the system UI font. Segoe UI
+  is the standard typeface for South African government digital systems, is pre-installed on all Windows machines
+  (the dominant OS in DWS offices), and provides excellent readability at both large heading sizes and small
+  data-table body text.
+</p>
+
+<table>
+  <tr><th>Element</th><th>Size</th><th>Weight</th><th>Colour</th></tr>
+  <tr><td>Page heading (h1)</td><td>20pt</td><td>700 (Bold)</td><td>Navy #002855</td></tr>
+  <tr><td>Section heading (h2)</td><td>15pt</td><td>600 (Semi-bold)</td><td>Navy #002855</td></tr>
+  <tr><td>Sub-heading (h3)</td><td>12pt</td><td>600</td><td>Blue #0066b3</td></tr>
+  <tr><td>Body text</td><td>11pt / 14px</td><td>400 (Regular)</td><td>Primary #1a1f2b</td></tr>
+  <tr><td>Secondary text</td><td>10pt / 13px</td><td>400</td><td>Secondary #555d6e</td></tr>
+  <tr><td>Table data</td><td>10pt / 13px</td><td>400</td><td>Primary #1a1f2b</td></tr>
+  <tr><td>Badge / label</td><td>9pt / 11px</td><td>600</td><td>White on coloured background</td></tr>
+  <tr><td>Caption / helper text</td><td>9pt / 11px</td><td>400</td><td>Muted #8892a0</td></tr>
+</table>
+
+<h3>12.2 Spacing System</h3>
+<p>
+  Spacing follows a 4px base unit: 4, 8, 12, 16, 24, 32, 48. Cards use 16px internal padding, sections are
+  separated by 24px margins, and page-level content has 32px padding from the sidebar and topbar edges. This
+  consistent spacing creates a rhythmic, uncluttered layout even on data-heavy screens.
+</p>
+
+<h3>12.3 Key UI Components</h3>
+
+<table>
+  <tr><th>Component</th><th>Description</th><th>Usage</th></tr>
+  <tr>
+    <td>Status Badge</td>
+    <td>Small rounded pill with coloured background and white text</td>
+    <td>Validation status, letter status, workflow state</td>
+  </tr>
+  <tr>
+    <td>Summary Card</td>
+    <td>White card with left colour border, large number, and descriptor</td>
+    <td>Dashboard KPIs, letter statistics, case counts</td>
+  </tr>
+  <tr>
+    <td>Data Table</td>
+    <td>Striped rows, sortable headers, inline badges, checkbox select</td>
+    <td>Properties list, letter list, case list</td>
+  </tr>
+  <tr>
+    <td>Step Indicator</td>
+    <td>Horizontal or vertical numbered circles connected by lines</td>
+    <td>Multi-step forms, workflow control points</td>
+  </tr>
+  <tr>
+    <td>Filter Bar</td>
+    <td>Row of dropdowns and search inputs above a data table</td>
+    <td>Properties list, letter management, reports</td>
+  </tr>
+  <tr>
+    <td>Action Button (Primary)</td>
+    <td>Filled button in DWS Blue with white text, 6px border radius</td>
+    <td>Register, Submit, Issue Letter, Sign</td>
+  </tr>
+  <tr>
+    <td>Action Button (Secondary)</td>
+    <td>Outlined button with DWS Blue border and text</td>
+    <td>Cancel, Save as Draft, Export</td>
+  </tr>
+  <tr>
+    <td>Breadcrumb</td>
+    <td>Slash-separated path in the top bar</td>
+    <td>All pages &mdash; shows navigation hierarchy</td>
+  </tr>
+</table>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     13. RESPONSIVE BEHAVIOUR
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="responsive">13. Responsive Behaviour</h1>
+
+<p>
+  While the V&amp;V System is primarily a desktop application used in office environments, the interface is
+  designed to adapt to varying screen sizes:
+</p>
+
+<table>
+  <tr><th>Breakpoint</th><th>Behaviour</th></tr>
+  <tr>
+    <td>Large (&gt;1280px)</td>
+    <td>Full sidebar (260px) + content area. Two-column form layouts. Data tables show all columns.</td>
+  </tr>
+  <tr>
+    <td>Medium (768px&ndash;1280px)</td>
+    <td>Sidebar collapses to icon-only mode (60px). Forms remain two-column. Some table columns hidden behind a "more" toggle.</td>
+  </tr>
+  <tr>
+    <td>Small (&lt;768px)</td>
+    <td>Sidebar becomes a hamburger-triggered overlay. Forms switch to single-column stacked layout. Tables become card-based lists.</td>
+  </tr>
+</table>
+
+<p>
+  Field workers conducting site visits may access the system from tablets. The medium breakpoint ensures that
+  property registration and data capture forms remain functional on 10-inch tablet screens. Full data analysis
+  and reporting workflows are optimised for desktop use.
+</p>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     14. ACCESSIBILITY
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="accessibility">14. Accessibility Considerations</h1>
+
+<p>
+  The V&amp;V System targets <strong>WCAG 2.1 Level AA</strong> compliance across all screens. Key measures include:
+</p>
+
+<ul>
+  <li><strong>Colour contrast</strong>: All text meets a minimum contrast ratio of 4.5:1 against its background. White text on DWS Navy (#002855) achieves a ratio of 14.8:1. Status badges use sufficiently dark background colours to ensure legibility.</li>
+  <li><strong>Keyboard navigation</strong>: All interactive elements (buttons, links, form inputs, table rows) are reachable via Tab key. The sidebar active state is visible on keyboard focus, not only on mouse hover.</li>
+  <li><strong>Form labels</strong>: Every input field has an explicit <code>&lt;label&gt;</code> element (not placeholder-only labelling). Error messages reference the field name and describe the required correction.</li>
+  <li><strong>Semantic HTML</strong>: The application uses correct heading hierarchy (h1 &rarr; h2 &rarr; h3), landmark regions (<code>&lt;nav&gt;</code>, <code>&lt;main&gt;</code>), and ARIA attributes where native semantics are insufficient.</li>
+  <li><strong>Screen reader support</strong>: Status badges include <code>aria-label</code> text (e.g., "Status: In Process") so that colour-coded information is also conveyed textually.</li>
+</ul>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     15. NEXT STEPS
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="next">15. Next Steps</h1>
+
+<p>
+  This document represents the MVP visual baseline. The following areas will be developed and documented in
+  subsequent iterations:
+</p>
+
+<ol>
+  <li><strong>External Water-User Portal</strong> &mdash; A separate set of wireframes for the public-facing portal where water users can track their case status, upload supporting documents, respond to Section 35 letters, and lodge objections.</li>
+  <li><strong>GIS Map Integration</strong> &mdash; Embedded map views on property details screens showing SG boundaries, catchment overlays, satellite imagery layers, and digitised crop field polygons.</li>
+  <li><strong>Calculator Screens</strong> &mdash; SAPWAT modelling input, dam volume calculator (Appendix D methods), and SFRA stream flow reduction calculation interfaces.</li>
+  <li><strong>Report Builder</strong> &mdash; Customisable report screens for programme progress, provincial summaries, ELU outcome statistics, and Section 35 compliance tracking.</li>
+  <li><strong>User Management &amp; Roles</strong> &mdash; Administration screens for managing DWS staff accounts, role assignments, organisational unit scoping, and audit log review.</li>
+  <li><strong>Notification Centre</strong> &mdash; Detailed notification management with email templates, due date reminders, and escalation rules configuration.</li>
+  <li><strong>Dark Mode (Optional)</strong> &mdash; An alternative colour scheme for extended work sessions, if requested by users during UAT.</li>
+</ol>
+
+<div class="callout">
+  <div class="callout-title">Client Feedback</div>
+  We welcome feedback on all aspects of the visual design. Please direct comments to the project team with
+  specific reference to section numbers in this document for efficient resolution.
+</div>
+
+<div style="margin-top:4rem; padding-top:1rem; border-top:2px solid #7db8e0; font-size:9pt; color:#8892a0; text-align:center;">
+  DWA V&amp;V System &mdash; Solution Look and Feel v1.0 &mdash; 25 March 2026<br>
+  Department of Water and Sanitation &mdash; Republic of South Africa
+</div>
+
+</body>
+</html>

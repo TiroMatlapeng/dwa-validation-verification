@@ -1,3 +1,4 @@
+%% AMENDED 2026-03-24: Protest→Objection; Water user input capability added
 flowchart TB
     subgraph RegFlow["Registration & Identity Verification Flow"]
         Visit["Water User visits\n/Portal/Register"]
@@ -39,11 +40,12 @@ flowchart TB
         SignLetter["Sign Letter Electronically\n(SignaturePad.js → DigitalSignature)"]
         UploadDoc["Upload Supporting Documents\n(virus-scanned before storage)"]
         SubmitComment["Submit Written Response\n(CaseComment record)"]
-        LodgeProtest["Lodge Formal Protest\n(Protest record + ProtestDocument)"]
+        LodgeObjection["Lodge Formal Appeal/Objection\n(Objection record + ObjectionDocument)\n[AMENDED 2026-03-24]"]
+        SubmitWaterUserInput["Submit Water User Input\n(information for any CP\nvia portal or comms)\n[AMENDED 2026-03-24]"]
         ViewNotifs["View Notifications\n(CaseNotification — mark as read)"]
     end
 
-    Dashboard --> ViewCase & DownloadLetter & SignLetter & UploadDoc & SubmitComment & LodgeProtest & ViewNotifs
+    Dashboard --> ViewCase & DownloadLetter & SignLetter & UploadDoc & SubmitComment & LodgeObjection & SubmitWaterUserInput & ViewNotifs
 
     style RegFlow fill:#e6f3ff,stroke:#0066cc
     style DashFlow fill:#fff3e6,stroke:#cc6600

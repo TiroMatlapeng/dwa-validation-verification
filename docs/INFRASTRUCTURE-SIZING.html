@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DWA V&V System — Infrastructure Sizing Estimates</title>
+<style>
+/* ── Word-compatible print styling ── */
+@page { size: A4; margin: 2.5cm; }
+body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; max-width: 210mm; margin: 0 auto; padding: 20px; }
+h1 { font-size: 22pt; color: #003366; border-bottom: 3px solid #003366; padding-bottom: 8px; margin-top: 30px; page-break-before: always; }
+h1:first-of-type { page-break-before: avoid; }
+h2 { font-size: 16pt; color: #003366; margin-top: 24px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+h3 { font-size: 13pt; color: #1a3a5c; margin-top: 18px; }
+h4 { font-size: 11pt; color: #003366; margin-top: 14px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px 0; font-size: 10pt; }
+th { background: #003366; color: #fff; padding: 8px 10px; text-align: left; font-weight: 600; }
+td { padding: 7px 10px; border: 1px solid #ddd; vertical-align: top; }
+tr:nth-child(even) { background: #f7f9fb; }
+.cover { text-align: center; padding: 80px 0 60px 0; page-break-after: always; }
+.cover h1 { font-size: 28pt; border: none; page-break-before: avoid; }
+.cover .subtitle { font-size: 14pt; color: #555; margin-top: 10px; }
+.cover .meta { margin-top: 40px; font-size: 11pt; color: #666; }
+.callout { background: #eef3f8; border-left: 4px solid #003366; padding: 12px 16px; margin: 14px 0; font-size: 10.5pt; }
+.callout-warn { background: #fff8e1; border-left-color: #f39c12; }
+.callout-green { background: #e8f5e9; border-left-color: #27ae60; }
+.label-con { display: inline-block; background: #27ae60; color: #fff; padding: 2px 10px; border-radius: 3px; font-size: 9pt; font-weight: 600; }
+.label-lib { display: inline-block; background: #e74c3c; color: #fff; padding: 2px 10px; border-radius: 3px; font-size: 9pt; font-weight: 600; }
+.label-mid { display: inline-block; background: #f39c12; color: #fff; padding: 2px 10px; border-radius: 3px; font-size: 9pt; font-weight: 600; }
+.spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 14px 0; }
+.spec-box { border: 1px solid #ddd; border-radius: 6px; padding: 14px; }
+.spec-box h4 { margin-top: 0; margin-bottom: 8px; }
+ul { margin: 6px 0; padding-left: 22px; }
+li { margin-bottom: 4px; }
+.toc { margin: 20px 0; }
+.toc a { color: #003366; text-decoration: none; }
+.toc li { margin-bottom: 6px; }
+.footer { text-align: center; font-size: 9pt; color: #888; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 10px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ COVER ═══ -->
+<div class="cover">
+    <h1 style="font-size:28pt;">DWA V&V System</h1>
+    <div class="subtitle">Infrastructure Sizing &amp; Network Requirements</div>
+    <div class="subtitle" style="font-size:12pt; margin-top:4px;">On-Premise Deployment Specification</div>
+    <div class="meta">
+        <p>Department of Water &amp; Sanitation</p>
+        <p>Version 1.0 &mdash; 18 March 2026</p>
+        <p>Classification: Internal</p>
+    </div>
+</div>
+
+<!-- ═══ TOC ═══ -->
+<h1 style="page-break-before:avoid;">Table of Contents</h1>
+<ol class="toc">
+    <li><a href="#s1">Executive Summary</a></li>
+    <li><a href="#s2">Sizing Assumptions</a></li>
+    <li><a href="#s3">Server Infrastructure — Conservative Estimate</a></li>
+    <li><a href="#s4">Server Infrastructure — Liberal Estimate</a></li>
+    <li><a href="#s5">Comparison Matrix</a></li>
+    <li><a href="#s6">Storage Sizing</a></li>
+    <li><a href="#s7">Network &amp; Bandwidth — Head Office (Data Centre)</a></li>
+    <li><a href="#s8">Network &amp; Bandwidth — Provincial Offices</a></li>
+    <li><a href="#s9">Network &amp; Bandwidth — Regional/CMA Offices</a></li>
+    <li><a href="#s10">Network Architecture Diagram</a></li>
+    <li><a href="#s11">Backup &amp; Disaster Recovery</a></li>
+    <li><a href="#s12">Software Licensing</a></li>
+    <li><a href="#s13">Estimated Power &amp; Cooling</a></li>
+    <li><a href="#s14">Growth Projections (3–5 Year)</a></li>
+    <li><a href="#s15">Recommendation</a></li>
+</ol>
+
+<!-- ═══ 1. EXECUTIVE SUMMARY ═══ -->
+<h1 id="s1">1. Executive Summary</h1>
+
+<p>This document provides two infrastructure sizing tiers for an on-premise deployment of the DWA Validation &amp; Verification (V&amp;V) system at the DWS Head Office data centre in Pretoria, with connectivity to 9 provincial offices and multiple regional/CMA offices.</p>
+
+<div class="spec-grid">
+    <div class="spec-box">
+        <h4><span class="label-con">CONSERVATIVE</span> Minimum Viable</h4>
+        <p>Sized for the confirmed user base, moderate concurrency, and essential redundancy. Suitable for initial rollout with room for controlled growth.</p>
+    </div>
+    <div class="spec-box">
+        <h4><span class="label-lib">LIBERAL</span> Production Recommended</h4>
+        <p>Sized for full national rollout, peak concurrency, document-heavy workflows, high availability, and 5-year growth without re-procurement.</p>
+    </div>
+</div>
+
+<div class="callout">
+    <strong>Key driver:</strong> The system manages approximately 500,000 property records across 19 Water Management Areas with ~200–400 concurrent internal users and an external public portal serving water users, landowners, and legal representatives.
+</div>
+
+<!-- ═══ 2. SIZING ASSUMPTIONS ═══ -->
+<h1 id="s2">2. Sizing Assumptions</h1>
+
+<table>
+    <thead><tr><th>Parameter</th><th>Value</th><th>Notes</th></tr></thead>
+    <tbody>
+        <tr><td>Total property records</td><td>~500,000</td><td>Across all 19 WMAs nationally</td></tr>
+        <tr><td>Internal users (DWS/CMA staff)</td><td>300–600</td><td>Validators, capturers, managers, admins</td></tr>
+        <tr><td>Peak concurrent internal users</td><td>80–200</td><td>During working hours (07:30–16:30)</td></tr>
+        <tr><td>External portal users (registered)</td><td>5,000–50,000</td><td>Water users, landowners, legal reps</td></tr>
+        <tr><td>Peak concurrent external users</td><td>50–500</td><td>During public participation / letter response periods</td></tr>
+        <tr><td>Average document size</td><td>2–5 MB</td><td>Title deeds, SG diagrams, GIS maps, letters (PDF)</td></tr>
+        <tr><td>Documents per property file</td><td>12–25</td><td>Per Appendix A checklist (title deed, SG, GIS maps, letters, etc.)</td></tr>
+        <tr><td>Total document storage (projected)</td><td>3–12 TB</td><td>500K properties &times; 12–25 docs &times; 2–5 MB average</td></tr>
+        <tr><td>Database size (data only)</td><td>5–15 GB</td><td>Relational data, audit logs, workflow state</td></tr>
+        <tr><td>Database growth rate</td><td>2–4 GB/year</td><td>Audit logs are the primary growth driver</td></tr>
+        <tr><td>SAPWAT calculation frequency</td><td>Batch &amp; on-demand</td><td>CPU-intensive; ~5–30 seconds per property</td></tr>
+        <tr><td>Letter generation frequency</td><td>50–500/day peak</td><td>PDF generation via QuestPDF (server-side)</td></tr>
+        <tr><td>Availability target</td><td>99.5%–99.9%</td><td>During business hours; planned maintenance windows allowed</td></tr>
+        <tr><td>Provincial offices</td><td>9</td><td>One per province</td></tr>
+        <tr><td>Regional/CMA offices</td><td>15–25</td><td>WMA-level offices, some co-located with provincial</td></tr>
+    </tbody>
+</table>
+
+<!-- ═══ 3. CONSERVATIVE ═══ -->
+<h1 id="s3">3. Server Infrastructure — <span class="label-con">CONSERVATIVE</span></h1>
+
+<p>Minimum viable production deployment. Single-site, essential redundancy only. Suitable for phased rollout starting with 2–3 WMAs.</p>
+
+<h2>3.1 Application Server</h2>
+<table>
+    <thead><tr><th>Component</th><th>Specification</th></tr></thead>
+    <tbody>
+        <tr><td>Quantity</td><td>1 (single server)</td></tr>
+        <tr><td>CPU</td><td>Intel Xeon Silver 4314 or equivalent — 8 cores / 16 threads</td></tr>
+        <tr><td>RAM</td><td>32 GB DDR4 ECC</td></tr>
+        <tr><td>OS Disk</td><td>2 &times; 480 GB SSD (RAID 1 mirror)</td></tr>
+        <tr><td>Operating System</td><td>Windows Server 2022 Standard or Ubuntu Server 24.04 LTS</td></tr>
+        <tr><td>Runtime</td><td>.NET 10.0 (ASP.NET Core), IIS or Kestrel reverse proxy</td></tr>
+        <tr><td>Network</td><td>2 &times; 1 Gbps NIC (bonded)</td></tr>
+    </tbody>
+</table>
+
+<h2>3.2 Database Server</h2>
+<table>
+    <thead><tr><th>Component</th><th>Specification</th></tr></thead>
+    <tbody>
+        <tr><td>Quantity</td><td>1 (single server)</td></tr>
+        <tr><td>CPU</td><td>Intel Xeon Silver 4314 — 8 cores / 16 threads</td></tr>
+        <tr><td>RAM</td><td>64 GB DDR4 ECC</td></tr>
+        <tr><td>OS Disk</td><td>2 &times; 480 GB SSD (RAID 1)</td></tr>
+        <tr><td>Data Disk</td><td>4 &times; 960 GB SSD (RAID 10) — ~1.9 TB usable</td></tr>
+        <tr><td>TempDB Disk</td><td>1 &times; 480 GB NVMe SSD (dedicated)</td></tr>
+        <tr><td>Database Engine</td><td>SQL Server 2022 Standard</td></tr>
+        <tr><td>Network</td><td>2 &times; 1 Gbps NIC (bonded)</td></tr>
+    </tbody>
+</table>
+
+<h2>3.3 File / Document Storage</h2>
+<table>
+    <thead><tr><th>Component</th><th>Specification</th></tr></thead>
+    <tbody>
+        <tr><td>Type</td><td>NAS or dedicated file server</td></tr>
+        <tr><td>Capacity</td><td>6 TB usable (RAID 5/6)</td></tr>
+        <tr><td>Configuration</td><td>4 &times; 4 TB HDD (RAID 5) or 6 &times; 2 TB SSD (RAID 6)</td></tr>
+        <tr><td>Protocol</td><td>SMB 3.0 / NFS for app server access</td></tr>
+        <tr><td>Network</td><td>1 Gbps dedicated link to app server</td></tr>
+    </tbody>
+</table>
+
+<h2>3.4 Supporting Infrastructure</h2>
+<table>
+    <thead><tr><th>Component</th><th>Specification</th></tr></thead>
+    <tbody>
+        <tr><td>Reverse Proxy / Load Balancer</td><td>Nginx or IIS ARR on app server (no separate hardware)</td></tr>
+        <tr><td>SSL Certificate</td><td>DWS-issued or commercial wildcard TLS certificate</td></tr>
+        <tr><td>Antivirus (document scanning)</td><td>ClamAV on app server or Windows Defender ATP</td></tr>
+        <tr><td>Backup</td><td>Daily full DB backup + weekly file backup to tape/offsite</td></tr>
+        <tr><td>UPS</td><td>2 kVA rack-mount UPS (30 min runtime)</td></tr>
+    </tbody>
+</table>
+
+<!-- ═══ 4. LIBERAL ═══ -->
+<h1 id="s4">4. Server Infrastructure — <span class="label-lib">LIBERAL</span></h1>
+
+<p>Full national production deployment with high availability, capacity for all 19 WMAs at peak load, and 5-year growth headroom.</p>
+
+<h2>4.1 Application Servers (HA Pair)</h2>
+<table>
+    <thead><tr><th>Component</th><th>Specification</th></tr></thead>
+    <tbody>
+        <tr><td>Quantity</td><td>2 (active-active behind load balancer)</td></tr>
+        <tr><td>CPU</td><td>Intel Xeon Gold 5320 or equivalent — 16 cores / 32 threads each</td></tr>
+        <tr><td>RAM</td><td>64 GB DDR4 ECC each</td></tr>
+        <tr><td>OS Disk</td><td>2 &times; 960 GB SSD (RAID 1) each</td></tr>
+        <tr><td>Operating System</td><td>Windows Server 2022 Standard or Ubuntu Server 24.04 LTS</td></tr>
+        <tr><td>Runtime</td><td>.NET 10.0, Kestrel behind Nginx/HAProxy</td></tr>
+        <tr><td>Network</td><td>2 &times; 10 Gbps NIC (bonded) each</td></tr>
+    </tbody>
+</table>
+
+<h2>4.2 Database Servers (Always On AG)</h2>
+<table>
+    <thead><tr><th>Component</th><th>Specification</th></tr></thead>
+    <tbody>
+        <tr><td>Quantity</td><td>2 (primary + synchronous replica)</td></tr>
+        <tr><td>CPU</td><td>Intel Xeon Gold 5320 — 16 cores / 32 threads each</td></tr>
+        <tr><td>RAM</td><td>128 GB DDR4 ECC each</td></tr>
+        <tr><td>OS Disk</td><td>2 &times; 960 GB SSD (RAID 1) each</td></tr>
+        <tr><td>Data Disk</td><td>8 &times; 1.92 TB SSD (RAID 10) — ~7.7 TB usable each</td></tr>
+        <tr><td>TempDB Disk</td><td>2 &times; 960 GB NVMe SSD (RAID 0) each</td></tr>
+        <tr><td>Log Disk</td><td>2 &times; 960 GB NVMe SSD (RAID 1) — dedicated transaction log</td></tr>
+        <tr><td>Database Engine</td><td>SQL Server 2022 Enterprise (for Always On AG)</td></tr>
+        <tr><td>Network</td><td>2 &times; 10 Gbps NIC (bonded) + 1 &times; 10 Gbps dedicated replication NIC</td></tr>
+    </tbody>
+</table>
+
+<h2>4.3 File / Document Storage</h2>
+<table>
+    <thead><tr><th>Component</th><th>Specification</th></tr></thead>
+    <tbody>
+        <tr><td>Type</td><td>Dedicated SAN or enterprise NAS (e.g., Dell PowerScale, NetApp)</td></tr>
+        <tr><td>Capacity</td><td>20 TB usable (with room to expand to 50 TB)</td></tr>
+        <tr><td>Configuration</td><td>RAID 6, dual controller, SSD tiering for hot data</td></tr>
+        <tr><td>Protocol</td><td>iSCSI / SMB 3.0 with encryption in transit</td></tr>
+        <tr><td>Network</td><td>10 Gbps dedicated storage network (separate VLAN)</td></tr>
+        <tr><td>Replication</td><td>Async replication to DR site</td></tr>
+    </tbody>
+</table>
+
+<h2>4.4 Supporting Infrastructure</h2>
+<table>
+    <thead><tr><th>Component</th><th>Specification</th></tr></thead>
+    <tbody>
+        <tr><td>Load Balancer</td><td>Dedicated hardware LB (F5 / Kemp) or HA pair of Nginx Plus</td></tr>
+        <tr><td>SSL Offloading</td><td>At load balancer level with DWS TLS certificates</td></tr>
+        <tr><td>Antivirus</td><td>Dedicated ClamAV scanning node or enterprise AV gateway</td></tr>
+        <tr><td>Monitoring</td><td>Prometheus + Grafana or SCOM for server/app monitoring</td></tr>
+        <tr><td>Log Aggregation</td><td>ELK Stack (Elasticsearch, Logstash, Kibana) or Seq</td></tr>
+        <tr><td>Backup</td><td>Veeam or Commvault — hourly DB log backups, daily full, offsite replication</td></tr>
+        <tr><td>UPS</td><td>6 kVA rack-mount UPS with generator failover</td></tr>
+        <tr><td>DR Site</td><td>Warm standby at secondary DWS data centre (async DB replica + file replication)</td></tr>
+    </tbody>
+</table>
+
+<!-- ═══ 5. COMPARISON ═══ -->
+<h1 id="s5">5. Comparison Matrix</h1>
+
+<table>
+    <thead><tr><th>Dimension</th><th><span class="label-con">CONSERVATIVE</span></th><th><span class="label-lib">LIBERAL</span></th></tr></thead>
+    <tbody>
+        <tr><td>Total physical servers</td><td>2 (app + DB) + NAS</td><td>4 (2 app + 2 DB) + SAN + LB</td></tr>
+        <tr><td>Total CPU cores</td><td>16 cores</td><td>64 cores</td></tr>
+        <tr><td>Total RAM</td><td>96 GB</td><td>384 GB</td></tr>
+        <tr><td>DB storage (usable)</td><td>~1.9 TB</td><td>~7.7 TB per node</td></tr>
+        <tr><td>Document storage</td><td>6 TB</td><td>20 TB (expandable to 50 TB)</td></tr>
+        <tr><td>Peak concurrent users supported</td><td>~150</td><td>~800+</td></tr>
+        <tr><td>Availability</td><td>99.5% (planned maintenance windows)</td><td>99.9% (HA, automatic failover)</td></tr>
+        <tr><td>Recovery Time Objective (RTO)</td><td>4–8 hours (restore from backup)</td><td>15–30 minutes (failover to replica)</td></tr>
+        <tr><td>Recovery Point Objective (RPO)</td><td>24 hours (daily backup)</td><td>5 minutes (synchronous + log shipping)</td></tr>
+        <tr><td>Estimated CAPEX (servers only)</td><td>R 350,000 – R 500,000</td><td>R 1,200,000 – R 1,800,000</td></tr>
+        <tr><td>Estimated annual OPEX (licensing, support)</td><td>R 150,000 – R 250,000</td><td>R 500,000 – R 800,000</td></tr>
+        <tr><td>Rack space</td><td>6U–8U</td><td>16U–24U</td></tr>
+        <tr><td>Growth headroom</td><td>1–2 years</td><td>5+ years</td></tr>
+    </tbody>
+</table>
+
+<!-- ═══ 6. STORAGE ═══ -->
+<h1 id="s6">6. Storage Sizing Detail</h1>
+
+<h2>6.1 Database Storage Breakdown</h2>
+<table>
+    <thead><tr><th>Data Category</th><th>Estimated Size</th><th>Growth Rate</th></tr></thead>
+    <tbody>
+        <tr><td>Property + FileMaster records (500K)</td><td>2–3 GB</td><td>Minimal (data entry, not volume growth)</td></tr>
+        <tr><td>Water use data (FieldAndCrop, Irrigation, Forestation)</td><td>1–2 GB</td><td>~500 MB/year</td></tr>
+        <tr><td>Workflow state + step records</td><td>500 MB – 1 GB</td><td>~200 MB/year</td></tr>
+        <tr><td>Letter issuance + tracking</td><td>200–500 MB</td><td>~100 MB/year</td></tr>
+        <tr><td>Audit log (immutable, PAJA compliance)</td><td>1–3 GB</td><td>1–2 GB/year (primary growth driver)</td></tr>
+        <tr><td>Notification records</td><td>200–500 MB</td><td>~300 MB/year</td></tr>
+        <tr><td>Public portal (users, comments, protests)</td><td>200–500 MB</td><td>~200 MB/year</td></tr>
+        <tr><td><strong>Total (Year 1)</strong></td><td><strong>5–10 GB</strong></td><td><strong>2–4 GB/year</strong></td></tr>
+        <tr><td><strong>Projected (Year 5)</strong></td><td><strong>15–30 GB</strong></td><td></td></tr>
+    </tbody>
+</table>
+
+<h2>6.2 Document / File Storage Breakdown</h2>
+<table>
+    <thead><tr><th>Document Type</th><th>Average Size</th><th>Qty per Property</th><th>Total (500K props)</th></tr></thead>
+    <tbody>
+        <tr><td>Title deeds (PDF)</td><td>3 MB</td><td>1–2</td><td>1.5–3 TB</td></tr>
+        <tr><td>SG diagrams (PDF/TIFF)</td><td>5 MB</td><td>1–3</td><td>2.5–7.5 TB</td></tr>
+        <tr><td>GIS maps (qualifying + current)</td><td>8 MB</td><td>2</td><td>8 TB</td></tr>
+        <tr><td>Section 35 letters (generated PDF)</td><td>200 KB</td><td>3–7</td><td>300 GB – 700 GB</td></tr>
+        <tr><td>Satellite imagery references</td><td>Stored externally</td><td>—</td><td>External GIS service</td></tr>
+        <tr><td>Uploaded documents (permits, evidence)</td><td>2 MB</td><td>2–5</td><td>2–5 TB</td></tr>
+        <tr><td><strong>Total projected</strong></td><td></td><td></td><td><strong>6–16 TB</strong></td></tr>
+    </tbody>
+</table>
+
+<div class="callout">
+    <strong>Note:</strong> Not all 500,000 properties will have complete file sets in Year 1. The V&amp;V process is phased by WMA. Conservative estimate assumes 30% completeness (Phase 1 rollout); liberal assumes 80% completeness by Year 3.
+</div>
+
+<!-- ═══ 7. NETWORK — HEAD OFFICE ═══ -->
+<h1 id="s7">7. Network &amp; Bandwidth — Head Office (Data Centre)</h1>
+
+<table>
+    <thead><tr><th>Parameter</th><th><span class="label-con">CONSERVATIVE</span></th><th><span class="label-lib">LIBERAL</span></th></tr></thead>
+    <tbody>
+        <tr><td>Internet uplink</td><td>100 Mbps dedicated (symmetric)</td><td>500 Mbps – 1 Gbps dedicated (symmetric)</td></tr>
+        <tr><td>WAN backbone to provinces</td><td>MPLS or VPN — 50 Mbps aggregate</td><td>MPLS or SD-WAN — 200 Mbps aggregate</td></tr>
+        <tr><td>LAN backbone</td><td>1 Gbps switched</td><td>10 Gbps switched (server VLAN)</td></tr>
+        <tr><td>Server-to-server (app ↔ DB)</td><td>1 Gbps direct</td><td>10 Gbps dedicated VLAN</td></tr>
+        <tr><td>Server-to-storage</td><td>1 Gbps</td><td>10 Gbps dedicated storage network</td></tr>
+        <tr><td>Firewall</td><td>Stateful firewall with IPS (1 Gbps throughput)</td><td>Next-gen firewall with IPS/IDS, SSL inspection (10 Gbps)</td></tr>
+        <tr><td>VPN for remote access</td><td>IPSec site-to-site + SSL VPN for remote users</td><td>SD-WAN mesh + Zero Trust Network Access (ZTNA)</td></tr>
+        <tr><td>DNS / AD</td><td>Existing DWS Active Directory</td><td>Existing DWS AD + dedicated app DNS zone</td></tr>
+    </tbody>
+</table>
+
+<h3>Bandwidth Calculation — Head Office Internet</h3>
+<div class="callout-green callout">
+    <strong>Formula:</strong> Peak users &times; average page weight &times; pages per minute &times; overhead factor<br>
+    <strong>Conservative:</strong> 150 users &times; 250 KB &times; 3 pages/min &times; 1.3 overhead = ~14 MB/min = <strong>~2 Mbps sustained</strong><br>
+    <strong>With document uploads:</strong> Add 20 concurrent 5 MB uploads/min = <strong>~15 Mbps burst</strong><br>
+    <strong>Public portal peak:</strong> 500 external users at 2 pages/min = <strong>~5 Mbps additional</strong><br>
+    <strong>Total peak:</strong> ~22 Mbps — well within 100 Mbps conservative allocation, with headroom for growth.
+</div>
+
+<!-- ═══ 8. NETWORK — PROVINCIAL ═══ -->
+<h1 id="s8">8. Network &amp; Bandwidth — Provincial Offices</h1>
+
+<p>Each of the 9 provincial DWS offices connects to the Head Office data centre to access the V&amp;V system. Staff at these offices use the system daily for case management, data capture, and document handling.</p>
+
+<h2>8.1 Per Provincial Office — Specifications</h2>
+<table>
+    <thead><tr><th>Parameter</th><th><span class="label-con">CONSERVATIVE</span></th><th><span class="label-lib">LIBERAL</span></th></tr></thead>
+    <tbody>
+        <tr><td>WAN link to Head Office</td><td><strong>10 Mbps dedicated</strong> (MPLS or site-to-site VPN)</td><td><strong>50 Mbps dedicated</strong> (MPLS or SD-WAN)</td></tr>
+        <tr><td>Internet breakout (local)</td><td>20 Mbps shared (for email, browsing)</td><td>50 Mbps shared (with traffic shaping for V&amp;V priority)</td></tr>
+        <tr><td>Expected V&amp;V users per office</td><td>15–30</td><td>30–60</td></tr>
+        <tr><td>Peak concurrent V&amp;V users</td><td>10–15</td><td>20–40</td></tr>
+        <tr><td>LAN</td><td>100 Mbps / 1 Gbps switched</td><td>1 Gbps switched throughout</td></tr>
+        <tr><td>Latency (to Head Office)</td><td>&lt; 80 ms (acceptable)</td><td>&lt; 40 ms (optimal)</td></tr>
+        <tr><td>Packet loss tolerance</td><td>&lt; 1%</td><td>&lt; 0.1%</td></tr>
+        <tr><td>QoS / Traffic shaping</td><td>V&amp;V application traffic prioritised over general browsing</td><td>Dedicated VLAN for V&amp;V with guaranteed bandwidth</td></tr>
+    </tbody>
+</table>
+
+<h3>Why These Numbers?</h3>
+<div class="callout">
+    <strong>Per-user bandwidth requirement:</strong><br>
+    A typical V&amp;V workflow session involves:
+    <ul>
+        <li>Page navigation (HTML + assets): ~250 KB per page, ~3 pages/min = <strong>~100 Kbps per user</strong></li>
+        <li>Document upload (title deed, SG diagram): 5 MB upload every ~5 min = <strong>~130 Kbps per user</strong></li>
+        <li>Document download/viewing: 3 MB download every ~3 min = <strong>~130 Kbps per user</strong></li>
+        <li><strong>Total per active user: ~360 Kbps (0.36 Mbps)</strong></li>
+    </ul>
+    <strong>Conservative (15 concurrent users):</strong> 15 &times; 0.36 = <strong>5.4 Mbps sustained</strong> → 10 Mbps link provides ~85% headroom for bursts.<br>
+    <strong>Liberal (40 concurrent users):</strong> 40 &times; 0.36 = <strong>14.4 Mbps sustained</strong> → 50 Mbps link provides ~70% headroom.
+</div>
+
+<h2>8.2 Provincial Office LAN Requirements</h2>
+<table>
+    <thead><tr><th>Component</th><th>Minimum Specification</th></tr></thead>
+    <tbody>
+        <tr><td>Network switch</td><td>Managed Layer 2/3 switch, minimum 24-port Gigabit</td></tr>
+        <tr><td>Wi-Fi (if applicable)</td><td>Wi-Fi 5 (802.11ac) or Wi-Fi 6 (802.11ax) access points</td></tr>
+        <tr><td>Router</td><td>Enterprise-grade with VPN capability (Cisco ISR, Fortinet, MikroTik)</td></tr>
+        <tr><td>Firewall</td><td>Stateful firewall with VPN termination</td></tr>
+        <tr><td>UPS for network equipment</td><td>1 kVA UPS for switch + router (15 min runtime)</td></tr>
+        <tr><td>Cabling</td><td>Cat 6 minimum (Cat 6a preferred for future-proofing)</td></tr>
+    </tbody>
+</table>
+
+<h2>8.3 User Workstation Requirements (Provincial)</h2>
+<table>
+    <thead><tr><th>Component</th><th>Minimum</th><th>Recommended</th></tr></thead>
+    <tbody>
+        <tr><td>Browser</td><td>Chrome 100+, Edge 100+, Firefox 100+</td><td>Latest stable Chrome or Edge</td></tr>
+        <tr><td>Screen resolution</td><td>1366 &times; 768</td><td>1920 &times; 1080</td></tr>
+        <tr><td>RAM</td><td>4 GB</td><td>8 GB</td></tr>
+        <tr><td>Internet speed (to LAN)</td><td>100 Mbps Ethernet</td><td>1 Gbps Ethernet</td></tr>
+        <tr><td>PDF viewer</td><td>Built-in browser PDF or Adobe Reader</td><td>Adobe Reader DC</td></tr>
+    </tbody>
+</table>
+
+<!-- ═══ 9. NETWORK — REGIONAL/CMA ═══ -->
+<h1 id="s9">9. Network &amp; Bandwidth — Regional / CMA Offices</h1>
+
+<p>Regional and CMA offices are smaller sites with 3–10 V&amp;V users. Many are in rural areas with limited connectivity options.</p>
+
+<table>
+    <thead><tr><th>Parameter</th><th><span class="label-con">CONSERVATIVE</span></th><th><span class="label-lib">LIBERAL</span></th></tr></thead>
+    <tbody>
+        <tr><td>WAN link to Head Office</td><td><strong>5 Mbps</strong> (VPN over existing internet)</td><td><strong>20 Mbps dedicated</strong> (MPLS or SD-WAN)</td></tr>
+        <tr><td>Expected V&amp;V users</td><td>3–5</td><td>5–10</td></tr>
+        <tr><td>Peak concurrent</td><td>2–3</td><td>5–8</td></tr>
+        <tr><td>Latency tolerance</td><td>&lt; 120 ms</td><td>&lt; 60 ms</td></tr>
+        <tr><td>Fallback connectivity</td><td>4G/LTE mobile broadband</td><td>Dual WAN (primary fibre + 4G/LTE failover)</td></tr>
+    </tbody>
+</table>
+
+<div class="callout-warn callout">
+    <strong>Rural connectivity challenge:</strong> Some CMA offices in remote areas (e.g., Mzimvubu, Vaal) may only have 4G/LTE connectivity (typically 5–20 Mbps with variable latency of 30–100 ms). The application must be optimised for higher latency: minimise round trips, use pagination, compress responses, and avoid large inline assets. Consider allowing offline document preparation with batch upload capability for the most remote sites.
+</div>
+
+<!-- ═══ 10. NETWORK DIAGRAM ═══ -->
+<h1 id="s10">10. Network Architecture</h1>
+
+<pre style="background:#f5f7fa; padding:16px; border:1px solid #ddd; border-radius:6px; font-family:'Courier New',monospace; font-size:9.5pt; line-height:1.5; overflow-x:auto;">
+
+                              ┌─────────────────────────────────┐
+                              │    INTERNET / PUBLIC PORTAL      │
+                              │    (Water Users, Landowners)     │
+                              └──────────────┬──────────────────┘
+                                             │
+                                     ┌───────┴───────┐
+                                     │   FIREWALL    │
+                                     │  (DMZ Zone)   │
+                                     └───────┬───────┘
+                                             │
+                 ┌───────────────────────────────────────────────────────┐
+                 │              HEAD OFFICE DATA CENTRE (Pretoria)        │
+                 │                                                       │
+                 │  ┌──────────┐   ┌──────────┐   ┌──────────────────┐ │
+                 │  │ App Srv  │   │ App Srv  │   │  Load Balancer   │ │
+                 │  │ (Primary)│   │(Standby) │   │  (Nginx/F5)     │ │
+                 │  └────┬─────┘   └────┬─────┘   └────────┬────────┘ │
+                 │       │              │                    │          │
+                 │       └──────────┬───┘                    │          │
+                 │           10 Gbps│Server VLAN             │          │
+                 │       ┌──────────┴───────────┐            │          │
+                 │       │                      │            │          │
+                 │  ┌────┴─────┐  ┌─────────────┴──┐  ┌─────┴──────┐ │
+                 │  │  DB Srv  │  │   DB Srv       │  │  File/Doc  │ │
+                 │  │ (Primary)│◄─┤  (Replica)     │  │  Storage   │ │
+                 │  │ SQL 2022 │  │  Always On AG  │  │  SAN/NAS   │ │
+                 │  └──────────┘  └────────────────┘  └────────────┘ │
+                 │                                                     │
+                 └──────────────────────┬──────────────────────────────┘
+                                        │
+                           MPLS / SD-WAN │ Backbone
+                    ┌───────────────────┼───────────────────┐
+                    │                   │                   │
+           ┌────────┴──────┐  ┌────────┴──────┐  ┌────────┴──────┐
+           │  Provincial   │  │  Provincial   │  │  Provincial   │
+           │  Office (GP)  │  │  Office (LP)  │  │  Office (WC)  │
+           │  10-50 Mbps   │  │  10-50 Mbps   │  │  10-50 Mbps   │
+           │  15-60 users  │  │  15-60 users  │  │  15-60 users  │
+           └───────┬───────┘  └───────┬───────┘  └───────┬───────┘
+                   │                  │                   │
+              ┌────┴────┐       ┌─────┴────┐        ┌────┴────┐
+              │Regional │       │ CMA      │        │Regional │
+              │ Office  │       │ Office   │        │ Office  │
+              │ 5-20Mbps│       │ 5-20Mbps │        │ 5-20Mbps│
+              │ 3-10 usr│       │ 3-10 usr │        │ 3-10 usr│
+              └─────────┘       └──────────┘        └─────────┘
+
+     ( &times; 9 Provincial Offices, &times; 15-25 Regional/CMA Offices )
+</pre>
+
+<!-- ═══ 11. BACKUP & DR ═══ -->
+<h1 id="s11">11. Backup &amp; Disaster Recovery</h1>
+
+<table>
+    <thead><tr><th>Aspect</th><th><span class="label-con">CONSERVATIVE</span></th><th><span class="label-lib">LIBERAL</span></th></tr></thead>
+    <tbody>
+        <tr><td>Database backup</td><td>Daily full + transaction log every 6 hours</td><td>Hourly transaction log + daily full + weekly integrity check</td></tr>
+        <tr><td>Document backup</td><td>Weekly full, daily incremental</td><td>Daily full, continuous incremental with deduplication</td></tr>
+        <tr><td>Backup destination</td><td>Local NAS + monthly offsite tape</td><td>Onsite + real-time replication to DR site</td></tr>
+        <tr><td>Backup retention</td><td>30 days local, 12 months offsite</td><td>90 days local, 7 years offsite (PAJA compliance)</td></tr>
+        <tr><td>DR site</td><td>None (cold restore from backup)</td><td>Warm standby at secondary DWS data centre</td></tr>
+        <tr><td>RTO</td><td>4–8 hours</td><td>15–30 minutes</td></tr>
+        <tr><td>RPO</td><td>6–24 hours</td><td>5 minutes</td></tr>
+        <tr><td>DR testing</td><td>Annually</td><td>Quarterly with documented results</td></tr>
+    </tbody>
+</table>
+
+<div class="callout-warn callout">
+    <strong>PAJA Compliance Note:</strong> The Promotion of Administrative Justice Act requires that all administrative decisions (including ELU determinations) and their evidence trail be preserved and reproducible. The audit log and all Section 35 correspondence must be retained for at least 7 years. This impacts backup retention policy regardless of sizing tier.
+</div>
+
+<!-- ═══ 12. LICENSING ═══ -->
+<h1 id="s12">12. Software Licensing</h1>
+
+<table>
+    <thead><tr><th>Software</th><th><span class="label-con">CONSERVATIVE</span></th><th><span class="label-lib">LIBERAL</span></th></tr></thead>
+    <tbody>
+        <tr><td>.NET 10.0 Runtime</td><td colspan="2">Free (open source, MIT license)</td></tr>
+        <tr><td>ASP.NET Core</td><td colspan="2">Free (open source)</td></tr>
+        <tr><td>SQL Server 2022 Standard</td><td>~R 70,000 (2-core pack &times; 4)</td><td>—</td></tr>
+        <tr><td>SQL Server 2022 Enterprise</td><td>—</td><td>~R 280,000 (2-core pack &times; 8, per server)</td></tr>
+        <tr><td>Windows Server 2022 Standard</td><td>~R 18,000 per server</td><td>~R 18,000 per server (&times; 4)</td></tr>
+        <tr><td>Alternative: Ubuntu Server 24.04</td><td colspan="2">Free (if Linux is acceptable for app servers)</td></tr>
+        <tr><td>QuestPDF (letter generation)</td><td colspan="2">Free (MIT license) for community edition</td></tr>
+        <tr><td>ClamAV (virus scanning)</td><td colspan="2">Free (open source)</td></tr>
+        <tr><td>Nginx</td><td colspan="2">Free (open source) or Nginx Plus (~R 50,000/year)</td></tr>
+        <tr><td>Veeam Backup (if used)</td><td>—</td><td>~R 40,000/year</td></tr>
+    </tbody>
+</table>
+
+<div class="callout-green callout">
+    <strong>Cost optimisation:</strong> The technology stack (ASP.NET Core, .NET 10) is cross-platform. Running the application servers on Ubuntu Server instead of Windows Server saves ~R 36,000–72,000 in OS licensing. The primary licensing cost is SQL Server, which requires Windows or Linux with SA (Software Assurance).
+</div>
+
+<!-- ═══ 13. POWER & COOLING ═══ -->
+<h1 id="s13">13. Estimated Power &amp; Cooling</h1>
+
+<table>
+    <thead><tr><th>Component</th><th><span class="label-con">CONSERVATIVE</span></th><th><span class="label-lib">LIBERAL</span></th></tr></thead>
+    <tbody>
+        <tr><td>App server(s)</td><td>~400 W</td><td>~800 W (2 servers)</td></tr>
+        <tr><td>DB server(s)</td><td>~500 W</td><td>~1,200 W (2 servers)</td></tr>
+        <tr><td>Storage</td><td>~200 W</td><td>~600 W (SAN)</td></tr>
+        <tr><td>Network equipment</td><td>~100 W</td><td>~300 W (LB, switches)</td></tr>
+        <tr><td>UPS overhead</td><td>~200 W</td><td>~400 W</td></tr>
+        <tr><td><strong>Total power draw</strong></td><td><strong>~1.4 kW</strong></td><td><strong>~3.3 kW</strong></td></tr>
+        <tr><td>Cooling requirement</td><td>~4,800 BTU/hr</td><td>~11,300 BTU/hr</td></tr>
+        <tr><td>Annual electricity (at R 2.50/kWh)</td><td>~R 31,000</td><td>~R 72,000</td></tr>
+    </tbody>
+</table>
+
+<!-- ═══ 14. GROWTH ═══ -->
+<h1 id="s14">14. Growth Projections (3–5 Year)</h1>
+
+<table>
+    <thead><tr><th>Year</th><th>WMAs Active</th><th>Properties in System</th><th>Internal Users</th><th>External Users</th><th>Document Storage</th></tr></thead>
+    <tbody>
+        <tr><td>Year 1 (Launch)</td><td>3–5</td><td>~80,000</td><td>~150</td><td>~2,000</td><td>~2 TB</td></tr>
+        <tr><td>Year 2</td><td>8–12</td><td>~250,000</td><td>~300</td><td>~15,000</td><td>~5 TB</td></tr>
+        <tr><td>Year 3</td><td>15–19</td><td>~400,000</td><td>~450</td><td>~35,000</td><td>~10 TB</td></tr>
+        <tr><td>Year 4</td><td>19 (all)</td><td>~500,000</td><td>~500</td><td>~50,000</td><td>~14 TB</td></tr>
+        <tr><td>Year 5 (Maintenance)</td><td>19</td><td>~500,000+</td><td>~500</td><td>~60,000</td><td>~18 TB</td></tr>
+    </tbody>
+</table>
+
+<div class="callout">
+    <strong>Planning note:</strong> The conservative tier will need a hardware refresh or upgrade by Year 2–3 as WMA rollout accelerates. The liberal tier is sized to absorb all 5 years of growth without hardware changes — only storage expansion may be needed from Year 4.
+</div>
+
+<!-- ═══ 15. RECOMMENDATION ═══ -->
+<h1 id="s15">15. Recommendation</h1>
+
+<div class="spec-grid">
+    <div class="spec-box">
+        <h4><span class="label-mid">RECOMMENDED</span> Phased Approach</h4>
+        <p>Start with <strong>Conservative</strong> infrastructure for the initial 2–3 WMA pilot, then scale to <strong>Liberal</strong> specifications before full national rollout. This:</p>
+        <ul>
+            <li>Reduces upfront capital expenditure</li>
+            <li>Validates actual usage patterns before committing to HA infrastructure</li>
+            <li>Allows procurement of the Enterprise SQL Server license only when Always On AG is truly needed</li>
+            <li>Provides real performance baselines for right-sizing the production environment</li>
+        </ul>
+    </div>
+    <div class="spec-box">
+        <h4>Critical Path Items</h4>
+        <ul>
+            <li><strong>WAN connectivity</strong> to provincial offices is the most likely bottleneck — engage SITA or DWS IT infrastructure team early to provision MPLS/SD-WAN links</li>
+            <li><strong>SQL Server licensing</strong> is the single largest cost item — evaluate Standard vs Enterprise based on actual HA requirements</li>
+            <li><strong>Document storage growth</strong> is the primary scaling concern — plan for expandable SAN/NAS from the start</li>
+            <li><strong>Rural CMA connectivity</strong> requires application-level optimisation (pagination, compression, offline capability)</li>
+        </ul>
+    </div>
+</div>
+
+<div class="footer">
+    DWA V&amp;V System — Infrastructure Sizing Estimates v1.0 &mdash; 18 March 2026<br>
+    Department of Water &amp; Sanitation &mdash; Internal Document
+</div>
+
+</body>
+</html>

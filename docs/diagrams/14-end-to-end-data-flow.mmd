@@ -4,7 +4,7 @@ flowchart TB
         eWULAAS["eWULAAS"]
         SG["Surveyor General\n(DRDLR)"]
         Deeds["Deeds Office\n(DRDLR)"]
-        GISStore["Satellite /\nGIS Store"]
+        GISStore["Satellite / GIS Store\n& Mapbooks"]
     end
 
     ExtSys <--> IntegSvc["Integration Service Layer\n(IIntegrationService)"]
@@ -15,12 +15,12 @@ flowchart TB
         P1A["WARMS Audit → New FileMaster records\nUnregistered User GIS Identification\nDatabase Status Analysis\nInception Report + Public Participation 1"]
     end
 
-    subgraph P2["Phase 2: Verification per Property (CP06–CP16)"]
-        P2A["WARMS Evaluation → Irrigation / Storing / Forestation\nSpatial Info → SateliteImage / Property\nSupportive Info → FileMaster\nProperty & Source Eval → Property / PropertyOwner / WaterSource\nAdditional Info → Authorisation / Entitlement\nGIS Analysis → FieldAndCrop / DamCalculation\nSAPWAT → FieldAndCrop.SAPWATCalculationResult\nELU → Irrigation (9 scenarios) / Entitlement\nDam Volumes → DamCalculation / Storing\nSFRA → Forestation"]
+    subgraph P2["Phase 2: Validation — Technical Extent per Property (CP06–CP16)"]
+        P2A["WARMS Evaluation → Irrigation / Storing / Forestation\nSpatial Info → Mapbook / Property / CatchmentArea\nSupportive Info → FileMaster\nProperty & Source Eval → Property / PropertyOwner / WaterSource\nAdditional Info → Authorisation / Entitlement\nGIS Analysis → FieldAndCrop / DamCalculation\nSAPWAT → FieldAndCrop.SAPWATCalculationResult\nELU → Irrigation (9 scenarios) / Entitlement\nDam Volumes → DamCalculation / Storing\nSFRA → Forestation"]
     end
 
-    subgraph P3["Phase 3: Validation / Section 35 (CP17–CP21)"]
-        P3A["Public Participation Session 2\nField Visit Letter Dissemination\nSection 35 Correspondence Tracking\nLetter State Machine (L1→L3/Enforcement)\nProject Control Reporting"]
+    subgraph P3["Phase 3: Verification — Legal Lawfulness / Section 35 + Section 33 (CP17–CP21)"]
+        P3A["Public Participation Session 2\nField Visit Letter Dissemination\nSection 35 Correspondence Tracking\nS33(2) Kader Asmal Declaration Track\nS33(3) Individual Application Track\nLetter State Machine (L1→L3/Enforcement)\nProject Control Reporting"]
     end
 
     P1 & P2 & P3 --> WFEngine
@@ -51,8 +51,8 @@ flowchart TB
     RepoLayer --> DB
 
     subgraph DB["SQL Server Database (dwa_val_ver)"]
-        CoreDomain["Core Domain (dbo)\nProperties · PropertyOwners · FileMasters\nIrrigation · Storing · Forestation\nFieldAndCrop · DamCalculation · Entitlements\nWaterSources · Rivers · Crops · SateliteImages"]
-        OrgRef["Organisation & Reference\nProvinces · WaterManagementAreas\nOrganisationalUnits · ApplicationUsers\nValidationStatus · EntitlementType · Period"]
+        CoreDomain["Core Domain (dbo)\nProperties · PropertyOwners · FileMasters\nIrrigation · Storing · Forestation\nFieldAndCrop · DamCalculation · Entitlements\nWaterSources · Rivers · Crops · Mapbooks\nGwcaProclamationRules"]
+        OrgRef["Organisation & Reference\nProvinces · WaterManagementAreas\nCatchmentAreas · OrganisationalUnits\nApplicationUsers · ValidationStatus\nEntitlementType · Period"]
         WorkflowSchema["Workflow Schema\nWorkflowInstances · WorkflowStepRecords\nWorkflowStates · AuditLog"]
         CorrSchema["Correspondence Schema\nLetterIssuances · LetterTypes\nDigitalSignatures · SignatureRequests\nUploadedDocuments · Authorisations"]
         PortalSchema["Portal Schema\nPublicUsers · PublicUserProperties\nNotifications · CaseComments\nProtests · ProtestDocuments"]

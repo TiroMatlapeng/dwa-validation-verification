@@ -4,6 +4,7 @@ erDiagram
     %% ERD 4 of 6: CASE MANAGEMENT & WORKFLOW
     %% DWA V&V System — Presentation View
     %% ═══════════════════════════════════════════════════
+    %% AMENDED 2026-03-24: CaseNumber added; WaterUserInput entity for portal inputs across CPs
 
     FileMaster {
         Guid FileMasterId PK
@@ -30,6 +31,9 @@ erDiagram
         Guid ValidatorId FK
         Guid CapturePersonId FK
         Guid EntitlementId FK
+        string CaseNumber "[AMENDED 2026-03-24] Auto-generated V&V case number"
+        Guid CatchmentAreaId FK "[AMENDED 2026-04-01]"
+        string AssessmentTrack "S33_2_KaderAsmal|S33_3_Individual|Standard [AMENDED 2026-04-01]"
     }
 
     Property {
@@ -100,7 +104,7 @@ erDiagram
     WorkflowState {
         Guid WorkflowStateId PK
         string StateName
-        string Phase "Inception|Verification|Validation"
+        string Phase "Inception|Validation|Verification [AMENDED 2026-04-01 fix phase order]"
         int DisplayOrder
         bool IsTerminal
     }
@@ -141,8 +145,37 @@ erDiagram
         DateTime Timestamp
     }
 
+    WaterUserInput {
+        Guid InputId PK "[AMENDED 2026-03-24]"
+        Guid FileMasterId FK
+        Guid PublicUserId FK "nullable"
+        string ControlPoint "which CP this input relates to [AMENDED 2026-03-24]"
+        string InputType "Document|Comment|Evidence|Response"
+        string Description
+        DateTime SubmittedDate
+        string Status "Pending|Reviewed|Accepted|Rejected"
+        Guid ReviewedById FK "nullable"
+    }
+
+    PublicUser {
+        Guid PublicUserId PK
+        string FirstName
+        string LastName
+    }
+
+    CatchmentArea {
+        Guid CatchmentAreaId PK
+        string CatchmentCode
+        string CatchmentName
+    }
+
+    %% Note: WorkflowState seed data should include S33_2_DeclarationIssued
+    %% and S33_3_DeclarationIssued states for S33(2) Kader Asmal and
+    %% S33(3) individual application tracks [AMENDED 2026-04-01]
+
     %% ── Relationships ──
 
+    FileMaster }o--|| CatchmentArea : "in catchment [AMENDED 2026-04-01]"
     FileMaster }o--|| Property : "is for"
     FileMaster }o--|| OrganisationalUnit : "belongs to"
     FileMaster }o--|| ValidationStatus : "has status"
@@ -167,3 +200,7 @@ erDiagram
 
     WorkflowStepRecord }o--|| WorkflowState : "transitioned to"
     WorkflowStepRecord }o--o| ApplicationUser : "completed by"
+
+    WaterUserInput }o--|| FileMaster : "input for [AMENDED 2026-03-24]"
+    WaterUserInput }o--o| PublicUser : "submitted by [AMENDED 2026-03-24]"
+    WaterUserInput }o--o| ApplicationUser : "reviewed by [AMENDED 2026-03-24]"

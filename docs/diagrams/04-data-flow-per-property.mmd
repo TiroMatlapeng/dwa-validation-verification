@@ -3,11 +3,11 @@ flowchart LR
         WARMS_Data["WARMS\nRegistration Data"]
         SG_Data["Surveyor General\nBoundaries & Diagrams"]
         Deeds_Data["Deeds Office\nTitle Deeds"]
-        Satellite["Satellite Imagery\n(1996-1999 + Current)"]
+        Satellite["Mapbooks\n(1 Oct 1996 – 30 Sep 1998\n+ Current)"]
         HistData["Historical Data\nPermits, Surveys\nCourt Decisions"]
     end
 
-    subgraph Phase2_Steps["Verification Steps"]
+    subgraph Phase2_Steps["Validation Steps (Technical Extent)"]
         CP06["CP06\nEvaluate WARMS"]
         CP07["CP07\nSpatial Info"]
         CP09["CP09\nProperty & Source\nEvaluation"]
@@ -38,7 +38,8 @@ flowchart LR
         DC["DamCalculation\n(capacity,\nriver, status)"]
         ENT["Entitlement\n(type, volume\ndetermined)"]
         WS["WaterSource\n(verified sources)"]
-        SI["SateliteImage\n(imagery records)"]
+        SI["Mapbook\n(processed imagery\nproducts)"]
+        CA["CatchmentArea\n(catchment assignment)"]
     end
 
     WARMS_Data --> CP06
@@ -56,6 +57,7 @@ flowchart LR
 
     CP07 --> SI
     CP07 --> PROP
+    CP07 --> CA
 
     CP09 --> PROP
     CP09 --> PO

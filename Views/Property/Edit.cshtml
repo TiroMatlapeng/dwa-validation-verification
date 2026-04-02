@@ -1,0 +1,150 @@
+@model Property
+
+@{
+    ViewData["Title"] = "Edit Property";
+}
+
+<a asp-controller="Property" asp-action="Index" class="btn-back">&larr; Back to Properties</a>
+
+<div class="page-title">Edit Property</div>
+<div class="page-subtitle">Update property information</div>
+
+<div class="card" style="max-width: 800px;">
+    <form asp-action="Edit" asp-route-id="@Model.PropertyId">
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom:14px;"></div>
+        <input type="hidden" asp-for="PropertyId" />
+        <input type="hidden" asp-for="AddressId" />
+
+        <!-- Property Details -->
+        <div class="form-section-title">Property Details</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="PropertyReferenceNumber" class="form-label"></label>
+                <input asp-for="PropertyReferenceNumber" class="form-control" style="width:100%;" />
+                <span asp-validation-for="PropertyReferenceNumber" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SGCode" class="form-label"></label>
+                <input asp-for="SGCode" class="form-control" style="width:100%;" />
+                <span asp-validation-for="SGCode" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="PropertySize" class="form-label"></label>
+                <input asp-for="PropertySize" class="form-control" style="width:100%;" />
+                <span asp-validation-for="PropertySize" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="QuaternaryDrainage" class="form-label"></label>
+                <input asp-for="QuaternaryDrainage" class="form-control" style="width:100%;" />
+                <span asp-validation-for="QuaternaryDrainage" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="CatchmentAreaId" class="form-label">Catchment Area</label>
+                <select asp-for="CatchmentAreaId" asp-items="ViewBag.CatchmentAreas" class="form-control" style="width:100%;">
+                    <option value="">-- Select Catchment Area --</option>
+                </select>
+                <span asp-validation-for="CatchmentAreaId" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <!-- Spacer -->
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="ProclamationDate" class="form-label"></label>
+                <input asp-for="ProclamationDate" type="date" class="form-control" style="width:100%;" />
+                <span asp-validation-for="ProclamationDate" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="RegistrationDate" class="form-label"></label>
+                <input asp-for="RegistrationDate" type="date" class="form-control" style="width:100%;" />
+                <span asp-validation-for="RegistrationDate" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="WmaId" class="form-label">Water Management Area</label>
+                <select asp-for="WmaId" asp-items="ViewBag.WaterManagementAreas" class="form-control" style="width:100%;">
+                    <option value="">-- Select WMA --</option>
+                </select>
+                <span asp-validation-for="WmaId" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <!-- Spacer -->
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="Longitude" class="form-label"></label>
+                <input asp-for="Longitude" class="form-control" style="width:100%;" />
+                <span asp-validation-for="Longitude" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Latitude" class="form-label"></label>
+                <input asp-for="Latitude" class="form-control" style="width:100%;" />
+                <span asp-validation-for="Latitude" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <!-- Address Section -->
+        <div class="form-section-title" style="margin-top: 20px;">Property Address</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="Address.StreetAddress" class="form-label"></label>
+                <input asp-for="Address.StreetAddress" class="form-control" style="width:100%;" />
+                <span asp-validation-for="Address.StreetAddress" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Address.SuburbName" class="form-label"></label>
+                <input asp-for="Address.SuburbName" class="form-control" style="width:100%;" />
+                <span asp-validation-for="Address.SuburbName" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="Address.CityName" class="form-label"></label>
+                <input asp-for="Address.CityName" class="form-control" style="width:100%;" />
+                <span asp-validation-for="Address.CityName" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Address.Province" class="form-label"></label>
+                <input asp-for="Address.Province" class="form-control" style="width:100%;" />
+                <span asp-validation-for="Address.Province" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="Address.Longitude" class="form-label">Address Longitude</label>
+                <input asp-for="Address.Longitude" class="form-control" style="width:100%;" />
+                <span asp-validation-for="Address.Longitude" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Address.Latitude" class="form-label">Address Latitude</label>
+                <input asp-for="Address.Latitude" class="form-control" style="width:100%;" />
+                <span asp-validation-for="Address.Latitude" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <input type="submit" value="Save Changes" class="btn btn-primary" />
+            <a asp-action="Index" class="btn btn-outline" style="margin-left: 8px;">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

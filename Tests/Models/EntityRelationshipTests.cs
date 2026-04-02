@@ -331,7 +331,7 @@ public class EntityRelationshipTests
         {
             WorkflowStateId = Guid.NewGuid(),
             StateName = "CP1_WARMSObtained",
-            Phase = "Phase1",
+            Phase = "Inception",
             DisplayOrder = 1,
             IsTerminal = false
         };
@@ -397,7 +397,7 @@ public class EntityRelationshipTests
     }
 
     [Fact]
-    public async Task Protest_With_Documents()
+    public async Task Objection_With_Documents()
     {
         using var context = TestDbContextFactory.Create();
 
@@ -412,7 +412,7 @@ public class EntityRelationshipTests
             SurveyorGeneralCode = "T0LR00000000012300007",
             PrimaryCatchment = "A",
             QuaternaryCatchment = "A21A",
-            FarmName = "Protest Farm",
+            FarmName = "Objection Farm",
             FarmNumber = 6,
             RegistrationDivision = "LR",
             FarmPortion = "0"
@@ -422,7 +422,7 @@ public class EntityRelationshipTests
         var publicUser = new PublicUser
         {
             PublicUserId = Guid.NewGuid(),
-            EmailAddress = "protester@example.co.za",
+            EmailAddress = "objector@example.co.za",
             PasswordHash = "hashed",
             FirstName = "Sipho",
             LastName = "Dlamini",
@@ -441,31 +441,288 @@ public class EntityRelationshipTests
         };
         context.Documents.Add(document);
 
-        var protest = new Protest
+        var objection = new Objection
         {
-            ProtestId = Guid.NewGuid(),
+            ObjectionId = Guid.NewGuid(),
             FileMasterId = fileMaster.FileMasterId,
             PublicUserId = publicUser.PublicUserId,
             LodgedDate = DateTime.UtcNow,
             Status = "Lodged"
         };
-        context.Protests.Add(protest);
+        context.Objections.Add(objection);
 
-        var protestDoc = new ProtestDocument
+        var objectionDoc = new ObjectionDocument
         {
             Id = Guid.NewGuid(),
-            ProtestId = protest.ProtestId,
+            ObjectionId = objection.ObjectionId,
             DocumentId = document.DocumentId
         };
-        context.ProtestDocuments.Add(protestDoc);
+        context.ObjectionDocuments.Add(objectionDoc);
         await context.SaveChangesAsync();
 
-        var retrieved = await context.Protests
-            .Include(p => p.ProtestDocuments)
-                .ThenInclude(pd => pd.Document)
-            .FirstAsync(p => p.ProtestId == protest.ProtestId);
+        var retrieved = await context.Objections
+            .Include(o => o.ObjectionDocuments)
+                .ThenInclude(od => od.Document)
+            .FirstAsync(o => o.ObjectionId == objection.ObjectionId);
 
-        Assert.Single(retrieved.ProtestDocuments);
-        Assert.Equal("affidavit.pdf", retrieved.ProtestDocuments.First().Document!.FileName);
+        Assert.Single(retrieved.ObjectionDocuments);
+        Assert.Equal("affidavit.pdf", retrieved.ObjectionDocuments.First().Document!.FileName);
+    }
+
+    [Fact]
+    public async Task CatchmentArea_Links_To_WMA_And_Properties()
+    {
+        using var context = TestDbContextFactory.Create();
+
+        var province = new Province { ProvinceId = Guid.NewGuid(), ProvinceName = "Limpopo", ProvinceCode = "LP" };
+        context.Provinces.Add(province);
+
+        var wma = new WaterManagementArea { WmaId = Guid.NewGuid(), WmaName = "Limpopo", WmaCode = "1", ProvinceId = province.ProvinceId };
+        context.WaterManagementAreas.Add(wma);
+
+        var catchment = new CatchmentArea
+        {
+            CatchmentAreaId = Guid.NewGuid(),
+            CatchmentCode = "A21A",
+            CatchmentName = "Mogalakwena Upper",
+            WmaId = wma.WmaId
+        };
+        context.CatchmentAreas.Add(catchment);
+
+        var property = new Property
+        {
+            PropertyId = Guid.NewGuid(),
+            PropertySize = 250m,
+            CatchmentAreaId = catchment.CatchmentAreaId,
+            WmaId = wma.WmaId
+        };
+        context.Properties.Add(property);
+        await context.SaveChangesAsync();
+
+        var retrieved = await context.CatchmentAreas
+            .Include(c => c.WaterManagementArea)
+            .Include(c => c.Properties)
+            .FirstAsync(c => c.CatchmentAreaId == catchment.CatchmentAreaId);
+
+        Assert.Equal("Limpopo", retrieved.WaterManagementArea!.WmaName);
+        Assert.Single(retrieved.Properties);
+        Assert.Equal(property.PropertyId, retrieved.Properties.First().PropertyId);
+    }
+
+    [Fact]
+    public async Task GwcaProclamationRule_Links_To_GWCA()
+    {
+        using var context = TestDbContextFactory.Create();
+
+        var gwca = new GovernmentWaterControlArea
+        {
+            WaterControlAreaId = Guid.NewGuid(),
+            GovernmentWaterControlAreaName = "Blyde River GWCA",
+            GovernmentGazetteReference = "Proclamation 67 of 1935",
+            ProclamationDate = new DateOnly(1935, 1, 1)
+        };
+        context.GovernmentWaterControlAreas.Add(gwca);
+
+        var rule = new GwcaProclamationRule
+        {
+            RuleId = Guid.NewGuid(),
+            WaterControlAreaId = gwca.WaterControlAreaId,
+            RuleCode = "MAX_HECTARES",
+            RuleDescription = "Maximum irrigable hectares per property",
+            NumericLimit = 30,
+            Unit = "ha",
+            GovernmentGazetteReference = "GN 180 of 10 July 1970",
+            IsActive = true,
+            EffectiveFrom = new DateOnly(1970, 7, 10)
+        };
+        context.GwcaProclamationRules.Add(rule);
+        await context.SaveChangesAsync();
+
+        var retrieved = await context.GovernmentWaterControlAreas
+            .Include(g => g.ProclamationRules)
+            .FirstAsync(g => g.WaterControlAreaId == gwca.WaterControlAreaId);
+
+        Assert.Single(retrieved.ProclamationRules);
+        Assert.Equal("MAX_HECTARES", retrieved.ProclamationRules.First().RuleCode);
+        Assert.Equal(30m, retrieved.ProclamationRules.First().NumericLimit);
+    }
+
+    [Fact]
+    public async Task Mapbook_Links_To_FileMaster_And_SateliteImages()
+    {
+        using var context = TestDbContextFactory.Create();
+
+        var property = new Property { PropertyId = Guid.NewGuid(), PropertySize = 100m };
+        context.Properties.Add(property);
+
+        var fileMaster = new FileMaster
+        {
+            FileMasterId = Guid.NewGuid(),
+            PropertyId = property.PropertyId,
+            RegistrationNumber = "REG-MAP-001",
+            SurveyorGeneralCode = "T0LR00000000012300010",
+            PrimaryCatchment = "A",
+            QuaternaryCatchment = "A21A",
+            FarmName = "Mapbook Farm",
+            FarmNumber = 10,
+            RegistrationDivision = "LR",
+            FarmPortion = "0"
+        };
+        context.FileMasters.Add(fileMaster);
+
+        var satImage = new SateliteImage
+        {
+            ImageId = Guid.NewGuid(),
+            ImageName = "Landsat_1997_Winter",
+            PropertyId = property.PropertyId,
+            ImageDate = new DateOnly(1997, 6, 15),
+            ImageSource = "USGS Earth Explorer"
+        };
+        context.SateliteImages.Add(satImage);
+
+        var mapbook = new Mapbook
+        {
+            MapbookId = Guid.NewGuid(),
+            FileMasterId = fileMaster.FileMasterId,
+            MapbookTitle = "Qualifying Period Mapbook - Farm 10",
+            MapType = "Qualifying",
+            ProcessedDate = new DateOnly(2026, 3, 1)
+        };
+        context.Mapbooks.Add(mapbook);
+
+        var mapbookImage = new MapbookImage
+        {
+            MapbookImageId = Guid.NewGuid(),
+            MapbookId = mapbook.MapbookId,
+            SateliteImageId = satImage.ImageId,
+            LayerOrder = 1,
+            Notes = "Winter qualifying period image"
+        };
+        context.MapbookImages.Add(mapbookImage);
+        await context.SaveChangesAsync();
+
+        var retrieved = await context.Mapbooks
+            .Include(m => m.FileMaster)
+            .Include(m => m.MapbookImages)
+                .ThenInclude(mi => mi.SateliteImage)
+            .FirstAsync(m => m.MapbookId == mapbook.MapbookId);
+
+        Assert.Equal("REG-MAP-001", retrieved.FileMaster!.RegistrationNumber);
+        Assert.Equal("Qualifying", retrieved.MapType);
+        Assert.Single(retrieved.MapbookImages);
+        Assert.Equal("Landsat_1997_Winter", retrieved.MapbookImages.First().SateliteImage!.ImageName);
+    }
+
+    [Fact]
+    public async Task FileMaster_AssessmentTrack_And_CatchmentArea()
+    {
+        using var context = TestDbContextFactory.Create();
+
+        var province = new Province { ProvinceId = Guid.NewGuid(), ProvinceName = "Mpumalanga", ProvinceCode = "MP" };
+        context.Provinces.Add(province);
+
+        var wma = new WaterManagementArea { WmaId = Guid.NewGuid(), WmaName = "Inkomati-Usuthu", WmaCode = "3", ProvinceId = province.ProvinceId };
+        context.WaterManagementAreas.Add(wma);
+
+        var catchment = new CatchmentArea
+        {
+            CatchmentAreaId = Guid.NewGuid(),
+            CatchmentCode = "X11A",
+            CatchmentName = "Komati Upper",
+            WmaId = wma.WmaId
+        };
+        context.CatchmentAreas.Add(catchment);
+
+        var property = new Property { PropertyId = Guid.NewGuid(), PropertySize = 500m, CatchmentAreaId = catchment.CatchmentAreaId };
+        context.Properties.Add(property);
+
+        var fileMaster = new FileMaster
+        {
+            FileMasterId = Guid.NewGuid(),
+            PropertyId = property.PropertyId,
+            RegistrationNumber = "REG-TRACK-001",
+            SurveyorGeneralCode = "T0LR00000000012300011",
+            PrimaryCatchment = "X",
+            QuaternaryCatchment = "X11A",
+            FarmName = "Assessment Farm",
+            FarmNumber = 11,
+            RegistrationDivision = "LR",
+            FarmPortion = "0",
+            AssessmentTrack = "S33_2_Declaration",
+            CatchmentAreaId = catchment.CatchmentAreaId
+        };
+        context.FileMasters.Add(fileMaster);
+        await context.SaveChangesAsync();
+
+        var retrieved = await context.FileMasters
+            .Include(fm => fm.CatchmentArea)
+            .FirstAsync(fm => fm.FileMasterId == fileMaster.FileMasterId);
+
+        Assert.Equal("S33_2_Declaration", retrieved.AssessmentTrack);
+        Assert.Equal("X11A", retrieved.CatchmentArea!.CatchmentCode);
+    }
+
+    [Fact]
+    public async Task LetterIssuance_S33_2_With_IrrigationBoard()
+    {
+        using var context = TestDbContextFactory.Create();
+
+        var property = new Property { PropertyId = Guid.NewGuid(), PropertySize = 100m };
+        context.Properties.Add(property);
+
+        var fileMaster = new FileMaster
+        {
+            FileMasterId = Guid.NewGuid(),
+            PropertyId = property.PropertyId,
+            RegistrationNumber = "REG-S33-001",
+            SurveyorGeneralCode = "T0LR00000000012300012",
+            PrimaryCatchment = "A",
+            QuaternaryCatchment = "A21A",
+            FarmName = "Declaration Farm",
+            FarmNumber = 12,
+            RegistrationDivision = "LR",
+            FarmPortion = "0",
+            AssessmentTrack = "S33_2_Declaration"
+        };
+        context.FileMasters.Add(fileMaster);
+
+        var irrigationBoard = new IrrigationBoard
+        {
+            IrrigationBoardId = Guid.NewGuid(),
+            IrrigationBoardName = "Loskop Irrigation Board"
+        };
+        context.IrrigationBoards.Add(irrigationBoard);
+
+        var letterType = new LetterType
+        {
+            LetterTypeId = Guid.NewGuid(),
+            LetterName = "S33(2) Declaration",
+            LetterDescription = "Kader Asmal Declaration — confirms ELU for scheduled area",
+            NWASection = "S33(2)"
+        };
+        context.LetterTypes.Add(letterType);
+
+        var issuance = new LetterIssuance
+        {
+            LetterIssuanceId = Guid.NewGuid(),
+            FileMasterId = fileMaster.FileMasterId,
+            LetterTypeId = letterType.LetterTypeId,
+            IrrigationBoardId = irrigationBoard.IrrigationBoardId,
+            IncludesDormantVolume = true,
+            GeneratedDate = new DateOnly(2026, 3, 15),
+            IssuedDate = new DateOnly(2026, 3, 20),
+            IssueMethod = "RegisteredPost"
+        };
+        context.LetterIssuances.Add(issuance);
+        await context.SaveChangesAsync();
+
+        var retrieved = await context.LetterIssuances
+            .Include(li => li.LetterType)
+            .Include(li => li.IrrigationBoard)
+            .FirstAsync(li => li.LetterIssuanceId == issuance.LetterIssuanceId);
+
+        Assert.Equal("S33(2)", retrieved.LetterType!.NWASection);
+        Assert.Equal("Loskop Irrigation Board", retrieved.IrrigationBoard!.IrrigationBoardName);
+        Assert.True(retrieved.IncludesDormantVolume);
     }
 }

@@ -178,14 +178,15 @@ Section 53 is **separate from** Sections 32–35. It is not about defining or ve
 
 The "qualifying period" is the **2 years immediately before the commencement of the NWA** (1 October 1998). Water use that was lawful and exercised during this window may qualify as ELU.
 
-### 6.2 Dates by Water Source
+### 6.2 Qualifying Period Dates (Unified)
+
+Per the SFRA court order direction, the qualifying period is **unified for all water types**:
 
 | Water Source | Qualifying Period | Rationale |
 |---|---|---|
-| **Surface water** (rivers, canals, irrigation schemes) | **1 October 1997 – 1 October 1999** | Section 32(1) — 2 years before commencement |
-| **Groundwater** (boreholes) | **1 October 1996 – 1 October 1998** | Groundwater outside proclaimed Government Water Control Areas was "private water" under the 1956 Act; the relevant period is therefore 2 years before 1 October 1998 |
+| **All water sources** (surface water, groundwater, boreholes) | **1 October 1996 – 30 September 1998** | Unified per SFRA court order. Section 32(1) — 2 years before commencement of the NWA (1 October 1998) |
 
-> **Note on surface water dates**: The surface water qualifying period extends to 1 October 1999 (one year *after* the NWA commenced) because Section 32(1) refers to use "at any time during a period of two years immediately before the date of commencement" — and the registration process required users to indicate their use 2–3 years after the qualifying period. The practical qualifying period assessment window captures use that was occurring around the commencement date.
+> **Note**: There is no distinction between surface water and borehole/groundwater qualifying periods. The SFRA court order established a single unified qualifying period of 1 October 1996 – 30 September 1998 for both.
 
 ### 6.3 Why the Qualifying Period Matters for the System
 

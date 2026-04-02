@@ -6,7 +6,7 @@ namespace dwa_ver_val.Tests.Repositories;
 public class PropertyRepositoryTests
 {
     [Fact]
-    public void AddProperty_Persists_To_Database()
+    public async Task AddAsync_Persists_To_Database()
     {
         using var context = TestDbContextFactory.Create();
         var repo = new PropertyRepository(context);
@@ -19,14 +19,14 @@ public class PropertyRepositoryTests
             PropertySize = 250.75m
         };
 
-        var result = repo.AddProperty(property);
+        var result = await repo.AddAsync(property);
 
         Assert.Equal("PROP-001", result.PropertyReferenceNumber);
         Assert.Equal(1, context.Properties.Count());
     }
 
     [Fact]
-    public void ListAll_Returns_All_Properties()
+    public async Task ListAllAsync_Returns_All_Properties()
     {
         using var context = TestDbContextFactory.Create();
         var repo = new PropertyRepository(context);
@@ -36,15 +36,15 @@ public class PropertyRepositoryTests
             new Property { PropertyId = Guid.NewGuid(), PropertySize = 200m },
             new Property { PropertyId = Guid.NewGuid(), PropertySize = 300m }
         );
-        context.SaveChanges();
+        await context.SaveChangesAsync();
 
-        var result = repo.ListAll();
+        var result = await repo.ListAllAsync();
 
         Assert.Equal(3, result.Count);
     }
 
     [Fact]
-    public void UpdateProperty_Modifies_Existing()
+    public async Task UpdateAsync_Modifies_Existing()
     {
         using var context = TestDbContextFactory.Create();
         var repo = new PropertyRepository(context);
@@ -56,19 +56,19 @@ public class PropertyRepositoryTests
             PropertySize = 100m
         };
         context.Properties.Add(property);
-        context.SaveChanges();
+        await context.SaveChangesAsync();
 
         property.PropertyReferenceNumber = "PROP-002-UPDATED";
         property.PropertySize = 150.5m;
-        repo.UpdateProperty(property);
+        await repo.UpdateAsync(property);
 
-        var updated = context.Properties.Find(property.PropertyId);
+        var updated = await context.Properties.FindAsync(property.PropertyId);
         Assert.Equal("PROP-002-UPDATED", updated!.PropertyReferenceNumber);
         Assert.Equal(150.5m, updated.PropertySize);
     }
 
     [Fact]
-    public async Task DeleteProperty_Removes_From_Database()
+    public async Task DeleteAsync_Removes_From_Database()
     {
         using var context = TestDbContextFactory.Create();
         var repo = new PropertyRepository(context);
@@ -82,7 +82,7 @@ public class PropertyRepositoryTests
         context.Properties.Add(property);
         await context.SaveChangesAsync();
 
-        var deleted = await repo.DeleteProperty(property.PropertyId);
+        var deleted = await repo.DeleteAsync(property.PropertyId);
 
         Assert.NotNull(deleted);
         Assert.Equal("PROP-003", deleted.PropertyReferenceNumber);
@@ -90,18 +90,18 @@ public class PropertyRepositoryTests
     }
 
     [Fact]
-    public async Task DeleteProperty_Returns_Null_For_NonExistent()
+    public async Task DeleteAsync_Returns_Null_For_NonExistent()
     {
         using var context = TestDbContextFactory.Create();
         var repo = new PropertyRepository(context);
 
-        var result = await repo.DeleteProperty(Guid.NewGuid());
+        var result = await repo.DeleteAsync(Guid.NewGuid());
 
         Assert.Null(result);
     }
 
     [Fact]
-    public void ListPropertyByProvince_Filters_Correctly()
+    public async Task ListByProvinceAsync_Filters_Correctly()
     {
         using var context = TestDbContextFactory.Create();
         var repo = new PropertyRepository(context);
@@ -129,10 +129,10 @@ public class PropertyRepositoryTests
             new Property { PropertyId = Guid.NewGuid(), PropertySize = 200m, AddressId = gpAddress.AddressId },
             new Property { PropertyId = Guid.NewGuid(), PropertySize = 300m, AddressId = lpAddress.AddressId }
         );
-        context.SaveChanges();
+        await context.SaveChangesAsync();
 
-        var gautengProperties = repo.ListPropertyByProvince("Gauteng");
-        var limpopoProperties = repo.ListPropertyByProvince("Limpopo");
+        var gautengProperties = await repo.ListByProvinceAsync("Gauteng");
+        var limpopoProperties = await repo.ListByProvinceAsync("Limpopo");
 
         Assert.Equal(2, gautengProperties.Count);
         Assert.Single(limpopoProperties);

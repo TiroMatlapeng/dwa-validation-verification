@@ -9,55 +9,58 @@ public class PropertyRepository : IPropertyInterface
         _context = context;
     }
 
-    public void TransferOwnership(ICollection<PropertyOwner> propertyOwners)
+    public async Task<Property> AddAsync(Property property)
     {
-        throw new NotImplementedException();
+        await _context.Properties.AddAsync(property);
+        await _context.SaveChangesAsync();
+        return property;
     }
 
-    public ICollection<Property> ListPropertyByOwner(PropertyOwner propertyOwner)
+    public async Task<Property?> GetByIdAsync(Guid id)
     {
-        throw new NotImplementedException();
+        return await _context.Properties
+            .Include(p => p.Address)
+            .Include(p => p.WaterManagementArea)
+            .Include(p => p.FileMasters)
+            .FirstOrDefaultAsync(p => p.PropertyId == id);
     }
 
-    public async Task<Property?> DeleteProperty(Guid PropertyId)
+    public async Task<ICollection<Property>> ListAllAsync()
+    {
+        return await _context.Properties
+            .Include(p => p.Address)
+            .Include(p => p.WaterManagementArea)
+            .ToListAsync();
+    }
+
+    public async Task<ICollection<Property>> ListByProvinceAsync(string provinceName)
+    {
+        return await _context.Properties
+            .Include(p => p.Address)
+            .Include(p => p.WaterManagementArea)
+            .Where(p => p.Address != null && p.Address.Province == provinceName)
+            .ToListAsync();
+    }
+
+    public async Task<Property> UpdateAsync(Property property)
+    {
+        _context.Properties.Update(property);
+        await _context.SaveChangesAsync();
+        return property;
+    }
+
+    public async Task<Property?> DeleteAsync(Guid id)
     {
         var property = await _context.Properties
-                       .FirstOrDefaultAsync(Property => Property.PropertyId == PropertyId);
-        if(property == null){
+            .FirstOrDefaultAsync(p => p.PropertyId == id);
+
+        if (property == null)
+        {
             return null;
         }
-         _context.Properties.Remove(property);
-         await _context.SaveChangesAsync();
-         return property;
-    }
 
-    public Property UpdateProperty(Property Property)
-    {
-         
-         _context.Properties.Update(Property);
-         _context.SaveChanges();
-         return Property;
-    }
-
-    public Property AddProperty(Property Property)
-    {
-          _context.Properties.Add(Property);
-          _context.SaveChanges();
-          return Property;
-    }
-
-
-    public ICollection<Property> ListPropertyByProvince(string provinceName)
-    {
-        return _context.Properties
-            .Include(p => p.Address)
-            .Where(p => p.Address != null && p.Address.Province == provinceName)
-            .ToList();
-    }
-
-    public ICollection<Property> ListAll()
-    {
-        return _context.Properties
-            .ToList();
+        _context.Properties.Remove(property);
+        await _context.SaveChangesAsync();
+        return property;
     }
 }

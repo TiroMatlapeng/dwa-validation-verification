@@ -3,10 +3,11 @@ flowchart TB
         National["National DWS\n(Head Office — Pretoria)"]
         Provincial["9 Provincial DWS Offices"]
         Regional["Regional Offices /\nWater Management Areas\n(19 WMAs nationally)"]
+        Catchment["CatchmentArea\n(Quaternary catchments within WMAs)\n[AMENDED 2026-04-01]"]
         CMA["CMAs\n(Catchment Management Agencies)"]
         SP["Service Providers /\nConsultants (contracted field work)"]
 
-        National --> Provincial --> Regional --> CMA --> SP
+        National --> Provincial --> Regional --> Catchment --> CMA --> SP
     end
 
     subgraph InternalRoles["Internal Roles (ApplicationUser extends IdentityUser)"]
@@ -33,7 +34,8 @@ flowchart TB
 
     National -.->|"scope"| SystemAdmin & NatMgr
     Provincial & Regional -.->|"scope"| RegMgr
-    Regional & CMA -.->|"scope"| Validator
+    Regional & Catchment -.->|"scope"| Validator
+    Catchment & CMA -.->|"scope"| Validator
     SP -.->|"scope"| Validator & Capturer
 
     style OrgHierarchy fill:#e6f3ff,stroke:#0066cc

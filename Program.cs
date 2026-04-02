@@ -8,16 +8,28 @@ builder.Services.AddDbContext<ApplicationDBContext>(
     options => options
     .UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-//builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+// Repository DI registrations
 builder.Services.AddScoped<IPropertyInterface, PropertyRepository>();
 builder.Services.AddScoped<IAddress, AddressRepository>();
+builder.Services.AddScoped<IFileMaster, FileMasterRepository>();
+builder.Services.AddScoped<IForestation, ForestationRepository>();
+
+// Services
+builder.Services.AddScoped<SeedDataService>();
+
 var app = builder.Build();
+
+// Seed reference data on startup
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<SeedDataService>();
+    await seeder.SeedAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

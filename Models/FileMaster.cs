@@ -4,13 +4,16 @@ public class FileMaster
 {
     public Guid FileMasterId { get; set; }
     public required string RegistrationNumber { get; set; }
+    public string? CaseNumber { get; set; } // Auto-generated V&V case number (business rule TBD)
     public Guid PropertyId { get; set; }
     public Property? Property { get; set; }
     public Guid? OrgUnitId { get; set; }
     public OrganisationalUnit? OrgUnit { get; set; }
     public required string SurveyorGeneralCode { get; set; }
     public required string PrimaryCatchment { get; set; }
-    public required string QuaternaryCatchment { get; set; }
+    public required string QuaternaryCatchment { get; set; } // Legacy — use CatchmentAreaId FK instead
+    public Guid? CatchmentAreaId { get; set; }
+    public CatchmentArea? CatchmentArea { get; set; }
     public required string FarmName { get; set; }
     public required int FarmNumber { get; set; }
     public required string RegistrationDivision { get; set; }
@@ -33,6 +36,9 @@ public class FileMaster
     public Guid? EntitlementId { get; set; }
     public Entitlement? Entitlement { get; set; }
 
+    // Assessment track: determines which control points are mandatory
+    public string? AssessmentTrack { get; set; } // "S35_Verification", "S33_2_Declaration", "S33_3_Declaration"
+
     // Workflow
     public Guid? WorkflowInstanceId { get; set; }
 
@@ -42,4 +48,5 @@ public class FileMaster
     public ICollection<Document> Documents { get; set; } = new List<Document>();
     public ICollection<CaseComment> CaseComments { get; set; } = new List<CaseComment>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public ICollection<Mapbook> Mapbooks { get; set; } = new List<Mapbook>();
 }

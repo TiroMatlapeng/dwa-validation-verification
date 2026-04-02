@@ -18,12 +18,20 @@ erDiagram
         Guid ProvinceId FK
     }
 
+    CatchmentArea {
+        Guid CatchmentAreaId PK
+        string CatchmentCode
+        string CatchmentName
+        Guid WmaId FK
+    }
+
     OrganisationalUnit {
         Guid OrgUnitId PK
         string Name
         string Type "National|Provincial|Regional|CMA"
         Guid ProvinceId FK
         Guid WmaId FK
+        Guid CatchmentAreaId FK "[AMENDED 2026-04-01]"
     }
 
     Address {
@@ -50,5 +58,7 @@ erDiagram
 
     Province ||--o{ WaterManagementArea : "contains 19 WMAs"
     Province ||--o{ OrganisationalUnit : "has offices in"
+    WaterManagementArea ||--o{ CatchmentArea : "contains [AMENDED 2026-04-01]"
     WaterManagementArea ||--o{ OrganisationalUnit : "covered by"
+    CatchmentArea ||--o{ OrganisationalUnit : "scopes [AMENDED 2026-04-01]"
     OrganisationalUnit ||--o{ ApplicationUser : "employs"

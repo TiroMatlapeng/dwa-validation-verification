@@ -95,6 +95,31 @@ erDiagram
         string ImageNumber
     }
 
+    %% [AMENDED 2026-04-01] Mapbook is the processed GIS product and V&V file artefact.
+    %% SateliteImage remains the raw imagery source. MapbookImage is the join table.
+    Mapbook {
+        Guid MapbookId PK
+        Guid FileMasterId FK
+        string MapbookName
+        string MapbookType "Qualifying|Current|Comparison"
+        DateOnly CompilationDate
+        string BlobPath
+        string Notes
+    }
+
+    MapbookImage {
+        Guid MapbookImageId PK
+        Guid MapbookId FK
+        Guid SateliteImageId FK
+        int DisplayOrder
+        string LayerDescription
+    }
+
+    FileMaster {
+        Guid FileMasterId PK
+        string RegistrationNumber
+    }
+
     %% ── Lookup Tables ──
 
     Crop {
@@ -173,3 +198,7 @@ erDiagram
 
     Crop }o--|| CropType : "is a"
     WaterSource }o--|| WaterSourceType : "is of type"
+
+    FileMaster ||--o{ Mapbook : "has mapbooks [AMENDED 2026-04-01]"
+    Mapbook ||--o{ MapbookImage : "composed of [AMENDED 2026-04-01]"
+    MapbookImage }o--|| SateliteImage : "uses raw imagery [AMENDED 2026-04-01]"

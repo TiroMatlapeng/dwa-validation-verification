@@ -11,6 +11,7 @@ public class PublicUser
     public bool EmailConfirmed { get; set; }
     public bool MfaEnabled { get; set; }
     public required string Status { get; set; } // Pending, Active, Suspended, Deactivated
+    public bool IsHDI { get; set; } // Historically Disadvantaged Individual (Black people and women)
     public DateTime RegistrationDate { get; set; }
     public ICollection<PublicUserProperty> PublicUserProperties { get; set; } = new List<PublicUserProperty>();
 }

@@ -44,6 +44,19 @@
 
         <div class="form-row">
             <div class="form-group">
+                <label asp-for="CatchmentAreaId" class="form-label">Catchment Area</label>
+                <select asp-for="CatchmentAreaId" asp-items="ViewBag.CatchmentAreas" class="form-control" style="width:100%;">
+                    <option value="">-- Select Catchment Area --</option>
+                </select>
+                <span asp-validation-for="CatchmentAreaId" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <!-- Spacer -->
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
                 <label asp-for="ProclamationDate" class="form-label"></label>
                 <input asp-for="ProclamationDate" type="date" class="form-control" style="width:100%;" />
                 <span asp-validation-for="ProclamationDate" class="text-danger text-sm"></span>
@@ -58,7 +71,9 @@
         <div class="form-row">
             <div class="form-group">
                 <label asp-for="WmaId" class="form-label">Water Management Area</label>
-                <input asp-for="WmaId" class="form-control" style="width:100%;" />
+                <select asp-for="WmaId" asp-items="ViewBag.WaterManagementAreas" class="form-control" style="width:100%;">
+                    <option value="">-- Select WMA --</option>
+                </select>
                 <span asp-validation-for="WmaId" class="text-danger text-sm"></span>
             </div>
             <div class="form-group">

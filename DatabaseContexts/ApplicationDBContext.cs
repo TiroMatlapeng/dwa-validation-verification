@@ -41,9 +41,17 @@ public class ApplicationDBContext : DbContext
     // ── Authorisation ──
     public DbSet<Authorisation> Authorisations { get; set; }
 
+    // ── GWCA proclamation rules ──
+    public DbSet<GwcaProclamationRule> GwcaProclamationRules { get; set; }
+
+    // ── Mapbooks (processed GIS map products) ──
+    public DbSet<Mapbook> Mapbooks { get; set; }
+    public DbSet<MapbookImage> MapbookImages { get; set; }
+
     // ── Organisational hierarchy ──
     public DbSet<Province> Provinces { get; set; }
     public DbSet<WaterManagementArea> WaterManagementAreas { get; set; }
+    public DbSet<CatchmentArea> CatchmentAreas { get; set; }
     public DbSet<OrganisationalUnit> OrganisationalUnits { get; set; }
 
     // ── Users ──
@@ -71,8 +79,8 @@ public class ApplicationDBContext : DbContext
     public DbSet<PublicUser> PublicUsers { get; set; }
     public DbSet<PublicUserProperty> PublicUserProperties { get; set; }
     public DbSet<CaseComment> CaseComments { get; set; }
-    public DbSet<Protest> Protests { get; set; }
-    public DbSet<ProtestDocument> ProtestDocuments { get; set; }
+    public DbSet<Objection> Objections { get; set; }
+    public DbSet<ObjectionDocument> ObjectionDocuments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -108,8 +116,13 @@ public class ApplicationDBContext : DbContext
 
         modelBuilder.Entity<Authorisation>().HasKey(e => e.AuthorisationId);
 
+        modelBuilder.Entity<GwcaProclamationRule>().HasKey(e => e.RuleId);
+        modelBuilder.Entity<Mapbook>().HasKey(e => e.MapbookId);
+        modelBuilder.Entity<MapbookImage>().HasKey(e => e.MapbookImageId);
+
         modelBuilder.Entity<Province>().HasKey(e => e.ProvinceId);
         modelBuilder.Entity<WaterManagementArea>().HasKey(e => e.WmaId);
+        modelBuilder.Entity<CatchmentArea>().HasKey(e => e.CatchmentAreaId);
         modelBuilder.Entity<OrganisationalUnit>().HasKey(e => e.OrgUnitId);
 
         modelBuilder.Entity<ApplicationUser>().HasKey(e => e.ApplicationUserId);
@@ -130,8 +143,8 @@ public class ApplicationDBContext : DbContext
         modelBuilder.Entity<PublicUser>().HasKey(e => e.PublicUserId);
         modelBuilder.Entity<PublicUserProperty>().HasKey(e => e.Id);
         modelBuilder.Entity<CaseComment>().HasKey(e => e.CommentId);
-        modelBuilder.Entity<Protest>().HasKey(e => e.ProtestId);
-        modelBuilder.Entity<ProtestDocument>().HasKey(e => e.Id);
+        modelBuilder.Entity<Objection>().HasKey(o => o.ObjectionId);
+        modelBuilder.Entity<ObjectionDocument>().HasKey(od => od.Id);
 
         // ── Relationships ──
 
@@ -148,6 +161,13 @@ public class ApplicationDBContext : DbContext
             .WithMany()
             .HasForeignKey(p => p.WmaId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Property self-referencing (subdivision/consolidation lineage)
+        modelBuilder.Entity<Property>()
+            .HasOne(p => p.ParentProperty)
+            .WithMany(p => p.ChildProperties)
+            .HasForeignKey(p => p.ParentPropertyId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // PropertyOwnership many-to-many
         modelBuilder.Entity<PropertyOwnership>()
@@ -358,32 +378,32 @@ public class ApplicationDBContext : DbContext
             .HasForeignKey(cc => cc.ParentCommentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Protest → FileMaster
-        modelBuilder.Entity<Protest>()
-            .HasOne(p => p.FileMaster)
+        // Objection → FileMaster
+        modelBuilder.Entity<Objection>()
+            .HasOne(o => o.FileMaster)
             .WithMany()
-            .HasForeignKey(p => p.FileMasterId)
+            .HasForeignKey(o => o.FileMasterId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Protest → PublicUser
-        modelBuilder.Entity<Protest>()
-            .HasOne(p => p.PublicUser)
+        // Objection → PublicUser
+        modelBuilder.Entity<Objection>()
+            .HasOne(o => o.PublicUser)
             .WithMany()
-            .HasForeignKey(p => p.PublicUserId)
+            .HasForeignKey(o => o.PublicUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // ProtestDocument → Protest
-        modelBuilder.Entity<ProtestDocument>()
-            .HasOne(pd => pd.Protest)
-            .WithMany(p => p.ProtestDocuments)
-            .HasForeignKey(pd => pd.ProtestId)
+        // ObjectionDocument → Objection
+        modelBuilder.Entity<ObjectionDocument>()
+            .HasOne(od => od.Objection)
+            .WithMany(o => o.ObjectionDocuments)
+            .HasForeignKey(od => od.ObjectionId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // ProtestDocument → Document
-        modelBuilder.Entity<ProtestDocument>()
-            .HasOne(pd => pd.Document)
+        // ObjectionDocument → Document
+        modelBuilder.Entity<ObjectionDocument>()
+            .HasOne(od => od.Document)
             .WithMany()
-            .HasForeignKey(pd => pd.DocumentId)
+            .HasForeignKey(od => od.DocumentId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Notification → FileMaster
@@ -518,6 +538,90 @@ public class ApplicationDBContext : DbContext
             .WithMany(p => p.WaterManagementAreas)
             .HasForeignKey(wma => wma.ProvinceId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // CatchmentArea → WMA
+        modelBuilder.Entity<CatchmentArea>()
+            .HasOne(c => c.WaterManagementArea)
+            .WithMany()
+            .HasForeignKey(c => c.WmaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CatchmentArea>()
+            .HasIndex(c => c.CatchmentCode)
+            .IsUnique();
+
+        // Property → CatchmentArea
+        modelBuilder.Entity<Property>()
+            .HasOne(p => p.CatchmentArea)
+            .WithMany(c => c.Properties)
+            .HasForeignKey(p => p.CatchmentAreaId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // FileMaster → CatchmentArea
+        modelBuilder.Entity<FileMaster>()
+            .HasOne(fm => fm.CatchmentArea)
+            .WithMany(c => c.FileMasters)
+            .HasForeignKey(fm => fm.CatchmentAreaId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // OrganisationalUnit → CatchmentArea
+        modelBuilder.Entity<OrganisationalUnit>()
+            .HasOne(ou => ou.CatchmentArea)
+            .WithMany()
+            .HasForeignKey(ou => ou.CatchmentAreaId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // GwcaProclamationRule → GovernmentWaterControlArea
+        modelBuilder.Entity<GwcaProclamationRule>()
+            .HasOne(r => r.WaterControlArea)
+            .WithMany(g => g.ProclamationRules)
+            .HasForeignKey(r => r.WaterControlAreaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<GwcaProclamationRule>()
+            .HasIndex(r => new { r.WaterControlAreaId, r.RuleCode });
+
+        // Mapbook → FileMaster
+        modelBuilder.Entity<Mapbook>()
+            .HasOne(m => m.FileMaster)
+            .WithMany(f => f.Mapbooks)
+            .HasForeignKey(m => m.FileMasterId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Mapbook → Document
+        modelBuilder.Entity<Mapbook>()
+            .HasOne(m => m.Document)
+            .WithMany()
+            .HasForeignKey(m => m.DocumentId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Mapbook → Period
+        modelBuilder.Entity<Mapbook>()
+            .HasOne(m => m.Period)
+            .WithMany()
+            .HasForeignKey(m => m.PeriodId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // MapbookImage → Mapbook
+        modelBuilder.Entity<MapbookImage>()
+            .HasOne(mi => mi.Mapbook)
+            .WithMany(m => m.MapbookImages)
+            .HasForeignKey(mi => mi.MapbookId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // MapbookImage → SateliteImage
+        modelBuilder.Entity<MapbookImage>()
+            .HasOne(mi => mi.SateliteImage)
+            .WithMany()
+            .HasForeignKey(mi => mi.SateliteImageId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // LetterIssuance → IrrigationBoard (for S33(2) declarations)
+        modelBuilder.Entity<LetterIssuance>()
+            .HasOne(li => li.IrrigationBoard)
+            .WithMany()
+            .HasForeignKey(li => li.IrrigationBoardId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // ── Global: disable cascade delete for all relationships ──
         // SQL Server does not allow multiple cascade paths; Restrict is safer

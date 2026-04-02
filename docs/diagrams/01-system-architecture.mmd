@@ -4,7 +4,7 @@ graph TB
         eWULAAS["eWULAAS\n(Licence Applications)"]
         SG["Surveyor General\n(DRDLR)"]
         Deeds["Deeds Office\n(DRDLR)"]
-        GIS["Satellite / GIS\nImage Store"]
+        GIS["Satellite / GIS\nImage Store\n& Mapbooks"]
     end
 
     subgraph Clients["User Interfaces"]
@@ -34,10 +34,10 @@ graph TB
     subgraph Database["SQL Server Database"]
         CoreDB["Core Domain\nProperties, Owners\nFileMasters\nIrrigation, Storing\nForestation, FieldAndCrop\nDamCalculation"]
         RefDB["Reference Tables\nValidationStatus, WaterSourceType\nVerificationScenario, CustomerTitle\nGender, DamCalculationStatus\nEntitlementType, AuthorisationType\nLetterType, Period"]
-        OrgDB["Organisation\nProvinces\nWaterManagementAreas\nOrganisationalUnits"]
+        OrgDB["Organisation\nProvinces\nWaterManagementAreas\nCatchmentAreas\nOrganisationalUnits"]
         WorkflowDB["Workflow\nWorkflowStates\nWorkflowInstances\nWorkflowStepRecords\nAuditLog"]
         CorrespDB["Correspondence\nLetterIssuances\nAuthorisations\nUploadedDocuments\nDigitalSignatures"]
-        PortalDB["Public Portal\nPublicUsers\nPublicUserProperties\nCaseNotifications\nCaseComments\nProtests\nProtestDocuments"]
+        PortalDB["Public Portal\nPublicUsers\nPublicUserProperties\nCaseNotifications\nCaseComments\nObjections [AMENDED]\nObjectionDocuments [AMENDED]"]
     end
 
     InternalApp --> Services

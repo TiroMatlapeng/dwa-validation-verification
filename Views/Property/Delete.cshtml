@@ -1,0 +1,46 @@
+@model Property
+
+@{
+    ViewData["Title"] = "Delete Property";
+}
+
+<a asp-controller="Property" asp-action="Index" class="btn-back">&larr; Back to Properties</a>
+
+<div class="page-title">Delete Property</div>
+<div class="page-subtitle">Confirm permanent deletion of this property record</div>
+
+<div class="card" style="max-width: 600px;">
+    <div class="form-section-title">Property Summary</div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <div class="form-label">SG Code</div>
+            <div style="font-weight: 600;">@Model.SGCode</div>
+        </div>
+        <div class="form-group">
+            <div class="form-label">Property Reference Number</div>
+            <div>@(Model.PropertyReferenceNumber ?? "—")</div>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <div class="form-label">Property Size (ha)</div>
+            <div>@Model.PropertySize.ToString("N2")</div>
+        </div>
+        <div class="form-group">
+            <div class="form-label">Water Management Area</div>
+            <div>@(Model.WaterManagementArea?.WmaName ?? "—")</div>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px; padding: 12px 16px; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; color: #991b1b; font-size: 14px;">
+        <strong>Warning:</strong> This action is permanent and cannot be undone. All data associated with this property will be permanently deleted.
+    </div>
+
+    <form asp-action="DeleteConfirmed" asp-route-id="@Model.PropertyId" method="post" style="margin-top: 20px;">
+        <input type="hidden" asp-for="PropertyId" />
+        <input type="submit" value="Delete Property" class="btn btn-danger" />
+        <a asp-action="Index" class="btn btn-outline" style="margin-left: 8px;">Cancel</a>
+    </form>
+</div>

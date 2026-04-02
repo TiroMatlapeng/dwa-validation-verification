@@ -1,8 +1,11 @@
 erDiagram
     Province ||--o{ WaterManagementArea : contains
     Province ||--o{ OrganisationalUnit : "has"
+    WaterManagementArea ||--o{ CatchmentArea : "contains [AMENDED 2026-04-01]"
     WaterManagementArea ||--o{ Property : "has"
     WaterManagementArea ||--o{ OrganisationalUnit : "scopes"
+    CatchmentArea ||--o{ Property : "contains [AMENDED 2026-04-01]"
+    CatchmentArea ||--o{ OrganisationalUnit : "scopes [AMENDED 2026-04-01]"
 
     OrganisationalUnit ||--o{ ApplicationUser : "employs"
 
@@ -11,7 +14,7 @@ erDiagram
     PropertyOwner ||--o| Address : "has"
     Property ||--o| Address : "has"
 
-    Property ||--o{ SateliteImage : "has"
+    Property ||--o{ SateliteImage : "has raw imagery"
     Property ||--o{ FieldAndCrop : "has"
     Property ||--o{ Irrigation : "has"
     Property ||--o{ Storing : "has"
@@ -26,7 +29,9 @@ erDiagram
     FileMaster ||--o{ Validation : "has"
     FileMaster ||--o{ LetterIssuance : "has"
     FileMaster ||--o{ Authorisation : "has"
+    FileMaster ||--o{ Mapbook : "has mapbooks [AMENDED 2026-04-01]"
     FileMaster ||--o{ AuditLog : "records"
+    FileMaster }o--o| CatchmentArea : "in catchment [AMENDED 2026-04-01]"
 
     Entitlement }o--|| EntitlementType : "typed by"
     Authorisation }o--|| AuthorisationType : "typed by"
@@ -42,6 +47,8 @@ erDiagram
     Irrigation }o--|| Period : "covers"
     Forestation }o--|| Period : "covers"
     SateliteImage }o--|| Period : "from"
+    Mapbook ||--o{ MapbookImage : "composed of [AMENDED 2026-04-01]"
+    MapbookImage }o--|| SateliteImage : "uses [AMENDED 2026-04-01]"
 
     PublicUser ||--o{ PublicUserProperty : "linked via"
     PublicUserProperty }o--|| Property : "links to"
@@ -50,3 +57,7 @@ erDiagram
     FileMaster ||--o{ Protest : "subject to"
     Protest ||--o{ ProtestDocument : "supported by"
     ProtestDocument }o--|| UploadedDocument : "references"
+
+    %% [AMENDED 2026-04-01] GWCA rules and Government Water Control Area
+    GovernmentWaterControlArea ||--o{ GwcaProclamationRule : "has rules"
+    LetterIssuance }o--o| IrrigationBoard : "S33(2) board"

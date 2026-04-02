@@ -1,6 +1,6 @@
-public class Protest
+public class Objection
 {
-    public Guid ProtestId { get; set; }
+    public Guid ObjectionId { get; set; }
     public Guid FileMasterId { get; set; }
     public FileMaster? FileMaster { get; set; }
     public Guid PublicUserId { get; set; }
@@ -8,5 +8,5 @@ public class Protest
     public DateTime LodgedDate { get; set; }
     public required string Status { get; set; } // Lodged, UnderReview, Resolved, Dismissed
     public string? ResolutionNotes { get; set; }
-    public ICollection<ProtestDocument> ProtestDocuments { get; set; } = new List<ProtestDocument>();
+    public ICollection<ObjectionDocument> ObjectionDocuments { get; set; } = new List<ObjectionDocument>();
 }

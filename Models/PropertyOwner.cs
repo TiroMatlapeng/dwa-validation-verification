@@ -12,6 +12,7 @@ public class PropertyOwner
     public Guid? AddressId { get; set; }
     public Address? Address { get; set; }
     public string? Gender { get; set; }
+    public bool IsHDI { get; set; } // Historically Disadvantaged Individual (Black people and women)
     public string? PhoneNumber { get; set; }
     public ICollection<PropertyOwnership> PropertyOwnerships { get; set; } = new List<PropertyOwnership>();
 }

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWA V&amp;V System &mdash; Design Amendment 002</title>
+<style>
+  body {
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    margin: 40px auto;
+    max-width: 960px;
+    line-height: 1.6;
+    color: #1a1a1a;
+    padding: 0 20px;
+  }
+  h1 { font-size: 1.8em; border-bottom: 3px solid #003366; padding-bottom: 8px; color: #003366; }
+  h2 { font-size: 1.4em; color: #003366; margin-top: 2em; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  h3 { font-size: 1.15em; color: #333; margin-top: 1.5em; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid #999; padding: 8px 10px; text-align: left; vertical-align: top; font-size: 0.92em; }
+  th { background: #003366; color: white; }
+  tr:nth-child(even) { background: #f5f7fa; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 0.85em; font-weight: bold; color: white; }
+  .badge-correction { background: #c0392b; }
+  .badge-additive { background: #27ae60; }
+  .badge-rename { background: #8e44ad; }
+  .badge-restructure { background: #e67e22; }
+  .before-after { display: flex; gap: 20px; margin: 10px 0; }
+  .before-after > div { flex: 1; padding: 12px; border-radius: 6px; }
+  .before { background: #fce4e4; border: 1px solid #e74c3c; }
+  .after { background: #e4fce4; border: 1px solid #27ae60; }
+  .before h4, .after h4 { margin: 0 0 8px 0; font-size: 0.95em; }
+  .before h4 { color: #c0392b; }
+  .after h4 { color: #1e8449; }
+  code { background: #eee; padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+  pre { background: #f4f4f4; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 0.88em; line-height: 1.5; }
+  ul { margin: 6px 0; padding-left: 24px; }
+  .meta-table td:first-child { font-weight: bold; width: 160px; }
+  .affected { background: #fffde7; padding: 10px; border-left: 4px solid #f9a825; margin: 10px 0; border-radius: 0 4px 4px 0; }
+  .source-ref { font-style: italic; color: #555; margin: 4px 0; }
+  .footer { margin-top: 40px; padding-top: 12px; border-top: 2px solid #003366; font-size: 0.9em; color: #555; }
+</style>
+</head>
+<body>
+
+<h1>DWA V&amp;V System &mdash; Design Amendment 002</h1>
+
+<table class="meta-table" style="width: auto; min-width: 400px;">
+  <tr><td>Amendment No:</td><td>002</td></tr>
+  <tr><td>Date:</td><td>1 April 2026</td></tr>
+  <tr><td>Source:</td><td>Client feedback &mdash; John Malungani (DWS Legal Expert), email + &ldquo;Application of Legal Principles&rdquo; presentation (November 2025)</td></tr>
+  <tr><td>Status:</td><td>Applied</td></tr>
+  <tr><td>Applies to:</td><td>Solution Design Document v1.0, CLAUDE.md, Entity Models, Seed Data, Architecture Diagrams (17), HTML Documentation (5), Views, Controllers, Unit Tests</td></tr>
+</table>
+
+<h2>Summary of Changes</h2>
+
+<table>
+  <tr>
+    <th>#</th>
+    <th>Change</th>
+    <th>Type</th>
+    <th>Impact</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>Section 33 properly categorised: S33(2) Kader Asmal Declaration vs S33(3) Individual Application</td>
+    <td><span class="badge badge-correction">Correction</span></td>
+    <td>High &mdash; workflow, letters, assessment tracks, seed data</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Qualifying period unified: 1 Oct 1996 &ndash; 30 Sep 1998 for both surface and ground water</td>
+    <td><span class="badge badge-correction">Correction</span></td>
+    <td>Medium &mdash; seed data, docs, wireframes</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Two-tier legal framework: General Legal Principles + Specific (GWCA) Principles</td>
+    <td><span class="badge badge-additive">Additive</span></td>
+    <td>High &mdash; new entity, seed data, calculator engine inputs</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Three-phase process corrected: Inception &rarr; Validation (technical) &rarr; Verification (legal)</td>
+    <td><span class="badge badge-correction">Correction</span></td>
+    <td>High &mdash; workflow states swapped, all diagrams, all docs</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>V&amp;V file artefact is a processed Mapbook, not raw satellite images</td>
+    <td><span class="badge badge-additive">Additive</span></td>
+    <td>Medium &mdash; new entities (Mapbook, MapbookImage), workflow guards</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>CatchmentArea (quaternary catchment) added to organisational hierarchy</td>
+    <td><span class="badge badge-additive">Additive</span></td>
+    <td>Medium &mdash; new entity, FK on Property/FileMaster/OrgUnit</td>
+  </tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>Change 1: Section 33 Categorisation</h2>
+<p><span class="badge badge-correction">Correction</span> S33 must be explicitly categorised into S33(2) and S33(3) with distinct letter types and assessment tracks</p>
+<p class="source-ref">Source: John Malungani email point 1; &ldquo;Application of Legal Principles&rdquo; presentation slides 12&ndash;18</p>
+
+<h3>Rationale</h3>
+<p>Section 33 of the NWA has two distinct regimes that were previously treated as a single category. S33(2) is the <strong>Kader Asmal Declaration</strong> for scheduled areas under irrigation board schemes &mdash; dormant but paid-for volumes count as ELU. S33(3) is a <strong>declaration on individual application</strong> with two sub-categories (a) and (b). Each has distinct letter types, assessment tracks, and workflow paths. The system must distinguish between these to generate the correct letters and apply the correct assessment logic.</p>
+
+<div class="before-after">
+  <div class="before">
+    <h4>BEFORE</h4>
+    <ul>
+      <li>Section 33 treated as a single undifferentiated provision</li>
+      <li>No S33 letter types defined</li>
+      <li>No <code>AssessmentTrack</code> field on <code>FileMaster</code></li>
+      <li>Single workflow track for all cases after CP9</li>
+      <li>No irrigation board / dormant volume tracking on <code>LetterIssuance</code></li>
+    </ul>
+  </div>
+  <div class="after">
+    <h4>AFTER</h4>
+    <ul>
+      <li>S33(2) = Kader Asmal Declaration (scheduled areas, irrigation boards, dormant volumes = ELU)</li>
+      <li>S33(3)(a) and S33(3)(b) = Declaration on individual application (two sub-types)</li>
+      <li>3 new letter types: <code>S33(2) Declaration</code>, <code>S33(3)(a) Declaration</code>, <code>S33(3)(b) Declaration</code></li>
+      <li><code>FileMaster.AssessmentTrack</code> field: <code>"S35_Verification"</code> | <code>"S33_2_Declaration"</code> | <code>"S33_3_Declaration"</code></li>
+      <li>Post-CP9 workflow branches into Track A (S35), Track B (S33(2)), or Track C (S33(3))</li>
+      <li><code>LetterIssuance.IrrigationBoardId</code> FK and <code>IncludesDormantVolume</code> flag for S33(2) cases</li>
+      <li>2 new workflow states: <code>S33_2_DeclarationIssued</code>, <code>S33_3_DeclarationIssued</code></li>
+    </ul>
+  </div>
+</div>
+
+<h3>Model Changes</h3>
+<table>
+  <tr><th>Entity</th><th>Field Added</th><th>Type</th><th>Purpose</th></tr>
+  <tr>
+    <td><code>FileMaster</code></td>
+    <td><code>AssessmentTrack</code></td>
+    <td><code>string?</code></td>
+    <td>Determines which CPs are mandatory and which post-CP9 letter track to follow</td>
+  </tr>
+  <tr>
+    <td><code>LetterIssuance</code></td>
+    <td><code>IrrigationBoardId</code></td>
+    <td><code>Guid?</code> (FK)</td>
+    <td>Links S33(2) letters to the relevant irrigation board</td>
+  </tr>
+  <tr>
+    <td><code>LetterIssuance</code></td>
+    <td><code>IncludesDormantVolume</code></td>
+    <td><code>bool</code></td>
+    <td>S33(2): whether dormant but paid-for volumes are included as ELU</td>
+  </tr>
+</table>
+
+<h3>Seed Data Changes (SeedDataService)</h3>
+<table>
+  <tr><th>Data Type</th><th>Before</th><th>After</th></tr>
+  <tr>
+    <td>Letter Types</td>
+    <td>7 S35 letter types only</td>
+    <td>7 S35 + 3 S33 letter types: <code>S33(2) Declaration</code>, <code>S33(3)(a) Declaration</code>, <code>S33(3)(b) Declaration</code></td>
+  </tr>
+  <tr>
+    <td>Workflow States</td>
+    <td>No S33 states</td>
+    <td>Added <code>S33_2_DeclarationIssued</code> and <code>S33_3_DeclarationIssued</code> + <code>Closed</code> terminal state</td>
+  </tr>
+</table>
+
+<div class="affected">
+  <strong>Affected artefacts:</strong>
+  <code>Models/FileMaster.cs</code>,
+  <code>Models/LetterIssuance.cs</code>,
+  <code>Services/SeedDataService.cs</code>,
+  <code>DatabaseContexts/ApplicationDBContext.cs</code>,
+  <code>CLAUDE.md</code> &sect;Letter Types,
+  <code>03-section35-letter-statemachine.mmd</code> [AMENDED],
+  <code>09-letter-generation.mmd</code> [AMENDED],
+  <code>02-workflow-phases.mmd</code> [AMENDED],
+  <code>erd-04-case-management-and-workflow.mmd</code> [AMENDED],
+  <code>Views/FileMaster/Create.cshtml</code>,
+  <code>Views/FileMaster/Edit.cshtml</code>,
+  <code>Views/FileMaster/Details.cshtml</code>,
+  <code>Tests/Models/EntityRelationshipTests.cs</code> (2 new tests)
+</div>
+
+<!-- ============================================================ -->
+<h2>Change 2: Qualifying Period Unified</h2>
+<p><span class="badge badge-correction">Correction</span> Single qualifying period for both surface water and ground water</p>
+<p class="source-ref">Source: John Malungani email point 2; SFRA court order direction</p>
+
+<h3>Rationale</h3>
+<p>The qualifying period was previously modelled as two separate periods: one for surface water and one for borehole/ground water. Per the SFRA court order, there is a <strong>single unified qualifying period</strong> of <strong>1 October 1996 &ndash; 30 September 1998</strong> for all water types. There is no legal basis for distinguishing between surface and borehole qualifying dates.</p>
+
+<div class="before-after">
+  <div class="before">
+    <h4>BEFORE</h4>
+    <ul>
+      <li>Two separate qualifying periods in seed data:
+        <ul>
+          <li>Surface water: 1 Oct 1996 &ndash; 30 Sep 1998</li>
+          <li>Borehole/ground water: 1 Oct 1997 &ndash; 30 Sep 1999</li>
+        </ul>
+      </li>
+      <li>Wireframes displayed split dates</li>
+      <li>LEGAL-FRAMEWORK.md had separate rows per water type</li>
+    </ul>
+  </div>
+  <div class="after">
+    <h4>AFTER</h4>
+    <ul>
+      <li>Single qualifying period: <strong>1 October 1996 &ndash; 30 September 1998</strong></li>
+      <li>Applies to all water types (surface, ground, SFRA)</li>
+      <li>Single <code>Period</code> seed record: &ldquo;Qualifying Period: 1 Oct 1996 - 30 Sep 1998&rdquo;</li>
+      <li>All documentation, wireframes, and diagrams updated to reflect single period</li>
+    </ul>
+  </div>
+</div>
+
+<div class="affected">
+  <strong>Affected artefacts:</strong>
+  <code>Services/SeedDataService.cs</code> (Period seed data),
+  <code>docs/LEGAL-FRAMEWORK.md</code> (lines 185&ndash;186),
+  <code>docs/Data-Structures-Document.html</code>,
+  <code>docs/Workflow-Document.html</code>,
+  <code>docs/wireframes/modern-internal-wireframes.html</code>,
+  <code>CLAUDE.md</code> &sect;Qualifying Period,
+  <code>04-data-flow-per-property.mmd</code> [AMENDED],
+  <code>14-end-to-end-data-flow.mmd</code> [AMENDED]
+</div>
+
+<!-- ============================================================ -->
+<h2>Change 3: Two-Tier Legal Framework (GWCA Proclamation Rules)</h2>
+<p><span class="badge badge-additive">Additive</span> Configurable per-GWCA legal limits that override general principles</p>
+<p class="source-ref">Source: John Malungani &ldquo;Application of Legal Principles&rdquo; presentation slides 22&ndash;38; email point 3</p>
+
+<h3>Rationale</h3>
+<p>The lawfulness assessment operates at two levels. <strong>General Legal Principles</strong> (riparian rights, S9B limits, private water) apply to all properties outside proclaimed areas. <strong>Specific Legal Principles</strong> are per-GWCA proclamation rules published in the Government Gazette that <strong>override</strong> general principles for properties within that area. Each proclaimed GWCA has unique limits (e.g. max hectares, max volume per hectare, max storage). These must be modelled as configurable rules, not hardcoded values.</p>
+
+<div class="before-after">
+  <div class="before">
+    <h4>BEFORE</h4>
+    <ul>
+      <li>No explicit two-tier framework in the data model</li>
+      <li><code>GovernmentWaterControlArea</code> entity existed but had no proclamation rules</li>
+      <li>No gazette reference or proclamation date fields</li>
+      <li>Lawfulness assessment logic had no GWCA rule lookup</li>
+    </ul>
+  </div>
+  <div class="after">
+    <h4>AFTER</h4>
+    <ul>
+      <li>New entity: <code>GwcaProclamationRule</code> &mdash; configurable per-GWCA legal limits</li>
+      <li><code>GovernmentWaterControlArea</code> enhanced with <code>GovernmentGazetteReference</code>, <code>ProclamationDate</code>, and <code>ProclamationRules</code> collection</li>
+      <li><code>LawfulnessAssessmentService</code> design: checks GWCA rules first, then falls through to general principles</li>
+      <li>Blyde River GWCA example rules seeded (5 rules from GN 180 and GN 2805)</li>
+    </ul>
+  </div>
+</div>
+
+<h3>New Entity: GwcaProclamationRule</h3>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td><code>RuleId</code></td><td><code>Guid</code> (PK)</td><td>Primary key</td></tr>
+  <tr><td><code>WaterControlAreaId</code></td><td><code>Guid</code> (FK)</td><td>Which GWCA this rule belongs to</td></tr>
+  <tr><td><code>RuleCode</code></td><td><code>string</code></td><td>Machine-readable code: <code>MAX_HECTARES</code>, <code>MAX_VOLUME_PER_HA</code>, <code>MAX_IRRIGABLE_PCT</code>, <code>MAX_STORAGE_PER_HA</code>, <code>MAX_STORAGE_PER_PROPERTY</code></td></tr>
+  <tr><td><code>RuleDescription</code></td><td><code>string</code></td><td>Human-readable description</td></tr>
+  <tr><td><code>NumericLimit</code></td><td><code>decimal(18,2)?</code></td><td>The limit value</td></tr>
+  <tr><td><code>Unit</code></td><td><code>string?</code></td><td>Unit of measure: <code>ha</code>, <code>m3/ha</code>, <code>pct</code>, <code>m3</code></td></tr>
+  <tr><td><code>GovernmentGazetteReference</code></td><td><code>string?</code></td><td>Gazette notice reference (e.g. &ldquo;GN 180 of 10 July 1970&rdquo;)</td></tr>
+  <tr><td><code>IsActive</code></td><td><code>bool</code></td><td>Whether this rule is currently in effect</td></tr>
+  <tr><td><code>EffectiveFrom</code></td><td><code>DateOnly?</code></td><td>Date rule took effect</td></tr>
+  <tr><td><code>EffectiveTo</code></td><td><code>DateOnly?</code></td><td>Date rule was superseded (null = still active)</td></tr>
+</table>
+
+<h3>Seeded Example: Blyde River GWCA Rules</h3>
+<table>
+  <tr><th>Rule Code</th><th>Limit</th><th>Unit</th><th>Gazette Source</th></tr>
+  <tr><td>MAX_HECTARES</td><td>30</td><td>ha</td><td>GN 180 of 10 July 1970</td></tr>
+  <tr><td>MAX_IRRIGABLE_PCT</td><td>53</td><td>pct</td><td>GN 180 of 10 July 1970</td></tr>
+  <tr><td>MAX_VOLUME_PER_HA</td><td>9,900</td><td>m3/ha</td><td>Proclamation</td></tr>
+  <tr><td>MAX_STORAGE_PER_HA</td><td>5,000</td><td>m3/ha</td><td>GN 2805 of 14 December 1979</td></tr>
+  <tr><td>MAX_STORAGE_PER_PROPERTY</td><td>50,000</td><td>m3</td><td>GN 2805 of 14 December 1979</td></tr>
+</table>
+
+<h3>Enhanced Entity: GovernmentWaterControlArea</h3>
+<table>
+  <tr><th>Field Added</th><th>Type</th><th>Purpose</th></tr>
+  <tr><td><code>GovernmentGazetteReference</code></td><td><code>string?</code></td><td>Gazette publication reference for the GWCA proclamation</td></tr>
+  <tr><td><code>ProclamationDate</code></td><td><code>DateOnly?</code></td><td>Date the GWCA was proclaimed</td></tr>
+  <tr><td><code>ProclamationRules</code></td><td><code>ICollection&lt;GwcaProclamationRule&gt;</code></td><td>Navigation to all rules for this GWCA</td></tr>
+</table>
+
+<div class="affected">
+  <strong>Affected artefacts:</strong>
+  <code>Models/GwcaProclamationRule.cs</code> [NEW],
+  <code>Models/GovermentWaterControlArea.cs</code>,
+  <code>DatabaseContexts/ApplicationDBContext.cs</code>,
+  <code>Services/SeedDataService.cs</code>,
+  <code>CLAUDE.md</code> &sect;Legal Principles,
+  <code>erd-03-gwca.mmd</code> [AMENDED],
+  <code>08-calculator-engine.mmd</code> [AMENDED],
+  <code>06-domain-model-erd.mmd</code> [AMENDED],
+  <code>Tests/Models/EntityRelationshipTests.cs</code> (1 new test)
+</div>
+
+<!-- ============================================================ -->
+<h2>Change 4: Three-Phase Process (Labels Corrected)</h2>
+<p><span class="badge badge-correction">Correction</span> Validation and Verification phase labels were <strong>swapped</strong> in the previous design</p>
+<p class="source-ref">Source: John Malungani email point 4; presentation slides 5&ndash;10</p>
+
+<h3>Rationale</h3>
+<p>The V&amp;V process has <strong>three phases</strong>, not two, and the labels were previously reversed in the codebase. <strong>Validation</strong> is the technical phase (did the water use exist, and to what extent?) and <strong>Verification</strong> is the legal phase (was the water use lawful?). The previous design had these labels swapped in workflow states, seed data, diagrams, and documentation.</p>
+
+<div class="before-after">
+  <div class="before">
+    <h4>BEFORE</h4>
+    <ul>
+      <li>Two phases only (no explicit Inception phase)</li>
+      <li>Phase labels <strong>swapped</strong>:
+        <ul>
+          <li>CP2&ndash;CP6 were labelled &ldquo;Verification&rdquo; (wrong &mdash; should be Validation)</li>
+          <li>CP7&ndash;CP9 were labelled &ldquo;Validation&rdquo; (wrong &mdash; should be Verification)</li>
+        </ul>
+      </li>
+      <li>Workflow states had <code>Phase = "Phase1"</code>, <code>"Phase2"</code></li>
+      <li>Diagrams showed &ldquo;Phase 2 (Implementation)&rdquo;</li>
+    </ul>
+  </div>
+  <div class="after">
+    <h4>AFTER</h4>
+    <ul>
+      <li>Three phases:
+        <ol>
+          <li><strong>Inception</strong> (CP1) &mdash; project setup, data acquisition, public participation</li>
+          <li><strong>Validation</strong> (CP2&ndash;CP6) &mdash; Technical: determine if water use EXISTED and ESTIMATE EXTENT</li>
+          <li><strong>Verification</strong> (CP7&ndash;CP9 + letters) &mdash; Legal: determine if water use was LAWFUL</li>
+        </ol>
+      </li>
+      <li>Workflow states use phase names: <code>Phase = "Inception"</code>, <code>"Validation"</code>, <code>"Verification"</code></li>
+      <li>Key distinction: Validation = &ldquo;Did the use exist and how much?&rdquo; (GIS-based). Verification = &ldquo;Was it lawful?&rdquo; (instrument-based)</li>
+    </ul>
+  </div>
+</div>
+
+<h3>Workflow State Phase Corrections</h3>
+<table>
+  <tr><th>Control Points</th><th>Before (Phase)</th><th>After (Phase)</th></tr>
+  <tr><td>CP1 (WARMS, imagery, inception report)</td><td><code>"Phase1"</code></td><td><code>"Inception"</code></td></tr>
+  <tr><td>CP2&ndash;CP6 (spatial info, WARMS eval, GIS, SAPWAT)</td><td><code>"Verification"</code></td><td><code>"Validation"</code></td></tr>
+  <tr><td>CP7&ndash;CP9 (ELU calc, dam volumes, SFRA)</td><td><code>"Validation"</code></td><td><code>"Verification"</code></td></tr>
+  <tr><td>S35/S33 letter states</td><td><code>"Validation"</code></td><td><code>"Verification"</code></td></tr>
+</table>
+
+<div class="affected">
+  <strong>Affected artefacts:</strong>
+  <code>Services/SeedDataService.cs</code> (all workflow state Phase values),
+  <code>Tests/Models/EntityRelationshipTests.cs</code>,
+  <code>Tests/Models/ModelValidationTests.cs</code>,
+  <code>CLAUDE.md</code> &sect;V&amp;V Process,
+  <code>02-workflow-phases.mmd</code> [AMENDED],
+  <code>07-phase1-data-flow.mmd</code> [AMENDED],
+  <code>14-end-to-end-data-flow.mmd</code> [AMENDED],
+  <code>Views/Home/Index.cshtml</code>,
+  <code>docs/Workflow-Document.html</code>,
+  <code>docs/wireframes/modern-internal-wireframes.html</code>,
+  <code>docs/DATA-FLOW-AND-WORKFLOW-DESIGN.md</code>
+</div>
+
+<!-- ============================================================ -->
+<h2>Change 5: Mapbooks (Processed GIS Map Products)</h2>
+<p><span class="badge badge-additive">Additive</span> V&amp;V file artefact is a processed Mapbook, not raw satellite images</p>
+<p class="source-ref">Source: John Malungani email point 5</p>
+
+<h3>Rationale</h3>
+<p>The V&amp;V file (Appendix A, items 7 and 9) contains a <strong>processed Mapbook</strong> &mdash; a GIS map product with references to the source satellite images used to produce it. Raw satellite images (<code>SateliteImage</code> records) are uploaded into the system separately and are not directly part of the V&amp;V file. The workflow guard at CP5 must check for the presence of <code>Mapbook</code> records, not raw <code>SateliteImage</code> records.</p>
+
+<div class="before-after">
+  <div class="before">
+    <h4>BEFORE</h4>
+    <ul>
+      <li>V&amp;V file referenced raw satellite images directly</li>
+      <li>No <code>Mapbook</code> or <code>MapbookImage</code> entities</li>
+      <li>CP5 guard would check for <code>SateliteImage</code> presence</li>
+      <li>Appendix A items 7 &amp; 9 described as &ldquo;satellite imagery&rdquo;</li>
+    </ul>
+  </div>
+  <div class="after">
+    <h4>AFTER</h4>
+    <ul>
+      <li>New entity: <code>Mapbook</code> &mdash; processed GIS map product per FileMaster</li>
+      <li>New entity: <code>MapbookImage</code> &mdash; join table linking Mapbook to source <code>SateliteImage</code> records</li>
+      <li>CP5 guard checks for <code>Mapbook</code> presence (qualifying + current periods)</li>
+      <li>Appendix A items 7 &amp; 9 now &ldquo;Qualifying/Current period Mapbook&rdquo;</li>
+      <li>Raw <code>SateliteImage</code> records remain as a separate upload mechanism</li>
+    </ul>
+  </div>
+</div>
+
+<h3>New Entity: Mapbook</h3>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td><code>MapbookId</code></td><td><code>Guid</code> (PK)</td><td>Primary key</td></tr>
+  <tr><td><code>FileMasterId</code></td><td><code>Guid</code> (FK)</td><td>Which V&amp;V case this mapbook belongs to</td></tr>
+  <tr><td><code>MapbookTitle</code></td><td><code>string</code></td><td>Title of the mapbook</td></tr>
+  <tr><td><code>MapType</code></td><td><code>string</code></td><td><code>"Qualifying"</code> | <code>"Current"</code> | <code>"Overview"</code></td></tr>
+  <tr><td><code>ProcessedDate</code></td><td><code>DateOnly?</code></td><td>When the mapbook was produced</td></tr>
+  <tr><td><code>GisLayerReference</code></td><td><code>string?</code></td><td>GIS layer reference identifier</td></tr>
+  <tr><td><code>DocumentId</code></td><td><code>Guid?</code> (FK)</td><td>Link to stored document file</td></tr>
+  <tr><td><code>PeriodId</code></td><td><code>Guid?</code> (FK)</td><td>Which period this mapbook covers</td></tr>
+</table>
+
+<h3>New Entity: MapbookImage (Join Table)</h3>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td><code>MapbookImageId</code></td><td><code>Guid</code> (PK)</td><td>Primary key</td></tr>
+  <tr><td><code>MapbookId</code></td><td><code>Guid</code> (FK)</td><td>Parent mapbook</td></tr>
+  <tr><td><code>SateliteImageId</code></td><td><code>Guid</code> (FK)</td><td>Source satellite image used</td></tr>
+  <tr><td><code>LayerOrder</code></td><td><code>int</code></td><td>Order of this image layer in the mapbook</td></tr>
+  <tr><td><code>Notes</code></td><td><code>string?</code></td><td>Notes about this image&rsquo;s usage in the mapbook</td></tr>
+</table>
+
+<div class="affected">
+  <strong>Affected artefacts:</strong>
+  <code>Models/Mapbook.cs</code> [NEW],
+  <code>Models/MapbookImage.cs</code> [NEW],
+  <code>DatabaseContexts/ApplicationDBContext.cs</code>,
+  <code>CLAUDE.md</code> &sect;Key Domain Entities &amp; &sect;V&amp;V File Content,
+  <code>erd-01-core-entities.mmd</code> [AMENDED],
+  <code>erd-04-case-management-and-workflow.mmd</code> [AMENDED],
+  <code>04-data-flow-per-property.mmd</code> [AMENDED],
+  <code>06-domain-model-erd.mmd</code> [AMENDED],
+  <code>16-object-model.mmd</code> [AMENDED],
+  <code>01-system-architecture.mmd</code> [AMENDED],
+  <code>Tests/Models/EntityRelationshipTests.cs</code> (1 new test),
+  <code>Tests/DatabaseContexts/ApplicationDBContextTests.cs</code>
+</div>
+
+<!-- ============================================================ -->
+<h2>Change 6: CatchmentArea in Organisational Hierarchy</h2>
+<p><span class="badge badge-additive">Additive</span> Quaternary catchment as an explicit entity between WMA and Property</p>
+<p class="source-ref">Source: Edwin Matlapeng / DWS feedback on organisational hierarchy; presentation slide 4 (catchment hierarchy)</p>
+
+<h3>Rationale</h3>
+<p>The organisational hierarchy must explicitly include <strong>Catchment Area</strong> (quaternary catchment, e.g. &ldquo;A21A&rdquo;, &ldquo;B31A&rdquo;) as a level between Water Management Area and Property. Previously, catchment data was stored as free-text string fields (<code>Property.QuaternaryDrainage</code>, <code>FileMaster.QuaternaryCatchment</code>) with no referential integrity. The new <code>CatchmentArea</code> entity provides a proper FK relationship and enables scoping of cases by catchment for access control.</p>
+
+<div class="before-after">
+  <div class="before">
+    <h4>BEFORE</h4>
+    <ul>
+      <li>Hierarchy: National &rarr; Provincial &rarr; Regional/WMA &rarr; CMA &rarr; Property</li>
+      <li>Catchment stored as free-text: <code>Property.QuaternaryDrainage</code> (string)</li>
+      <li>Catchment stored as free-text: <code>FileMaster.QuaternaryCatchment</code> (string)</li>
+      <li><code>OrganisationalUnit.Type</code> values: National, Provincial, Regional, CMA</li>
+      <li>No referential integrity on catchment data</li>
+    </ul>
+  </div>
+  <div class="after">
+    <h4>AFTER</h4>
+    <ul>
+      <li>Hierarchy: National &rarr; Provincial &rarr; Regional/WMA &rarr; <strong>Catchment Area</strong> &rarr; CMA &rarr; Property</li>
+      <li>New entity: <code>CatchmentArea</code> (Guid PK, <code>CatchmentCode</code> unique index, FK to <code>WaterManagementArea</code>)</li>
+      <li><code>Property.CatchmentAreaId</code> FK (nullable, legacy string field retained for migration)</li>
+      <li><code>FileMaster.CatchmentAreaId</code> FK (nullable, legacy string field retained for migration)</li>
+      <li><code>OrganisationalUnit.CatchmentAreaId</code> FK + <code>"Catchment"</code> added to Type values</li>
+      <li>~1,946 quaternary catchments nationally (e.g. &ldquo;A21A&rdquo;, &ldquo;B31A&rdquo;)</li>
+    </ul>
+  </div>
+</div>
+
+<h3>New Entity: CatchmentArea</h3>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td><code>CatchmentAreaId</code></td><td><code>Guid</code> (PK)</td><td>Primary key</td></tr>
+  <tr><td><code>CatchmentCode</code></td><td><code>string</code> (unique index)</td><td>Quaternary code, e.g. &ldquo;A21A&rdquo;</td></tr>
+  <tr><td><code>CatchmentName</code></td><td><code>string</code></td><td>Descriptive name</td></tr>
+  <tr><td><code>WmaId</code></td><td><code>Guid</code> (FK)</td><td>Parent Water Management Area</td></tr>
+</table>
+
+<h3>FK Additions to Existing Entities</h3>
+<table>
+  <tr><th>Entity</th><th>Field Added</th><th>Type</th><th>Notes</th></tr>
+  <tr><td><code>Property</code></td><td><code>CatchmentAreaId</code></td><td><code>Guid?</code> (FK)</td><td>Nullable; legacy <code>QuaternaryDrainage</code> string retained</td></tr>
+  <tr><td><code>FileMaster</code></td><td><code>CatchmentAreaId</code></td><td><code>Guid?</code> (FK)</td><td>Nullable; legacy <code>QuaternaryCatchment</code> string retained</td></tr>
+  <tr><td><code>OrganisationalUnit</code></td><td><code>CatchmentAreaId</code></td><td><code>Guid?</code> (FK)</td><td>For &ldquo;Catchment&rdquo; type org units</td></tr>
+</table>
+
+<div class="affected">
+  <strong>Affected artefacts:</strong>
+  <code>Models/CatchmentArea.cs</code> [NEW],
+  <code>Models/Property.cs</code>,
+  <code>Models/FileMaster.cs</code>,
+  <code>Models/OrganisationalUnit.cs</code>,
+  <code>DatabaseContexts/ApplicationDBContext.cs</code>,
+  <code>CLAUDE.md</code> &sect;Organisational Hierarchy,
+  <code>05-org-hierarchy-and-roles.mmd</code> [AMENDED],
+  <code>erd-01-core-entities.mmd</code> [AMENDED],
+  <code>erd-02-property-and-ownership.mmd</code> [AMENDED],
+  <code>erd-05-organisational.mmd</code> [AMENDED],
+  <code>06-domain-model-erd.mmd</code> [AMENDED],
+  <code>01-system-architecture.mmd</code> [AMENDED],
+  <code>14-end-to-end-data-flow.mmd</code> [AMENDED],
+  <code>Views/Property/Register.cshtml</code>,
+  <code>Views/Property/Edit.cshtml</code>,
+  <code>Views/Property/Details.cshtml</code>,
+  <code>Controllers/PropertyController.cs</code>,
+  <code>Controllers/FileMasterController.cs</code>,
+  <code>Tests/Models/EntityRelationshipTests.cs</code> (1 new test),
+  <code>Tests/DatabaseContexts/ApplicationDBContextTests.cs</code>
+</div>
+
+<!-- ============================================================ -->
+<h2>Amended Diagrams Index</h2>
+<p>The following 17 Mermaid diagrams were amended in-place. Updated SVG renders are in <code>docs/diagrams/svg/</code>.</p>
+
+<table>
+  <tr><th>Diagram</th><th>Changes Applied</th></tr>
+  <tr><td><code>01-system-architecture.mmd</code></td><td>Added Mapbooks, CatchmentAreas to data layer</td></tr>
+  <tr><td><code>02-workflow-phases.mmd</code></td><td>Swapped Phase 2/3 labels (Validation/Verification); added S33 tracks; fixed qualifying dates</td></tr>
+  <tr><td><code>03-section35-letter-statemachine.mmd</code></td><td>Added S33(2) and S33(3) track branching post-CP9</td></tr>
+  <tr><td><code>04-data-flow-per-property.mmd</code></td><td>SateliteImage &rarr; Mapbook flow; fixed qualifying period dates</td></tr>
+  <tr><td><code>05-org-hierarchy-and-roles.mmd</code></td><td>Added CatchmentArea level between WMA and CMA</td></tr>
+  <tr><td><code>06-domain-model-erd.mmd</code></td><td>All new entities (CatchmentArea, GwcaProclamationRule, Mapbook, MapbookImage) and relationships</td></tr>
+  <tr><td><code>07-phase1-data-flow.mmd</code></td><td>Phase 2 label corrected to &ldquo;Validation&rdquo;</td></tr>
+  <tr><td><code>08-calculator-engine.mmd</code></td><td>GwcaProclamationRule + AssessmentTrack as inputs to calculator</td></tr>
+  <tr><td><code>09-letter-generation.mmd</code></td><td>S33 letter types (S33(2), S33(3)(a), S33(3)(b)) added</td></tr>
+  <tr><td><code>14-end-to-end-data-flow.mmd</code></td><td>Phase labels corrected; Mapbooks; CatchmentAreas</td></tr>
+  <tr><td><code>16-object-model.mmd</code></td><td>New repos, MapbookGuard, new DbSets</td></tr>
+  <tr><td><code>erd-01-core-entities.mmd</code></td><td>CatchmentArea entity; Mapbook/MapbookImage relationships</td></tr>
+  <tr><td><code>erd-02-property-and-ownership.mmd</code></td><td>Property &rarr; CatchmentArea FK</td></tr>
+  <tr><td><code>erd-03-gwca.mmd</code></td><td>GwcaProclamationRule entity linked to GWCA</td></tr>
+  <tr><td><code>erd-04-case-management-and-workflow.mmd</code></td><td>FileMaster.AssessmentTrack; CatchmentAreaId FK; Mapbook link</td></tr>
+  <tr><td><code>erd-05-organisational.mmd</code></td><td>OrganisationalUnit &rarr; CatchmentArea FK</td></tr>
+  <tr><td><code>erd-06-public-portal.mmd</code></td><td>No direct changes from this amendment (already updated in Amendment 001)</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>Amended HTML Documentation Index</h2>
+
+<table>
+  <tr><th>Document</th><th>Changes Applied</th></tr>
+  <tr><td><code>docs/Data-Structures-Document.html</code></td><td>Qualifying period corrected to single unified period</td></tr>
+  <tr><td><code>docs/Workflow-Document.html</code></td><td>Phase labels corrected; qualifying period unified</td></tr>
+  <tr><td><code>docs/wireframes/modern-internal-wireframes.html</code></td><td>Qualifying period display corrected; phase labels updated</td></tr>
+  <tr><td><code>docs/DATA-FLOW-AND-WORKFLOW-DESIGN.md</code></td><td>&ldquo;Phase 2 Workflow: Study Implementation&rdquo; &rarr; correct Validation label</td></tr>
+  <tr><td><code>docs/LEGAL-FRAMEWORK.md</code></td><td>Split surface/borehole qualifying periods unified into single row</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>Unit Tests Added / Modified</h2>
+
+<table>
+  <tr><th>Test File</th><th>Changes</th></tr>
+  <tr>
+    <td><code>Tests/Models/EntityRelationshipTests.cs</code></td>
+    <td>5 new tests:
+      <ul>
+        <li><code>CatchmentArea_Links_To_WMA_And_Properties</code></li>
+        <li><code>GwcaProclamationRule_Links_To_GWCA</code></li>
+        <li><code>Mapbook_Links_To_FileMaster_And_SateliteImages</code></li>
+        <li><code>FileMaster_AssessmentTrack_And_CatchmentArea</code></li>
+        <li><code>LetterIssuance_S33_2_With_IrrigationBoard</code></li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td><code>Tests/DatabaseContexts/ApplicationDBContextTests.cs</code></td>
+    <td>New test verifying <code>CatchmentAreas</code>, <code>GwcaProclamationRules</code>, <code>Mapbooks</code>, <code>MapbookImages</code> DbSets exist</td>
+  </tr>
+  <tr>
+    <td><code>Tests/Models/ModelValidationTests.cs</code></td>
+    <td>Phase label fix: <code>"Phase1"</code> &rarr; <code>"Inception"</code></td>
+  </tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>New Reference Document</h2>
+
+<table>
+  <tr><th>File</th><th>Description</th></tr>
+  <tr>
+    <td><code>docs/System-Development-Presentation-Text.md</code></td>
+    <td>Full text extraction of John Malungani&rsquo;s &ldquo;Application of Legal Principles&rdquo; PowerPoint presentation (44 slides, November 2025). This is the authoritative reference for the two-tier legal framework, S33 categorisation, qualifying period, and GWCA-specific rules. Extracted from <code>System development.pptx</code>.</td>
+  </tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>Build Status</h2>
+<p>All changes compile cleanly. <strong>39 tests passing, 0 errors, 0 warnings.</strong></p>
+<pre>
+$ dotnet build
+Build succeeded. 0 Warning(s). 0 Error(s).
+
+$ dotnet test
+Passed! - Failed: 0, Passed: 39, Skipped: 0, Total: 39
+</pre>
+
+<!-- ============================================================ -->
+<div class="footer">
+  <p><strong>Amendment 002</strong> &mdash; Applied 1 April 2026. Prepared by the V&amp;V System development team.</p>
+  <p>Source: John Malungani (DWS), client feedback email + &ldquo;Application of Legal Principles&rdquo; presentation (November 2025).</p>
+  <p>All changes are on the <code>features</code> branch, pending commit and merge to <code>main</code>.</p>
+</div>
+
+</body>
+</html>

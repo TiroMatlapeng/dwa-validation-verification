@@ -58,7 +58,8 @@ flowchart TB
     Stakeholders --> CP05
     CP05 --> Minutes
 
-    Minutes --> Phase2([">>> Transition to Phase 2\n(per property)"])
+    Minutes --> CatchAssign["Assign CatchmentArea\nto each property\nin scope"]
+    CatchAssign --> Phase2([">>> Transition to Phase 2: Validation\n(per property — technical extent)"])
 
     style Inputs fill:#ffe6e6,stroke:#cc0000
     style Documents fill:#e6e6ff,stroke:#0000cc

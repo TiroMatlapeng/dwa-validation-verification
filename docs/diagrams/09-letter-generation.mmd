@@ -7,6 +7,8 @@ flowchart TB
         STOR_Data["Storing\n(dam volumes)"]
         FOR_Data["Forestation\n(SFRA volumes)"]
         ENT_Data["Entitlement\n(type, total ELU volume m³)"]
+        AT_Data["AssessmentTrack\n(S35 vs S33(2) vs S33(3)\ndetermines letter set)"]
+        IB_Data["IrrigationBoardId\n(required for S33(2)\nKader Asmal declarations)"]
     end
 
     subgraph LetterTypes["Letter Types (NWA Sections)"]
@@ -17,6 +19,9 @@ flowchart TB
         L3["Letter 3 — S35(4)\nELU confirmation certificate"]
         L4A["Letter 4A — S53(1)\nNotice of intent to stop unlawful use"]
         L45["Letter 4&5 — S53(1)\nDirective to stop unlawful use"]
+        S33_2["S33(2) Declaration Letter\nKader Asmal Declaration\n(per Irrigation Board area)"]
+        S33_3a["S33(3)(a) Declaration Letter\nIndividual application\n(request for information)"]
+        S33_3b["S33(3)(b) Declaration Letter\nIndividual application\n(determination outcome)"]
     end
 
     subgraph LetterSvc["Letter Service (ILetterService)"]
@@ -47,8 +52,8 @@ flowchart TB
         DocStore[("UploadedDocument\n(PDF blob path)")]
     end
 
-    FM_Data & PO_Data & PROP_Data & IRR_Data & STOR_Data & FOR_Data & ENT_Data --> Generate
-    L1 & L1A & L2 & L2A & L3 & L4A & L45 --> Generate
+    FM_Data & PO_Data & PROP_Data & IRR_Data & STOR_Data & FOR_Data & ENT_Data & AT_Data & IB_Data --> Generate
+    L1 & L1A & L2 & L2A & L3 & L4A & L45 & S33_2 & S33_3a & S33_3b --> Generate
 
     Generate --> Template
     Template --> PDF[/"Document (PDF)"/]

@@ -136,7 +136,7 @@ public class ModelValidationTests
         var states = new[]
         {
             new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "NotStarted", Phase = "Inception", DisplayOrder = 0, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_Complete", Phase = "Phase1", DisplayOrder = 7, IsTerminal = false },
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_Complete", Phase = "Inception", DisplayOrder = 7, IsTerminal = false },
             new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "Closed", Phase = "Complete", DisplayOrder = 99, IsTerminal = true },
         };
         context.WorkflowStates.AddRange(states);

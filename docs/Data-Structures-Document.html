@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWA V&amp;V System &mdash; Data Structures &amp; Entity Model</title>
+<style>
+  @page {
+    size: A4;
+    margin: 2cm 2.5cm;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Calibri', system-ui, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #1a1f2b;
+    background: #fff;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 2cm 2.5cm;
+  }
+
+  /* ── Cover Page ── */
+  .cover {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 90vh;
+    text-align: center;
+  }
+  .cover-stripe {
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(90deg, #002855, #0066b3, #7db8e0, #00838f, #2e7d32);
+    border-radius: 4px;
+    margin-bottom: 3rem;
+  }
+  .cover h1 {
+    font-size: 28pt;
+    font-weight: 700;
+    color: #002855;
+    margin-bottom: 0.3rem;
+  }
+  .cover h2 {
+    font-size: 16pt;
+    font-weight: 400;
+    color: #0066b3;
+    margin-bottom: 2rem;
+  }
+  .cover-meta {
+    font-size: 10pt;
+    color: #555d6e;
+    line-height: 2;
+  }
+  .cover-meta strong { color: #002855; }
+  .cover-footer {
+    margin-top: 4rem;
+    font-size: 9pt;
+    color: #8892a0;
+  }
+
+  /* ── Headings ── */
+  h1 { font-size: 20pt; color: #002855; margin: 2rem 0 0.8rem; page-break-after: avoid; }
+  h2 { font-size: 15pt; color: #002855; margin: 1.8rem 0 0.6rem; border-bottom: 2px solid #7db8e0; padding-bottom: 0.3rem; page-break-after: avoid; }
+  h3 { font-size: 12pt; color: #0066b3; margin: 1.4rem 0 0.5rem; page-break-after: avoid; }
+  h4 { font-size: 11pt; color: #00838f; margin: 1rem 0 0.4rem; }
+
+  p { margin-bottom: 0.8rem; text-align: justify; }
+  ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+  li { margin-bottom: 0.3rem; }
+
+  /* ── Screenshot figures ── */
+  figure {
+    margin: 1.5rem 0;
+    page-break-inside: avoid;
+  }
+  figure img {
+    width: 100%;
+    border: 1px solid #d0d5db;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,40,85,0.10);
+  }
+  figcaption {
+    font-size: 9pt;
+    color: #555d6e;
+    text-align: center;
+    margin-top: 0.4rem;
+    font-style: italic;
+  }
+
+  /* ── Callout boxes ── */
+  .callout {
+    background: #f0f6fc;
+    border-left: 4px solid #0066b3;
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 10pt;
+  }
+  .callout-title {
+    font-weight: 600;
+    color: #002855;
+    margin-bottom: 0.3rem;
+  }
+  .callout-green {
+    background: #f0faf0;
+    border-left: 4px solid #2e7d32;
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 10pt;
+  }
+  .callout-teal {
+    background: #f0f9fa;
+    border-left: 4px solid #00838f;
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 10pt;
+  }
+  .callout-amber {
+    background: #fffbf0;
+    border-left: 4px solid #e68a00;
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 10pt;
+  }
+
+  /* ── Table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 10pt;
+  }
+  th {
+    background: #002855;
+    color: #fff;
+    text-align: left;
+    padding: 0.5rem 0.8rem;
+    font-weight: 600;
+  }
+  td {
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid #e2e6ea;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f8f9fa; }
+
+  .page-break { page-break-before: always; }
+
+  /* ── Code snippets ── */
+  code {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 9pt;
+    background: #f0f2f5;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+  }
+  pre {
+    background: #1a1f2b;
+    color: #e8ecf1;
+    padding: 1rem;
+    border-radius: 6px;
+    font-size: 9pt;
+    overflow-x: auto;
+    margin: 0.8rem 0;
+    line-height: 1.5;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  /* ── TOC ── */
+  .toc { margin: 1rem 0 2rem; }
+  .toc a { text-decoration: none; color: #0066b3; }
+  .toc a:hover { text-decoration: underline; }
+  .toc ul { list-style: none; margin-left: 0; }
+  .toc > ul > li { margin-bottom: 0.5rem; font-weight: 600; color: #002855; }
+  .toc > ul > li > ul > li { font-weight: 400; color: #1a1f2b; margin-bottom: 0.2rem; margin-left: 1.5rem; }
+  .toc > ul > li > ul > li::before { content: ""; }
+
+  /* ── Entity group header ── */
+  .entity-group-badge {
+    display: inline-block;
+    background: #002855;
+    color: #fff;
+    font-size: 8pt;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Print adjustments ── */
+  @media print {
+    body { padding: 0; }
+    .cover { min-height: 100vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     COVER PAGE
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-stripe"></div>
+  <h1>DWA Validation &amp; Verification System</h1>
+  <h2>Data Structures &amp; Entity Model</h2>
+  <p style="font-size:12pt; color:#555d6e; margin-bottom:3rem;">
+    Comprehensive Data Architecture &amp; Entity Relationship Documentation
+  </p>
+  <div class="cover-meta">
+    <strong>Client:</strong> Department of Water and Sanitation (DWS)<br>
+    <strong>Project:</strong> Electronic V&amp;V Information Management System<br>
+    <strong>Version:</strong> 1.0<br>
+    <strong>Date:</strong> 25 March 2026<br>
+    <strong>Classification:</strong> Internal &mdash; For Client Review
+  </div>
+  <div class="cover-footer">
+    Prepared in support of the Requirements for Verifying the Lawfulness of Existing Water Use<br>
+    and Extent of Existing Lawful Water Use, Edition 3, July 2024 (DWS)
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+     ════════════════════════════════════════════════════════════════════ -->
+<h1>Table of Contents</h1>
+<div class="toc">
+<ul>
+  <li><a href="#sec1">1. Introduction</a></li>
+  <li><a href="#sec2">2. Design Patterns &amp; Architectural Decisions</a>
+    <ul>
+      <li><a href="#sec2-1">2.1 Repository Pattern</a></li>
+      <li><a href="#sec2-2">2.2 Lookup Table / Type Pattern</a></li>
+      <li><a href="#sec2-3">2.3 Self-Referencing Hierarchies</a></li>
+      <li><a href="#sec2-4">2.4 Join Table / Explicit Many-to-Many</a></li>
+      <li><a href="#sec2-5">2.5 Polymorphic Identity</a></li>
+      <li><a href="#sec2-6">2.6 State Machine in Data</a></li>
+      <li><a href="#sec2-7">2.7 Immutable Audit Trail</a></li>
+      <li><a href="#sec2-8">2.8 Row-Level Security</a></li>
+    </ul>
+  </li>
+  <li><a href="#sec3">3. Domain Group: Geography &amp; Organisation</a></li>
+  <li><a href="#sec4">4. Domain Group: Property &amp; Ownership</a></li>
+  <li><a href="#sec5">5. Domain Group: Water Use Reference Data</a></li>
+  <li><a href="#sec6">6. Domain Group: Water Use Data</a></li>
+  <li><a href="#sec7">7. Domain Group: Entitlements &amp; Authorisations</a></li>
+  <li><a href="#sec8">8. Domain Group: Case Management</a></li>
+  <li><a href="#sec9">9. Domain Group: Workflow Engine</a></li>
+  <li><a href="#sec10">10. Domain Group: Letters, Documents &amp; Signatures</a></li>
+  <li><a href="#sec11">11. Domain Group: Notifications &amp; Audit</a></li>
+  <li><a href="#sec12">12. Domain Group: Public Portal</a></li>
+  <li><a href="#sec13">13. Enum Types &amp; Subtypes</a></li>
+  <li><a href="#sec14">14. Data Integrity Rules</a></li>
+  <li><a href="#sec15">15. Seed Data</a></li>
+  <li><a href="#sec16">16. Known Issues &amp; Planned Changes</a></li>
+</ul>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     1. INTRODUCTION
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec1">1. Introduction</h1>
+
+<p>
+  This document describes the complete data model and entity structure of the DWA Validation &amp; Verification (V&amp;V) System &mdash;
+  an electronic information management system mandated by Sections 32&ndash;35 of South Africa's National Water Act (Act 38 of 1998).
+  The system manages approximately <strong>500,000 property records</strong> across DWS and CMA regional offices,
+  with a target completion date of 2026.
+</p>
+
+<p>
+  The data layer is built on <strong>Entity Framework Core 10.0</strong> with <strong>SQL Server 2022</strong> as the backing store.
+  All primary keys are <code>Guid</code> values configured via the Fluent API in <code>ApplicationDBContext.OnModelCreating()</code>.
+  The project enables <strong>nullable reference types</strong> and <strong>implicit usings</strong> globally, which ensures compile-time safety
+  for null handling across all entity properties.
+</p>
+
+<p>This document covers:</p>
+<ul>
+  <li>Entity design, properties, and data types for 50+ entities across 10 domain groups</li>
+  <li>Relationships, foreign keys, and navigation properties as configured in the <code>ApplicationDBContext</code></li>
+  <li>Design patterns applied: Repository, State Machine, Composite, Observer, and Chain of Responsibility</li>
+  <li>Data integrity rules: delete behaviours, decimal precision conventions, and PK strategy</li>
+  <li>Enum types, lookup/seed data, and known issues</li>
+</ul>
+
+<div class="callout">
+  <div class="callout-title">Architecture Layer</div>
+  <code>Controllers &rarr; Services (planned) &rarr; Repositories &rarr; ApplicationDBContext &rarr; SQL Server 2022</code><br>
+  All data access flows through repository interfaces registered in <code>Program.cs</code> via constructor-injected <code>AddScoped</code> registrations.
+</div>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     2. DESIGN PATTERNS & ARCHITECTURAL DECISIONS
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec2">2. Design Patterns &amp; Architectural Decisions</h1>
+
+<h2 id="sec2-1">2.1 Repository Pattern</h2>
+
+<p>
+  All data access is encapsulated behind interface contracts defined in the <code>Interfaces/</code> directory. Each repository interface
+  (e.g., <code>IPropertyInterface</code>, <code>IFileMaster</code>, <code>IAddress</code>, <code>IForestation</code>) declares CRUD operations
+  that are implemented by concrete classes in <code>Repositories/</code>. This inversion of control enables:
+</p>
+<ul>
+  <li><strong>Testability</strong> &mdash; Unit tests can substitute the EF Core <code>InMemory</code> provider or mock repositories</li>
+  <li><strong>Separation of concerns</strong> &mdash; Controllers remain thin HTTP boundaries; business logic will live in the Services layer</li>
+  <li><strong>Consistency</strong> &mdash; All new repository methods follow <code>async</code>/<code>await</code> with <code>SaveChangesAsync()</code></li>
+</ul>
+
+<div class="callout">
+  <div class="callout-title">DI Registration</div>
+  Every repository pair must be registered in <code>Program.cs</code>:<br>
+  <code>builder.Services.AddScoped&lt;IPropertyInterface, PropertyRepository&gt;();</code>
+</div>
+
+<h2 id="sec2-2">2.2 Lookup Table / Type Pattern</h2>
+
+<p>
+  Rather than encoding classification values as enums in code (which require recompilation to extend), the system uses
+  separate <strong>Type entities</strong> as extensible lookup tables. These include:
+</p>
+
+<table>
+  <tr><th>Type Entity</th><th>Referenced By</th><th>Purpose</th></tr>
+  <tr><td><code>EntitlementType</code></td><td><code>Entitlement.EntitlementTypeId</code></td><td>Classifies ELU entitlement categories</td></tr>
+  <tr><td><code>AuthorisationType</code></td><td><code>Authorisation.AuthorisationTypeId</code></td><td>Permit, S32/33, Transfer, GA, etc.</td></tr>
+  <tr><td><code>CustomerType</code></td><td><code>PropertyOwner.CustomerTypeId</code></td><td>Owner classification (Individual, Company, Trust, etc.)</td></tr>
+  <tr><td><code>CropType</code></td><td><code>Crop.CropTypeId</code></td><td>Crop classification hierarchy</td></tr>
+  <tr><td><code>LetterType</code></td><td><code>LetterIssuance.LetterTypeId</code></td><td>7 Section 35 letter types per NWA</td></tr>
+</table>
+
+<p>
+  All type entities are seeded on application startup via <code>SeedDataService</code>, which checks if the table is empty before inserting.
+  This allows DWS administrators to add new classification values through the database without requiring a code deployment.
+</p>
+
+<h2 id="sec2-3">2.3 Self-Referencing Hierarchies</h2>
+
+<p>
+  Three entities in the system use self-referencing foreign keys to model tree structures. This is an application of the
+  <strong>Composite pattern</strong>, where each node can act both as an individual element and as a container of child elements.
+</p>
+
+<table>
+  <tr><th>Entity</th><th>FK Property</th><th>Navigation</th><th>Hierarchy Purpose</th></tr>
+  <tr>
+    <td><code>OrganisationalUnit</code></td>
+    <td><code>ParentOrgUnitId</code></td>
+    <td><code>ParentOrgUnit</code> / <code>ChildOrgUnits</code></td>
+    <td>National &rarr; Provincial &rarr; Regional &rarr; CMA office hierarchy</td>
+  </tr>
+  <tr>
+    <td><code>Property</code></td>
+    <td><code>ParentPropertyId</code></td>
+    <td><code>ParentProperty</code> / <code>ChildProperties</code></td>
+    <td>Subdivision and consolidation lineage tracking</td>
+  </tr>
+  <tr>
+    <td><code>CaseComment</code></td>
+    <td><code>ParentCommentId</code></td>
+    <td><code>ParentComment</code> / <code>Replies</code></td>
+    <td>Threaded comment replies on V&amp;V cases</td>
+  </tr>
+</table>
+
+<p>
+  All three self-referencing relationships use <code>DeleteBehavior.Restrict</code> to prevent cascading deletes that would
+  orphan child records. The nullable FK (<code>Guid?</code>) indicates root-level nodes (no parent).
+</p>
+
+<h2 id="sec2-4">2.4 Join Table / Explicit Many-to-Many</h2>
+
+<p>
+  The system uses <strong>explicit join entities</strong> rather than EF Core's implicit many-to-many configuration.
+  This design choice is deliberate: each join table carries <strong>payload properties</strong> beyond the two foreign keys,
+  making implicit skip navigations insufficient.
+</p>
+
+<table>
+  <tr><th>Join Entity</th><th>Left FK</th><th>Right FK</th><th>Payload</th></tr>
+  <tr>
+    <td><code>PropertyOwnership</code></td>
+    <td><code>PropertyId</code> &rarr; <code>Property</code></td>
+    <td><code>PropertyOwnerId</code> &rarr; <code>PropertyOwner</code></td>
+    <td><code>TitleDeedNumber</code>, <code>TitleDeedDate</code></td>
+  </tr>
+  <tr>
+    <td><code>PublicUserProperty</code></td>
+    <td><code>PublicUserId</code> &rarr; <code>PublicUser</code></td>
+    <td><code>PropertyId</code> &rarr; <code>Property</code></td>
+    <td><code>ApprovedByUserId</code>, <code>ApprovedDate</code>, <code>Status</code></td>
+  </tr>
+  <tr>
+    <td><code>ObjectionDocument</code></td>
+    <td><code>ObjectionId</code> &rarr; <code>Objection</code></td>
+    <td><code>DocumentId</code> &rarr; <code>Document</code></td>
+    <td>(Link-only; enables independent document reuse)</td>
+  </tr>
+</table>
+
+<h2 id="sec2-5">2.5 Polymorphic Identity</h2>
+
+<p>
+  The system maintains <strong>two separate identity realms</strong> to enforce strict security boundaries between
+  internal DWS staff and external water users:
+</p>
+
+<table>
+  <tr><th>Entity</th><th>Base Class</th><th>Auth Scheme</th><th>Purpose</th></tr>
+  <tr>
+    <td><code>ApplicationUser</code></td>
+    <td>Extends <code>IdentityUser</code> (ASP.NET Identity)</td>
+    <td>Internal cookie scheme</td>
+    <td>DWS officials, validators, capturers, managers</td>
+  </tr>
+  <tr>
+    <td><code>PublicUser</code></td>
+    <td>Standalone entity (no IdentityUser)</td>
+    <td>Separate external cookie scheme</td>
+    <td>Water users, landowners, legal representatives</td>
+  </tr>
+</table>
+
+<p>
+  Both user types can sign documents. The <code>DigitalSignature</code> entity has two optional FKs:
+  <code>ApplicationUserId?</code> and <code>PublicUserId?</code>, with exactly one populated at any time.
+  The same pattern appears in <code>Document</code> (<code>UploadedByUserId?</code> / <code>UploadedByPublicUserId?</code>),
+  <code>Notification</code>, and <code>SignatureRequest</code>.
+</p>
+
+<h2 id="sec2-6">2.6 State Machine in Data</h2>
+
+<p>
+  The V&amp;V workflow is modelled as a <strong>State pattern</strong> implemented across three cooperating entities:
+</p>
+
+<div class="callout-teal">
+  <div class="callout-title">State Machine Triad</div>
+  <strong>WorkflowState</strong> &mdash; Defines the 31 possible states (seeded reference data), grouped by phase.<br>
+  <strong>WorkflowInstance</strong> &mdash; Tracks which state a specific <code>FileMaster</code> case is currently in.<br>
+  <strong>WorkflowStepRecord</strong> &mdash; Provides immutable history of every state transition, including who completed it and when.
+</div>
+
+<p>
+  <code>WorkflowInstance.CurrentWorkflowStateId</code> points to the active state.
+  The <code>WorkflowEngine</code> (planned service) exposes <code>CanTransition(user, fileMaster, targetState)</code>
+  which evaluates a chain of <code>ITransitionGuard</code> implementations before allowing state changes.
+</p>
+
+<h2 id="sec2-7">2.7 Immutable Audit Trail</h2>
+
+<p>
+  Every significant action in the system is recorded in the <code>AuditLog</code> entity. This is an append-only table &mdash;
+  rows are never updated or deleted. Each entry captures:
+</p>
+<ul>
+  <li><code>EntityType</code> + <code>EntityId</code> &mdash; Generic entity reference (polymorphic by convention, not by FK)</li>
+  <li><code>OldValues</code> / <code>NewValues</code> &mdash; JSON-serialised snapshots of the before/after state</li>
+  <li><code>ApplicationUserId</code>, <code>UserName</code>, <code>IPAddress</code>, <code>Timestamp</code> &mdash; Full forensic context</li>
+</ul>
+
+<h2 id="sec2-8">2.8 Row-Level Security</h2>
+
+<p>
+  External portal data isolation is enforced through the <code>PublicUserProperty</code> join table. An external user can
+  only access case data for properties explicitly linked to their account. The link requires:
+</p>
+<ol>
+  <li>The external user requests access (status = <code>Pending</code>)</li>
+  <li>A DWS official approves the link (<code>ApprovedByUserId</code>, <code>ApprovedDate</code>, status = <code>Approved</code>)</li>
+  <li>All external portal queries are scoped by <code>PublicUserId</code> via the approved <code>PublicUserProperty</code> records</li>
+</ol>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     3. GEOGRAPHY & ORGANISATION
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec3">3. Domain Group: Geography &amp; Organisation</h1>
+<span class="entity-group-badge">5 Entities</span>
+
+<p>
+  DWS operates a national-to-regional hierarchy that maps directly onto the case management access model.
+  South Africa has <strong>9 provinces</strong> and <strong>19 Water Management Areas (WMAs)</strong> nationally. The organisational
+  hierarchy flows: National DWS (Head Office, Pretoria) &rarr; Provincial DWS Offices &rarr; Regional Offices / WMAs &rarr;
+  Catchment Areas &rarr; CMAs (Catchment Management Agencies, where established) &rarr; Service Providers / Consultants.
+</p>
+
+<p>
+  A <code>FileMaster</code> case belongs to a WMA/Regional Office, and access is scoped by the <code>OrganisationalUnit</code>
+  assigned to the user. When a user is assigned to a province or WMA, they can only see and operate on cases in that scope,
+  unless they hold a national-level role.
+</p>
+
+<table>
+  <tr><th>Entity</th><th>Key Properties</th><th>Type / FK</th><th>Relationships</th><th>Notes</th></tr>
+  <tr>
+    <td><strong>Province</strong></td>
+    <td><code>ProvinceId</code>, <code>ProvinceName</code>, <code>ProvinceCode</code></td>
+    <td>PK: <code>Guid</code></td>
+    <td>Has many <code>WaterManagementArea</code></td>
+    <td>9 provinces seeded on startup</td>
+  </tr>
+  <tr>
+    <td><strong>WaterManagementArea</strong></td>
+    <td><code>WmaId</code>, <code>WmaName</code>, <code>WmaCode</code>, <code>ProvinceId</code></td>
+    <td>PK: <code>Guid</code>; FK: <code>ProvinceId</code> &rarr; Province</td>
+    <td>Belongs to <code>Province</code>; has many <code>CatchmentArea</code>, <code>OrganisationalUnit</code></td>
+    <td>19 WMAs seeded. Delete: Restrict</td>
+  </tr>
+  <tr>
+    <td><strong>CatchmentArea</strong></td>
+    <td><code>CatchmentAreaId</code>, <code>CatchmentName</code>, <code>CatchmentCode</code>, <code>WmaId</code></td>
+    <td>PK: <code>Guid</code>; FK: <code>WmaId</code> &rarr; WaterManagementArea</td>
+    <td>Belongs to <code>WaterManagementArea</code>; has many <code>Property</code></td>
+    <td>Intermediate level in org hierarchy between WMA and Property. Corresponds to quaternary catchment boundaries used in hydrological analysis.</td>
+  </tr>
+  <tr>
+    <td><strong>OrganisationalUnit</strong></td>
+    <td><code>OrgUnitId</code>, <code>Name</code>, <code>Type</code>, <code>ParentOrgUnitId?</code></td>
+    <td>PK: <code>Guid</code>; FKs: <code>ProvinceId?</code>, <code>WmaId?</code>, <code>ParentOrgUnitId?</code></td>
+    <td>Self-referencing parent/child; belongs to Province, WMA; has many <code>ApplicationUser</code></td>
+    <td>Type: National, Provincial, Regional, CMA. Self-ref delete: Restrict</td>
+  </tr>
+  <tr>
+    <td><strong>Address</strong></td>
+    <td><code>AddressId</code>, <code>StreetAddress</code>, <code>SuburbName</code>, <code>CityName</code>, <code>Province</code></td>
+    <td>PK: <code>Guid</code>; <code>Longitude?</code> decimal(9,6), <code>Latitude?</code> decimal(9,6)</td>
+    <td>Referenced by <code>Property</code>, <code>PropertyOwner</code></td>
+    <td>Province stored as string (not FK to Province entity)</td>
+  </tr>
+  <tr>
+    <td><strong>ApplicationUser</strong></td>
+    <td><code>ApplicationUserId</code>, <code>FirstName</code>, <code>LastName</code>, <code>EmployeeNumber</code>, <code>OrgUnitId?</code></td>
+    <td>PK: <code>Guid</code>; FK: <code>OrgUnitId?</code> &rarr; OrganisationalUnit. Extends <code>IdentityUser</code></td>
+    <td>Belongs to <code>OrganisationalUnit</code>; referenced by FileMaster (Validator, CapturePerson), WorkflowInstance, AuditLog, etc.</td>
+    <td>Internal DWS staff. Inherits email, password hash, roles from ASP.NET Identity</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <div class="callout-title">Access Scoping</div>
+  <code>ApplicationUser.OrgUnitId</code> determines which cases a user can access. The <code>OrganisationalUnit</code> self-referencing
+  hierarchy allows queries to walk up the tree: a Provincial user sees all Regional and CMA cases within their province.
+</div>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     4. PROPERTY & OWNERSHIP
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec4">4. Domain Group: Property &amp; Ownership</h1>
+<span class="entity-group-badge">4 Entities</span>
+
+<p>
+  <code>Property</code> is the <strong>central entity</strong> of the entire system. Every V&amp;V case (FileMaster), every water use
+  record (Irrigation, Forestation, Storing, FieldAndCrop), every dam calculation, and every satellite image is ultimately linked to a Property.
+  A property represents a farm or land parcel identified by its <strong>SG Code</strong> (21-digit Surveyor General code), which
+  uniquely identifies the parcel in South Africa's cadastral system.
+</p>
+
+<p>
+  The <strong>Quaternary Drainage</strong> code locates the property within the hydrological catchment hierarchy, and the
+  <strong>WMA</strong> foreign key links it to one of the 19 Water Management Areas. Properties can be subdivided or consolidated:
+  the <code>ParentPropertyId</code> self-referencing FK tracks this lineage, with <code>PropertyStatus</code> indicating whether the
+  property is Active, Consolidated, or Subdivided.
+</p>
+
+<p>
+  Property ownership is modelled as a many-to-many relationship through <code>PropertyOwnership</code>, which carries the
+  title deed number and date as payload. The <code>IsHDI</code> flag on <code>PropertyOwner</code> indicates whether the owner
+  is a Historically Disadvantaged Individual (HDI) &mdash; a classification relevant to water allocation reform.
+</p>
+
+<table>
+  <tr><th>Entity</th><th>Key Properties</th><th>Type / FK</th><th>Relationships</th><th>Notes</th></tr>
+  <tr>
+    <td><strong>Property</strong></td>
+    <td>
+      <code>PropertyId</code>, <code>PropertyReferenceNumber?</code>, <code>PropertySize</code>,
+      <code>ProclamationDate?</code>, <code>RegistrationDate?</code>, <code>SGCode?</code>,
+      <code>QuaternaryDrainage?</code>, <code>PropertyStatus?</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>AddressId?</code>, <code>WmaId?</code>, <code>ParentPropertyId?</code><br>
+      <code>PropertySize</code> decimal(18,2); <code>Longitude?</code>/<code>Latitude?</code> decimal(9,6)
+    </td>
+    <td>
+      Belongs to Address, WMA; self-ref parent/child.<br>
+      Has many: FileMaster, Irrigation, Storing, Forestation, FieldAndCrop, DamCalculation, SateliteImage, PropertyOwnership
+    </td>
+    <td>Central entity. Address/WMA delete: SetNull. Self-ref delete: Restrict</td>
+  </tr>
+  <tr>
+    <td><strong>PropertyOwner</strong></td>
+    <td>
+      <code>OwnerId</code>, <code>FirstName</code>, <code>LastName</code>, <code>DateOfBirth?</code>,
+      <code>Title?</code>, <code>IdentityDocumentNumber?</code>, <code>EmailAddress?</code>,
+      <code>Gender?</code>, <code>IsHDI</code>, <code>PhoneNumber?</code>
+    </td>
+    <td>PK: <code>Guid</code>; FKs: <code>CustomerTypeId?</code>, <code>AddressId?</code></td>
+    <td>Belongs to CustomerType, Address; has many <code>PropertyOwnership</code></td>
+    <td>IsHDI: Historically Disadvantaged Individual (Black people and women)</td>
+  </tr>
+  <tr>
+    <td><strong>PropertyOwnership</strong></td>
+    <td><code>Id</code>, <code>TitleDeedNumber?</code>, <code>TitleDeedDate?</code></td>
+    <td>PK: <code>Guid</code>; FKs: <code>PropertyId</code>, <code>PropertyOwnerId</code></td>
+    <td>Join: Property &harr; PropertyOwner</td>
+    <td>Explicit M:N with title deed payload. Both FKs: Restrict</td>
+  </tr>
+  <tr>
+    <td><strong>CustomerType</strong></td>
+    <td><code>Id</code>, <code>CustomerTypeName</code></td>
+    <td>PK: <code>Guid</code></td>
+    <td>Referenced by <code>PropertyOwner</code></td>
+    <td>Lookup: Individual, Company, Trust, Government, etc.</td>
+  </tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     5. WATER USE REFERENCE DATA
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec5">5. Domain Group: Water Use Reference Data</h1>
+<span class="entity-group-badge">9 Entities</span>
+
+<p>
+  These are the lookup and reference tables that classify water use types, periods, sources, and related
+  institutional entities. They are <strong>seeded on application startup</strong> via <code>SeedDataService</code>
+  and are designed to be extended by administrators without code changes.
+</p>
+
+<p>
+  The <strong>Period</strong> entity distinguishes between the qualifying period (the 2 years before NWA commencement on
+  1 October 1998) and the current period. The <strong>WaterSource</strong> entity combines a name with a
+  <code>WaterSourceType</code> enum (SURFACE, BOREHOLE, STREAM). The qualifying period is unified
+  across all water source types: <strong>1 October 1996 &ndash; 30 September 1998</strong> (per SFRA court order).
+</p>
+
+<table>
+  <tr><th>Entity</th><th>Key Properties</th><th>Type / FK</th><th>Relationships</th><th>Notes</th></tr>
+  <tr>
+    <td><strong>Period</strong></td>
+    <td><code>PeriodId</code>, <code>PeriodName</code></td>
+    <td>PK: <code>Guid</code></td>
+    <td>Referenced by FieldAndCrop, Irrigation, Forestation, Storing, SateliteImage</td>
+    <td>Seeded: Qualifying, Current, Historical</td>
+  </tr>
+  <tr>
+    <td><strong>WaterSource</strong></td>
+    <td><code>WaterSourceId</code>, <code>WaterSourceName</code>, <code>WaterSourceType</code></td>
+    <td>PK: <code>Guid</code>; <code>WaterSourceType</code> enum</td>
+    <td>Referenced by FieldAndCrop, Irrigation</td>
+    <td>Enum: SURFACE, BOREHOLE, STREAM</td>
+  </tr>
+  <tr>
+    <td><strong>River</strong></td>
+    <td><code>RiverId</code>, <code>RiverName</code></td>
+    <td>PK: <code>Guid</code></td>
+    <td>Referenced by DamCalculation, Storing</td>
+    <td>River name lookup for water source identification</td>
+  </tr>
+  <tr>
+    <td><strong>IrrigationSystem</strong></td>
+    <td><code>IrrigationSystemId</code>, <code>Name</code>, <code>Description?</code>, <code>Model?</code></td>
+    <td>PK: <code>Guid</code></td>
+    <td>Referenced by FieldAndCrop</td>
+    <td>Centre pivot, flood, micro, drip, sprinkler, etc.</td>
+  </tr>
+  <tr>
+    <td><strong>Crop</strong></td>
+    <td><code>CropId</code>, <code>CropName</code>, <code>CropType?</code></td>
+    <td>PK: <code>Guid</code>; FK: <code>CropTypeId?</code></td>
+    <td>Belongs to CropType; referenced by FieldAndCrop</td>
+    <td>Individual crop varieties</td>
+  </tr>
+  <tr>
+    <td><strong>CropType</strong></td>
+    <td><code>CropTypeId</code>, <code>CropTypeName</code>, <code>CropTypeDescription?</code></td>
+    <td>PK: <code>Guid</code></td>
+    <td>Has many <code>Crop</code></td>
+    <td>Crop classification: Annual, Perennial, Pasture, etc.</td>
+  </tr>
+  <tr>
+    <td><strong>GovernmentWaterControlArea</strong></td>
+    <td><code>WaterControlAreaId</code>, <code>Name</code>, <code>PhoneNumber?</code>, <code>Address?</code></td>
+    <td>PK: <code>Guid</code></td>
+    <td>Referenced in GWCA checks on Forestation</td>
+    <td>Government Water Control Area (GWCA) lookup</td>
+  </tr>
+  <tr>
+    <td><strong>GovernmentWaterScheme</strong></td>
+    <td><code>WaterSchemeId</code>, <code>WaterSchemeName</code></td>
+    <td>PK: <code>Guid</code></td>
+    <td>Referenced for scheme-based water use authorisation</td>
+    <td>GWS lookup</td>
+  </tr>
+  <tr>
+    <td><strong>IrrigationBoard</strong></td>
+    <td><code>IrrigationBoardId</code>, <code>Name</code>, <code>PNumber?</code>, <code>EmailAddress?</code>, <code>Address?</code></td>
+    <td>PK: <code>Guid</code></td>
+    <td>Referenced for Irrigation Board authorisation checks</td>
+    <td>Historical irrigation board records</td>
+  </tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     6. WATER USE DATA
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec6">6. Domain Group: Water Use Data</h1>
+<span class="entity-group-badge">6 Entities</span>
+
+<p>
+  This group contains the <strong>transactional data</strong> captured during the V&amp;V process. These are the core evidence
+  records that determine whether water use is lawful, and what volume constitutes the Existing Lawful Use (ELU).
+  All volume and area measurements use <code>decimal(18, 2)</code> precision. Geographic coordinates use <code>decimal(9, 6)</code>
+  for sub-metre accuracy.
+</p>
+
+<table>
+  <tr><th>Entity</th><th>Key Properties</th><th>Type / FK</th><th>Relationships</th><th>Notes</th></tr>
+  <tr>
+    <td><strong>FieldAndCrop</strong></td>
+    <td>
+      <code>FieldAndCropId</code>, <code>FieldNumber?</code>, <code>FieldArea</code>,
+      <code>PlantDate?</code>, <code>RotationFactor</code>, <code>CropArea</code>,
+      <code>SAPWATCalculationResult</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>PropertyId</code>, <code>PeriodId</code><br>
+      All decimals: decimal(18,2)
+    </td>
+    <td>Belongs to Property, Period, Crop, IrrigationSystem, WaterSource</td>
+    <td>Per-field crop data with SAPWAT modelling result (mm/ha/a). Core ELU evidence.</td>
+  </tr>
+  <tr>
+    <td><strong>Irrigation</strong></td>
+    <td>
+      <code>IrrigationId</code>, <code>IrrigationName</code>, <code>WaterDate</code>,
+      <code>WaterVolume</code>, <code>WaterLandArea</code>, <code>WaterCropArea</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>PropertyId</code>, <code>FileMasterId?</code>,
+      <code>WaterSourceId</code>, <code>PeriodId?</code><br>
+      Decimals: decimal(18,2)
+    </td>
+    <td>Belongs to Property, FileMaster?, WaterSource, Period?</td>
+    <td>Water taking volumes per property. Links to FileMaster for case context.</td>
+  </tr>
+  <tr>
+    <td><strong>Storing</strong></td>
+    <td>
+      <code>StoringId</code>, <code>NumberOfDams</code>, <code>Volume</code>,
+      <code>VerifactionScenario</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>PropertyId</code><br>
+      Volume: decimal(18,2); <code>VerifactionScenario</code> enum
+    </td>
+    <td>Belongs to Property, Period; optional River reference</td>
+    <td>Water storage records. Scenario enum maps to water use categories (Appendix B)</td>
+  </tr>
+  <tr>
+    <td><strong>Forestation</strong></td>
+    <td>
+      <code>ForestationId</code>, <code>WithinGWCA?</code>,
+      <code>QualifyPeriodSFRAHectares?</code>, <code>CurrentPeriodSFRAHectares?</code>,
+      <code>QualifyPeriodVolume</code>, <code>RegisteredHectares</code>, <code>RegisteredVolume</code>,
+      <code>ELUHectares</code>, <code>ELUVolume</code>,
+      <code>UnlawfulHectares</code>, <code>UnlawfulVolume</code>,
+      <code>LawfulHectares</code>, <code>LawfulVolume</code>,
+      <code>Pre1972Hectares</code>, <code>Pre1972Volume</code>,
+      <code>SFRAPermitNumber?</code>, <code>SFRAPermitHectares</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>PropertyId</code>, <code>PeriodId?</code><br>
+      All hectare/volume fields: decimal(18,2)
+    </td>
+    <td>Belongs to Property, Period?</td>
+    <td>
+      Stream Flow Reduction Activity (SFRA) data. Contains paired hectare+volume fields for
+      ELU, Lawful, Unlawful, Pre-1972, and Registered categories. User feedback fields capture
+      landowner responses.
+    </td>
+  </tr>
+  <tr>
+    <td><strong>DamCalculation</strong></td>
+    <td>
+      <code>DamCalculationId</code>, <code>CalculationDate</code>,
+      <code>SateliteSurveyDate</code>, <code>DamNumber?</code>,
+      <code>DamCapacity</code>, <code>DamCalculationStatus</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>PropertyId</code>, <code>SateliteImageId?</code>, <code>RiverId</code><br>
+      DamCapacity: decimal(18,2)
+    </td>
+    <td>Belongs to Property, SateliteImage?, River</td>
+    <td>
+      Dam storage capacity calculation per Appendix D formulas (Wall Length or Area method).
+      Status: COMPLETED, IN_PROGRESS, CANCELLED
+    </td>
+  </tr>
+  <tr>
+    <td><strong>SateliteImage</strong></td>
+    <td>
+      <code>ImageId</code>, <code>ImageName</code>, <code>FarmNumber?</code>,
+      <code>MapCompilation?</code>, <code>ImageDate?</code>,
+      <code>ImageNumber?</code>, <code>ImageSource?</code>
+    </td>
+    <td>PK: <code>Guid</code>; FKs: <code>PropertyId?</code>, <code>PeriodId?</code></td>
+    <td>Belongs to Property?, Period?; referenced by DamCalculation</td>
+    <td>Raw satellite imagery metadata for GIS analysis. Qualifying period (1 October 1996 &ndash; 30 September 1998, per SFRA court order) and current period. The processed V&amp;V file artefact is a <strong>Mapbook</strong> derived from these raw images; <code>SateliteImage</code> stores the source imagery records only.</td>
+  </tr>
+</table>
+
+<div class="callout-green">
+  <div class="callout-title">SAPWAT Modelling</div>
+  SAPWAT is the nationally-accepted model for estimating crop water requirements. The output (mm/ha/a) is stored in
+  <code>FieldAndCrop.SAPWATCalculationResult</code>. It uses crop type, irrigation system, and crop area as inputs, and
+  must be calibrated per catchment against the average annual water requirement for each crop type.
+</div>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     7. ENTITLEMENTS & AUTHORISATIONS
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec7">7. Domain Group: Entitlements &amp; Authorisations</h1>
+<span class="entity-group-badge">4 Entities</span>
+
+<p>
+  The <code>Entitlement</code> entity represents the <strong>outcome of the V&amp;V process</strong> &mdash; the
+  determined volume and type of Existing Lawful Use (ELU). It is the ultimate deliverable of the system: after all
+  control points are complete and the Section 35 validation process concludes, an <code>Entitlement</code> record
+  captures the confirmed water use entitlement for a property.
+</p>
+
+<p>
+  <code>Authorisation</code> records capture the <strong>supporting legal instruments</strong> that provide evidence
+  for lawful water use: permits, Section 32/33 approvals, transfers, General Authorisations, irrigation board records,
+  and other water act instruments. The relationship is: <code>FileMaster &rarr; Entitlement</code> (the determination)
+  and <code>FileMaster &rarr; Authorisations</code> (the evidence supporting that determination).
+</p>
+
+<table>
+  <tr><th>Entity</th><th>Key Properties</th><th>Type / FK</th><th>Relationships</th><th>Notes</th></tr>
+  <tr>
+    <td><strong>Entitlement</strong></td>
+    <td><code>EntitlementId</code>, <code>Name</code>, <code>Volume</code></td>
+    <td>PK: <code>Guid</code>; FK: <code>EntitlementTypeId</code>; Volume: decimal(18,2)</td>
+    <td>Belongs to EntitlementType; referenced by FileMaster, Validation</td>
+    <td>The ELU determination. Volume in cubic metres per annum.</td>
+  </tr>
+  <tr>
+    <td><strong>EntitlementType</strong></td>
+    <td><code>EntitlementTypeId</code>, <code>EntitlementName</code>, <code>EntitlementDescription</code></td>
+    <td>PK: <code>Guid</code></td>
+    <td>Has many Entitlement</td>
+    <td>Lookup: classifies entitlement categories</td>
+  </tr>
+  <tr>
+    <td><strong>Authorisation</strong></td>
+    <td><code>AuthorisationId</code>, <code>ReferenceNumber?</code>, <code>IssueDate?</code>, <code>ExpiryDate?</code>, <code>Notes?</code></td>
+    <td>PK: <code>Guid</code>; FKs: <code>FileMasterId</code>, <code>AuthorisationTypeId</code></td>
+    <td>Belongs to FileMaster, AuthorisationType</td>
+    <td>Legal instrument evidence. Both FKs: Restrict.</td>
+  </tr>
+  <tr>
+    <td><strong>AuthorisationType</strong></td>
+    <td><code>AuthorisationTypeId</code>, <code>AuthorisationTypeName</code>, <code>Description?</code></td>
+    <td>PK: <code>Guid</code></td>
+    <td>Referenced by Authorisation</td>
+    <td>Seeded: Permit, S32/33 Approval, Transfer (Temp/Perm), Field Survey, Water Court, Other Water Act, License, GA, Other</td>
+  </tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     8. CASE MANAGEMENT
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec8">8. Domain Group: Case Management</h1>
+<span class="entity-group-badge">2 Entities</span>
+
+<p>
+  <code>FileMaster</code> is <strong>THE central case entity</strong> of the V&amp;V system. It represents the V&amp;V case file
+  for a single property &mdash; the digital equivalent of the physical file folder described in Appendix A of the DWS requirements document.
+  Every property under investigation has one (or more, in rare cases) <code>FileMaster</code> record that tracks the complete
+  lifecycle from inception to ELU confirmation.
+</p>
+
+<h3>FileMaster Field Groups</h3>
+
+<h4>Identification</h4>
+<p>
+  <code>RegistrationNumber</code> (required) is the WARMS registration number. <code>CaseNumber</code> is the auto-generated
+  V&amp;V case number (business rule TBD). <code>SurveyorGeneralCode</code> identifies the property in the SG cadastral system.
+  <code>FileNumber</code> is the physical file reference.
+</p>
+
+<h4>Catchment &amp; Farm Details</h4>
+<p>
+  <code>PrimaryCatchment</code> and <code>QuaternaryCatchment</code> locate the property in the hydrological hierarchy.
+  <code>FarmName</code>, <code>FarmNumber</code>, <code>FarmPortion</code>, and <code>RegistrationDivision</code> identify the farm.
+</p>
+
+<h4>Registration Flags</h4>
+<p>
+  Three boolean flags indicate what the property is registered for in WARMS:
+  <code>RegisteredForTakingWater</code>, <code>RegisteredForStoring</code>, <code>RegisteredForForestation</code>.
+  These determine which water use data entities must be populated.
+</p>
+
+<h4>Assignment &amp; Status</h4>
+<p>
+  <code>ValidatorId</code> and <code>CapturePersonId</code> FK to <code>ApplicationUser</code> for role-based assignment.
+  <code>OrgUnitId</code> scopes the case to an organisational unit. <code>ValidationStatusName</code> tracks the Appendix B status.
+  <code>WorkflowInstanceId</code> links to the active workflow instance for state machine tracking.
+</p>
+
+<table>
+  <tr><th>Entity</th><th>Key Properties</th><th>Type / FK</th><th>Relationships</th><th>Notes</th></tr>
+  <tr>
+    <td><strong>FileMaster</strong></td>
+    <td>
+      <code>FileMasterId</code>, <code>RegistrationNumber</code> (required),
+      <code>CaseNumber?</code>, <code>SurveyorGeneralCode</code>,
+      <code>PrimaryCatchment</code>, <code>QuaternaryCatchment</code>,
+      <code>FarmName</code>, <code>FarmNumber</code> (int),
+      <code>RegistrationDivision</code>, <code>FarmPortion</code>,
+      <code>Notes?</code>, <code>PropertyIndex?</code>,
+      <code>WarmsApplicant?</code>, <code>FileNumber?</code>,
+      <code>FileCreatedDate</code> (DateOnly), <code>FileStatus?</code>,
+      <code>RegisteredForTakingWater</code> (bool),
+      <code>RegisteredForStoring</code> (bool),
+      <code>RegisteredForForestation</code> (bool),
+      <code>BatchDescription?</code>, <code>ValidationStatusName?</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>PropertyId</code> (Restrict),
+      <code>OrgUnitId?</code> (SetNull), <code>ValidatorId?</code> (SetNull),
+      <code>CapturePersonId?</code> (SetNull), <code>EntitlementId?</code> (SetNull),
+      <code>WorkflowInstanceId?</code>
+    </td>
+    <td>
+      Belongs to Property, OrgUnit, Validator, CapturePerson, Entitlement.<br>
+      Has many: Authorisation, LetterIssuance, Document, CaseComment, Notification
+    </td>
+    <td>Central case entity. ~500,000 records expected. PropertyId delete: Restrict (cannot delete property with active case).</td>
+  </tr>
+  <tr>
+    <td><strong>Validation</strong></td>
+    <td>
+      <code>ValidationId</code>, <code>ValidationStatusName?</code>,
+      <code>ValidationStartDate?</code>, <code>ValidationDescription?</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>FileMasterId</code> (Restrict),
+      <code>PropertyId?</code> (Restrict), <code>PeriodId?</code>,
+      <code>AssignedToId?</code> (SetNull), <code>EntitlementId?</code>
+    </td>
+    <td>Belongs to FileMaster, Property, Period, AssignedTo (ApplicationUser), Entitlement</td>
+    <td>Tracks individual validation events. Multiple validations possible per case (re-validation).</td>
+  </tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     9. WORKFLOW ENGINE
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec9">9. Domain Group: Workflow Engine</h1>
+<span class="entity-group-badge">3 Entities</span>
+
+<p>
+  The workflow engine is the <strong>core process controller</strong> of the V&amp;V system. It enforces that a <code>FileMaster</code>
+  case advances through control points in order, with guards and role checks at each transition. The design follows the
+  <strong>State pattern</strong>: states are defined as data (not code), instances track current position, and step records
+  provide the immutable audit history.
+</p>
+
+<h3>31 Workflow States by Phase</h3>
+
+<h4>Phase 1: Inception (CP1 sub-steps)</h4>
+<table>
+  <tr><th>#</th><th>State Name</th><th>Description</th></tr>
+  <tr><td>1</td><td>CP1.1_WarmsDataObtained</td><td>WARMS database export obtained and imported</td></tr>
+  <tr><td>2</td><td>CP1.2_SatelliteImageryObtained</td><td>Qualifying + current period imagery acquired</td></tr>
+  <tr><td>3</td><td>CP1.3_DatabaseAuditComplete</td><td>New records identified, ownership changes flagged</td></tr>
+  <tr><td>4</td><td>CP1.4_UnregisteredUsersIdentified</td><td>GIS analysis on current imagery to find unregistered users</td></tr>
+  <tr><td>5</td><td>CP1.5_DatabaseAnalysisComplete</td><td>Record status assigned per Appendix B</td></tr>
+  <tr><td>6</td><td>CP1.6_InceptionReportApproved</td><td>Inception report drafted and approved</td></tr>
+  <tr><td>7</td><td>CP1.7_PublicParticipationComplete</td><td>WMA-level public participation session held</td></tr>
+</table>
+
+<h4>Phase 2: Validation &mdash; Technical Extent (CP2&ndash;CP9)</h4>
+<table>
+  <tr><th>#</th><th>State Name</th><th>Description</th></tr>
+  <tr><td>8</td><td>CP2_SpatialInfoObtained</td><td>SG boundaries, catchments, rivers confirmed</td></tr>
+  <tr><td>9</td><td>CP3_WarmsEvaluationComplete</td><td>Volumes, crops, hectares, irrigation methods reviewed</td></tr>
+  <tr><td>10</td><td>CP4_AdditionalInfoObtained</td><td>Permits, S32/33 approvals, transfers, GA captured</td></tr>
+  <tr><td>11</td><td>CP5_GISAnalysisComplete</td><td>Crop fields + dams digitised for qualifying + current periods</td></tr>
+  <tr><td>12</td><td>CP6_FieldCropSapwatComplete</td><td>FieldAndCrop records with SAPWAT results present</td></tr>
+  <tr><td>13</td><td>CP7_ELUCalculated</td><td>ELU volumes determined (Lawful/Unlawful/Increase/Decrease)</td></tr>
+  <tr><td>14</td><td>CP8_DamVolumesCalculated</td><td>Dam calculations complete or marked N/A</td></tr>
+  <tr><td>15</td><td>CP9_SFRACalculated</td><td>Forestation/SFRA calculations complete or marked N/A</td></tr>
+</table>
+
+<h4>Phase 3: Verification &mdash; Legal Lawfulness (Section 35 Letter States)</h4>
+<table>
+  <tr><th>#</th><th>State Name</th><th>Description</th></tr>
+  <tr><td>16</td><td>Letter1Issued</td><td>S35(1) notice served in person</td></tr>
+  <tr><td>17</td><td>Letter1Responded</td><td>Response received within statutory period</td></tr>
+  <tr><td>18</td><td>Letter1ARequired</td><td>No response &mdash; S53(1) directive required</td></tr>
+  <tr><td>19</td><td>Letter1AIssued</td><td>S53(1) directive issued</td></tr>
+  <tr><td>20</td><td>Letter1AResponded</td><td>Response to directive received</td></tr>
+  <tr><td>21</td><td>AdditionalInfoRequired</td><td>Additional information needed from water user</td></tr>
+  <tr><td>22</td><td>Letter2Issued</td><td>S35(3)(a) request for additional information</td></tr>
+  <tr><td>23</td><td>Letter2Responded</td><td>Additional information received</td></tr>
+  <tr><td>24</td><td>Letter2ARequired</td><td>No response &mdash; S35(1) directive required</td></tr>
+  <tr><td>25</td><td>Letter2AIssued</td><td>S35(1) directive for additional information</td></tr>
+  <tr><td>26</td><td>ELUConfirmed</td><td>Lawful use confirmed</td></tr>
+  <tr><td>27</td><td>Letter3Issued</td><td>S35(4) ELU certificate issued</td></tr>
+  <tr><td>28</td><td>UnlawfulUseFound</td><td>Unlawful water use identified</td></tr>
+  <tr><td>29</td><td>Letter4AIssued</td><td>S53(1) notice of intent to stop unlawful use</td></tr>
+  <tr><td>30</td><td>Letter4And5Issued</td><td>S53(1) directive to cease unlawful use</td></tr>
+  <tr><td>31</td><td>Closed</td><td>Case archived (terminal state)</td></tr>
+</table>
+
+<h3>Entity Table</h3>
+
+<table>
+  <tr><th>Entity</th><th>Key Properties</th><th>Type / FK</th><th>Relationships</th><th>Notes</th></tr>
+  <tr>
+    <td><strong>WorkflowState</strong></td>
+    <td><code>WorkflowStateId</code>, <code>StateName</code>, <code>Phase</code>, <code>DisplayOrder</code>, <code>IsTerminal</code></td>
+    <td>PK: <code>Guid</code>; Phase: string (Inception, Verification, Validation)</td>
+    <td>Referenced by WorkflowInstance, WorkflowStepRecord</td>
+    <td>31 states seeded on startup. IsTerminal marks end states (Closed). DisplayOrder for UI sequencing.</td>
+  </tr>
+  <tr>
+    <td><strong>WorkflowInstance</strong></td>
+    <td><code>WorkflowInstanceId</code>, <code>Status</code>, <code>CreatedDate</code>, <code>CompletedDate?</code></td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>FileMasterId</code> (Restrict),
+      <code>CurrentWorkflowStateId</code> (Restrict), <code>AssignedToId?</code>
+    </td>
+    <td>Belongs to FileMaster, CurrentWorkflowState, AssignedTo (ApplicationUser); has many WorkflowStepRecord</td>
+    <td>Status: Active, Paused, Completed, Cancelled. One active instance per FileMaster.</td>
+  </tr>
+  <tr>
+    <td><strong>WorkflowStepRecord</strong></td>
+    <td>
+      <code>WorkflowStepRecordId</code>, <code>StepStatus</code>,
+      <code>StartedDate?</code>, <code>CompletedDate?</code>,
+      <code>Notes?</code>, <code>ValidationErrors?</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>WorkflowInstanceId</code> (Restrict),
+      <code>WorkflowStateId</code> (Restrict), <code>CompletedById?</code> (SetNull)
+    </td>
+    <td>Belongs to WorkflowInstance, WorkflowState, CompletedBy (ApplicationUser)</td>
+    <td>
+      Immutable step history. StepStatus: Pending, InProgress, Completed, Skipped.
+      ValidationErrors stored as JSON for guard failure details.
+    </td>
+  </tr>
+</table>
+
+<div class="callout-teal">
+  <div class="callout-title">WorkflowEngine Design</div>
+  The engine exposes <code>CanTransition(user, fileMaster, targetState)</code> which returns a bool and reason string.
+  Guards are defined per transition as a list of <code>ITransitionGuard</code> implementations checked in order.
+  Notifications are triggered as domain events on successful transitions.
+  Every state transition is written to an immutable <code>AuditLog</code> entry (who, what, when, previous state, new state).
+</div>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     10. LETTERS, DOCUMENTS & SIGNATURES
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec10">10. Domain Group: Letters, Documents &amp; Signatures</h1>
+<span class="entity-group-badge">5 Entities</span>
+
+<p>
+  Section 35 letters are the primary instrument for communicating V&amp;V outcomes to water users. The letter lifecycle follows
+  the <strong>Chain of Responsibility pattern</strong>: if a water user does not respond to Letter 1 (S35(1) notice), the system
+  escalates to Letter 1A (S53(1) directive). If additional information is needed, Letter 2 is issued; non-response escalates to
+  Letter 2A. Confirmed ELU results in Letter 3 (the ELU certificate). Unlawful use triggers Letters 4A and 4/5 (directives to cease).
+</p>
+
+<h3>Letter Types</h3>
+<table>
+  <tr><th>Letter</th><th>NWA Section</th><th>Purpose</th></tr>
+  <tr><td>Letter 1</td><td>S35(1)</td><td>Notice to apply for verification. <strong>Must be served in person.</strong></td></tr>
+  <tr><td>Letter 1A</td><td>S53(1)</td><td>Directive to apply for verification (non-responsive users)</td></tr>
+  <tr><td>Letter 2</td><td>S35(3)(a)</td><td>Request for additional information</td></tr>
+  <tr><td>Letter 2A</td><td>S35(1)</td><td>Directive to provide additional information</td></tr>
+  <tr><td>Letter 3</td><td>S35(4)</td><td>Confirmation of ELU (the certificate)</td></tr>
+  <tr><td>Letter 4A</td><td>S53(1)</td><td>Notice of intent to issue directive to stop unlawful use</td></tr>
+  <tr><td>Letter 4 &amp; 5</td><td>S53(1)</td><td>Directive to stop unlawful water use</td></tr>
+</table>
+
+<h3>Entity Table</h3>
+
+<table>
+  <tr><th>Entity</th><th>Key Properties</th><th>Type / FK</th><th>Relationships</th><th>Notes</th></tr>
+  <tr>
+    <td><strong>LetterType</strong></td>
+    <td><code>LetterTypeId</code>, <code>LetterName</code>, <code>LetterDescription</code>, <code>NWASection?</code></td>
+    <td>PK: <code>Guid</code></td>
+    <td>Referenced by LetterIssuance</td>
+    <td>7 letter types seeded. NWASection stores the statutory reference.</td>
+  </tr>
+  <tr>
+    <td><strong>LetterIssuance</strong></td>
+    <td>
+      <code>LetterIssuanceId</code>,
+      <code>GeneratedDate?</code>, <code>SignedDate?</code>, <code>IssuedDate?</code>,
+      <code>IssueMethod?</code> (RegisteredPost/Email/InPerson),
+      <code>DueDate?</code>, <code>ResponseStatus?</code> (Pending/Agreed/NotAgreed/NoResponse/RTS),
+      <code>ResponseDate?</code>, <code>AgreedWithFindings?</code>, <code>ResponseNotes?</code>,
+      <code>ReturnedToSender</code> (bool), <code>BatchNumber?</code>,
+      <code>AvailableInPortal</code> (bool),
+      <code>PortalFirstViewedDate?</code>, <code>PortalAcknowledgedDate?</code>,
+      <code>ServingOfficialName?</code>, <code>PhysicalDeliveryDate?</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>FileMasterId</code> (Restrict),
+      <code>PropertyOwnerId?</code> (SetNull), <code>LetterTypeId</code> (Restrict),
+      <code>SignedById?</code> (SetNull), <code>DigitalSignatureId?</code> (SetNull),
+      <code>DocumentId?</code> (SetNull), <code>ReissuedFromId?</code> (Restrict),
+      <code>PortalAcknowledgedByPublicUserId?</code>
+    </td>
+    <td>
+      Belongs to FileMaster, PropertyOwner, LetterType, SignedBy, DigitalSignature, Document.<br>
+      Self-ref: ReissuedFrom (reissue chain)
+    </td>
+    <td>
+      Complete letter lifecycle. Self-referencing <code>ReissuedFromId</code> enables reissue chain tracking.
+      Portal fields track external user viewing and acknowledgement.
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Document</strong></td>
+    <td>
+      <code>DocumentId</code>, <code>DocumentType</code> (Letter/TitleDeed/GISMap/SG/Upload),
+      <code>FileName</code>, <code>BlobPath</code>, <code>ContentType?</code>,
+      <code>FileSizeBytes</code> (long), <code>UploadDate</code>,
+      <code>VirusScanStatus?</code> (Pending/Clean/Infected),
+      <code>DocumentHash?</code> (SHA-256)
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>FileMasterId?</code> (SetNull),
+      <code>UploadedByUserId?</code> (SetNull), <code>UploadedByPublicUserId?</code> (SetNull)
+    </td>
+    <td>
+      Belongs to FileMaster?, UploadedByUser?, UploadedByPublicUser?.<br>
+      Referenced by LetterIssuance, DigitalSignature, SignatureRequest, ObjectionDocument
+    </td>
+    <td>
+      Unified file storage. BlobPath stores Azure Blob Storage URL or filesystem path.
+      All uploads virus-scanned before being made accessible. SHA-256 hash for integrity verification.
+    </td>
+  </tr>
+  <tr>
+    <td><strong>DigitalSignature</strong></td>
+    <td>
+      <code>SignatureId</code>, <code>SignatureImage</code> (byte[]),
+      <code>SignatureHash?</code> (SHA-256), <code>SignedAt</code>,
+      <code>IPAddress?</code>, <code>UserAgent?</code>,
+      <code>Reason?</code>, <code>DocumentHashAtSigning?</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>DocumentId</code> (Restrict),
+      <code>ApplicationUserId?</code> (SetNull), <code>PublicUserId?</code> (SetNull)
+    </td>
+    <td>Belongs to Document, ApplicationUser?, PublicUser?</td>
+    <td>
+      SignaturePad.js capture on client, SHA-256 hash on server.
+      DocumentHashAtSigning enables tamper detection (compare with Document.DocumentHash).
+      Dual FK for polymorphic signer identity.
+    </td>
+  </tr>
+  <tr>
+    <td><strong>SignatureRequest</strong></td>
+    <td>
+      <code>Id</code>, <code>Reason?</code>,
+      <code>Status</code> (Pending/Completed/Declined/Expired),
+      <code>RequestedDate</code>, <code>CompletedDate?</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>DocumentId</code> (Restrict),
+      <code>ApplicationUserId?</code> (SetNull), <code>PublicUserId?</code> (SetNull),
+      <code>DigitalSignatureId?</code> (SetNull)
+    </td>
+    <td>Belongs to Document, ApplicationUser?, PublicUser?, DigitalSignature?</td>
+    <td>Signature approval workflow. Links to DigitalSignature upon completion.</td>
+  </tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     11. NOTIFICATIONS & AUDIT
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec11">11. Domain Group: Notifications &amp; Audit</h1>
+<span class="entity-group-badge">2 Entities</span>
+
+<p>
+  The notification and audit subsystems implement the <strong>Observer pattern</strong>: domain events
+  (state transitions, letter issuances, document uploads, comments) trigger both user-facing notifications
+  and system audit records. The two are decoupled &mdash; notifications can be dismissed or marked read,
+  while audit records are immutable and permanent.
+</p>
+
+<table>
+  <tr><th>Entity</th><th>Key Properties</th><th>Type / FK</th><th>Relationships</th><th>Notes</th></tr>
+  <tr>
+    <td><strong>Notification</strong></td>
+    <td>
+      <code>NotificationId</code>,
+      <code>NotificationType</code> (WorkflowStep/Letter/CaseStatus/Comment/Upload/Protest/System),
+      <code>Subject</code>, <code>Body?</code>, <code>ActionUrl?</code>,
+      <code>CreatedDate</code>, <code>ReadDate?</code>, <code>IsRead</code> (bool),
+      <code>EmailSent</code> (bool), <code>EmailSentDate?</code>,
+      <code>SmsSent</code> (bool), <code>SmsSentDate?</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>ApplicationUserId?</code> (SetNull),
+      <code>PublicUserId?</code> (SetNull), <code>FileMasterId?</code> (SetNull)
+    </td>
+    <td>Belongs to ApplicationUser?, PublicUser?, FileMaster?</td>
+    <td>
+      Multi-channel delivery: in-app (IsRead tracking), email (EmailSent/EmailSentDate), SMS (SmsSent/SmsSentDate).
+      Dual user FK for polymorphic recipient. ActionUrl provides deep link to relevant case/document.
+    </td>
+  </tr>
+  <tr>
+    <td><strong>AuditLog</strong></td>
+    <td>
+      <code>AuditLogId</code>,
+      <code>EntityType</code>, <code>EntityId</code>,
+      <code>Action</code>,
+      <code>OldValues?</code> (JSON), <code>NewValues?</code> (JSON),
+      <code>Description?</code>,
+      <code>UserName?</code>, <code>IPAddress?</code>, <code>Timestamp</code>
+    </td>
+    <td>PK: <code>Guid</code>; FK: <code>ApplicationUserId?</code></td>
+    <td>Belongs to ApplicationUser?</td>
+    <td>
+      Append-only table. EntityType + EntityId provide generic reference to any entity.
+      JSON diff in OldValues/NewValues enables before/after comparison.
+      Never updated or deleted.
+    </td>
+  </tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     12. PUBLIC PORTAL
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec12">12. Domain Group: Public Portal</h1>
+<span class="entity-group-badge">5 Entities</span>
+
+<p>
+  External stakeholders (water users, landowners, legal representatives) access a <strong>separate portal</strong>
+  with its own identity regime, isolated from the internal DWS staff system. The portal is implemented as a
+  separate MVC Area (<code>/Areas/ExternalPortal/</code>) with its own authentication cookie scheme.
+</p>
+
+<p>
+  <strong>Data isolation</strong> is enforced at every level: <code>PublicUserProperty</code> controls which properties
+  an external user can see, and all data queries in the external portal are always scoped by <code>PublicUserId</code>.
+  An external user can never retrieve records for a property not linked to their account.
+</p>
+
+<table>
+  <tr><th>Entity</th><th>Key Properties</th><th>Type / FK</th><th>Relationships</th><th>Notes</th></tr>
+  <tr>
+    <td><strong>PublicUser</strong></td>
+    <td>
+      <code>PublicUserId</code>, <code>EmailAddress</code>, <code>PasswordHash</code>,
+      <code>FirstName</code>, <code>LastName</code>,
+      <code>IdentityNumber?</code>, <code>BusinessRegistrationNumber?</code>,
+      <code>PhoneNumber?</code>, <code>EmailConfirmed</code> (bool),
+      <code>MfaEnabled</code> (bool),
+      <code>Status</code> (Pending/Active/Suspended/Deactivated),
+      <code>IsHDI</code> (bool), <code>RegistrationDate</code>
+    </td>
+    <td>PK: <code>Guid</code></td>
+    <td>
+      Has many PublicUserProperty.<br>
+      Referenced by Notification, DigitalSignature, SignatureRequest, CaseComment, Objection, Document
+    </td>
+    <td>
+      Self-registered. MFA mandatory before accessing case data. Email confirmation via link.
+      Separate from ApplicationUser &mdash; does NOT extend IdentityUser.
+    </td>
+  </tr>
+  <tr>
+    <td><strong>PublicUserProperty</strong></td>
+    <td>
+      <code>Id</code>, <code>ApprovedDate?</code>,
+      <code>Status</code> (Pending/Approved/Rejected)
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>PublicUserId</code> (Restrict),
+      <code>PropertyId</code> (Restrict), <code>ApprovedByUserId?</code> (SetNull)
+    </td>
+    <td>Join: PublicUser &harr; Property; belongs to ApprovedByUser (ApplicationUser)</td>
+    <td>
+      Row-level security gate. DWS official must approve before external user sees any data.
+      ApprovedByUserId provides accountability trail.
+    </td>
+  </tr>
+  <tr>
+    <td><strong>CaseComment</strong></td>
+    <td>
+      <code>CommentId</code>, <code>AuthorType</code> (PublicUser/DWSOfficial),
+      <code>CommentText</code>, <code>SubmittedDate</code>,
+      <code>ReadByDWSDate?</code>, <code>ReadByPublicUserDate?</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>FileMasterId</code> (Restrict),
+      <code>PublicUserId?</code> (SetNull), <code>ApplicationUserId?</code> (SetNull),
+      <code>ParentCommentId?</code> (Restrict, self-ref)
+    </td>
+    <td>Belongs to FileMaster, PublicUser?, ApplicationUser?; self-ref Parent/Replies</td>
+    <td>
+      Threaded comments. Self-referencing ParentCommentId enables reply chains.
+      Dual read-tracking: ReadByDWSDate for when DWS reads, ReadByPublicUserDate for when user reads DWS response.
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Objection</strong></td>
+    <td>
+      <code>ObjectionId</code>, <code>LodgedDate</code>,
+      <code>Status</code> (Lodged/UnderReview/Resolved/Dismissed),
+      <code>ResolutionNotes?</code>
+    </td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>FileMasterId</code> (Restrict),
+      <code>PublicUserId</code> (Restrict)
+    </td>
+    <td>Belongs to FileMaster, PublicUser; has many ObjectionDocument</td>
+    <td>Formal protest against an ELU determination. Both FKs: Restrict.</td>
+  </tr>
+  <tr>
+    <td><strong>ObjectionDocument</strong></td>
+    <td><code>Id</code></td>
+    <td>
+      PK: <code>Guid</code>; FKs: <code>ObjectionId</code> (Restrict),
+      <code>DocumentId</code> (Restrict)
+    </td>
+    <td>Join: Objection &harr; Document</td>
+    <td>Links supporting documents (affidavits, legal opinions, counter-evidence) to an objection.</td>
+  </tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     13. ENUM TYPES & SUBTYPES
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec13">13. Enum Types &amp; Subtypes</h1>
+
+<p>
+  The system defines four C# enums that are stored as integer values in SQL Server. These represent
+  fixed classification sets that are unlikely to change and are tightly coupled to business logic.
+</p>
+
+<h3>WaterSourceType</h3>
+<table>
+  <tr><th>Value</th><th>Name</th><th>Description</th></tr>
+  <tr><td>0</td><td><code>SURFACE</code></td><td>Surface water (rivers, streams, dams). Qualifying period: 1 October 1996 &ndash; 30 September 1998 (unified, per SFRA court order).</td></tr>
+  <tr><td>1</td><td><code>BOREHOLE</code></td><td>Groundwater (boreholes). Qualifying period: 1 October 1996 &ndash; 30 September 1998 (unified, per SFRA court order).</td></tr>
+  <tr><td>2</td><td><code>STREAM</code></td><td>Stream flow reduction activities (forestry). Linked to SFRA calculations.</td></tr>
+</table>
+
+<h3>VerifactionScenario</h3>
+<p>Maps to the water use categories defined in the DWS requirements (Appendix B, rows 4.1&ndash;4.9):</p>
+<table>
+  <tr><th>Value</th><th>Name</th><th>Requirement Row</th><th>Description</th></tr>
+  <tr><td>0</td><td><code>PROCLAMATION_DATE</code></td><td>4.1</td><td>Proclamation date / previous surveys (historical)</td></tr>
+  <tr><td>1</td><td><code>POSSIBLE_EXISTING</code></td><td>4.2</td><td>Possible existing use during qualifying period</td></tr>
+  <tr><td>2</td><td><code>POSSIBLE_LAWFUL</code></td><td>4.3</td><td>Possible lawful use (GWCA, Permit, Irrigation Board, GWS)</td></tr>
+  <tr><td>3</td><td><code>POSSIBLE_UNLAWFUL</code></td><td>4.5</td><td>Possible unlawful use (no authorisation)</td></tr>
+  <tr><td>4</td><td><code>REGISTERED</code></td><td>4.6</td><td>Registered in WARMS</td></tr>
+  <tr><td>5</td><td><code>PRESENT</code></td><td>4.7</td><td>Present day use (current period satellite analysis)</td></tr>
+  <tr><td>6</td><td><code>PRESENT_POSSIBLE</code></td><td>4.8</td><td>Possible unlawful increase/decrease (delta between current and ELU)</td></tr>
+  <tr><td>7</td><td><code>GENERAL_AUTHORISATION</code></td><td>4.9</td><td>Use covered by General Authorisation</td></tr>
+</table>
+
+<h3>DamCalculationStatus</h3>
+<table>
+  <tr><th>Value</th><th>Name</th><th>Description</th></tr>
+  <tr><td>0</td><td><code>COMPLETED</code></td><td>Calculation finalised and verified</td></tr>
+  <tr><td>1</td><td><code>IN_PROGRESS</code></td><td>Calculation underway, awaiting data or review</td></tr>
+  <tr><td>2</td><td><code>CANCELLED</code></td><td>Calculation cancelled (e.g., dam no longer exists or N/A)</td></tr>
+</table>
+
+<h3>ValidationStatus</h3>
+<p>
+  Maps to the V&amp;V control point activities. Used by the workflow engine to identify which process step a case is at:
+</p>
+<table>
+  <tr><th>Value</th><th>Name</th><th>Control Point</th></tr>
+  <tr><td>0</td><td><code>EVALAUTE_ADDTIONAL_INFORMATION</code></td><td>CP4: Evaluate additional information</td></tr>
+  <tr><td>1</td><td><code>CALCULATE_ELU_DISCREPANCY</code></td><td>CP7: Calculate ELU and discrepancies</td></tr>
+  <tr><td>2</td><td><code>GIS_ANALYSIS_AND_FIELD_DIGITISING</code></td><td>CP5: GIS analysis and field digitising</td></tr>
+  <tr><td>3</td><td><code>FIELD_AND_CROP_MODELLING</code></td><td>CP6: Field, crop and SAPWAT modelling</td></tr>
+  <tr><td>4</td><td><code>UPDATE_VANDV_DATABASE</code></td><td>Post-CP7: Update V&amp;V database</td></tr>
+  <tr><td>5</td><td><code>CALCULATE_DAM_VOLUMES</code></td><td>CP8: Calculate dam volumes</td></tr>
+  <tr><td>6</td><td><code>CALCULATE_STREAM_FLOW_REDUCTION</code></td><td>CP9: Calculate SFRA/forestation</td></tr>
+  <tr><td>7</td><td><code>IDENTIFY_UNREGISTERED_USERS</code></td><td>CP1.4: Identify unregistered users</td></tr>
+  <tr><td>8</td><td><code>VANDV_DATABASE_ANALYSIS_TO_IDENTIFY_RECORD_STATUS</code></td><td>CP1.5: Database analysis to assign record status</td></tr>
+  <tr><td>9</td><td><code>PROJECT_INCEPTION_REPORT</code></td><td>CP1.6: Project inception report</td></tr>
+  <tr><td>10</td><td><code>PUBLIC_PARTICIPATION_SESSIONS</code></td><td>CP1.7: Public participation sessions</td></tr>
+  <tr><td>11</td><td><code>EVALUATE_WARMS_REGISTRATION_INFORMATION</code></td><td>CP3: Evaluate WARMS registration information</td></tr>
+  <tr><td>12</td><td><code>OBTAIN_SUPPORTIVE_SPATIAL_INFORMATION</code></td><td>CP2: Obtain supportive spatial information</td></tr>
+  <tr><td>13</td><td><code>OBTAIN_OTHER_SUPPORTIVR_INFORMATION</code></td><td>CP4: Obtain other supportive information</td></tr>
+  <tr><td>14</td><td><code>PROPERTY_AND_SOURCE_EVALUATION</code></td><td>CP4: Property and source evaluation</td></tr>
+</table>
+
+<div class="callout-amber">
+  <div class="callout-title">Note on Enum Naming</div>
+  The <code>VerifactionScenario</code> enum contains a known typo ("Verifaction" instead of "Verification").
+  Similarly, <code>OBTAIN_OTHER_SUPPORTIVR_INFORMATION</code> contains a typo. These are preserved as-is
+  because changing enum names after migration would require a database migration and data fix.
+</div>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     14. DATA INTEGRITY RULES
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec14">14. Data Integrity Rules</h1>
+
+<h3>14.1 Global Delete Behaviour</h3>
+<p>
+  The <code>ApplicationDBContext.OnModelCreating()</code> method applies a <strong>global
+  <code>DeleteBehavior.Restrict</code></strong> to all relationships via a loop over all foreign keys.
+  This is a deliberate safety measure: SQL Server does not allow multiple cascade paths, and Restrict
+  forces explicit deletion in the correct order, preventing accidental data loss.
+</p>
+
+<p>
+  Prior to the global override, specific relationships are configured with <code>DeleteBehavior.SetNull</code>
+  where orphaning is acceptable (e.g., <code>Property.AddressId</code>, <code>FileMaster.OrgUnitId</code>,
+  <code>FileMaster.ValidatorId</code>). However, the global loop at the end of <code>OnModelCreating</code>
+  overrides these to Restrict as well.
+</p>
+
+<div class="callout-amber">
+  <div class="callout-title">Important: Global Override</div>
+  The global <code>DeleteBehavior.Restrict</code> loop at the end of <code>OnModelCreating</code> overrides all
+  individually-configured SetNull behaviours. This means that in practice, <strong>no cascade or set-null deletes
+  occur</strong> &mdash; all deletions must be performed explicitly in the correct dependency order.
+</div>
+
+<h3>14.2 Primary Key Strategy</h3>
+<p>
+  All primary keys are <code>Guid</code> (not auto-incrementing integers). This supports:
+</p>
+<ul>
+  <li><strong>Distributed generation</strong> &mdash; IDs can be created client-side or in disconnected scenarios without database roundtrips</li>
+  <li><strong>Merge safety</strong> &mdash; No collision risk when merging data from regional offices</li>
+  <li><strong>Security</strong> &mdash; Non-sequential IDs prevent enumeration attacks</li>
+</ul>
+<p>
+  All PKs are configured explicitly in <code>OnModelCreating()</code> via <code>HasKey()</code> calls.
+  No <code>[Key]</code> data annotations are used on model classes.
+</p>
+
+<h3>14.3 Decimal Precision Conventions</h3>
+<table>
+  <tr><th>Convention</th><th>Precision</th><th>Used For</th></tr>
+  <tr><td>Volumes and areas</td><td><code>decimal(18, 2)</code></td><td>PropertySize, WaterVolume, WaterLandArea, WaterCropArea, DamCapacity, ELU volumes, hectares, SAPWAT results</td></tr>
+  <tr><td>Geographic coordinates</td><td><code>decimal(9, 6)</code></td><td>Longitude, Latitude on Property and Address</td></tr>
+</table>
+
+<h3>14.4 Nullable Reference Types</h3>
+<p>
+  The project enables nullable reference types globally. Properties marked with <code>?</code> (e.g., <code>string?</code>,
+  <code>Guid?</code>) are genuinely optional and map to nullable SQL columns. Properties marked with <code>required</code>
+  must be set at construction time and map to non-nullable SQL columns.
+</p>
+
+<h3>14.5 Fluent API Configuration</h3>
+<p>
+  All entity configuration is done in <code>ApplicationDBContext.OnModelCreating()</code> using the EF Core Fluent API.
+  No data annotations (<code>[Key]</code>, <code>[Required]</code>, <code>[ForeignKey]</code>) are used on model classes,
+  with the exception of <code>[Column(TypeName = "...")]</code> for decimal precision. This centralises all database
+  schema decisions in a single location.
+</p>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     15. SEED DATA
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec15">15. Seed Data</h1>
+
+<p>
+  The <code>SeedDataService</code> runs on application startup and populates reference tables using a
+  <strong>check-if-empty pattern</strong>: for each table, it queries whether any rows exist, and only inserts
+  seed data if the table is empty. This ensures seed data is applied on first run but never duplicated on subsequent starts.
+</p>
+
+<table>
+  <tr><th>Table</th><th>Count</th><th>Examples</th></tr>
+  <tr>
+    <td><code>Province</code></td>
+    <td>9</td>
+    <td>Eastern Cape (EC), Free State (FS), Gauteng (GP), KwaZulu-Natal (KZN), Limpopo (LP), Mpumalanga (MP), Northern Cape (NC), North West (NW), Western Cape (WC)</td>
+  </tr>
+  <tr>
+    <td><code>WaterManagementArea</code></td>
+    <td>9+</td>
+    <td>Limpopo, Olifants, Inkomati-Usuthu, Pongola-Mtamvuna, Vaal, Orange, Mzimvubu-Tsitsikamma, Breede-Gouritz, Berg-Olifants</td>
+  </tr>
+  <tr>
+    <td><code>WorkflowState</code></td>
+    <td>31</td>
+    <td>CP1.1 through CP9, Letter states, Closed (see Section 9)</td>
+  </tr>
+  <tr>
+    <td><code>LetterType</code></td>
+    <td>7</td>
+    <td>Letter 1 (S35(1)), Letter 1A (S53(1)), Letter 2 (S35(3)(a)), Letter 2A (S35(1)), Letter 3 (S35(4)), Letter 4A (S53(1)), Letter 4&amp;5 (S53(1))</td>
+  </tr>
+  <tr>
+    <td><code>AuthorisationType</code></td>
+    <td>10</td>
+    <td>Permit, S32/33 Approval, Temporary Transfer, Permanent Transfer, Ad-hoc Field Survey, Water Court, Other Water Act, License, General Authorisation, Other</td>
+  </tr>
+  <tr>
+    <td><code>Period</code></td>
+    <td>3</td>
+    <td>Qualifying, Current, Historical</td>
+  </tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     16. KNOWN ISSUES & PLANNED CHANGES
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="sec16">16. Known Issues &amp; Planned Changes</h1>
+
+<h3>16.1 IEntitlement Interface Naming Conflict</h3>
+<p>
+  <code>Interfaces/IEntitlement.cs</code> defines <code>public interface Entitlement</code> which conflicts with
+  <code>Models/Entitlement.cs</code>. This must be renamed to <code>public interface IEntitlement</code> to follow
+  the project's naming convention and resolve the ambiguity. Until fixed, the compiler may resolve references
+  incorrectly depending on using directives.
+</p>
+
+<h3>16.2 Synchronous Methods in Older Repositories</h3>
+<p>
+  Some existing repositories (e.g., <code>PropertyRepository</code>) use synchronous <code>SaveChanges()</code>
+  instead of the preferred <code>async</code>/<code>await</code> pattern with <code>SaveChangesAsync()</code>.
+  These should be migrated to async as part of ongoing codebase modernisation. All new repositories must use async methods.
+</p>
+
+<h3>16.3 WaterUserInput Entity</h3>
+<p>
+  A <code>WaterUserInput</code> entity is planned but not yet created. This will capture structured data from
+  water user responses to Section 35 letters, replacing the current free-text <code>ResponseNotes</code> field
+  on <code>LetterIssuance</code>.
+</p>
+
+<h3>16.4 Global Delete Behaviour Override</h3>
+<p>
+  The global <code>DeleteBehavior.Restrict</code> loop at the end of <code>OnModelCreating</code> currently overrides
+  all individually-configured <code>SetNull</code> behaviours. This is intentionally conservative but may need refinement
+  as the application matures. Specific SetNull relationships (e.g., removing a Validator from a case without deleting the case)
+  should be moved <strong>after</strong> the global loop to take precedence.
+</p>
+
+<h3>16.5 Address.Province as String</h3>
+<p>
+  The <code>Address.Province</code> field is stored as a plain string rather than a foreign key to the <code>Province</code>
+  entity. A future migration should add a <code>ProvinceId?</code> FK to enable referential integrity and consistent
+  province naming.
+</p>
+
+<h3>16.6 Enum Typos</h3>
+<p>
+  <code>VerifactionScenario</code> (should be "Verification") and <code>OBTAIN_OTHER_SUPPORTIVR_INFORMATION</code>
+  (should be "SUPPORTIVE") contain typos that are preserved to avoid breaking existing migrations. A coordinated
+  rename with a migration and data fix is planned.
+</p>
+
+<div class="page-break"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     DOCUMENT FOOTER
+     ════════════════════════════════════════════════════════════════════ -->
+<div style="text-align:center; margin-top:3rem; padding-top:1rem; border-top:2px solid #7db8e0; font-size:9pt; color:#8892a0;">
+  DWA Validation &amp; Verification System &mdash; Data Structures &amp; Entity Model &mdash; Version 1.0 &mdash; 25 March 2026<br>
+  Department of Water and Sanitation (DWS) &mdash; Internal Document
+</div>
+
+</body>
+</html>

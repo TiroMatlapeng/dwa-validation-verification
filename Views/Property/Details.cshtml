@@ -1,0 +1,156 @@
+@model Property
+
+@{
+    ViewData["Title"] = "Property Details";
+}
+
+<a asp-controller="Property" asp-action="Index" class="btn-back">&larr; Back to Properties</a>
+
+<!-- Detail Header -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="detail-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <div class="page-title" style="font-size: 28px; letter-spacing: 1px;">@Model.SGCode</div>
+            <div class="page-subtitle">
+                @Model.PropertyReferenceNumber
+                @if (Model.WaterManagementArea != null)
+                {
+                    <span style="margin-left: 12px; color: #6b7280;">| @Model.WaterManagementArea.WmaName</span>
+                }
+            </div>
+        </div>
+        <div>
+            <span class="badge badge-grey">
+                @(Model.FileMasters.Any() ? "In Process" : "Not Commenced")
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Property Details Grid -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="form-section-title">Property Information</div>
+    <div class="form-row">
+        <div class="form-group">
+            <div class="form-label">SG Code</div>
+            <div>@Model.SGCode</div>
+        </div>
+        <div class="form-group">
+            <div class="form-label">Water Management Area</div>
+            <div>@(Model.WaterManagementArea?.WmaName ?? "—")</div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <div class="form-label">Property Reference Number</div>
+            <div>@(Model.PropertyReferenceNumber ?? "—")</div>
+        </div>
+        <div class="form-group">
+            <div class="form-label">Longitude</div>
+            <div>@(Model.Longitude?.ToString("F6") ?? "—")</div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <div class="form-label">Property Size (ha)</div>
+            <div>@Model.PropertySize.ToString("N2")</div>
+        </div>
+        <div class="form-group">
+            <div class="form-label">Latitude</div>
+            <div>@(Model.Latitude?.ToString("F6") ?? "—")</div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <div class="form-label">Quaternary Drainage</div>
+            <div>@(Model.QuaternaryDrainage ?? "—")</div>
+        </div>
+        <div class="form-group">
+            <div class="form-label">Catchment Area</div>
+            <div>@(Model.CatchmentArea?.CatchmentCode ?? "—")</div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <div class="form-label">Street Address</div>
+            <div>@(Model.Address?.StreetAddress ?? "—")</div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <div class="form-label">Proclamation Date</div>
+            <div>@(Model.ProclamationDate?.ToString("yyyy-MM-dd") ?? "—")</div>
+        </div>
+        <div class="form-group">
+            <div class="form-label">Suburb</div>
+            <div>@(Model.Address?.SuburbName ?? "—")</div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <div class="form-label">Registration Date</div>
+            <div>@(Model.RegistrationDate?.ToString("yyyy-MM-dd") ?? "—")</div>
+        </div>
+        <div class="form-group">
+            <div class="form-label">City</div>
+            <div>@(Model.Address?.CityName ?? "—")</div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <!-- Spacer -->
+        </div>
+        <div class="form-group">
+            <div class="form-label">Province</div>
+            <div>@(Model.Address?.Province ?? "—")</div>
+        </div>
+    </div>
+</div>
+
+<!-- Linked V&V Cases -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="form-section-title">V&amp;V Cases (FileMasters)</div>
+    @if (Model.FileMasters.Any())
+    {
+        <div class="data-table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Registration Number</th>
+                        <th>Farm Name</th>
+                        <th>File Status</th>
+                        <th>Validation Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var fm in Model.FileMasters)
+                    {
+                        <tr>
+                            <td>@fm.RegistrationNumber</td>
+                            <td>@fm.FarmName</td>
+                            <td>@(fm.FileStatus ?? "—")</td>
+                            <td><span class="badge badge-grey">@(fm.ValidationStatusName ?? "Not Commenced")</span></td>
+                            <td>@fm.FileCreatedDate.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <a asp-controller="FileMaster" asp-action="Details" asp-route-id="@fm.FileMasterId" class="btn btn-sm btn-outline">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p style="color: #6b7280; font-size: 14px;">No V&amp;V cases linked to this property yet.</p>
+    }
+</div>
+
+<!-- Action Buttons -->
+<div style="display: flex; gap: 8px;">
+    <a asp-action="Edit" asp-route-id="@Model.PropertyId" class="btn btn-primary">Edit</a>
+    <a asp-action="Delete" asp-route-id="@Model.PropertyId" class="btn btn-danger">Delete</a>
+    <a asp-controller="FileMaster" asp-action="Create" asp-route-propertyId="@Model.PropertyId" class="btn btn-outline">+ New Case</a>
+</div>

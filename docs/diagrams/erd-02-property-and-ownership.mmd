@@ -4,6 +4,7 @@ erDiagram
     %% ERD 2 of 6: PROPERTY & OWNERSHIP
     %% DWA V&V System — Presentation View
     %% ═══════════════════════════════════════════════════
+    %% AMENDED 2026-03-24: Property status/lineage, HDI indicator
 
     Property {
         Guid PropertyId PK
@@ -17,6 +18,9 @@ erDiagram
         Guid WaterManagementAreaId FK
         decimal Longitude "decimal(9,6)"
         decimal Latitude "decimal(9,6)"
+        string PropertyStatus "Active|Consolidated|Subdivided [AMENDED 2026-03-24]"
+        Guid ParentPropertyId FK "[AMENDED 2026-03-24] self-ref for lineage"
+        Guid CatchmentAreaId FK "[AMENDED 2026-04-01]"
     }
 
     Address {
@@ -40,6 +44,7 @@ erDiagram
         string EmailAddress
         Guid AddressId FK
         Guid GenderId FK
+        bool IsHDI "[AMENDED 2026-03-24] Historically Disadvantaged Individual"
     }
 
     PropertyOwnership {
@@ -71,13 +76,23 @@ erDiagram
         string WmaCode
     }
 
+    CatchmentArea {
+        Guid CatchmentAreaId PK
+        string CatchmentCode
+        string CatchmentName
+        Guid WmaId FK
+    }
+
     %% ── Relationships ──
 
     Property ||--o{ PropertyOwnership : "has"
     PropertyOwner ||--o{ PropertyOwnership : "owns via title deed"
     Property }o--|| Address : "located at"
     Property }o--|| WaterManagementArea : "within"
+    Property }o--|| CatchmentArea : "in catchment [AMENDED 2026-04-01]"
+    CatchmentArea }o--|| WaterManagementArea : "belongs to [AMENDED 2026-04-01]"
     PropertyOwner }o--|| Address : "resides at"
     PropertyOwner }o--|| CustomerType : "is a"
     PropertyOwner }o--|| CustomerTitle : "has title"
     PropertyOwner }o--|| Gender : "is"
+    Property }o--o| Property : "subdivided/consolidated from [AMENDED 2026-03-24]"

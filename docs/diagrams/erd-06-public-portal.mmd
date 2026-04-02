@@ -4,6 +4,8 @@ erDiagram
     %% ERD 6 of 6: PUBLIC PORTAL
     %% DWA V&V System — Presentation View
     %% ═══════════════════════════════════════════════════
+    %% AMENDED 2026-03-24: Protest→Objection; HDI indicator added
+    %% REVIEWED 2026-04-01: CatchmentArea not exposed to public portal — internal org hierarchy only
 
     PublicUser {
         Guid PublicUserId PK
@@ -18,6 +20,7 @@ erDiagram
         bool MfaEnabled "mandatory before case access"
         string Status "Pending|Active|Suspended|Deactivated"
         DateTime RegistrationDate
+        bool IsHDI "[AMENDED 2026-03-24] Historically Disadvantaged Individual"
     }
 
     Property {
@@ -66,8 +69,8 @@ erDiagram
         DateTime ReadByPublicUserDate "set when user first views reply"
     }
 
-    Protest {
-        Guid ProtestId PK
+    Objection {
+        Guid ObjectionId PK "[AMENDED 2026-03-24]"
         Guid FileMasterId FK
         Guid PublicUserId FK
         DateTime LodgedDate
@@ -75,9 +78,9 @@ erDiagram
         string ResolutionNotes
     }
 
-    ProtestDocument {
-        Guid Id PK
-        Guid ProtestId FK
+    ObjectionDocument {
+        Guid Id PK "[AMENDED 2026-03-24]"
+        Guid ObjectionId FK
         Guid DocumentId FK
     }
 
@@ -86,7 +89,7 @@ erDiagram
         Guid ApplicationUserId FK "internal user - nullable"
         Guid PublicUserId FK "external user - nullable"
         Guid FileMasterId FK "nullable - case context"
-        string NotificationType "WorkflowStep|Letter|CaseStatus|Comment|Upload|Protest|System"
+        string NotificationType "WorkflowStep|Letter|CaseStatus|Comment|Upload|Objection|System [AMENDED 2026-03-24]"
         string Subject
         string Body
         string ActionUrl "deep link"
@@ -110,10 +113,10 @@ erDiagram
     CaseComment }o--o| ApplicationUser : "posted by DWS"
     CaseComment }o--o| CaseComment : "reply to (threaded)"
 
-    Protest }o--|| FileMaster : "is against"
-    Protest }o--|| PublicUser : "lodged by"
-    Protest ||--o{ ProtestDocument : "has supporting docs"
-    ProtestDocument }o--|| Document : "is"
+    Objection }o--|| FileMaster : "is against [AMENDED 2026-03-24]"
+    Objection }o--|| PublicUser : "lodged by [AMENDED 2026-03-24]"
+    Objection ||--o{ ObjectionDocument : "has supporting docs [AMENDED 2026-03-24]"
+    ObjectionDocument }o--|| Document : "is [AMENDED 2026-03-24]"
 
     Notification }o--o| PublicUser : "sent to external"
     Notification }o--o| ApplicationUser : "sent to internal"

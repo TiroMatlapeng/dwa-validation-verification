@@ -1,5 +1,30 @@
 stateDiagram-v2
-    [*] --> L1_Generated: Letter 1 Created
+    [*] --> TrackRouter: Assessment Track\nDetermined
+
+    state TrackRouter <<choice>>
+    TrackRouter --> L1_Generated: S35 Track
+    TrackRouter --> S33_2_DeclarationIssued: S33(2) Track\n(Kader Asmal Declaration)
+    TrackRouter --> S33_3_DeclarationIssued: S33(3) Track\n(Individual Application)
+
+    state "S33(2): Kader Asmal Declaration" as S33_2 {
+        S33_2_DeclarationIssued --> S33_2_Awaiting: Issued to\nIrrigation Board area
+        S33_2_Awaiting --> S33_2_Accepted: Declaration accepted
+        S33_2_Awaiting --> S33_2_Objected: Objection lodged
+    }
+
+    S33_2_Accepted --> ELU_Confirmed: ELU confirmed\nvia declaration
+    S33_2_Objected --> L2_Generated: Requires further info
+
+    state "S33(3): Individual Application" as S33_3 {
+        S33_3_DeclarationIssued --> S33_3a_Issued: S33(3)(a)\nRequest for information
+        S33_3a_Issued --> S33_3a_Awaiting: Waiting for response
+        S33_3a_Awaiting --> S33_3a_Returned: Info returned
+        S33_3a_Awaiting --> S33_3a_NoResponse: Failure to respond
+        S33_3a_Returned --> S33_3b_Issued: S33(3)(b)\nDetermination outcome
+        S33_3a_NoResponse --> S33_3b_Issued: Proceed with\navailable data
+    }
+
+    S33_3b_Issued --> ELU_Confirmed: ELU confirmed\nvia individual application
 
     state "Letter 1: S35(1) Notice to Apply" as L1 {
         L1_Generated --> L1_Signed: Regional Manager signs

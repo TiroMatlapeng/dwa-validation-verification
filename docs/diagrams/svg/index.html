@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DWA V&V System — Architecture Diagrams</title>
+    <style>
+        @media print {
+            .diagram-section { page-break-after: always; }
+            .no-print { display: none; }
+            body { margin: 0; }
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            color: #1a1a1a;
+        }
+        .cover {
+            text-align: center;
+            padding: 80px 20px;
+            border-bottom: 3px solid #003366;
+            margin-bottom: 40px;
+        }
+        .cover h1 {
+            font-size: 28px;
+            color: #003366;
+            margin-bottom: 8px;
+        }
+        .cover h2 {
+            font-size: 18px;
+            color: #555;
+            font-weight: normal;
+        }
+        .cover .date {
+            margin-top: 30px;
+            color: #777;
+            font-size: 14px;
+        }
+        .toc {
+            margin-bottom: 40px;
+        }
+        .toc h2 {
+            color: #003366;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 6px;
+        }
+        .toc ol {
+            columns: 2;
+            column-gap: 40px;
+        }
+        .toc li {
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .toc a {
+            color: #003366;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .diagram-section {
+            margin-bottom: 40px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 20px;
+        }
+        .diagram-section h3 {
+            color: #003366;
+            font-size: 18px;
+            margin-top: 0;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 8px;
+        }
+        .diagram-section img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px auto;
+        }
+        .section-group {
+            margin-top: 40px;
+        }
+        .section-group h2 {
+            color: #003366;
+            font-size: 22px;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="cover diagram-section">
+    <h1>DWA Validation & Verification System</h1>
+    <h2>Architecture & Design Diagrams</h2>
+    <p class="date">Department of Water and Sanitation<br>March 2026</p>
+</div>
+
+<div class="toc no-print">
+    <h2>Table of Contents</h2>
+    <ol>
+        <li><a href="#d01">System Architecture</a></li>
+        <li><a href="#d02">Workflow Phases & Control Points</a></li>
+        <li><a href="#d03">Section 35 Letter State Machine</a></li>
+        <li><a href="#d04">Data Flow per Property</a></li>
+        <li><a href="#d05">Organisational Hierarchy & Roles</a></li>
+        <li><a href="#d06">Domain Model ERD (Summary)</a></li>
+        <li><a href="#d07">Phase 1 Data Flow</a></li>
+        <li><a href="#d08">Calculator Engine</a></li>
+        <li><a href="#d09">Letter Generation Flow</a></li>
+        <li><a href="#d10">Notification Engine</a></li>
+        <li><a href="#d11">Signature Flow</a></li>
+        <li><a href="#d12">Public Portal</a></li>
+        <li><a href="#d13">External Integrations</a></li>
+        <li><a href="#d14">End-to-End Data Flow</a></li>
+        <li><a href="#d15">Implementation Roadmap</a></li>
+        <li><a href="#d16">Object Model</a></li>
+        <li><a href="#erd1">ERD: Geography & Organisation</a></li>
+        <li><a href="#erd2">ERD: Property & Ownership</a></li>
+        <li><a href="#erd3">ERD: Water Use & Calculations</a></li>
+        <li><a href="#erd4">ERD: Case Management & Workflow</a></li>
+        <li><a href="#erd5">ERD: Letters, Signatures & Documents</a></li>
+        <li><a href="#erd6">ERD: Public Portal</a></li>
+    </ol>
+</div>
+
+<div class="section-group">
+    <h2>System Architecture</h2>
+
+    <div class="diagram-section" id="d01">
+        <h3>1. System Architecture Overview</h3>
+        <img src="01-system-architecture.svg" alt="System Architecture">
+    </div>
+
+    <div class="diagram-section" id="d05">
+        <h3>2. Organisational Hierarchy & Roles</h3>
+        <img src="05-org-hierarchy-and-roles.svg" alt="Org Hierarchy">
+    </div>
+
+    <div class="diagram-section" id="d13">
+        <h3>3. External Integrations</h3>
+        <img src="13-external-integrations.svg" alt="External Integrations">
+    </div>
+</div>
+
+<div class="section-group">
+    <h2>Workflow & Process</h2>
+
+    <div class="diagram-section" id="d02">
+        <h3>4. Workflow Phases & Control Points</h3>
+        <img src="02-workflow-phases.svg" alt="Workflow Phases">
+    </div>
+
+    <div class="diagram-section" id="d03">
+        <h3>5. Section 35 Letter State Machine</h3>
+        <img src="03-section35-letter-statemachine.svg" alt="Section 35 State Machine">
+    </div>
+
+    <div class="diagram-section" id="d07">
+        <h3>6. Phase 1 Data Flow</h3>
+        <img src="07-phase1-data-flow.svg" alt="Phase 1 Data Flow">
+    </div>
+
+    <div class="diagram-section" id="d04">
+        <h3>7. Data Flow per Property</h3>
+        <img src="04-data-flow-per-property.svg" alt="Data Flow per Property">
+    </div>
+
+    <div class="diagram-section" id="d14">
+        <h3>8. End-to-End Data Flow</h3>
+        <img src="14-end-to-end-data-flow.svg" alt="End to End Data Flow">
+    </div>
+</div>
+
+<div class="section-group">
+    <h2>Component Design</h2>
+
+    <div class="diagram-section" id="d08">
+        <h3>9. Calculator Engine</h3>
+        <img src="08-calculator-engine.svg" alt="Calculator Engine">
+    </div>
+
+    <div class="diagram-section" id="d09">
+        <h3>10. Letter Generation Flow</h3>
+        <img src="09-letter-generation.svg" alt="Letter Generation">
+    </div>
+
+    <div class="diagram-section" id="d10">
+        <h3>11. Notification Engine</h3>
+        <img src="10-notification-engine.svg" alt="Notification Engine">
+    </div>
+
+    <div class="diagram-section" id="d11">
+        <h3>12. Digital Signature Flow</h3>
+        <img src="11-signature-flow.svg" alt="Signature Flow">
+    </div>
+
+    <div class="diagram-section" id="d12">
+        <h3>13. Public Portal</h3>
+        <img src="12-public-portal.svg" alt="Public Portal">
+    </div>
+</div>
+
+<div class="section-group">
+    <h2>Data Model (Entity Relationship Diagrams)</h2>
+
+    <div class="diagram-section" id="d06">
+        <h3>14. Domain Model ERD (Summary)</h3>
+        <img src="06-domain-model-erd.svg" alt="Domain Model ERD">
+    </div>
+
+    <div class="diagram-section" id="d16">
+        <h3>15. Object Model</h3>
+        <img src="16-object-model.svg" alt="Object Model">
+    </div>
+
+    <div class="diagram-section" id="erd1">
+        <h3>16. ERD: Geography & Organisation</h3>
+        <img src="erd-01-geography-and-organisation.svg" alt="ERD Geography">
+    </div>
+
+    <div class="diagram-section" id="erd2">
+        <h3>17. ERD: Property & Ownership</h3>
+        <img src="erd-02-property-and-ownership.svg" alt="ERD Property">
+    </div>
+
+    <div class="diagram-section" id="erd3">
+        <h3>18. ERD: Water Use & Calculations</h3>
+        <img src="erd-03-water-use-and-calculations.svg" alt="ERD Water Use">
+    </div>
+
+    <div class="diagram-section" id="erd4">
+        <h3>19. ERD: Case Management & Workflow</h3>
+        <img src="erd-04-case-management-and-workflow.svg" alt="ERD Case Management">
+    </div>
+
+    <div class="diagram-section" id="erd5">
+        <h3>20. ERD: Letters, Signatures & Documents</h3>
+        <img src="erd-05-letters-signatures-documents.svg" alt="ERD Letters">
+    </div>
+
+    <div class="diagram-section" id="erd6">
+        <h3>21. ERD: Public Portal</h3>
+        <img src="erd-06-public-portal.svg" alt="ERD Public Portal">
+    </div>
+</div>
+
+<div class="section-group">
+    <h2>Project Planning</h2>
+
+    <div class="diagram-section" id="d15">
+        <h3>22. Implementation Roadmap</h3>
+        <img src="15-implementation-roadmap.svg" alt="Implementation Roadmap">
+    </div>
+</div>
+
+</body>
+</html>

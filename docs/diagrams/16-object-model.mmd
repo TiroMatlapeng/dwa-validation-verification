@@ -393,6 +393,30 @@ classDiagram
         +GetByEntity(string type, string id) ICollection~AuditLog~
     }
 
+    class ICatchmentAreaRepository {
+        <<interface>>
+        +Add(CatchmentArea) CatchmentArea
+        +Update(CatchmentArea) CatchmentArea
+        +GetById(Guid) CatchmentArea
+        +ListByWMA(Guid wmaId) ICollection~CatchmentArea~
+    }
+
+    class IMapbookRepository {
+        <<interface>>
+        +Add(Mapbook) Mapbook
+        +Update(Mapbook) Mapbook
+        +GetById(Guid) Mapbook
+        +ListByProperty(Guid propertyId) ICollection~Mapbook~
+    }
+
+    class IGwcaProclamationRuleRepository {
+        <<interface>>
+        +Add(GwcaProclamationRule) GwcaProclamationRule
+        +Update(GwcaProclamationRule) GwcaProclamationRule
+        +GetById(Guid) GwcaProclamationRule
+        +ListAll() ICollection~GwcaProclamationRule~
+    }
+
     %% ═════════════════════════════════════════════
     %% REPOSITORY LAYER — Implementations
     %% ═════════════════════════════════════════════
@@ -449,6 +473,18 @@ classDiagram
         -ApplicationDBContext context
     }
 
+    class CatchmentAreaRepository {
+        -ApplicationDBContext context
+    }
+
+    class MapbookRepository {
+        -ApplicationDBContext context
+    }
+
+    class GwcaProclamationRuleRepository {
+        -ApplicationDBContext context
+    }
+
     %% ═════════════════════════════════════════════
     %% DATA LAYER
     %% ═════════════════════════════════════════════
@@ -473,6 +509,9 @@ classDiagram
         +DbSet~FieldAndCrop~ FieldAndCrops
         +DbSet~DamCalculation~ DamCalculations
         +DbSet~Storing~ Storings
+        +DbSet~CatchmentArea~ CatchmentAreas
+        +DbSet~Mapbook~ Mapbooks
+        +DbSet~GwcaProclamationRule~ GwcaProclamationRules
         +OnModelCreating(ModelBuilder) void
     }
 
@@ -494,7 +533,7 @@ classDiagram
         -ApplicationDBContext context
     }
 
-    class SateliteImageGuard {
+    class MapbookGuard {
         -ApplicationDBContext context
     }
 
@@ -588,6 +627,9 @@ classDiagram
     NotificationRepository ..|> INotificationRepository
     SignatureRepository ..|> ISignatureRepository
     AuditRepository ..|> IAuditRepository
+    CatchmentAreaRepository ..|> ICatchmentAreaRepository
+    MapbookRepository ..|> IMapbookRepository
+    GwcaProclamationRuleRepository ..|> IGwcaProclamationRuleRepository
 
     %% ═════════════════════════════════════════════
     %% RELATIONSHIPS — Repository → DbContext
@@ -606,12 +648,15 @@ classDiagram
     NotificationRepository --> ApplicationDBContext
     SignatureRepository --> ApplicationDBContext
     AuditRepository --> ApplicationDBContext
+    CatchmentAreaRepository --> ApplicationDBContext
+    MapbookRepository --> ApplicationDBContext
+    GwcaProclamationRuleRepository --> ApplicationDBContext
 
     %% ═════════════════════════════════════════════
     %% RELATIONSHIPS — Transition Guards
     %% ═════════════════════════════════════════════
 
     WarmsAuditGuard ..|> ITransitionGuard
-    SateliteImageGuard ..|> ITransitionGuard
+    MapbookGuard ..|> ITransitionGuard
     FieldAndCropGuard ..|> ITransitionGuard
     RoleGuard ..|> ITransitionGuard

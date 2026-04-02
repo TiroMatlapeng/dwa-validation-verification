@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWA V&amp;V System — Workflow &amp; Process Design</title>
+<style>
+  @page {
+    size: A4;
+    margin: 2cm 2.5cm;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Calibri', system-ui, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #1a1f2b;
+    background: #fff;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 2cm 2.5cm;
+  }
+
+  /* ── Cover Page ── */
+  .cover {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 90vh;
+    text-align: center;
+  }
+  .cover-stripe {
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(90deg, #002855, #0066b3, #7db8e0, #00838f, #2e7d32);
+    border-radius: 4px;
+    margin-bottom: 3rem;
+  }
+  .cover h1 {
+    font-size: 28pt;
+    font-weight: 700;
+    color: #002855;
+    margin-bottom: 0.3rem;
+  }
+  .cover h2 {
+    font-size: 16pt;
+    font-weight: 400;
+    color: #0066b3;
+    margin-bottom: 2rem;
+  }
+  .cover-meta {
+    font-size: 10pt;
+    color: #555d6e;
+    line-height: 2;
+  }
+  .cover-meta strong { color: #002855; }
+  .cover-footer {
+    margin-top: 4rem;
+    font-size: 9pt;
+    color: #8892a0;
+  }
+
+  /* ── Headings ── */
+  h1 { font-size: 20pt; color: #002855; margin: 2rem 0 0.8rem; page-break-after: avoid; }
+  h2 { font-size: 15pt; color: #002855; margin: 1.8rem 0 0.6rem; border-bottom: 2px solid #7db8e0; padding-bottom: 0.3rem; page-break-after: avoid; }
+  h3 { font-size: 12pt; color: #0066b3; margin: 1.4rem 0 0.5rem; page-break-after: avoid; }
+  h4 { font-size: 11pt; color: #00838f; margin: 1rem 0 0.4rem; }
+
+  p { margin-bottom: 0.8rem; text-align: justify; }
+  ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+  li { margin-bottom: 0.3rem; }
+
+  /* ── Screenshot figures ── */
+  figure {
+    margin: 1.5rem 0;
+    page-break-inside: avoid;
+  }
+  figure img {
+    width: 100%;
+    border: 1px solid #d0d5db;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,40,85,0.10);
+  }
+  figcaption {
+    font-size: 9pt;
+    color: #555d6e;
+    text-align: center;
+    margin-top: 0.4rem;
+    font-style: italic;
+  }
+
+  /* ── Callout boxes ── */
+  .callout {
+    background: #f0f6fc;
+    border-left: 4px solid #0066b3;
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 10pt;
+  }
+  .callout-title {
+    font-weight: 600;
+    color: #002855;
+    margin-bottom: 0.3rem;
+  }
+  .callout.callout-warning {
+    background: #fff8e1;
+    border-left-color: #f9a825;
+  }
+  .callout.callout-success {
+    background: #e8f5e9;
+    border-left-color: #2e7d32;
+  }
+
+  /* ── Table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 10pt;
+  }
+  th {
+    background: #002855;
+    color: #fff;
+    text-align: left;
+    padding: 0.5rem 0.8rem;
+    font-weight: 600;
+  }
+  td {
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid #e2e6ea;
+  }
+  tr:nth-child(even) td { background: #f8f9fa; }
+
+  .page-break { page-break-before: always; }
+
+  /* ── Print adjustments ── */
+  @media print {
+    body { padding: 0; }
+    .cover { min-height: 100vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     COVER PAGE
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-stripe"></div>
+  <h1>DWA Validation &amp; Verification System</h1>
+  <h2>Workflow &amp; Process Design</h2>
+  <p style="font-size:12pt; color:#555d6e; margin-bottom:3rem;">
+    State Machine Architecture, Letter Lifecycle, Data Flow &amp; Electronic Signature Specification
+  </p>
+  <div class="cover-meta">
+    <strong>Client:</strong> Department of Water and Sanitation (DWS)<br>
+    <strong>Project:</strong> Electronic V&amp;V Information Management System<br>
+    <strong>Version:</strong> 1.0<br>
+    <strong>Date:</strong> 25 March 2026<br>
+    <strong>Classification:</strong> Internal &mdash; For Client Review
+  </div>
+  <div class="cover-footer">
+    Prepared in support of the Requirements for Verifying the Lawfulness of Existing Water Use<br>
+    and Extent of Existing Lawful Water Use, Edition 3, July 2024 (DWS)
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+     ════════════════════════════════════════════════════════════════════ -->
+<h1>Table of Contents</h1>
+<ol style="font-size:11pt; line-height:2.2;">
+  <li><a href="#intro" style="color:#0066b3; text-decoration:none;">Introduction</a></li>
+  <li><a href="#philosophy" style="color:#0066b3; text-decoration:none;">Design Philosophy</a></li>
+  <li><a href="#workflow-state-machine" style="color:#0066b3; text-decoration:none;">The V&amp;V Workflow State Machine</a>
+    <ol style="font-size:10pt; line-height:1.8; margin-top:0.2rem;">
+      <li><a href="#wf-overview" style="color:#0066b3; text-decoration:none;">Overview</a></li>
+      <li><a href="#wf-inception" style="color:#0066b3; text-decoration:none;">Case Inception Phase</a></li>
+      <li><a href="#wf-technical" style="color:#0066b3; text-decoration:none;">Technical Validation Phase</a></li>
+      <li><a href="#wf-legal" style="color:#0066b3; text-decoration:none;">Legal Verification Phase</a></li>
+      <li><a href="#wf-statutory" style="color:#0066b3; text-decoration:none;">Statutory Procedure Phase</a></li>
+      <li><a href="#wf-noncompliance" style="color:#0066b3; text-decoration:none;">Non-Compliance Branch</a></li>
+      <li><a href="#wf-guards" style="color:#0066b3; text-decoration:none;">Transition Guards</a></li>
+    </ol>
+  </li>
+  <li><a href="#letter-workflow" style="color:#0066b3; text-decoration:none;">The Section 35 Letter Workflow</a>
+    <ol style="font-size:10pt; line-height:1.8; margin-top:0.2rem;">
+      <li><a href="#lw-overview" style="color:#0066b3; text-decoration:none;">Overview</a></li>
+      <li><a href="#lw-letter1" style="color:#0066b3; text-decoration:none;">Letter 1: S35(1) Notice to Apply</a></li>
+      <li><a href="#lw-letter1a" style="color:#0066b3; text-decoration:none;">Letter 1A: S53(1) Directive</a></li>
+      <li><a href="#lw-letter2" style="color:#0066b3; text-decoration:none;">Letter 2: S35(3)(a) Request for Additional Information</a></li>
+      <li><a href="#lw-letter2a" style="color:#0066b3; text-decoration:none;">Letter 2A: S35(1) Directive for Information</a></li>
+      <li><a href="#lw-letter3" style="color:#0066b3; text-decoration:none;">Letter 3: S35(4) ELU Confirmation</a></li>
+      <li><a href="#lw-letter45" style="color:#0066b3; text-decoration:none;">Letters 4A and 4&amp;5: Enforcement</a></li>
+      <li><a href="#lw-ewulaas" style="color:#0066b3; text-decoration:none;">eWULAAS Integration</a></li>
+    </ol>
+  </li>
+  <li><a href="#data-flow" style="color:#0066b3; text-decoration:none;">End-to-End Data Flow</a>
+    <ol style="font-size:10pt; line-height:1.8; margin-top:0.2rem;">
+      <li><a href="#df-overview" style="color:#0066b3; text-decoration:none;">System Architecture Overview</a></li>
+      <li><a href="#df-external" style="color:#0066b3; text-decoration:none;">External System Integration</a></li>
+      <li><a href="#df-phases" style="color:#0066b3; text-decoration:none;">The Three V&amp;V Phases</a></li>
+      <li><a href="#df-engines" style="color:#0066b3; text-decoration:none;">The Engine Layer</a></li>
+      <li><a href="#df-services" style="color:#0066b3; text-decoration:none;">Service and Repository Layers</a></li>
+      <li><a href="#df-schema" style="color:#0066b3; text-decoration:none;">Database Schema Groups</a></li>
+    </ol>
+  </li>
+  <li><a href="#signature-flow" style="color:#0066b3; text-decoration:none;">Electronic Signature Flow</a>
+    <ol style="font-size:10pt; line-height:1.8; margin-top:0.2rem;">
+      <li><a href="#sf-overview" style="color:#0066b3; text-decoration:none;">Overview</a></li>
+      <li><a href="#sf-request" style="color:#0066b3; text-decoration:none;">Signature Request Creation</a></li>
+      <li><a href="#sf-routing" style="color:#0066b3; text-decoration:none;">Notification Routing</a></li>
+      <li><a href="#sf-capture" style="color:#0066b3; text-decoration:none;">Signature Capture</a></li>
+      <li><a href="#sf-verify" style="color:#0066b3; text-decoration:none;">Verification and Storage</a></li>
+      <li><a href="#sf-post" style="color:#0066b3; text-decoration:none;">Post-Signing</a></li>
+      <li><a href="#sf-legal" style="color:#0066b3; text-decoration:none;">Legal Compliance</a></li>
+    </ol>
+  </li>
+  <li><a href="#patterns" style="color:#0066b3; text-decoration:none;">Design Patterns Summary</a></li>
+  <li><a href="#next-steps" style="color:#0066b3; text-decoration:none;">Next Steps</a></li>
+</ol>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     1. INTRODUCTION
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h1 id="intro">1. Introduction</h1>
+
+<p>
+  The Validation and Verification (V&amp;V) of existing lawful water use is a statutory obligation
+  under Sections 32&ndash;35 of the National Water Act (Act 36 of 1998). The Department of Water
+  and Sanitation (DWS) is required to verify the lawfulness and extent of all existing water use
+  across South Africa, encompassing approximately <strong>500,000 property records</strong> managed
+  by DWS regional offices and Catchment Management Agencies (CMAs) across 19 Water Management Areas.
+</p>
+
+<p>
+  The DWA V&amp;V System is an electronic information management system designed to digitise,
+  automate, and enforce the V&amp;V process. At its core is the <strong>Workflow Engine</strong>
+  &mdash; a state machine that governs the lifecycle of every case file (FileMaster) from initial
+  inception through technical evaluation, legal verification, statutory correspondence under
+  Section 35, and final determination of Existing Lawful Use (ELU).
+</p>
+
+<p>
+  This document provides a comprehensive specification of the four principal workflows within the
+  system:
+</p>
+<ol>
+  <li>The <strong>V&amp;V Workflow State Machine</strong> &mdash; the master process governing all control point transitions</li>
+  <li>The <strong>Section 35 Letter Workflow</strong> &mdash; a nested state machine for statutory correspondence</li>
+  <li>The <strong>End-to-End Data Flow</strong> &mdash; from external systems through processing engines to final output</li>
+  <li>The <strong>Electronic Signature Flow</strong> &mdash; dual-path signing for internal officials and external water users</li>
+</ol>
+
+<div class="callout">
+  <div class="callout-title">Governing Requirements</div>
+  All workflows in this document are designed to comply with the <em>Requirements for Verifying
+  the Lawfulness of Existing Water Use and Extent of Existing Lawful Water Use, Edition 3,
+  July 2024</em> (DWS). The target completion date for the national V&amp;V programme is 2026.
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     2. DESIGN PHILOSOPHY
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h1 id="philosophy">2. Design Philosophy</h1>
+
+<h3>State Machine Pattern</h3>
+<p>
+  The workflow engine is built on a <strong>finite state machine</strong> pattern. Every FileMaster
+  case exists in exactly one state at any given time, and may only transition to a defined set of
+  successor states. This design was chosen for three fundamental reasons:
+</p>
+<ul>
+  <li><strong>Deterministic:</strong> Given a current state and a transition request, the outcome is always predictable. There are no ambiguous or race-condition-prone paths through the process.</li>
+  <li><strong>Auditable:</strong> Every state transition is recorded as an immutable audit entry, capturing the user, timestamp, previous state, new state, and reason. This provides a complete forensic trail for any case.</li>
+  <li><strong>Enforceable:</strong> The state machine prevents out-of-order operations. A case cannot reach the Section 35 letter phase without first completing all nine control points, and each control point has verifiable preconditions.</li>
+</ul>
+
+<h3>The Guard Pattern (ITransitionGuard)</h3>
+<p>
+  Each state transition is protected by one or more <strong>transition guards</strong> &mdash;
+  implementations of the <code>ITransitionGuard</code> interface. Guards are checked in sequence
+  before any transition is permitted. A guard may verify that required data is present (e.g.,
+  SAPWAT calculations exist for CP6), that the requesting user holds the correct role (e.g., only
+  <code>RegionalManager</code> or above may approve Section 35 letters), or that business rules
+  are satisfied (e.g., dam calculations are present or explicitly marked as not applicable).
+</p>
+
+<h3>Immutable Audit Trail</h3>
+<p>
+  The <code>AuditEntry</code> table is append-only. Records are never updated or deleted. Each entry
+  captures: the acting user, the action performed, the entity affected, the previous and new state
+  values, a timestamp, and additional metadata. This log provides the evidentiary basis for any
+  legal challenge to a V&amp;V determination.
+</p>
+
+<h3>Domain Events and Notifications</h3>
+<p>
+  Successful state transitions raise <strong>domain events</strong> that are consumed by the
+  <code>NotificationService</code>. This decoupled, event-driven architecture ensures that
+  notifications (email, in-app, SMS) are triggered automatically without the workflow engine
+  needing direct knowledge of the notification mechanism. For example, when a Letter 1 transitions
+  to <em>Issued</em>, a <code>LetterIssuedEvent</code> is raised, which the notification service
+  consumes to alert the relevant water user and the case validator.
+</p>
+
+<div class="callout">
+  <div class="callout-title">Separation of Concerns</div>
+  The workflow engine is responsible solely for state management and guard evaluation. All
+  side effects &mdash; notifications, PDF generation, audit logging, integration updates &mdash;
+  are handled by dedicated services listening to domain events.
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     3. THE V&V WORKFLOW STATE MACHINE
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h1 id="workflow-state-machine">3. The V&amp;V Workflow State Machine</h1>
+
+<figure>
+  <img src="wireframes/workflow-screenshots/image1.png" alt="V&amp;V Workflow State Machine diagram showing the full process from Case Creation through Final Determination">
+  <figcaption>Figure 1 &mdash; V&amp;V Workflow State Machine: the complete lifecycle of a FileMaster case from creation through final determination, including the non-compliance branch.</figcaption>
+</figure>
+
+<!-- 3.1 Overview -->
+<h2 id="wf-overview">3.1 Overview</h2>
+<p>
+  The V&amp;V Workflow State Machine governs the entire lifecycle of a FileMaster case. As shown in
+  Figure 1, the process is organised into <strong>five macro phases</strong>, each containing one
+  or more sequential states:
+</p>
+<ol>
+  <li><strong>Case Inception</strong> &mdash; Document assimilation, data staging, and readiness verification</li>
+  <li><strong>Technical Validation</strong> &mdash; Satellite/GIS analysis, volumetric calculations, and comparison logic</li>
+  <li><strong>Legal Verification</strong> &mdash; Lawfulness assessment, entitlement-versus-authorisation evaluation, and determination</li>
+  <li><strong>Statutory Procedure</strong> &mdash; Section 35 notice issuance, representation review, and finality</li>
+  <li><strong>Final Determination / Non-Compliance</strong> &mdash; ELU certification or directive issuance for unlawful use</li>
+</ol>
+<p>
+  A case begins at <strong>Create Case</strong> and advances linearly through each phase. At the
+  Determination stage, the case may branch into Non-Compliance if unlawful use is identified,
+  leading to Directive Issuance under Section 53(1). Otherwise, the case proceeds through the
+  statutory procedure to Final Determination.
+</p>
+
+<!-- 3.2 Case Inception Phase -->
+<h2 id="wf-inception">3.2 Case Inception Phase</h2>
+<p>
+  The Case Inception phase establishes the evidentiary foundation for the entire V&amp;V process.
+  It comprises three states:
+</p>
+
+<h4>Case_Inception</h4>
+<p>
+  The entry point. A <code>Validator</code> or higher creates a new FileMaster record, linking it
+  to a Property via the SG Code and to the appropriate Water Management Area and organisational unit.
+</p>
+
+<h4>Document_Assimilation</h4>
+<p>
+  All foundational documents are gathered and associated with the case: identity documents, title
+  deeds, WARMS registration references obtained from eWULAAS, SG diagrams, and any prior V&amp;V
+  study records. The system verifies that mandatory document types are present before allowing
+  progression.
+</p>
+
+<h4>Data_Staging</h4>
+<p>
+  Imported data is normalised, validated, and staged for technical analysis. This includes
+  reconciling property boundaries against SG data, confirming quaternary drainage and WMA
+  assignments, and running a readiness check to ensure all prerequisite data sets are in place.
+</p>
+
+<div class="callout">
+  <div class="callout-title">Transition Trigger: File Complete</div>
+  The case advances from Case Inception to Technical Validation only when the readiness check
+  confirms that all mandatory documents have been assimilated and data staging is complete. This
+  is enforced by the <code>FileCompleteGuard</code>.
+</div>
+
+<!-- 3.3 Technical Validation Phase -->
+<h2 id="wf-technical">3.3 Technical Validation Phase</h2>
+<p>
+  The Technical Validation phase is where the quantitative analysis of water use takes place.
+  It comprises three states:
+</p>
+
+<h4>Satellite_GIS_Analysis</h4>
+<p>
+  Satellite imagery from both the qualifying period (<strong>1 October 1996 &ndash; 30 September 1998</strong>,
+  unified per SFRA court order) and the current period is analysed. The processed artefact produced from
+  this analysis is a <strong>Mapbook</strong>; <code>SateliteImage</code> records store the raw imagery metadata only. Crop fields and dams are digitised using GIS tools,
+  producing spatial layers that define the areas of water use for both periods.
+</p>
+
+<h4>Volumetric_Calculation</h4>
+<p>
+  The Calculator Engine executes three calculation models:
+</p>
+<ul>
+  <li><strong>SAPWAT</strong> &mdash; Crop water requirement modelling (output in mm/ha/a) based on crop type, irrigation system, and field area, calibrated per catchment</li>
+  <li><strong>Dam Volume Calculation</strong> &mdash; Using either the wall-length method or the area method (Appendix D formulas) with appropriate shape factors</li>
+  <li><strong>SFRA/Forestation</strong> &mdash; Stream flow reduction activity calculations for afforested areas, determining qualifying period hectares, current hectares, and lawful/unlawful volumes</li>
+</ul>
+
+<h4>Comparison_Logic</h4>
+<p>
+  The system compares qualifying-period water use against current-period use, categorising volumes
+  across the water use categories defined in the requirements (rows 4.1 through 4.9): possible
+  existing, possible lawful, possible existing lawful, possible unlawful, registered (WARMS),
+  present-day use, and possible unlawful increase or decrease.
+</p>
+
+<div class="callout">
+  <div class="callout-title">Transition Trigger: Tech Sign-off</div>
+  A <code>Validator</code> must formally sign off on the technical analysis before the case
+  advances to Legal Verification. The guard verifies that all three calculation types have been
+  completed (or explicitly marked as not applicable) and that comparison logic results are recorded.
+</div>
+
+<!-- 3.4 Legal Verification Phase -->
+<div class="page-break"></div>
+<h2 id="wf-legal">3.4 Legal Verification Phase</h2>
+<p>
+  The Legal Verification phase applies the legal framework of the National Water Act to the
+  technical results. It comprises three states:
+</p>
+
+<h4>Lawfulness_Assessment</h4>
+<p>
+  A legal opinion is formed on the lawfulness of the water use, considering all evidence gathered:
+  GWCA authorisations, permits, Section 32/33 approvals, irrigation board records, water court
+  orders, General Authorisations, and any other applicable legislative instruments. Each water use
+  category is assessed against its legal basis.
+</p>
+
+<h4>Entitlement_vs_Authorization</h4>
+<p>
+  The determined Existing Lawful Use (ELU) is compared against the user's current authorisation
+  status. This comparison produces one of three outcomes:
+</p>
+<ul>
+  <li><strong>Lawful</strong> &mdash; All water use is within authorised limits</li>
+  <li><strong>Unlawful</strong> &mdash; Water use exceeds authorisation or lacks any legal basis</li>
+  <li><strong>Possible Unlawful Increase/Decrease</strong> &mdash; A delta exists between the ELU and current use that requires further investigation</li>
+</ul>
+
+<h4>Determination</h4>
+<p>
+  The formal determination is recorded on the Validation entity, including ELU volumes, registration
+  status, and the classification of each water use component. This state represents the point at
+  which the case is ready to enter the statutory procedure or, if unlawful use is identified, to
+  branch into the non-compliance path.
+</p>
+
+<div class="callout">
+  <div class="callout-title">Transition Trigger: S35 Initiation</div>
+  The <code>RegionalManager</code> approves the determination, which triggers the transition
+  into the Statutory Procedure phase. If unlawful use is identified, a parallel branch to
+  Non-Compliance may be initiated.
+</div>
+
+<!-- 3.5 Statutory Procedure Phase -->
+<h2 id="wf-statutory">3.5 Statutory Procedure Phase</h2>
+<p>
+  The Statutory Procedure phase enacts the requirements of Section 35 of the National Water Act
+  through formal correspondence with the water user. It comprises three states:
+</p>
+
+<h4>Section_35_1_Notice</h4>
+<p>
+  Letter 1 &mdash; the S35(1) Notice to Apply for Verification &mdash; is generated, signed by
+  the Regional Manager, and served to the water user. This letter <strong>must be served in
+  person</strong> (hand delivery by an official, agent, or sheriff), and the system records the
+  serving official, delivery date, and method.
+</p>
+
+<h4>Representation_Review</h4>
+<p>
+  The water user's response is received and reviewed. The user may agree with the determination,
+  disagree and provide additional evidence, or fail to respond within the statutory period. Each
+  outcome triggers a different downstream path (detailed in Section 4).
+</p>
+
+<h4>Section_35_4_Finality</h4>
+<p>
+  Upon resolution of all representations and any additional information requests, the Section 35(4)
+  certificate is issued &mdash; Letter 3 &mdash; which formally confirms the extent and lawfulness
+  of the water use. This is the terminal state for compliant cases.
+</p>
+
+<div class="callout callout-success">
+  <div class="callout-title">Transition Trigger: Certificate Issued</div>
+  The case reaches Final Determination when Letter 3 (the S35(4) ELU certificate) is signed,
+  issued, and acknowledged. The case is then closed or archived.
+</div>
+
+<!-- 3.6 Non-Compliance Branch -->
+<h2 id="wf-noncompliance">3.6 Non-Compliance Branch</h2>
+<p>
+  When a water user fails to respond to statutory notices, refuses to comply with directives, or
+  when the determination reveals unlawful water use that cannot be regularised, the case branches
+  into the <strong>Non-Compliance</strong> path. This branch leads to <strong>Directive_Issuance</strong>,
+  where the following enforcement actions may be taken:
+</p>
+<ul>
+  <li><strong>Letter 4A</strong> &mdash; S53(1) Notice of Intent to issue a directive to stop unlawful water use</li>
+  <li><strong>Letters 4 &amp; 5</strong> &mdash; S53(1) Directive to stop unlawful water use</li>
+</ul>
+<p>
+  The non-compliance branch has its own letter lifecycle (detailed in Section 4.7) and terminates
+  at <strong>Enforcement Complete</strong>, after which the case is closed with the unlawful use
+  determination on record.
+</p>
+
+<div class="callout callout-warning">
+  <div class="callout-title">Legal Significance</div>
+  Directive issuance under Section 53(1) is a formal enforcement action with legal consequences.
+  The system must record all correspondence, delivery confirmation, and response timelines with
+  forensic precision, as these records may be required in subsequent legal proceedings.
+</div>
+
+<!-- 3.7 Transition Guards -->
+<div class="page-break"></div>
+<h2 id="wf-guards">3.7 Transition Guards</h2>
+<p>
+  Every state transition in the workflow is protected by one or more guards that must all pass
+  before the transition is permitted. The <code>WorkflowEngine.CanTransition(user, fileMaster,
+  targetState)</code> method evaluates all guards and returns a boolean result with a reason
+  string. The following table lists representative guard examples:
+</p>
+
+<table>
+  <tr>
+    <th>Transition</th>
+    <th>Guard</th>
+    <th>Requirement</th>
+  </tr>
+  <tr>
+    <td>CP1 &rarr; CP2</td>
+    <td><code>WarmsExportGuard</code></td>
+    <td>WARMS export date must be recorded on the FileMaster</td>
+  </tr>
+  <tr>
+    <td>CP1 &rarr; CP2</td>
+    <td><code>SatelliteImageGuard</code></td>
+    <td>At least one <code>SateliteImage</code> record must exist for qualifying (1 October 1996 &ndash; 30 September 1998) and current periods; and a Mapbook must be confirmed as produced</td>
+  </tr>
+  <tr>
+    <td>CP2 &rarr; CP3</td>
+    <td><code>SpatialDataGuard</code></td>
+    <td>River and Property SG codes must be confirmed</td>
+  </tr>
+  <tr>
+    <td>CP5 &rarr; CP6</td>
+    <td><code>GisLayerGuard</code></td>
+    <td>GIS spatial layers for qualifying and current periods must be confirmed</td>
+  </tr>
+  <tr>
+    <td>CP6 &rarr; CP7</td>
+    <td><code>SapwatGuard</code></td>
+    <td>FieldAndCrop records with SAPWATCalculationResult values must be present</td>
+  </tr>
+  <tr>
+    <td>CP7 &rarr; CP8</td>
+    <td><code>EluCalculationGuard</code></td>
+    <td>Validation record with ELU volumes must be set</td>
+  </tr>
+  <tr>
+    <td>CP8 &rarr; CP9</td>
+    <td><code>DamCalculationGuard</code></td>
+    <td>DamCalculation records must be present, or explicitly marked N/A</td>
+  </tr>
+  <tr>
+    <td>CP9 &rarr; S35</td>
+    <td><code>ForestationGuard</code></td>
+    <td>Forestation records must be present, or explicitly marked N/A</td>
+  </tr>
+  <tr>
+    <td>Any letter signing</td>
+    <td><code>RoleGuard</code></td>
+    <td>Only <code>RegionalManager</code> or above may sign Section 35 letters</td>
+  </tr>
+  <tr>
+    <td>Any transition</td>
+    <td><code>AuditGuard</code></td>
+    <td>An AuditEntry must be successfully written before the transition completes</td>
+  </tr>
+</table>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     4. THE SECTION 35 LETTER WORKFLOW
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h1 id="letter-workflow">4. The Section 35 Letter Workflow</h1>
+
+<figure>
+  <img src="wireframes/workflow-screenshots/image2.png" alt="Section 35 Letters Workflow Engine diagram showing the full letter lifecycle from creation through enforcement">
+  <figcaption>Figure 2 &mdash; Letters Workflow Engine: the nested state machine governing all Section 35 correspondence, from Letter 1 creation through enforcement completion.</figcaption>
+</figure>
+
+<!-- 4.1 Overview -->
+<h2 id="lw-overview">4.1 Overview</h2>
+<p>
+  The Section 35 Letter Workflow is a <strong>nested state machine</strong> that activates after
+  Control Point 9 (CP9) is complete. It governs the generation, signing, issuance, tracking, and
+  response handling of all statutory letters required by Sections 35 and 53 of the National Water Act.
+</p>
+<p>
+  As shown in Figure 2, each letter follows a standard lifecycle:
+</p>
+<ol>
+  <li><strong>Generated</strong> &mdash; The PDF is created by the LetterService using QuestPDF templates</li>
+  <li><strong>Signed</strong> &mdash; An authorised signatory (RegionalManager or above) applies an electronic signature</li>
+  <li><strong>Issued</strong> &mdash; The letter is dispatched to the water user via the appropriate delivery method</li>
+  <li><strong>Awaiting</strong> &mdash; The system tracks the statutory response period</li>
+  <li><strong>Response / Escalation</strong> &mdash; The user responds (agreed/not agreed) or fails to respond, triggering the next letter in the sequence</li>
+</ol>
+
+<div class="callout">
+  <div class="callout-title">Letter Issuance Records</div>
+  Every letter transition records: <code>IssuedDate</code>, <code>IssuedByUserId</code>,
+  <code>SignedByUserId</code>, <code>DeliveryMethod</code>, <code>PostalRegistrationNumber</code>
+  (if registered post), <code>DueDate</code>, and <code>ResponseReceivedDate</code>. These fields
+  form the evidentiary record for legal compliance.
+</div>
+
+<!-- 4.2 Letter 1 -->
+<h2 id="lw-letter1">4.2 Letter 1: S35(1) Notice to Apply</h2>
+<p>
+  Letter 1 is the initiating notice under Section 35(1) of the National Water Act, informing the
+  water user that their existing water use is being verified and requesting them to apply for
+  verification. The letter lifecycle is:
+</p>
+<p>
+  <strong>Letter 1 Created &rarr; L1_Generated &rarr; L1_Signed &rarr; L1_Issued &rarr; L1_Awaiting</strong>
+</p>
+
+<div class="callout callout-warning">
+  <div class="callout-title">Personal Service Requirement</div>
+  Letter 1 <strong>must be served in person</strong> &mdash; by hand delivery through a DWS
+  official, authorised agent, or sheriff of the court. The system records the serving official's
+  identity, the date and time of delivery, and the GPS coordinates of delivery where available.
+  This is a non-negotiable legal requirement under the NWA.
+</div>
+
+<p>
+  The Regional Manager (or delegated authority) signs the letter electronically before issuance.
+  After issuance, the system enters the <strong>L1_Awaiting</strong> state and monitors three
+  possible outcomes:
+</p>
+<ul>
+  <li><strong>L1_Agreed</strong> &mdash; The water user responds within the statutory period and agrees with the verification. The case advances to Letter 3 (ELU confirmation).</li>
+  <li><strong>L1_NotAgreed</strong> &mdash; The water user responds but disagrees. This may trigger Letter 2 (request for additional information) or proceed to further review.</li>
+  <li><strong>No Response</strong> &mdash; The statutory period expires without a response. The case escalates to Letter 1A.</li>
+</ul>
+<p>
+  Additionally, a <strong>Return to Sender</strong> branch handles undeliverable letters: the
+  state transitions to <strong>L1_RTS</strong>, and the letter may be reissued with an updated
+  address or alternative delivery method.
+</p>
+
+<!-- 4.3 Letter 1A -->
+<h2 id="lw-letter1a">4.3 Letter 1A: S53(1) Directive</h2>
+<p>
+  Letter 1A is an escalation under Section 53(1) &mdash; a formal directive issued when the water
+  user fails to respond to Letter 1. It follows the same lifecycle as Letter 1
+  (Created &rarr; Generated &rarr; Signed &rarr; Issued &rarr; Awaiting) and carries stronger
+  legal force. The directive compels the water user to apply for verification within a specified
+  period, with consequences for continued non-compliance.
+</p>
+<p>
+  Upon response to Letter 1A (<strong>L1A_Responded</strong>), the case returns to the standard
+  correspondence flow. If no response is received, the case may escalate to enforcement
+  (Letters 4A and 4&amp;5).
+</p>
+
+<!-- 4.4 Letter 2 -->
+<h2 id="lw-letter2">4.4 Letter 2: S35(3)(a) Request for Additional Information</h2>
+<p>
+  Letter 2 is issued under Section 35(3)(a) when the responsible authority requires additional
+  information to complete the verification. This typically arises when:
+</p>
+<ul>
+  <li>The water user disputes the technical findings and provides counter-evidence that requires evaluation</li>
+  <li>Documentary gaps exist (missing title deeds, permits, or historical records)</li>
+  <li>The GIS analysis reveals anomalies that require field verification by the water user</li>
+</ul>
+<p>
+  The letter specifies exactly what information is required and sets a deadline for submission.
+  Upon receipt of the response (<strong>L2_Responded</strong>), the additional information is
+  incorporated into the case and the technical evaluation may be revisited.
+</p>
+
+<!-- 4.5 Letter 2A -->
+<h2 id="lw-letter2a">4.5 Letter 2A: S35(1) Directive for Information</h2>
+<p>
+  Letter 2A is the enforcement escalation for Letter 2 &mdash; issued under Section 35(1) as a
+  formal directive when the water user fails to provide the additional information requested in
+  Letter 2 within the statutory period. It follows the standard letter lifecycle and carries the
+  same legal weight as Letter 1A.
+</p>
+
+<!-- 4.6 Letter 3 -->
+<div class="page-break"></div>
+<h2 id="lw-letter3">4.6 Letter 3: S35(4) ELU Confirmation</h2>
+<p>
+  Letter 3 is the culmination of the V&amp;V process for compliant cases &mdash; the
+  <strong>Section 35(4) certificate</strong> that formally confirms the extent and lawfulness of
+  the water user's existing water use. This letter is signed by the responsible authority and
+  constitutes an official determination under the National Water Act.
+</p>
+<p>
+  The issuance of Letter 3 leads to one of two outcomes:
+</p>
+<ul>
+  <li><strong>ELU Confirmed</strong> &mdash; All water use is determined to be lawful. The case transitions to <strong>Case Complete</strong> and is archived.</li>
+  <li><strong>Unlawful Use Identified</strong> &mdash; The determination reveals water use that exceeds the ELU or lacks legal authorisation. The case branches to enforcement (Letters 4A and 4&amp;5).</li>
+</ul>
+
+<div class="callout callout-success">
+  <div class="callout-title">The ELU Certificate</div>
+  Letter 3 is the single most important output of the V&amp;V process. It provides legal certainty
+  to the water user regarding their existing lawful use and forms the basis for future water use
+  licensing decisions. The system must ensure this letter is generated with complete accuracy,
+  properly signed, and securely stored.
+</div>
+
+<!-- 4.7 Letters 4A and 4&5 -->
+<h2 id="lw-letter45">4.7 Letters 4A and 4&amp;5: Enforcement</h2>
+<p>
+  When unlawful water use is identified and the water user fails to regularise their use, the
+  enforcement sequence is initiated:
+</p>
+
+<h4>Letter 4A &mdash; S53(1) Notice of Intent</h4>
+<p>
+  A formal notice informing the water user that the responsible authority intends to issue a
+  directive to stop unlawful water use. This provides a final opportunity for the user to comply
+  voluntarily or to make representations before enforcement action is taken.
+</p>
+
+<h4>Letters 4 &amp; 5 &mdash; S53(1) Directive to Stop</h4>
+<p>
+  The final enforcement instrument &mdash; a formal directive under Section 53(1) ordering the
+  water user to cease all unlawful water use. Upon issuance and acknowledgement (or expiry of the
+  response period), the case transitions to <strong>Enforcement Complete</strong>.
+</p>
+
+<!-- 4.8 eWULAAS Integration -->
+<h2 id="lw-ewulaas">4.8 eWULAAS Integration</h2>
+<p>
+  Upon final determination &mdash; whether through ELU confirmation (Letter 3) or enforcement
+  completion (Letters 4&amp;5) &mdash; the system pushes the determination data back to
+  <strong>eWULAAS</strong> via the <code>IntegrationService.UpdateWarmsData()</code> method. This
+  ensures that the national water use registration system reflects the verified and validated
+  water use information.
+</p>
+
+<div class="callout">
+  <div class="callout-title">WARMS Integration Removed</div>
+  Direct integration with the legacy WARMS system has been removed from the architecture. All
+  water use registration data now flows exclusively through <strong>eWULAAS</strong>, which serves
+  as the single authoritative source for registration information. The V&amp;V system reads from
+  eWULAAS at case inception and writes back to eWULAAS at case closure.
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     5. END-TO-END DATA FLOW
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h1 id="data-flow">5. End-to-End Data Flow</h1>
+
+<figure>
+  <img src="wireframes/workflow-screenshots/image3.png" alt="End-to-End Data Flow diagram showing the complete system architecture from external systems through processing layers to outputs">
+  <figcaption>Figure 3 &mdash; End-to-End Data Flow: the complete system architecture from external data sources through the integration, application, and data layers to internal and public-facing outputs.</figcaption>
+</figure>
+
+<!-- 5.1 System Architecture Overview -->
+<h2 id="df-overview">5.1 System Architecture Overview</h2>
+<p>
+  The DWA V&amp;V System is structured as a <strong>four-tier architecture</strong>, as illustrated
+  in Figure 3:
+</p>
+<ol>
+  <li><strong>External Systems</strong> &mdash; Upstream data sources that feed into the V&amp;V process</li>
+  <li><strong>Application Layer</strong> &mdash; The V&amp;V phases, processing engines, and service layer</li>
+  <li><strong>Data Layer</strong> &mdash; The repository layer and SQL Server database</li>
+  <li><strong>Outputs</strong> &mdash; The internal DWS application and the public-facing external portal</li>
+</ol>
+<p>
+  Data flows from left to right through the system: external source data is ingested via the
+  Integration Service, processed through the three V&amp;V phases using specialised engines,
+  persisted via the repository layer to SQL Server, and presented through both the internal
+  ASP.NET Core MVC application and the separate external portal.
+</p>
+
+<!-- 5.2 External System Integration -->
+<h2 id="df-external">5.2 External System Integration</h2>
+<p>
+  The V&amp;V System integrates with four external data sources, all managed through the
+  <code>IntegrationService</code>:
+</p>
+
+<table>
+  <tr>
+    <th>External System</th>
+    <th>Data Provided</th>
+    <th>Integration Method</th>
+  </tr>
+  <tr>
+    <td><strong>eWULAAS</strong></td>
+    <td>Water use registration data (WARMS records), registration status, licence information</td>
+    <td>Primary integration &mdash; API-based read/write</td>
+  </tr>
+  <tr>
+    <td><strong>Surveyor General / DRDLR</strong></td>
+    <td>SG farm boundaries, cadastral data, SG diagrams, property extent information</td>
+    <td>Spatial data import</td>
+  </tr>
+  <tr>
+    <td><strong>Deeds Office / DRDLR</strong></td>
+    <td>Title deed records, property ownership history, transfer records</td>
+    <td>Document retrieval</td>
+  </tr>
+  <tr>
+    <td><strong>Satellite / NoSQL Store</strong></td>
+    <td>Satellite imagery for qualifying period (1996&ndash;1999) and current period, stored in a NoSQL document store for high-volume binary data</td>
+    <td>Blob/document storage integration</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <div class="callout-title">eWULAAS as Primary Integration Point</div>
+  eWULAAS (the electronic Water Use Licence Application and Authorisation System) is the primary
+  external system. It replaces direct WARMS integration and serves as the single source of truth
+  for water use registration data. Both initial data retrieval (at case inception) and final
+  determination updates (at case closure) flow through eWULAAS.
+</div>
+
+<!-- 5.3 The Three V&V Phases -->
+<h2 id="df-phases">5.3 The Three V&amp;V Phases</h2>
+<p>
+  The application layer processes data through three sequential phases, each corresponding to a
+  section of the DWS requirements document:
+</p>
+
+<h4>Phase 1: Inception</h4>
+<p>
+  The foundational phase that establishes the case and gathers all prerequisite data:
+</p>
+<ul>
+  <li><strong>WARMS Audit</strong> &mdash; Obtain the latest registration data from eWULAAS and audit for new records, ownership changes, and data discrepancies</li>
+  <li><strong>GIS Identification</strong> &mdash; Identify unregistered water users through GIS analysis of current satellite imagery</li>
+  <li><strong>Database Analysis</strong> &mdash; Assign record status to all properties using the validation status categories (Not Commenced, In Process, Completed, etc.)</li>
+  <li><strong>Inception Report</strong> &mdash; Draft and approve the project inception report documenting scope, methodology, and findings</li>
+  <li><strong>Public Participation</strong> &mdash; Conduct WMA-level public participation sessions (Session 1) to launch the V&amp;V process in the area</li>
+</ul>
+
+<h4>Phase 2: Validation (Technical Extent)</h4>
+<p>
+  The technical analysis phase where water use is quantified and classified against the qualifying period
+  (<strong>1 October 1996 &ndash; 30 September 1998</strong>, unified per SFRA court order):
+</p>
+<ul>
+  <li><strong>Evaluate WARMS Data</strong> &mdash; Review registered volumes, crops, hectares, and irrigation methods against field evidence</li>
+  <li><strong>Spatial Information</strong> &mdash; Obtain and verify SG farm boundaries, catchment boundaries, and river data</li>
+  <li><strong>Additional Information</strong> &mdash; Gather permits, Section 32/33 approvals, transfers, General Authorisations, and other legislative instruments</li>
+  <li><strong>GIS Analysis &amp; Field Digitising</strong> &mdash; Digitise crop fields and dams for both qualifying and current periods</li>
+  <li><strong>SAPWAT Modelling</strong> &mdash; Calculate crop water requirements per field using the SAPWAT model</li>
+  <li><strong>ELU Calculation</strong> &mdash; Determine lawful, unlawful, and possible unlawful increase/decrease volumes</li>
+  <li><strong>Dam Volume Calculation</strong> &mdash; Calculate storage capacity using wall-length or area methods</li>
+  <li><strong>SFRA Calculation</strong> &mdash; Determine stream flow reduction for afforested areas</li>
+</ul>
+
+<h4>Phase 3: Validation</h4>
+<p>
+  The statutory correspondence and closure phase:
+</p>
+<ul>
+  <li><strong>Section 35 Letters</strong> &mdash; Generate, sign, issue, and track all statutory correspondence (Letters 1 through 5)</li>
+  <li><strong>Response Tracking</strong> &mdash; Monitor statutory deadlines and process water user responses</li>
+  <li><strong>Case Closure</strong> &mdash; Issue the ELU certificate or enforcement directive, update eWULAAS, and archive the case</li>
+</ul>
+
+<!-- 5.4 The Engine Layer -->
+<div class="page-break"></div>
+<h2 id="df-engines">5.4 The Engine Layer</h2>
+<p>
+  The engine layer comprises six specialised components that provide the core processing
+  capabilities of the system. These engines are coordinated through a mediator pattern, with
+  domain events providing loose coupling between components:
+</p>
+
+<table>
+  <tr>
+    <th>Engine</th>
+    <th>Responsibility</th>
+    <th>Key Technologies</th>
+  </tr>
+  <tr>
+    <td><strong>Calculator Engine</strong></td>
+    <td>Executes SAPWAT crop water requirement modelling, dam volume calculations (Appendix D wall-length and area methods), and SFRA stream flow reduction calculations</td>
+    <td>Domain-specific calculation logic; shape factors (0.33, 0.4, 0.5)</td>
+  </tr>
+  <tr>
+    <td><strong>Letter Engine</strong></td>
+    <td>Generates Section 35 letter PDFs from templates, manages letter lifecycle states, and tracks delivery and response</td>
+    <td>QuestPDF for PDF generation; letter type templates</td>
+  </tr>
+  <tr>
+    <td><strong>Workflow Engine</strong></td>
+    <td>Enforces the state machine, evaluates transition guards, manages control point progression, and raises domain events on transitions</td>
+    <td>State machine pattern; <code>ITransitionGuard</code> interface</td>
+  </tr>
+  <tr>
+    <td><strong>Notification Engine</strong></td>
+    <td>Delivers email, in-app, and SMS notifications triggered by domain events (state transitions, letter issuance, deadline reminders)</td>
+    <td>Email provider integration; in-app notification hub</td>
+  </tr>
+  <tr>
+    <td><strong>Signature Engine</strong></td>
+    <td>Captures electronic signatures via SignaturePad.js, generates SHA-256 hashes, embeds signatures into PDFs, and verifies document integrity</td>
+    <td>SignaturePad.js; X.509 server-side verification</td>
+  </tr>
+  <tr>
+    <td><strong>Audit Engine</strong></td>
+    <td>Writes immutable audit log entries for every state transition, data modification, and significant user action</td>
+    <td>Append-only <code>AuditEntry</code> table; structured logging</td>
+  </tr>
+</table>
+
+<p>
+  The engines communicate through <strong>domain events</strong> following the mediator pattern.
+  When the Workflow Engine completes a state transition, it publishes a
+  <code>StateTransitionEvent</code>. The Notification Engine subscribes to this event and
+  dispatches the appropriate notifications. The Audit Engine subscribes to all events and logs
+  them. The Letter Engine listens for transitions into letter-related states and initiates PDF
+  generation. This decoupled architecture ensures that each engine can evolve independently
+  without creating tight dependencies.
+</p>
+
+<!-- 5.5 Service and Repository Layers -->
+<h2 id="df-services">5.5 Service and Repository Layers</h2>
+<p>
+  The <strong>Service Layer</strong> orchestrates business logic by coordinating between engines,
+  repositories, and external integrations. Services are injected via ASP.NET Core dependency
+  injection and follow the pattern established by the existing <code>PropertyService</code> stub.
+  Each service encapsulates a bounded context of domain logic (e.g., <code>LetterService</code>
+  manages all letter-related operations, <code>ValidationService</code> manages ELU calculations).
+</p>
+<p>
+  The <strong>Repository Layer</strong> provides data access through Entity Framework Core,
+  implementing repository interfaces defined in the <code>Interfaces/</code> directory (e.g.,
+  <code>IPropertyInterface</code>, <code>IAddress</code>, <code>IForestation</code>). All new
+  repository methods follow the async/await pattern with <code>SaveChangesAsync()</code>. The
+  single <code>ApplicationDBContext</code> manages all entity relationships, with primary keys
+  and foreign keys configured explicitly in <code>OnModelCreating()</code>.
+</p>
+
+<div class="callout">
+  <div class="callout-title">Repository Pattern and Interface Contracts</div>
+  Every data access operation is abstracted behind an interface, allowing the service and engine
+  layers to be tested independently of the database. New repositories must be registered in
+  <code>Program.cs</code> using
+  <code>builder.Services.AddScoped&lt;IXxx, XxxRepository&gt;()</code>.
+</div>
+
+<!-- 5.6 Database Schema Groups -->
+<h2 id="df-schema">5.6 Database Schema Groups</h2>
+<p>
+  The SQL Server database (<code>dwa_val_ver</code>) is organised into five logical schema groups,
+  as reflected in the data flow diagram:
+</p>
+
+<table>
+  <tr>
+    <th>Schema Group</th>
+    <th>Tables</th>
+    <th>Purpose</th>
+  </tr>
+  <tr>
+    <td><strong>Core Domain</strong></td>
+    <td>Property, FileMaster, Entitlement, Validation, Irrigation, FieldAndCrop, DamCalculation, Forestation, Storing, PropertyOwner, PropertyOwnership</td>
+    <td>The central V&amp;V entities representing properties, case files, water use data, and calculations</td>
+  </tr>
+  <tr>
+    <td><strong>Organisation &amp; Reference</strong></td>
+    <td>Province, WaterManagementArea, OrganisationalUnit, River, Address, SateliteImage, lookup tables (ValidationStatus, RegistrationStatus, etc.)</td>
+    <td>Organisational hierarchy, geographic reference data, and seed/lookup values</td>
+  </tr>
+  <tr>
+    <td><strong>Workflow Schema</strong></td>
+    <td>WorkflowState, WorkflowInstance, WorkflowStepRecord, AuditEntry</td>
+    <td>State machine state storage, transition history, and immutable audit log</td>
+  </tr>
+  <tr>
+    <td><strong>Correspondence</strong></td>
+    <td>LetterType, LetterIssuance, UploadedDocument, DigitalSignature, SignatureRequest</td>
+    <td>Section 35 letter types, issuance records, document storage references, and electronic signatures</td>
+  </tr>
+  <tr>
+    <td><strong>Portal Schema</strong></td>
+    <td>ExternalUser, ExternalUserProperty, CaseComment, CaseNotification, Protest, ProtestDocument</td>
+    <td>External water user accounts, case comments, notifications, and protest records for the public-facing portal</td>
+  </tr>
+</table>
+
+<p>
+  All primary keys are <code>Guid</code> values, configured in <code>OnModelCreating()</code>.
+  Decimal columns use <code>decimal(18,2)</code> for volumes and areas, and
+  <code>decimal(9,6)</code> for geographic coordinates (latitude/longitude).
+</p>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     6. ELECTRONIC SIGNATURE FLOW
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h1 id="signature-flow">6. Electronic Signature Flow</h1>
+
+<figure>
+  <img src="wireframes/workflow-screenshots/image4.png" alt="Electronic Signature Flow diagram showing the dual-path signing process for internal and external users">
+  <figcaption>Figure 4 &mdash; Signature Flow: dual-path electronic signature capture, verification, and storage for both internal DWS officials and external water users.</figcaption>
+</figure>
+
+<!-- 6.1 Overview -->
+<h2 id="sf-overview">6.1 Overview</h2>
+<p>
+  The electronic signature flow provides a <strong>dual-path signing mechanism</strong> that serves
+  both internal DWS officials (who sign letters in the internal application) and external water
+  users (who sign acknowledgements and responses through the public portal). As shown in Figure 4,
+  the flow begins when a letter PDF is generated and ends when the signed document is stored,
+  the letter issuance record is updated, and downstream notifications are triggered.
+</p>
+<p>
+  The signature mechanism is designed to produce legally admissible electronic signatures that
+  comply with the Electronic Communications and Transactions Act (ECTA), Act 25 of 2002, by
+  capturing sufficient metadata to establish the identity of the signatory, the integrity of the
+  signed document, and the intent to sign.
+</p>
+
+<!-- 6.2 Signature Request Creation -->
+<h2 id="sf-request">6.2 Signature Request Creation</h2>
+<p>
+  The signature flow is initiated when the <code>LetterService</code> generates a letter PDF and
+  creates a <strong>SignatureRequest</strong> record:
+</p>
+<ul>
+  <li><strong>DocumentId</strong> &mdash; FK to the generated letter document</li>
+  <li><strong>RequestedSignatoryId</strong> &mdash; The user who is required to sign (identified by role and organisational unit)</li>
+  <li><strong>Reason</strong> &mdash; The legal basis for the signature (e.g., "S35(1) Notice &mdash; Regional Manager approval")</li>
+  <li><strong>Status</strong> &mdash; Initially set to <code>Pending</code></li>
+  <li><strong>CreatedDate</strong> &mdash; Timestamp of request creation</li>
+  <li><strong>DocumentHashAtCreation</strong> &mdash; SHA-256 hash of the PDF at the time of request, used later for tamper detection</li>
+</ul>
+
+<!-- 6.3 Notification Routing -->
+<h2 id="sf-routing">6.3 Notification Routing</h2>
+<p>
+  The SignatureRequest triggers a notification through the <code>NotificationService</code>,
+  routed based on the signatory type:
+</p>
+
+<h4>Internal User (DWS Official)</h4>
+<p>
+  An in-app notification of type <code>LetterReadyForSigning</code> is displayed in the
+  notification bell of the internal application. Clicking the notification routes the user to
+  <code>/Letters/{id}/Sign</code>, where the letter PDF is displayed alongside the signature
+  capture interface.
+</p>
+
+<h4>External Portal User (Water User)</h4>
+<p>
+  A portal notification of type <code>SignatureRequired</code> is created, accompanied by an
+  email notification to the external user's registered email address. The portal notification
+  routes to <code>/Portal/Cases/{id}/Sign</code>, where the same signature capture interface
+  is presented within the external portal layout.
+</p>
+
+<!-- 6.4 Signature Capture -->
+<h2 id="sf-capture">6.4 Signature Capture</h2>
+<p>
+  Both internal and external signing interfaces use <strong>SignaturePad.js</strong> to render an
+  HTML5 canvas element where the user draws their signature. Upon submission, the following payload
+  is assembled:
+</p>
+<ul>
+  <li><strong>Signature Image</strong> &mdash; The drawn signature exported as a PNG data URI</li>
+  <li><strong>Timestamp</strong> &mdash; The exact date and time of signing (server-validated)</li>
+  <li><strong>IP Address</strong> &mdash; The signatory's IP address at the time of signing</li>
+  <li><strong>User Agent</strong> &mdash; The browser/device information</li>
+  <li><strong>Document Hash</strong> &mdash; SHA-256 hash of the document at the moment of signing, computed client-side and verified server-side</li>
+</ul>
+
+<div class="callout callout-warning">
+  <div class="callout-title">Tamper Detection</div>
+  The document hash captured at signing is compared against the hash stored at request creation.
+  If the hashes do not match, the signing is rejected, as it indicates the document has been
+  modified after the signature was requested. This provides tamper-evidence as required by ECTA.
+</div>
+
+<!-- 6.5 Verification and Storage -->
+<div class="page-break"></div>
+<h2 id="sf-verify">6.5 Verification and Storage</h2>
+<p>
+  Upon submission of the signature payload, the server performs the following operations:
+</p>
+<ol>
+  <li><strong>Hash Verification</strong> &mdash; The submitted document hash is compared against the <code>DocumentHashAtCreation</code> on the SignatureRequest. Mismatches are rejected.</li>
+  <li><strong>DigitalSignature Record</strong> &mdash; A new <code>DigitalSignature</code> record is created, storing the signature image (PNG), the SHA-256 hash, the signatory's identity, IP address, user agent, and timestamp.</li>
+  <li><strong>PDF Embedding</strong> &mdash; The signature image is embedded into the letter PDF at the designated signature position, producing the final signed document.</li>
+  <li><strong>Document Storage</strong> &mdash; The signed PDF is stored (Azure Blob Storage or filesystem), and the <code>UploadedDocument</code> record is updated with the new <code>BlobPath</code>.</li>
+  <li><strong>LetterIssuance Update</strong> &mdash; The <code>LetterIssuance</code> record is updated with <code>SignedDate</code>, <code>SignedById</code>, <code>DigitalSignatureId</code>, and <code>Status</code> transitions to <code>Signed</code>.</li>
+</ol>
+
+<!-- 6.6 Post-Signing -->
+<h2 id="sf-post">6.6 Post-Signing</h2>
+<p>
+  Once the letter is signed and the LetterIssuance record is updated, the following post-signing
+  actions are triggered:
+</p>
+<ul>
+  <li>The <code>NotificationService</code> raises a <code>LetterSignedEvent</code> domain event, triggering notifications to relevant parties (the case validator, the water user, and any watchers on the case).</li>
+  <li>The <code>LetterService.IssueLetter()</code> method is invoked to dispatch the signed letter via the appropriate delivery method:
+    <ul>
+      <li><strong>Post</strong> &mdash; Registered post with tracking number recorded in <code>PostalRegistrationNumber</code></li>
+      <li><strong>Email</strong> &mdash; Electronic delivery to the water user's registered email address with the signed PDF attached</li>
+      <li><strong>In-Person</strong> &mdash; Flagged for hand delivery (mandatory for Letter 1); the serving official is recorded</li>
+      <li><strong>Other</strong> &mdash; Alternative delivery methods as determined by the responsible authority</li>
+    </ul>
+  </li>
+  <li>The workflow state transitions to the next appropriate state (e.g., <code>L1_Signed</code> &rarr; <code>L1_Issued</code>).</li>
+</ul>
+
+<!-- 6.7 Legal Compliance -->
+<h2 id="sf-legal">6.7 Legal Compliance</h2>
+<p>
+  The electronic signature implementation is designed to comply with the
+  <strong>Electronic Communications and Transactions Act (ECTA), Act 25 of 2002</strong>, which
+  establishes the legal framework for electronic signatures in South Africa. Key compliance
+  measures include:
+</p>
+<ul>
+  <li><strong>Identity Association</strong> &mdash; Each signature is linked to an authenticated user account (internal via ASP.NET Identity, external via the separate portal identity regime with mandatory MFA).</li>
+  <li><strong>Tamper Evidence</strong> &mdash; The <code>DocumentHashAtSigning</code> is permanently stored and can be compared against the current document hash at any future point. Any modification to the signed document is detectable.</li>
+  <li><strong>Intent to Sign</strong> &mdash; The signing interface requires an explicit action (drawing a signature and clicking "Confirm"), with clear indication of what is being signed and the legal implications.</li>
+  <li><strong>Audit Trail</strong> &mdash; The complete signing process is logged: request creation, notification delivery, signature capture (with IP, user agent, timestamp), verification, and PDF embedding. All audit records are immutable.</li>
+  <li><strong>Non-Repudiation</strong> &mdash; The combination of authenticated identity, captured biometric-style signature image, IP address, device information, and timestamped hash chain provides strong evidence against repudiation.</li>
+</ul>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     7. DESIGN PATTERNS SUMMARY
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h1 id="patterns">7. Design Patterns Summary</h1>
+
+<p>
+  The following table summarises the core design patterns employed across the workflow and process
+  architecture:
+</p>
+
+<table>
+  <tr>
+    <th>Pattern</th>
+    <th>Application</th>
+    <th>Component</th>
+  </tr>
+  <tr>
+    <td><strong>State Machine</strong></td>
+    <td>Governs the lifecycle of every FileMaster case through defined states and transitions. Ensures deterministic, auditable progression through control points.</td>
+    <td><code>WorkflowEngine</code></td>
+  </tr>
+  <tr>
+    <td><strong>Guard / Specification</strong></td>
+    <td>Each state transition is protected by composable guard objects that verify preconditions (data presence, role authorisation, business rules) before permitting advancement.</td>
+    <td><code>ITransitionGuard</code></td>
+  </tr>
+  <tr>
+    <td><strong>Repository</strong></td>
+    <td>Abstracts all data access behind interface contracts, enabling testability and separation of the data layer from business logic.</td>
+    <td><code>IPropertyInterface</code>, <code>IAddress</code>, <code>IForestation</code>, etc.</td>
+  </tr>
+  <tr>
+    <td><strong>Strategy</strong></td>
+    <td>Letter delivery methods (Post, Email, In-Person, Other) are implemented as interchangeable strategies, selected at runtime based on the letter type and case requirements.</td>
+    <td><code>LetterService</code> delivery methods</td>
+  </tr>
+  <tr>
+    <td><strong>Observer / Domain Events</strong></td>
+    <td>State transitions and significant actions publish domain events that are consumed by loosely coupled subscribers (notifications, audit logging, integration updates).</td>
+    <td><code>NotificationService</code>, <code>AuditService</code></td>
+  </tr>
+  <tr>
+    <td><strong>Mediator</strong></td>
+    <td>Engine coordination is managed through a central mediator, preventing direct dependencies between engines while enabling complex multi-engine workflows.</td>
+    <td>Engine layer coordination</td>
+  </tr>
+  <tr>
+    <td><strong>Immutable Log</strong></td>
+    <td>All audit entries are append-only records that can never be modified or deleted, providing a tamper-proof evidentiary trail for legal and regulatory compliance.</td>
+    <td><code>AuditEntry</code> table</td>
+  </tr>
+</table>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     8. NEXT STEPS
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h1 id="next-steps">8. Next Steps</h1>
+
+<p>
+  The workflow and process designs documented here represent the target architecture for the
+  DWA V&amp;V System. The following implementation tasks are prioritised for the next development
+  phases:
+</p>
+
+<h3>8.1 WorkflowEngine Implementation</h3>
+<p>
+  Implement the core <code>WorkflowEngine</code> class with the state machine, transition guard
+  evaluation, and domain event publishing. Create the <code>WorkflowState</code> seed data for
+  all states identified in this document. Implement the <code>ITransitionGuard</code> interface
+  and create guard implementations for each control point transition.
+</p>
+
+<h3>8.2 QuestPDF Letter Templates</h3>
+<p>
+  Design and implement QuestPDF templates for all seven Section 35 letter types (Letters 1, 1A, 2,
+  2A, 3, 4A, and 4&amp;5). Each template must incorporate the DWS letterhead, case-specific data
+  fields, signature placement zones, and statutory language as prescribed by the NWA.
+</p>
+
+<h3>8.3 SignaturePad.js Integration</h3>
+<p>
+  Integrate SignaturePad.js into both the internal application and external portal. Implement the
+  server-side signature verification, hash comparison, and PDF embedding pipeline. Create the
+  <code>DigitalSignature</code> and <code>SignatureRequest</code> entities and their corresponding
+  repository interfaces.
+</p>
+
+<h3>8.4 Notification Service</h3>
+<p>
+  Implement the <code>NotificationService</code> with support for email (via SMTP or a
+  transactional email provider), in-app notifications (via a notification hub), and SMS (via an
+  SMS gateway provider). Define the notification templates for each domain event type and configure
+  the delivery preferences per user role.
+</p>
+
+<h3>8.5 eWULAAS API Integration Specification</h3>
+<p>
+  Develop the detailed API integration specification for eWULAAS, covering the data contracts for
+  both reading registration data at case inception and writing determination data at case closure.
+  Coordinate with the eWULAAS development team (also on C#/ASP.NET/SQL Server) to agree on
+  authentication, data formats, error handling, and retry policies.
+</p>
+
+<div class="callout">
+  <div class="callout-title">Implementation Priority</div>
+  The WorkflowEngine (8.1) is the critical-path dependency for all other components. Letter
+  templates (8.2) and the notification service (8.4) can be developed in parallel once the
+  workflow engine's domain event interface is defined. The signature flow (8.3) depends on
+  letter templates being available. eWULAAS integration (8.5) requires external coordination
+  and should be initiated early to avoid delays.
+</div>
+
+<br>
+<div style="text-align:center; margin-top:3rem; padding-top:2rem; border-top:2px solid #7db8e0; color:#8892a0; font-size:9pt;">
+  <p>DWA Validation &amp; Verification System &mdash; Workflow &amp; Process Design &mdash; Version 1.0</p>
+  <p>Department of Water and Sanitation (DWS) &mdash; 25 March 2026</p>
+  <p style="margin-top:0.5rem;">End of Document</p>
+</div>
+
+</body>
+</html>

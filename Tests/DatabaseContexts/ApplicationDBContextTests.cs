@@ -69,8 +69,19 @@ public class ApplicationDBContextTests
         Assert.NotNull(context.PublicUsers);
         Assert.NotNull(context.PublicUserProperties);
         Assert.NotNull(context.CaseComments);
-        Assert.NotNull(context.Protests);
-        Assert.NotNull(context.ProtestDocuments);
+        Assert.NotNull(context.Objections);
+        Assert.NotNull(context.ObjectionDocuments);
+    }
+
+    [Fact]
+    public void Context_Has_All_Catchment_And_Mapbook_DbSets()
+    {
+        using var context = TestDbContextFactory.Create();
+
+        Assert.NotNull(context.CatchmentAreas);
+        Assert.NotNull(context.GwcaProclamationRules);
+        Assert.NotNull(context.Mapbooks);
+        Assert.NotNull(context.MapbookImages);
     }
 
     [Fact]

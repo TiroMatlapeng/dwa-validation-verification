@@ -1,0 +1,120 @@
+@model FileMaster
+
+@{
+    ViewData["Title"] = "Create V&V Case";
+}
+
+<a asp-controller="FileMaster" asp-action="Index" class="btn-back">&larr; Back to V&amp;V Cases</a>
+
+<div class="page-title">Create V&amp;V Case</div>
+<div class="page-subtitle">Open a new Validation &amp; Verification case file</div>
+
+<div class="card" style="max-width: 800px;">
+    <form asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom:14px;"></div>
+
+        <!-- Registration Details -->
+        <div class="form-section-title">Registration Details</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="RegistrationNumber" class="form-label"></label>
+                <input asp-for="RegistrationNumber" class="form-control" style="width:100%;" />
+                <span asp-validation-for="RegistrationNumber" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SurveyorGeneralCode" class="form-label"></label>
+                <input asp-for="SurveyorGeneralCode" class="form-control" style="width:100%;" />
+                <span asp-validation-for="SurveyorGeneralCode" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="PrimaryCatchment" class="form-label"></label>
+                <input asp-for="PrimaryCatchment" class="form-control" style="width:100%;" />
+                <span asp-validation-for="PrimaryCatchment" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="QuaternaryCatchment" class="form-label"></label>
+                <input asp-for="QuaternaryCatchment" class="form-control" style="width:100%;" />
+                <span asp-validation-for="QuaternaryCatchment" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="CatchmentAreaId" class="form-label">Catchment Area</label>
+                <select asp-for="CatchmentAreaId" asp-items="@ViewBag.CatchmentAreas" class="form-control" style="width:100%;">
+                    <option value="">-- Select Catchment Area --</option>
+                </select>
+                <span asp-validation-for="CatchmentAreaId" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="AssessmentTrack" class="form-label">Assessment Track</label>
+                <select asp-for="AssessmentTrack" asp-items="@ViewBag.AssessmentTracks" class="form-control" style="width:100%;">
+                    <option value="">-- Select Assessment Track --</option>
+                </select>
+                <span asp-validation-for="AssessmentTrack" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <!-- Farm Details -->
+        <div class="form-section-title" style="margin-top: 20px;">Farm Details</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="FarmName" class="form-label"></label>
+                <input asp-for="FarmName" class="form-control" style="width:100%;" />
+                <span asp-validation-for="FarmName" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FarmNumber" class="form-label"></label>
+                <input asp-for="FarmNumber" class="form-control" style="width:100%;" />
+                <span asp-validation-for="FarmNumber" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="RegistrationDivision" class="form-label"></label>
+                <input asp-for="RegistrationDivision" class="form-control" style="width:100%;" />
+                <span asp-validation-for="RegistrationDivision" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FarmPortion" class="form-label"></label>
+                <input asp-for="FarmPortion" class="form-control" style="width:100%;" />
+                <span asp-validation-for="FarmPortion" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <!-- Assignment -->
+        <div class="form-section-title" style="margin-top: 20px;">Assignment</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="PropertyId" class="form-label">Property</label>
+                <select asp-for="PropertyId" asp-items="@ViewBag.Properties" class="form-control" style="width:100%;">
+                    <option value="">-- Select Property --</option>
+                </select>
+                <span asp-validation-for="PropertyId" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="OrgUnitId" class="form-label">Organisational Unit</label>
+                <select asp-for="OrgUnitId" asp-items="@ViewBag.OrgUnits" class="form-control" style="width:100%;">
+                    <option value="">-- Select Org Unit --</option>
+                </select>
+                <span asp-validation-for="OrgUnitId" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <input type="submit" value="Create Case" class="btn btn-primary" />
+            <a asp-action="Index" class="btn btn-outline" style="margin-left: 8px;">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

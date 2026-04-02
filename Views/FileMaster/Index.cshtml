@@ -1,0 +1,84 @@
+@model IEnumerable<FileMaster>
+
+@{
+    ViewData["Title"] = "V&V Cases";
+}
+
+<div class="flex-between mb-16">
+    <div>
+        <div class="page-title">V&amp;V Cases</div>
+        <div class="page-subtitle">@Model.Count() cases found</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+        <a asp-controller="FileMaster" asp-action="Create" class="btn btn-primary">+ New Case</a>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <select class="form-select" style="width:auto; min-width:150px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;">
+        <option>All Statuses</option>
+        <option>Not Commenced</option>
+        <option>In Process</option>
+        <option>Completed</option>
+        <option>Compl require client interaction</option>
+        <option>Compl Not Client Interaction</option>
+        <option>Compl Post Interact Processing</option>
+    </select>
+    <input type="text" class="form-input" style="width:250px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;" placeholder="Search by Reg No, Farm Name, SG Code..." />
+    <button class="btn btn-primary btn-sm">Filter</button>
+    <button class="btn btn-outline btn-sm">Clear</button>
+</div>
+
+<!-- Data Table -->
+<div class="data-table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Registration Number</th>
+                <th>Farm Name</th>
+                <th>SG Code</th>
+                <th>Catchment</th>
+                <th>Status</th>
+                <th>Property</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.RegistrationNumber</td>
+                    <td>@item.FarmName</td>
+                    <td class="sg-code">@item.SurveyorGeneralCode</td>
+                    <td>@item.QuaternaryCatchment</td>
+                    <td>
+                        @{
+                            var badgeClass = item.ValidationStatusName switch
+                            {
+                                "Completed" => "badge-green",
+                                "In Process" => "badge-blue",
+                                _ => "badge-grey"
+                            };
+                        }
+                        <span class="badge @badgeClass">@(item.ValidationStatusName ?? "Not Commenced")</span>
+                    </td>
+                    <td>
+                        @if (item.Property != null)
+                        {
+                            <a asp-controller="Property" asp-action="Details" asp-route-id="@item.PropertyId">@item.Property.PropertyReferenceNumber</a>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.FileMasterId" class="btn btn-sm btn-outline">Edit</a>
+                        <a asp-action="Details" asp-route-id="@item.FileMasterId" class="btn btn-sm btn-outline">Details</a>
+                        <a asp-action="Delete" asp-route-id="@item.FileMasterId" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <div class="table-pagination">
+        <span>Showing @Model.Count() cases</span>
+    </div>
+</div>

@@ -1,3 +1,5 @@
+%% AMENDED 2026-03-24: Water user input capability across all CPs
+%% AMENDED 2026-04-01: Fix phase labels (Validation=technical, Verification=legal), unify qualifying period, add S33 tracks
 flowchart TB
     Start([Property Enters V&V System]) --> CP01
 
@@ -13,9 +15,11 @@ flowchart TB
 
     CP05 --> CP06
 
-    subgraph Phase2["Phase 2: Verification (per property)"]
+    WUI["[AMENDED 2026-03-24] Water User Input\nWater users may submit information\nvia portal at any control point\nwhere DWS lacks required data"]
+
+    subgraph Phase2["Phase 2: Validation — Technical Extent (per property)"]
         CP06["CP06: Evaluate WARMS\nRegistration Information\n---\nIdentify activities: Taking,\nStoring, Industrial, SFRA"]
-        CP07["CP07: Obtain Supportive\nSpatial Information\n---\nSG boundaries, satellite\nimagery 1996-1999 + current"]
+        CP07["CP07: Obtain Supportive\nSpatial Information\n---\nSG boundaries, mapbooks\n1 Oct 1996 – 30 Sep 1998 + current"]
         CP08["CP08: Obtain Other\nSupportive Information\n---\nField surveys, GWCA,\nIrrigation Board, Section 9B"]
         CP09["CP09: Property & Source\nEvaluation\n---\nTitle deeds, SG diagram,\nowner verification, source eval"]
         CP10["CP10: Evaluate Additional\nInformation\n---\nPermits, Section 32/33,\ntransfers, court decisions"]
@@ -34,13 +38,16 @@ flowchart TB
         CP16 --> CP14
     end
 
+    WUI -.->|"feeds into"| CP06
+    WUI -.->|"feeds into"| CP09
+
     CP14 --> CP17
 
-    subgraph Phase3["Phase 3: Validation / Section 35"]
+    subgraph Phase3["Phase 3: Verification — Legal Lawfulness / Section 35 + Section 33"]
         CP17["CP17: Public Participation\nSession 2\n---\nField visits per small area\nIndividual sessions with users\nPresent application letters"]
         CP18["CP18: Field Visit &\nLetter Dissemination\n---\nPresent findings to users\nIssue Letter 1"]
-        CP19["CP19: Section 35\nCorrespondence\n---\nPost letters to non-attendees\nTrack responses & deadlines"]
-        CP20["CP20: Section 35 Process\nTracking\n---\nLetter state machine\nEscalation paths"]
+        CP19["CP19: Section 35 / Section 33\nCorrespondence\n---\nPost letters to non-attendees\nTrack responses & deadlines\nS33(2) Kader Asmal Declaration\nS33(3) Individual Application"]
+        CP20["CP20: Section 35 / Section 33\nProcess Tracking\n---\nLetter state machine\nEscalation paths\nAssessment track routing\n(S35 vs S33(2) vs S33(3))"]
         CP21["CP21: Project Control\n& Reporting\n---\nProgress reports\nLetter tracking summary"]
 
         CP17 --> CP18 --> CP19 --> CP20 --> CP21
@@ -51,3 +58,4 @@ flowchart TB
     style Phase1 fill:#e6f3ff,stroke:#0066cc
     style Phase2 fill:#e6ffe6,stroke:#006600
     style Phase3 fill:#fff3e6,stroke:#cc6600
+    style WUI fill:#ffe6f0,stroke:#cc0066

@@ -1,15 +1,11 @@
+%% AMENDED 2026-03-24: WARMS integration removed. All data flows via eWULAAS
 flowchart LR
     VVSystem["V&V System\n(IIntegrationService)"]
 
-    subgraph WARMS_Int["WARMS Integration"]
-        WARMS["WARMS\n(C# / ASP.NET / SQL Server)"]
-        Delta["Delta Extract\nNew records & ownership changes\nScheduled daily batch"]
-        ELUUpdate["ELU Update\nUpdate registration with\nconfirmed ELU volumes\nEvent-driven on Letter 3 issuance"]
-    end
-
-    subgraph eWULAAS_Int["eWULAAS Integration"]
+    subgraph eWULAAS_Int["eWULAAS Integration [AMENDED 2026-03-24]"]
         eWULAAS["eWULAAS\n(C# / ASP.NET / SQL Server)"]
-        PrePop["Pre-populate Licence Application\nProperty data, owner data,\nELU determination\nOn demand (compulsory licensing)"]
+        Inbound["Inbound from eWULAAS\nProperty data, WARMS reg numbers,\nowner data, registration info\nScheduled batch + on demand\n[AMENDED 2026-03-24]"]
+        Outbound["Outbound to eWULAAS\nELU determination output,\nconfirmed volumes, validation status\nEvent-driven on Letter 3 issuance\n[AMENDED 2026-03-24]"]
     end
 
     subgraph SG_Int["Surveyor General — DRDLR"]
@@ -22,24 +18,20 @@ flowchart LR
         DeedsData["Owner information\nTitle deed data\nTransfer history"]
     end
 
-    subgraph Patterns["Integration Patterns"]
-        P1["WARMS → V&V: Daily batch\n(API or file extract)"]
-        P2["V&V → WARMS: Real-time API\n(on Letter 3 issuance)"]
-        P3["V&V → eWULAAS: Real-time API\n(on demand)"]
-        P4["SG → V&V: On demand query\n(at CP09)"]
-        P5["Deeds → V&V: On demand query\n(at CP09)"]
+    subgraph Patterns["Integration Patterns [AMENDED 2026-03-24]"]
+        P1["eWULAAS → V&V: Scheduled batch + on demand\n(property data, WARMS reg numbers, owner data)\n[AMENDED 2026-03-24]"]
+        P2["V&V → eWULAAS: Real-time API\n(on Letter 3 issuance — ELU output)\n[AMENDED 2026-03-24]"]
+        P3["SG → V&V: On demand query\n(at CP09)"]
+        P4["Deeds → V&V: On demand query\n(at CP09)"]
     end
 
-    WARMS -->|"Daily batch"| Delta --> VVSystem
-    VVSystem -->|"On Letter 3 issuance"| ELUUpdate --> WARMS
-
-    VVSystem -->|"On demand"| PrePop --> eWULAAS
+    eWULAAS -->|"Scheduled batch + on demand\n[AMENDED]"| Inbound --> VVSystem
+    VVSystem -->|"On Letter 3 issuance\n[AMENDED]"| Outbound --> eWULAAS
 
     VVSystem -->|"Query by SGCode (CP09)"| SG --> SGData --> VVSystem
 
     VVSystem -->|"Query by TitleDeedNumber (CP09)"| Deeds --> DeedsData --> VVSystem
 
-    style WARMS_Int fill:#ffe6e6,stroke:#cc0000
     style eWULAAS_Int fill:#ffe6cc,stroke:#cc6600
     style SG_Int fill:#e6f3ff,stroke:#0066cc
     style Deeds_Int fill:#e6ffe6,stroke:#006600
