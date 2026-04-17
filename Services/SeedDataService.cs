@@ -18,6 +18,7 @@ public class SeedDataService
         await SeedAuthorisationTypesAsync();
         await SeedPeriodsAsync();
         await SeedGwcaProclamationRulesAsync();
+        await SeedSampleCasesAsync();
     }
 
     // ── 1. Provinces (9) ──────────────────────────────────────────────
@@ -390,5 +391,147 @@ public class SeedDataService
 
         _context.GwcaProclamationRules.AddRange(rules);
         await _context.SaveChangesAsync();
+    }
+
+    // ── 8. Sample cases for demo ────────────────────────────────────
+
+    private async Task SeedSampleCasesAsync()
+    {
+        if (await _context.FileMasters.AnyAsync())
+            return;
+
+        var mpumalanga = await _context.Provinces.SingleAsync(p => p.ProvinceCode == "MP");
+        var inkomati = await _context.WaterManagementAreas.SingleAsync(w => w.WmaName == "Inkomati-Usuthu");
+
+        // Catchment area if none exists
+        var catchment = await _context.CatchmentAreas.FirstOrDefaultAsync(c => c.CatchmentCode == "X21A");
+        if (catchment == null)
+        {
+            catchment = new CatchmentArea
+            {
+                CatchmentAreaId = Guid.NewGuid(),
+                CatchmentCode = "X21A",
+                CatchmentName = "Upper Komati Quaternary",
+                WmaId = inkomati.WmaId,
+            };
+            _context.CatchmentAreas.Add(catchment);
+        }
+
+        // Org unit if none exists
+        var orgUnit = await _context.OrganisationalUnits.FirstOrDefaultAsync(o => o.Name == "Mpumalanga Regional Office");
+        if (orgUnit == null)
+        {
+            orgUnit = new OrganisationalUnit
+            {
+                OrgUnitId = Guid.NewGuid(),
+                Name = "Mpumalanga Regional Office",
+                Type = "Regional",
+                ProvinceId = mpumalanga.ProvinceId,
+                WmaId = inkomati.WmaId,
+            };
+            _context.OrganisationalUnits.Add(orgUnit);
+        }
+
+        var prop1 = new Property
+        {
+            PropertyId = Guid.NewGuid(),
+            PropertyReferenceNumber = "DRN-123",
+            SGCode = "T0HT00000000012300000",
+            QuaternaryDrainage = "X21A",
+            WmaId = inkomati.WmaId,
+            CatchmentAreaId = catchment.CatchmentAreaId,
+        };
+        var prop2 = new Property
+        {
+            PropertyId = Guid.NewGuid(),
+            PropertyReferenceNumber = "LWF-456",
+            SGCode = "T0HT00000000045600000",
+            QuaternaryDrainage = "X21A",
+            WmaId = inkomati.WmaId,
+            CatchmentAreaId = catchment.CatchmentAreaId,
+        };
+        _context.Properties.AddRange(prop1, prop2);
+
+        await _context.SaveChangesAsync();
+
+        var samples = new[]
+        {
+            new { Reg = "WARMS-2024-001", Farm = "Doornhoek",  FarmNo = 123, Portion = "0", Prop = prop1, TargetState = "CP1_WARMSObtained" },
+            new { Reg = "WARMS-2024-002", Farm = "Leeuwfontein", FarmNo = 456, Portion = "1", Prop = prop2, TargetState = "CP5_GISAnalysis" },
+            new { Reg = "WARMS-2024-003", Farm = "Doornhoek",  FarmNo = 123, Portion = "2", Prop = prop1, TargetState = "CP9_SFRACalculated" },
+        };
+
+        foreach (var s in samples)
+        {
+            var fm = new FileMaster
+            {
+                FileMasterId = Guid.NewGuid(),
+                RegistrationNumber = s.Reg,
+                CaseNumber = $"VV-2026-{s.Reg.Substring(s.Reg.Length - 3)}",
+                PropertyId = s.Prop.PropertyId,
+                OrgUnitId = orgUnit.OrgUnitId,
+                CatchmentAreaId = catchment.CatchmentAreaId,
+                SurveyorGeneralCode = s.Prop.SGCode!,
+                PrimaryCatchment = "X",
+                QuaternaryCatchment = "X21A",
+                FarmName = s.Farm,
+                FarmNumber = s.FarmNo,
+                RegistrationDivision = "JR",
+                FarmPortion = s.Portion,
+                FileCreatedDate = DateOnly.FromDateTime(DateTime.Today),
+                AssessmentTrack = "S35_Verification",
+                ValidationStatusName = s.TargetState == "CP1_WARMSObtained" ? "Not Commenced" : "In Process",
+                RegisteredForTakingWater = true,
+                RegisteredForStoring = false,
+                RegisteredForForestation = false,
+            };
+            _context.FileMasters.Add(fm);
+            await _context.SaveChangesAsync();
+
+            // Build workflow instance inline (avoid calling WorkflowService from here)
+            var targetState = await _context.WorkflowStates.SingleAsync(w => w.StateName == s.TargetState);
+            var firstState = await _context.WorkflowStates.OrderBy(w => w.DisplayOrder).FirstAsync();
+
+            var instance = new WorkflowInstance
+            {
+                WorkflowInstanceId = Guid.NewGuid(),
+                FileMasterId = fm.FileMasterId,
+                CurrentWorkflowStateId = targetState.WorkflowStateId,
+                Status = "Active",
+                CreatedDate = DateTime.UtcNow.AddDays(-10),
+            };
+            _context.WorkflowInstances.Add(instance);
+
+            // Synthesise history: Completed step per state from first up to (but not including) target, then InProgress for target.
+            var traversed = await _context.WorkflowStates
+                .Where(w => w.DisplayOrder < targetState.DisplayOrder)
+                .OrderBy(w => w.DisplayOrder)
+                .ToListAsync();
+
+            var baseTime = DateTime.UtcNow.AddDays(-10);
+            for (int i = 0; i < traversed.Count; i++)
+            {
+                _context.WorkflowStepRecords.Add(new WorkflowStepRecord
+                {
+                    WorkflowStepRecordId = Guid.NewGuid(),
+                    WorkflowInstanceId = instance.WorkflowInstanceId,
+                    WorkflowStateId = traversed[i].WorkflowStateId,
+                    StepStatus = "Completed",
+                    StartedDate = baseTime.AddHours(i),
+                    CompletedDate = baseTime.AddHours(i + 1),
+                });
+            }
+            _context.WorkflowStepRecords.Add(new WorkflowStepRecord
+            {
+                WorkflowStepRecordId = Guid.NewGuid(),
+                WorkflowInstanceId = instance.WorkflowInstanceId,
+                WorkflowStateId = targetState.WorkflowStateId,
+                StepStatus = "InProgress",
+                StartedDate = baseTime.AddHours(traversed.Count + 1),
+            });
+
+            fm.WorkflowInstanceId = instance.WorkflowInstanceId;
+            await _context.SaveChangesAsync();
+        }
     }
 }
