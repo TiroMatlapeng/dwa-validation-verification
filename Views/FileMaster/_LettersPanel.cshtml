@@ -1,0 +1,72 @@
+@model FileMasterDetailsViewModel
+
+<div class="card" style="max-width: 900px; margin-top: 16px;">
+    <div class="form-section-title">Section 35 Letters</div>
+
+    <div class="letter-actions">
+        @foreach (var action in Model.AvailableLetterActions)
+        {
+            var (label, cssClass) = action switch
+            {
+                "IssueLetter1"          => ("Issue Letter 1 (S35(1) Notice)", "btn btn-primary"),
+                "MarkLetter1Responded"  => ("Mark Letter 1 Responded", "btn btn-outline"),
+                "IssueLetter2"          => ("Issue Letter 2 (S35(3)(a) Info Request)", "btn btn-primary"),
+                "MarkLetter2Responded"  => ("Mark Letter 2 Responded", "btn btn-outline"),
+                "IssueLetter3"          => ("Issue Letter 3 (S35(4) ELU Confirmation)", "btn btn-primary"),
+                "MarkELUConfirmed"      => ("Confirm ELU Determination", "btn btn-primary"),
+                "CloseCase"             => ("Close Case", "btn btn-outline"),
+                _                       => (action, "btn btn-outline")
+            };
+
+            if (action.StartsWith("Issue"))
+            {
+                <form asp-action="IssueLetter" asp-route-id="@Model.FileMaster.FileMasterId" method="post" class="letter-inline-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="letterAction" value="@action" />
+                    <input type="text" name="recipient" placeholder="Recipient" class="form-input form-input-sm" required />
+                    <select name="deliveryMethod" class="form-select form-select-sm">
+                        <option value="RegisteredPost">Registered Post</option>
+                        <option value="InPerson">In Person (S35(2)(d))</option>
+                        <option value="Email">Email</option>
+                    </select>
+                    <input type="date" name="issuedDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" class="form-input form-input-sm" />
+                    <button type="submit" class="@cssClass btn-sm">@label</button>
+                </form>
+            }
+            else
+            {
+                <form asp-action="MarkLetterResponse" asp-route-id="@Model.FileMaster.FileMasterId" method="post" style="display:inline-block; margin-right:8px;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="letterAction" value="@action" />
+                    <button type="submit" class="@cssClass btn-sm">@label</button>
+                </form>
+            }
+        }
+    </div>
+
+    @if (Model.Letters.Any())
+    {
+        <div class="data-table-wrap" style="margin-top: 16px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Letter</th><th>NWA</th><th>Issued</th><th>Method</th><th>Recipient</th><th>Response</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var l in Model.Letters)
+                    {
+                        <tr>
+                            <td>@(l.LetterType?.LetterName ?? "--")</td>
+                            <td>@(l.LetterType?.NWASection ?? "--")</td>
+                            <td>@(l.IssuedDate?.ToString("dd MMM yyyy") ?? "--")</td>
+                            <td>@(l.IssueMethod ?? "--")</td>
+                            <td>@(l.ServingOfficialName ?? "--")</td>
+                            <td>@(l.ResponseStatus ?? "Pending")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

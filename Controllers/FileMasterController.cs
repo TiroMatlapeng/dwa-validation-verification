@@ -138,6 +138,102 @@ public class FileMasterController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    private static readonly Dictionary<string, (string LetterName, string TargetState)> LetterActionMap = new()
+    {
+        ["IssueLetter1"] = ("Letter 1", "S35_Letter1Issued"),
+        ["IssueLetter2"] = ("Letter 2", "S35_Letter2Issued"),
+        ["IssueLetter3"] = ("Letter 3", "S35_Letter3Issued"),
+    };
+
+    private static readonly Dictionary<string, string> ResponseActionMap = new()
+    {
+        ["MarkLetter1Responded"] = "S35_Letter1Responded",
+        ["MarkLetter2Responded"] = "S35_Letter2Responded",
+        ["MarkELUConfirmed"]     = "S35_ELUConfirmed",
+        ["CloseCase"]            = "Closed",
+    };
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> IssueLetter(Guid id, string letterAction, string recipient, string deliveryMethod, DateTime issuedDate)
+    {
+        if (!LetterActionMap.TryGetValue(letterAction, out var map))
+        {
+            TempData["WorkflowError"] = $"Unknown letter action '{letterAction}'.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var letterType = await _context.LetterTypes.SingleOrDefaultAsync(t => t.LetterName == map.LetterName);
+        if (letterType == null)
+        {
+            TempData["WorkflowError"] = $"Letter type '{map.LetterName}' not seeded.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        _context.LetterIssuances.Add(new LetterIssuance
+        {
+            LetterIssuanceId = Guid.NewGuid(),
+            FileMasterId = id,
+            LetterTypeId = letterType.LetterTypeId,
+            IssuedDate = DateOnly.FromDateTime(issuedDate),
+            IssueMethod = deliveryMethod,
+            ServingOfficialName = recipient,
+            ResponseStatus = "Pending",
+            DueDate = DateOnly.FromDateTime(issuedDate.AddDays(60)),
+        });
+        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _workflow.TransitionToAsync(id, map.TargetState, userId: null, notes: $"{map.LetterName} issued to {recipient}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["WorkflowError"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkLetterResponse(Guid id, string letterAction)
+    {
+        if (!ResponseActionMap.TryGetValue(letterAction, out var targetState))
+        {
+            TempData["WorkflowError"] = $"Unknown response action '{letterAction}'.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var fm = await _context.FileMasters
+            .Include(f => f.LetterIssuances)
+            .FirstOrDefaultAsync(f => f.FileMasterId == id);
+        if (fm == null) return NotFound();
+
+        var latestPending = fm.LetterIssuances
+            .Where(l => l.ResponseStatus == "Pending")
+            .OrderByDescending(l => l.IssuedDate)
+            .FirstOrDefault();
+        if (latestPending != null)
+        {
+            latestPending.ResponseDate = DateOnly.FromDateTime(DateTime.Today);
+            latestPending.ResponseStatus = "Agreed";
+            latestPending.AgreedWithFindings = true;
+        }
+        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _workflow.TransitionToAsync(id, targetState, userId: null, notes: $"State transitioned to {targetState}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["WorkflowError"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
     private async Task PopulateDropdownsAsync(FileMaster? fileMaster = null)
     {
         var properties = await _context.Properties
