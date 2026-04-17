@@ -13,6 +13,7 @@ builder.Services.AddScoped<IPropertyInterface, PropertyRepository>();
 builder.Services.AddScoped<IAddress, AddressRepository>();
 builder.Services.AddScoped<IFileMaster, FileMasterRepository>();
 builder.Services.AddScoped<IForestation, ForestationRepository>();
+builder.Services.AddScoped<IWorkflowService, WorkflowService>();
 
 // Services
 builder.Services.AddScoped<SeedDataService>();

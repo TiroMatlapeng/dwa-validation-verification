@@ -6,11 +6,13 @@ public class FileMasterController : Controller
 {
     private readonly IFileMaster _fileMasterRepository;
     private readonly ApplicationDBContext _context;
+    private readonly IWorkflowService _workflow;
 
-    public FileMasterController(IFileMaster fileMasterRepository, ApplicationDBContext context)
+    public FileMasterController(IFileMaster fileMasterRepository, ApplicationDBContext context, IWorkflowService workflow)
     {
         _fileMasterRepository = fileMasterRepository;
         _context = context;
+        _workflow = workflow;
     }
 
     // GET: FileMaster
@@ -36,8 +38,9 @@ public class FileMasterController : Controller
     {
         if (ModelState.IsValid)
         {
-            await _fileMasterRepository.AddAsync(fileMaster);
-            return RedirectToAction(nameof(Index));
+            var created = await _fileMasterRepository.AddAsync(fileMaster);
+            await _workflow.StartWorkflowAsync(created.FileMasterId);
+            return RedirectToAction(nameof(Details), new { id = created.FileMasterId });
         }
 
         await PopulateDropdownsAsync();
