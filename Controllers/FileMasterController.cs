@@ -81,11 +81,41 @@ public class FileMasterController : Controller
     [HttpGet]
     public async Task<IActionResult> Details(Guid id)
     {
-        var fileMaster = await _fileMasterRepository.GetByIdAsync(id);
-        if (fileMaster == null)
-            return NotFound();
+        var fileMaster = await _fileMasterRepository.GetWithWorkflowAsync(id);
+        if (fileMaster == null) return NotFound();
 
-        return View(fileMaster);
+        var vm = new FileMasterDetailsViewModel { FileMaster = fileMaster };
+
+        if (fileMaster.WorkflowInstanceId.HasValue)
+        {
+            vm.WorkflowInstance = await _context.WorkflowInstances
+                .Include(w => w.CurrentWorkflowState)
+                .FirstOrDefaultAsync(w => w.WorkflowInstanceId == fileMaster.WorkflowInstanceId);
+
+            vm.History = await _workflow.GetHistoryAsync(fileMaster.WorkflowInstanceId.Value) is IReadOnlyList<WorkflowStepRecord> list
+                ? list.ToList()
+                : new List<WorkflowStepRecord>();
+        }
+
+        vm.AllStates = await _context.WorkflowStates.OrderBy(s => s.DisplayOrder).ToListAsync();
+        vm.Letters = fileMaster.LetterIssuances.OrderBy(l => l.IssuedDate).ToList();
+
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdvanceWorkflow(Guid id, string? notes)
+    {
+        try
+        {
+            await _workflow.AdvanceAsync(id, userId: null, notes: notes);
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["WorkflowError"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     // GET: FileMaster/Delete/{id}
