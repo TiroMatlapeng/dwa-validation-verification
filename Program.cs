@@ -20,9 +20,12 @@ builder.Services.AddScoped<SeedDataService>();
 
 var app = builder.Build();
 
-// Seed reference data on startup
+// Apply EF Core migrations and seed reference data on startup
 using (var scope = app.Services.CreateScope())
 {
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+    await db.Database.MigrateAsync();
+
     var seeder = scope.ServiceProvider.GetRequiredService<SeedDataService>();
     await seeder.SeedAsync();
 }
