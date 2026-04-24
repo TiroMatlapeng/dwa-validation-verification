@@ -33,3 +33,6 @@ logs/
 appsettings.Local.json
 appsettings.Production.json
 secrets.json
+
+# Git worktrees
+.worktrees/
