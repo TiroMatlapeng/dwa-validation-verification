@@ -96,6 +96,30 @@
 
 ---
 
+### 2026-04-24 15:20 — dotnet-architect — Phase 3 complete
+
+- **Read:** Phase 0 + 1 + 2 journal entries; Plan 1 Phase 3 (Tasks 3.1–3.3) as supplied inline; `docs/contracts/auth-claims.md`; `contracts/fixtures/auth/claims.json`; `Models/ApplicationUser.cs`, `Models/OrganisationalUnit.cs`, `Models/Province.cs`, `Models/WaterManagementArea.cs`; current `Program.cs`; Tests/dwa_ver_val.Tests.csproj; agents-in-concert SKILL.md Rules 2, 3, 6; cross-boundary-contracts SKILL.md Rule 2 (fixture-driven tests).
+- **Changed:**
+  - `Tests/Services/Auth/DwsClaimsTransformationTests.cs` — new; two fixture-asserted tests (fixture round-trip for Limpopo Validator + idempotency re-call). Plan's seed snippet adjusted to populate required `Province.ProvinceCode` ("LP") and `WaterManagementArea.WmaCode` ("LIM") — without these the test project fails to compile because both are declared with C# `required` modifier.
+  - `Services/Auth/DwsClaimsTransformation.cs` — new; `IClaimsTransformation` producer. Verbatim from plan. Uses `dws:augmented` sentinel claim for idempotency; projects user + org-unit fields via `.AsNoTracking()` single-round-trip query.
+  - `Services/Auth/DwsRoles.cs` — new; 6 role constants + 7 hierarchy arrays (`All`, `AtLeastReadOnly`, `AtLeastCapturer`, `AtLeastValidator`, `AtLeastRegionalManager`, `AtLeastNationalManager`, `AdminOnly`). Verbatim.
+  - `Services/Auth/DwsPolicies.cs` — new; 6 policy names + `Configure(AuthorizationOptions)` registration. Verbatim.
+  - `Program.cs:54,58,71,72` — commented out 3 forward refs with `// TODO(Phase 4):` / `// TODO(Phase 5):` prefixes: `IScopedCaseQuery, ScopedCaseQuery` (Phase 4), `IdentitySeeder` DI registration and startup `SeedAsync()` invocation (Phase 5). Restores a green `dotnet build`.
+- **Learned:**
+  - Plan's seed snippet was missing the required `ProvinceCode` / `WmaCode` values — their `required` modifier on the models is enforced by the C# compiler at object-initialiser time, not by EF Core. Caught before first commit by grepping the model files.
+  - Fixture path `Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "contracts", "fixtures", "auth", "claims.json")` resolves correctly. 4 `..` segments walk `bin/Debug/net10.0 → bin/Debug → bin → Tests → worktree-root`, then descend into `contracts/fixtures/auth/`. `Path.GetFullPath` flattens the traversal; no need to log for debugging — the test passed on first run.
+  - The `_db.Users` query's projection materialises the `OrgUnit` nav into an anonymous record via `Select` — `AsNoTracking` has no effect on projection queries (they're never tracked), but keeping it is fine and idiomatic. EF translates the null-guard `u.OrgUnit == null ? null : new { ... }` into a `LEFT JOIN` + null-propagated select; works identically on the InMemory provider.
+  - The `dws:augmented` sentinel pattern is cheap and correct: `identity.HasClaim(c => c.Type == Marker)` short-circuits on re-entry before any DB round-trip. Idempotency test verifies no duplicate `displayName` claim after second `TransformAsync` call.
+  - Build warnings carried from Phase 0–2 baseline: CS8618 × 2 (`Models/Entitlement.cs:11`, `Models/Irrigation.cs:20`) plus ASP0026 × 1 (`Controllers/AccountController.cs:66`, from Phase 2's `[Authorize]` on `Logout` inside an `[AllowAnonymous]` controller — pre-existing). One new xUnit2031 warning on `DwsClaimsTransformationTests.cs:118` for `Assert.Single(...Where(...))` — verbatim from plan; non-blocking; Phase-next agent may switch to `Assert.Single(claims, predicate)` overload if they care.
+  - `dotnet test` after bridge commit: **45 tests pass, 0 failures** (43 existing + 2 new). `Build succeeded. 0 Error(s).`
+- **Status:** DONE
+- **Concerns:**
+  - Pre-existing shadow FK `OrganisationalUnitOrgUnitId` on `AspNetUsers` (flagged in Phase 1) is NOT touched — it doesn't affect the producer's projection because the projection goes through the navigational `u.OrgUnit` property (which uses the proper `OrgUnitId` FK), not the shadow column. Leave for a dedicated migration cleanup later.
+  - Phase 4 agent: when you restore `IScopedCaseQuery` registration on line 54, note that the `DwsClaimsTransformation` already emits empty-string sentinels for `provinceId`/`wmaId`/`catchmentId` — your scope filter should treat empty string (not null/missing) as the "unscoped" branch, per the contract.
+  - Phase 5 agent: the two commented lines at 71–72 must be restored TOGETHER (registration-free `GetRequiredService<IdentitySeeder>()` will throw). The existing `SeedDataService` registration on line 57 is untouched.
+
+---
+
 ## Retro (fill in on task completion)
 
 - **Converged:** <what landed cleanly>
