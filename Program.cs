@@ -2,6 +2,10 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Infrastructure;
+
+// QuestPDF licence — Community for the demo build. See docs/superpowers/specs/2026-04-24-mvp-hardening-design.md §4.
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,6 +65,17 @@ builder.Services.AddScoped<dwa_ver_val.Services.Workflow.ITransitionGuard, dwa_v
 builder.Services.AddScoped<dwa_ver_val.Services.Workflow.ITransitionGuard, dwa_ver_val.Services.Workflow.Guards.Cp5MapbookPresentGuard>();
 builder.Services.AddScoped<dwa_ver_val.Services.Workflow.ITransitionGuard, dwa_ver_val.Services.Workflow.Guards.Cp8DamOrNAGuard>();
 builder.Services.AddScoped<dwa_ver_val.Services.Workflow.ITransitionGuard, dwa_ver_val.Services.Workflow.Guards.Cp9SfraOrNAGuard>();
+
+// Letter generation (Plan 4)
+builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S35Letter1Template>();
+builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S35Letter3Template>();
+builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S33_2DeclarationTemplate>();
+builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplateRegistry, dwa_ver_val.Services.Letters.LetterTemplateRegistry>();
+builder.Services.AddSingleton<dwa_ver_val.Services.Letters.IPdfRenderer, dwa_ver_val.Services.Letters.QuestPdfRenderer>();
+builder.Services.AddSingleton<dwa_ver_val.Services.Letters.IBlobStore>(sp =>
+    new dwa_ver_val.Services.Letters.FileSystemBlobStore(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "_uploads")));
+builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterService, dwa_ver_val.Services.Letters.LetterService>();
 
 // Seeders
 builder.Services.AddScoped<SeedDataService>();
