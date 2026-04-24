@@ -174,6 +174,7 @@ public class FileMasterController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanIssueLetter)]
     public async Task<IActionResult> IssueLetter(Guid id, string letterAction, string recipient, string deliveryMethod, DateTime issuedDate)
     {
         if (!LetterActionMap.TryGetValue(letterAction, out var map))
@@ -216,6 +217,7 @@ public class FileMasterController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanIssueLetter)]
     public async Task<IActionResult> MarkLetterResponse(Guid id, string letterAction)
     {
         if (!ResponseActionMap.TryGetValue(letterAction, out var targetState))
