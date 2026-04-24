@@ -143,6 +143,24 @@
   - `IScopedCaseQuery` is currently consumed only by `FileMasterController.Index`. Other read paths (`Details` via `_fileMasterRepository.GetWithWorkflowAsync`, PDF/letter surfaces in future phases) bypass the filter. Phase 5+ agents should either route all reads through `_scope` or add defence-in-depth inside the repository.
   - Pre-existing shadow FK `OrganisationalUnitOrgUnitId` on `AspNetUsers` (flagged in Phases 1–3) still untouched — correct per plan's "out of scope" list.
 
+### 2026-04-24 16:10 — controller (inline) — Phases 6 + 7 complete
+
+- **Read:** Plan Phases 6 + 7. Phase 2 code-review note about `CookieSecurePolicy.Always` blocking HTTP test clients.
+- **Changed:**
+  - `ViewModels/Admin/{UserListItemViewModel,CreateUserViewModel,EditUserViewModel,ResetPasswordViewModel}.cs` — 4 new VMs.
+  - `Controllers/Admin/UsersController.cs` — CRUD + ResetPassword + Deactivate/Reactivate, all gated by `DwsPolicies.CanAdminister`. Index loads user→role mapping via a single `IdentityUserRole join Roles` query instead of N+1 `GetRolesAsync`.
+  - `Views/Users/{Index,Create,Edit,ResetPassword}.cshtml` — 4 new Razor views using `dws-*` class convention (styles land in Plan 2's re-skin).
+  - `Tests/Integration/IdentityFlowTests.cs` — 3 `WebApplicationFactory<Program>`-based integration tests: anonymous access to public pages, redirect-to-login for protected pages, ReadOnly user denied at /Admin/Users/Index with redirect to /Account/AccessDenied.
+- **Learned:**
+  - `CookieSecurePolicy.Always` had to be overridden to `SameAsRequest` in the test harness — the default `WebApplicationFactory` test client uses HTTP and would otherwise drop the auth cookie. Production config stays Always (defence in depth).
+  - Antiforgery token extraction from HTML needs to search by `name="__RequestVerificationToken"` first then find the nearest `value="…"` attribute — Razor's attribute ordering is not guaranteed to be `name` before `value`.
+  - Test count: 51 → 55 (+4: 2 theory cases for PublicPage_IsReachableAnonymously plus 2 discrete tests).
+  - `[Route("Admin/[controller]/[action]")]` on `UsersController` routes URLs to `/Admin/Users/…` while view lookup still resolves to `Views/Users/` (Razor uses controller class name, not route template).
+- **Status:** DONE
+- **Concerns:**
+  - Integration tests depend on the live SQL Server + seeded demo users. In a CI environment without Docker, the tests will fail on DB connection. Plan 1 considered an InMemory override recipe for this — not wired up in this iteration; flag for when CI is set up.
+  - `Views/Users/*` references `dws-*` classes that don't exist in CSS yet (Plan 2 scope). Views render without style — functional, ugly.
+
 ### 2026-04-24 15:30 — controller (inline) — Phase 5 complete
 
 - **Read:** Plan Phase 5 (tasks 5.1–5.2); Phase 3 journal bridge-commit (`TODO(Phase 5)` markers on Program.cs:58, 71-72).
@@ -177,9 +195,25 @@
 
 ---
 
-## Retro (fill in on task completion)
+## Retro (Plan 1 complete)
 
-- **Converged:** <what landed cleanly>
-- **Drifted:** <where agents disagreed or needed iteration>
-- **Failed prompt pattern:** <specific phrasing to avoid in future>
-- **Lesson worth promoting to agent memory?** <yes/no + which memory file to update>
+- **Converged:**
+  - Every subagent dispatch's first action (environmental confirmation line) caught zero environment drift — no-one edited the main `demo/azure-deploy` checkout instead of the worktree.
+  - The claims contract at `docs/contracts/auth-claims.md` + `contracts/fixtures/auth/claims.json` worked as designed: Phase 3's producer was asserted against the fixture, Phase 4's consumer implicitly honoured the same shape. The fixture IS the contract — no verbal specification drift.
+  - TDD RED → GREEN cycles in Phases 3 and 4 produced cleanly passing tests on first implementation attempt, indicating the plan's test code was sufficiently specific to drive correct implementation.
+  - Plan-splitting (one plan per independently deployable slice) paid off when Phase 4 needed an emergency security fix (IDOR addendum) — no other phases were blocked.
+
+- **Drifted:**
+  - Phase 3 required a plan-drift correction: `Province.ProvinceCode` and `WmaCode` are `required` but the plan's test code omitted them. Subagent correctly added placeholder values. Plan author (me) should grep for `required` modifiers on referenced models before pasting test snippets.
+  - Phase 4's initial pass missed scope enforcement on case-level actions (Edit/Delete/Details/AdvanceWorkflow/letter actions). Code-quality reviewer caught it; inline addendum fixed it in 4 files, +4 tests. **Lesson:** when introducing a scope filter, the implementation spec should be explicit about WHICH actions it guards, not just the list query.
+  - Phase 5's integration-test section of the plan used `YourStrong@Passw0rd` in a `sqlcmd` example — actual dev password is `YourStrong!Passw0rd`. Low-impact plan drift.
+  - Rate limit on the final background agent dispatch (attempt to close IDOR) forced inline completion. Agents-in-concert protocol is robust to this — the briefing packet + plan text + verification criteria made inline execution exactly as disciplined as a fresh dispatch would have been.
+
+- **Failed prompt patterns:**
+  - "Plan says X but you may need to adjust for Y" — vague hedge in briefing packets. Better to state the exact adjustment needed (the Phase 3 brief correctly pre-called the `ProvinceCode`/`WmaCode` gap; the Phase 4 brief correctly pre-called the `FileMaster` 8-required-fields gap).
+  - In Phase 4 the plan described `AdvanceWorkflow` with "may not exist yet in this codebase" — wasted the subagent's energy confirming what a `grep` would have resolved at briefing time. Controllers should verify expected callsites before dispatching.
+
+- **Lessons worth promoting to agent memory:**
+  - **Yes:** feedback memory — "when a spec or plan pastes test code that `new`s up a model, grep the model for `required` modifiers and include them in the paste; subagents will otherwise hit a `CS9035` and lose time."
+  - **Yes:** feedback memory — "when a plan introduces an authorisation scope filter (`IScopedCaseQuery`-style), explicitly list EVERY controller action that should be guarded, not just the list action. Code review will catch missed ones, but prevention beats review."
+  - Save both under `feedback_plan_authoring.md`.
