@@ -232,7 +232,57 @@ Migration applied in CI on deploy via the existing `Database.MigrateAsync()` cal
 
 ---
 
-## 9. Success criteria
+## 9. Execution discipline
+
+Implementation follows two binding skills in addition to the standard plan → subagent-driven-development flow.
+
+### agents-in-concert (mandatory for every multi-agent dispatch)
+
+- **Shared task journal:** `docs/superpowers/tasks/2026-04-24-mvp-hardening/journal.md`, seeded from `~/.claude/skills/agents-in-concert/journal-template.md`. Every dispatched agent reads the full journal before acting and appends one terse entry afterwards.
+- **Briefing packet:** every `Agent` dispatch begins with the verbatim packet (task, environmental contract, plan + spec paths, acceptance criteria, journal path, the agent's slice, out-of-scope list). No summaries, no "figure out what's in the repo" prompts.
+- **Environmental confirmation:** every agent's first response line reports its branch + CWD + file list. Mismatch → `NEEDS_CONTEXT`, STOP.
+- **Structured status:** agents return exactly one of `DONE` / `DONE_WITH_CONCERNS` / `NEEDS_CONTEXT` / `BLOCKED`. Controller never ignores a non-DONE status.
+- **Verified handoff:** before briefing agent B with A's work, the controller runs `git diff` and the tests A claims pass. Mismatch is an unfinished task.
+- **Parallel only when truly independent:** controller must be able to state in one sentence why two parallel slices don't overlap. Default to serial.
+- **Two-sided verdict on cross-boundary work:** when a slice touches both a boundary producer and a consumer (see section below), dispatch a specialist per side, collect independent verdicts, reconcile before proceeding.
+- **Post-concert retro:** one paragraph at the bottom of the journal covering what converged, what drifted, which prompt patterns failed.
+
+### Specialist agent mapping
+
+| Slice | Primary agent | Reviewer / co-specialist |
+|---|---|---|
+| Identity + claims pipeline + policies | `security-architect` | `dotnet-architect` |
+| Role + org-unit seeding + user admin UI | `dotnet-architect` | `razor-frontend-specialist` |
+| EF migration + `Cp1Progress` / `AuditLog` / `LetterIssuance` schema | `sqlserver-ef-architect` | `dotnet-architect` |
+| Workflow guards + `ITransitionGuard` + track branching | `dotnet-architect` | `superpowers:code-reviewer` |
+| `AuditService` + audit wiring | `dotnet-architect` | `security-architect` |
+| `LetterService` + QuestPDF templates + `IBlobStore` | `dotnet-architect` | `sqlserver-ef-architect` on storage |
+| UI re-skin (layout, `dws.css`, component classes) | `razor-frontend-specialist` | `dotnet-architect` on Razor integration |
+| `[Display]` label sweep + view label switch | `razor-frontend-specialist` | — |
+| Integration tests + xUnit additions | `dotnet-architect` | `superpowers:code-reviewer` |
+
+### cross-boundary-contracts (applicable to three internal seams)
+
+ASP.NET MVC monolith — most shapes don't cross service boundaries, so full fixture-driven contracts apply only where drift would be invisible. Three seams qualify:
+
+- **Claims contract** (`docs/contracts/auth-claims.md` + `contracts/fixtures/auth/claims.json`):
+  - Producer: `IClaimsTransformation` implementation.
+  - Consumers: every `Authorization` policy handler, every controller `[Authorize(Policy = ...)]`, `IScopedCaseQuery`.
+  - Fixture: canonical claim set for a `Validator` scoped to Limpopo WMA, asserted against in both the producer's unit test and the policy-evaluation integration tests.
+- **`LetterContext` shape** (`docs/contracts/letter-context.md` + `contracts/fixtures/letters/letter-context.json`):
+  - Producer: `LetterService.BuildContext(...)`.
+  - Consumers: all ten `ILetterTemplate` implementations.
+  - Each template's unit test loads the fixture and asserts its rendered PDF contains the expected fields from that context.
+- **`AuditEvent` shape** (`docs/contracts/audit-event.md` + `contracts/fixtures/audit/audit-event.json`):
+  - Producer: `AuditService.LogAsync(...)`.
+  - Consumers today: Audit tab reader. Consumers later: eWULAAS outbound stream.
+  - Fixture locks the field set so a future rename doesn't silently break the consumer projection.
+
+For each: doc and fixture are written **before** producer or consumer code. Two-agent review (per agents-in-concert Rule 7) approves the doc + fixture diff before any implementation. `docs/contracts/CHANGELOG.md` gets a one-liner when the change ships.
+
+Internal types that never leave a single controller-service-repository chain do **not** require contracts — the skill explicitly excludes them.
+
+## 10. Success criteria
 
 - A SystemAdmin can sign in, create other staff users with roles and org units, and those users can sign in.
 - A Validator in Limpopo WMA sees only Limpopo cases in the FileMaster list; a NationalManager sees all cases.
