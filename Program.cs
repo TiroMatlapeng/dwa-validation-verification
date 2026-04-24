@@ -51,7 +51,7 @@ builder.Services.AddScoped<IAddress, AddressRepository>();
 builder.Services.AddScoped<IFileMaster, FileMasterRepository>();
 builder.Services.AddScoped<IForestation, ForestationRepository>();
 builder.Services.AddScoped<IWorkflowService, WorkflowService>();
-// TODO(Phase 4): builder.Services.AddScoped<IScopedCaseQuery, ScopedCaseQuery>();
+builder.Services.AddScoped<IScopedCaseQuery, ScopedCaseQuery>();
 
 // Seeders
 builder.Services.AddScoped<SeedDataService>();

@@ -1,30 +1,43 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
+[Authorize(Policy = DwsPolicies.CanRead)]
 public class FileMasterController : Controller
 {
     private readonly IFileMaster _fileMasterRepository;
     private readonly ApplicationDBContext _context;
     private readonly IWorkflowService _workflow;
+    private readonly IScopedCaseQuery _scope;
 
-    public FileMasterController(IFileMaster fileMasterRepository, ApplicationDBContext context, IWorkflowService workflow)
+    public FileMasterController(
+        IFileMaster fileMasterRepository,
+        ApplicationDBContext context,
+        IWorkflowService workflow,
+        IScopedCaseQuery scope)
     {
         _fileMasterRepository = fileMasterRepository;
         _context = context;
         _workflow = workflow;
+        _scope = scope;
     }
 
     // GET: FileMaster
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var fileMasters = await _fileMasterRepository.ListAllAsync();
+        var query = _scope.FilterFileMasters(_context.FileMasters.AsQueryable(), User);
+        var fileMasters = await query
+            .Include(fm => fm.Property)
+            .OrderBy(fm => fm.FileNumber)
+            .ToListAsync();
         return View(fileMasters);
     }
 
     // GET: FileMaster/Create
     [HttpGet]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Create()
     {
         await PopulateDropdownsAsync();
@@ -34,6 +47,7 @@ public class FileMasterController : Controller
     // POST: FileMaster/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Create(FileMaster fileMaster)
     {
         if (ModelState.IsValid)
@@ -49,6 +63,7 @@ public class FileMasterController : Controller
 
     // GET: FileMaster/Edit/{id}
     [HttpGet]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Edit(Guid id)
     {
         var fileMaster = await _fileMasterRepository.GetByIdAsync(id);
@@ -62,6 +77,7 @@ public class FileMasterController : Controller
     // POST: FileMaster/Edit/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Edit(Guid id, FileMaster fileMaster)
     {
         if (id != fileMaster.FileMasterId)
@@ -105,6 +121,7 @@ public class FileMasterController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanTransitionWorkflow)]
     public async Task<IActionResult> AdvanceWorkflow(Guid id, string? notes)
     {
         try
@@ -120,6 +137,7 @@ public class FileMasterController : Controller
 
     // GET: FileMaster/Delete/{id}
     [HttpGet]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var fileMaster = await _fileMasterRepository.GetByIdAsync(id);
@@ -132,6 +150,7 @@ public class FileMasterController : Controller
     // POST: FileMaster/Delete/{id}
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> DeleteConfirmed(Guid id)
     {
         await _fileMasterRepository.DeleteAsync(id);
