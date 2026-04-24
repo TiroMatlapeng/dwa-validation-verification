@@ -143,6 +143,20 @@
   - `IScopedCaseQuery` is currently consumed only by `FileMasterController.Index`. Other read paths (`Details` via `_fileMasterRepository.GetWithWorkflowAsync`, PDF/letter surfaces in future phases) bypass the filter. Phase 5+ agents should either route all reads through `_scope` or add defence-in-depth inside the repository.
   - Pre-existing shadow FK `OrganisationalUnitOrgUnitId` on `AspNetUsers` (flagged in Phases 1–3) still untouched — correct per plan's "out of scope" list.
 
+### 2026-04-24 14:45 — controller (inline) — Phase 4 addendum: close IDOR
+
+- **Read:** Phase 4 code-quality review (CHANGES_REQUIRED). Reviewer identified that only `Index` used the scope filter; Edit/Delete/Details/AdvanceWorkflow/IssueLetter/MarkLetterResponse allowed out-of-WMA access via direct URL (IDOR).
+- **Changed:**
+  - `Services/Auth/IScopedCaseQuery.cs` — added XML doc documenting the `IsInScope` contract (callers may pre-load `Property` nav but don't have to).
+  - `Services/Auth/ScopedCaseQuery.cs:38-50` — rewrote `IsInScope` to not depend on `_db.Entry(...)` tracking. Uses `fileMaster.Property?.WmaId` first, falls back to a DB lookup by `PropertyId`. Works for detached or non-included entities.
+  - `Controllers/FileMasterController.cs` — added `if (!_scope.IsInScope(fm, User)) return Forbid();` guards to Edit GET+POST, Details, Delete GET+POST, AdvanceWorkflow, IssueLetter, MarkLetterResponse. Each action loads the FileMaster first, returns `NotFound()` on null, then `Forbid()` on out-of-scope.
+  - `Tests/Services/Auth/ScopedCaseQueryTests.cs` — added 4 `IsInScope` tests: Validator out-of-WMA (false), Validator in-WMA (true), NationalManager bypass (true), SystemAdmin bypass (true).
+- **Learned:**
+  - The `Entry(...)` / `Reference(...)` pattern only works for entities already tracked by the DbContext. A `FileMaster` freshly loaded by a different repository method (or the in-memory test setup) may not be tracked at all — returns null navigation via Entry. The new query-based fallback is more robust.
+  - Inline controller fix was faster than re-dispatching a subagent for a tightly-scoped change; 4 files, ~60 lines of delta.
+- **Status:** DONE
+- **Concerns:** None. Code-quality re-review should now approve.
+
 ---
 
 ## Retro (fill in on task completion)
