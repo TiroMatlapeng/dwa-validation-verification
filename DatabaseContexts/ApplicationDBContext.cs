@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-public class ApplicationDBContext : DbContext
+public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
     public ApplicationDBContext(DbContextOptions<ApplicationDBContext> dbContextOption) : base(dbContextOption)
-    {}
+    { }
 
     // ── Core domain ──
     public DbSet<Property> Properties { get; set; }
@@ -54,9 +56,6 @@ public class ApplicationDBContext : DbContext
     public DbSet<CatchmentArea> CatchmentAreas { get; set; }
     public DbSet<OrganisationalUnit> OrganisationalUnits { get; set; }
 
-    // ── Users ──
-    public DbSet<ApplicationUser> ApplicationUsers { get; set; }
-
     // ── Workflow ──
     public DbSet<WorkflowState> WorkflowStates { get; set; }
     public DbSet<WorkflowInstance> WorkflowInstances { get; set; }
@@ -84,6 +83,8 @@ public class ApplicationDBContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         // ── Primary keys ──
         modelBuilder.Entity<Property>().HasKey(e => e.PropertyId);
         modelBuilder.Entity<FileMaster>().HasKey(e => e.FileMasterId);
@@ -124,8 +125,6 @@ public class ApplicationDBContext : DbContext
         modelBuilder.Entity<WaterManagementArea>().HasKey(e => e.WmaId);
         modelBuilder.Entity<CatchmentArea>().HasKey(e => e.CatchmentAreaId);
         modelBuilder.Entity<OrganisationalUnit>().HasKey(e => e.OrgUnitId);
-
-        modelBuilder.Entity<ApplicationUser>().HasKey(e => e.ApplicationUserId);
 
         modelBuilder.Entity<WorkflowState>().HasKey(e => e.WorkflowStateId);
         modelBuilder.Entity<WorkflowInstance>().HasKey(e => e.WorkflowInstanceId);

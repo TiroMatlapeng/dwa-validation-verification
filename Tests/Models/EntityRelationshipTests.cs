@@ -56,7 +56,7 @@ public class EntityRelationshipTests
 
         var validator = new ApplicationUser
         {
-            ApplicationUserId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             FirstName = "Jane",
             LastName = "Validator",
             EmployeeNumber = "EMP001",
@@ -64,13 +64,13 @@ public class EntityRelationshipTests
         };
         var capturer = new ApplicationUser
         {
-            ApplicationUserId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             FirstName = "John",
             LastName = "Capturer",
             EmployeeNumber = "EMP002",
             OrgUnitId = orgUnit.OrgUnitId
         };
-        context.ApplicationUsers.AddRange(validator, capturer);
+        context.Users.AddRange(validator, capturer);
 
         var property = new Property { PropertyId = Guid.NewGuid(), PropertySize = 100m };
         context.Properties.Add(property);
@@ -87,8 +87,8 @@ public class EntityRelationshipTests
             FarmNumber = 124,
             RegistrationDivision = "LR",
             FarmPortion = "0",
-            ValidatorId = validator.ApplicationUserId,
-            CapturePersonId = capturer.ApplicationUserId,
+            ValidatorId = validator.Id,
+            CapturePersonId = capturer.Id,
             OrgUnitId = orgUnit.OrgUnitId
         };
         context.FileMasters.Add(fileMaster);

@@ -245,11 +245,11 @@ public class FileMasterController : Controller
             await _context.OrganisationalUnits.OrderBy(o => o.Name).ToListAsync(),
             "OrgUnitId", "Name", fileMaster?.OrgUnitId);
 
-        var users = await _context.ApplicationUsers
-            .Select(u => new { u.ApplicationUserId, Display = u.FirstName + " " + u.LastName })
+        var users = await _context.Users
+            .Select(u => new { u.Id, Display = u.FirstName + " " + u.LastName })
             .ToListAsync();
-        ViewBag.Validators = new SelectList(users, "ApplicationUserId", "Display", fileMaster?.ValidatorId);
-        ViewBag.CapturePersons = new SelectList(users, "ApplicationUserId", "Display", fileMaster?.CapturePersonId);
+        ViewBag.Validators = new SelectList(users, "Id", "Display", fileMaster?.ValidatorId);
+        ViewBag.CapturePersons = new SelectList(users, "Id", "Display", fileMaster?.CapturePersonId);
 
         ViewBag.CatchmentAreas = new SelectList(
             await _context.CatchmentAreas.OrderBy(c => c.CatchmentCode).ToListAsync(),
