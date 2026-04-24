@@ -55,7 +55,7 @@ builder.Services.AddScoped<IScopedCaseQuery, ScopedCaseQuery>();
 
 // Seeders
 builder.Services.AddScoped<SeedDataService>();
-// TODO(Phase 5): builder.Services.AddScoped<IdentitySeeder>();
+builder.Services.AddScoped<IdentitySeeder>();
 
 var app = builder.Build();
 
@@ -68,8 +68,8 @@ using (var scope = app.Services.CreateScope())
     var refSeeder = scope.ServiceProvider.GetRequiredService<SeedDataService>();
     await refSeeder.SeedAsync();
 
-    // TODO(Phase 5): var identitySeeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
-    // TODO(Phase 5): await identitySeeder.SeedAsync();
+    var identitySeeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
+    await identitySeeder.SeedAsync();
 }
 
 // Pipeline
