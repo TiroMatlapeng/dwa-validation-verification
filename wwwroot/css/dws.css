@@ -1,0 +1,265 @@
+/* DWS V&V System — brand tokens and shared component classes.
+   Palette extracted from docs/wireframes/modern-internal-wireframes.html.
+   Loaded after site.css so these tokens take precedence.
+*/
+
+:root {
+    /* Brand palette */
+    --dws-navy-900: #001a3a;
+    --dws-navy-800: #002855;
+    --dws-navy-700: #003d7a;
+    --dws-blue-600: #0066b3;
+    --dws-blue-400: #4a9fd4;
+    --dws-blue-300: #7db8e0;
+    --dws-blue-100: #b3d9f2;
+
+    --dws-teal-600: #00838f;
+    --dws-teal-400: #4db6ac;
+
+    --dws-green-700: #2e7d32;
+    --dws-green-400: #66bb6a;
+    --dws-green-100: #a5d6a7;
+
+    --dws-amber-700: #8a6d00;
+    --dws-amber-500: #c49000;
+    --dws-red-700:   #c62828;
+
+    --dws-neutral-900: #1a1f2b;
+    --dws-neutral-700: #555d6e;
+    --dws-neutral-500: #8892a0;
+    --dws-neutral-300: #d0d5db;
+    --dws-neutral-100: #f2f4f7;
+    --dws-white:       #ffffff;
+
+    /* Semantic tokens */
+    --dws-bg:             var(--dws-neutral-100);
+    --dws-surface:        var(--dws-white);
+    --dws-border:         var(--dws-neutral-300);
+    --dws-text:           var(--dws-neutral-900);
+    --dws-text-muted:     var(--dws-neutral-700);
+    --dws-link:           var(--dws-blue-600);
+    --dws-primary:        var(--dws-navy-800);
+    --dws-primary-hover:  var(--dws-navy-900);
+    --dws-accent:         var(--dws-blue-600);
+    --dws-success:        var(--dws-green-700);
+    --dws-success-bg:     var(--dws-green-100);
+    --dws-warning:        var(--dws-amber-700);
+    --dws-warning-bg:     #fff3d4;
+    --dws-danger:         var(--dws-red-700);
+
+    /* Type scale */
+    --dws-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --dws-fs-xs:  12px;
+    --dws-fs-sm:  13px;
+    --dws-fs-md:  14px;
+    --dws-fs-lg:  16px;
+    --dws-fs-xl:  20px;
+    --dws-fs-h1:  26px;
+    --dws-fs-h2:  20px;
+
+    /* Spacing */
+    --dws-space-1: 4px;
+    --dws-space-2: 8px;
+    --dws-space-3: 12px;
+    --dws-space-4: 16px;
+    --dws-space-5: 24px;
+    --dws-space-6: 32px;
+
+    /* Radii */
+    --dws-radius-sm: 3px;
+    --dws-radius-md: 6px;
+    --dws-radius-lg: 10px;
+
+    --dws-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+    --dws-shadow-md: 0 4px 12px rgba(0, 26, 58, 0.08);
+}
+
+/* Page header: title + optional action buttons on the right */
+.dws-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--dws-space-4);
+    margin-bottom: var(--dws-space-5);
+    padding-bottom: var(--dws-space-3);
+    border-bottom: 1px solid var(--dws-border);
+}
+.dws-page-header h1 {
+    font-size: var(--dws-fs-h1);
+    color: var(--dws-primary);
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Card container */
+.dws-card {
+    background: var(--dws-surface);
+    border: 1px solid var(--dws-border);
+    border-radius: var(--dws-radius-md);
+    padding: var(--dws-space-5);
+    box-shadow: var(--dws-shadow-sm);
+}
+.dws-card--login {
+    max-width: 420px;
+    margin: 48px auto;
+}
+.dws-card h1 {
+    font-size: var(--dws-fs-xl);
+    color: var(--dws-primary);
+    margin: 0 0 var(--dws-space-4) 0;
+}
+
+/* Panel variant — compact card for side-content / dashboards */
+.dws-panel {
+    background: var(--dws-surface);
+    border: 1px solid var(--dws-border);
+    border-radius: var(--dws-radius-md);
+    padding: var(--dws-space-4);
+}
+
+/* Forms */
+.dws-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--dws-space-4);
+    max-width: 560px;
+}
+.dws-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--dws-space-1);
+}
+.dws-label {
+    font-size: var(--dws-fs-sm);
+    font-weight: 500;
+    color: var(--dws-text);
+}
+.dws-input,
+select.dws-input {
+    font-family: var(--dws-font-sans);
+    font-size: var(--dws-fs-md);
+    padding: 8px 10px;
+    border: 1px solid var(--dws-border);
+    border-radius: var(--dws-radius-sm);
+    background: var(--dws-surface);
+    color: var(--dws-text);
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.dws-input:focus,
+select.dws-input:focus {
+    outline: none;
+    border-color: var(--dws-accent);
+    box-shadow: 0 0 0 3px rgba(0, 102, 179, 0.2);
+}
+.dws-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--dws-space-2);
+    font-size: var(--dws-fs-md);
+    color: var(--dws-text);
+    cursor: pointer;
+}
+.dws-validation-summary {
+    background: #fde8e8;
+    border: 1px solid var(--dws-red-700);
+    color: var(--dws-red-700);
+    padding: var(--dws-space-3);
+    border-radius: var(--dws-radius-sm);
+    font-size: var(--dws-fs-sm);
+}
+.dws-validation-summary:empty { display: none; }
+.dws-validation-summary ul { margin: 0; padding-left: var(--dws-space-5); }
+.dws-field-error {
+    color: var(--dws-red-700);
+    font-size: var(--dws-fs-xs);
+}
+
+/* Tables */
+.dws-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--dws-surface);
+    border: 1px solid var(--dws-border);
+    border-radius: var(--dws-radius-md);
+    overflow: hidden;
+    font-size: var(--dws-fs-md);
+}
+.dws-table thead {
+    background: var(--dws-primary);
+    color: var(--dws-white);
+}
+.dws-table th,
+.dws-table td {
+    text-align: left;
+    padding: var(--dws-space-3) var(--dws-space-4);
+    border-bottom: 1px solid var(--dws-border);
+    vertical-align: middle;
+}
+.dws-table tbody tr:last-child td { border-bottom: none; }
+.dws-table tbody tr:hover { background: var(--dws-neutral-100); }
+
+/* Buttons */
+.dws-btn {
+    display: inline-block;
+    font-family: var(--dws-font-sans);
+    font-size: var(--dws-fs-md);
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: var(--dws-radius-sm);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+    line-height: 1.4;
+}
+.dws-btn-primary {
+    background: var(--dws-primary);
+    color: var(--dws-white);
+    border-color: var(--dws-primary);
+}
+.dws-btn-primary:hover { background: var(--dws-primary-hover); border-color: var(--dws-primary-hover); color: var(--dws-white); }
+.dws-btn-secondary {
+    background: var(--dws-accent);
+    color: var(--dws-white);
+    border-color: var(--dws-accent);
+}
+.dws-btn-secondary:hover { filter: brightness(1.05); }
+.dws-btn-ghost {
+    background: transparent;
+    color: var(--dws-primary);
+    border-color: var(--dws-border);
+}
+.dws-btn-ghost:hover { background: var(--dws-neutral-100); }
+.dws-btn-danger {
+    background: var(--dws-white);
+    color: var(--dws-red-700);
+    border-color: var(--dws-red-700);
+}
+.dws-btn-danger:hover { background: var(--dws-red-700); color: var(--dws-white); }
+
+/* Status pills */
+.dws-status-pill {
+    display: inline-block;
+    font-size: var(--dws-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 2px 10px;
+    border-radius: 999px;
+    line-height: 1.6;
+}
+.dws-status-pill--ok {
+    background: var(--dws-success-bg);
+    color: var(--dws-success);
+}
+.dws-status-pill--warning {
+    background: var(--dws-warning-bg);
+    color: var(--dws-warning);
+}
+
+/* Inline form used inside table cells for POST-only actions */
+.dws-inline-form {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
