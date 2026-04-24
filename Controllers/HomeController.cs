@@ -1,9 +1,11 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using dwa_ver_val.Models;
 
 namespace dwa_ver_val.Controllers;
 
+[Authorize(Policy = DwsPolicies.CanRead)]
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
@@ -18,11 +20,13 @@ public class HomeController : Controller
         return View();
     }
 
+    [AllowAnonymous]
     public IActionResult Privacy()
     {
         return View();
     }
 
+    [AllowAnonymous]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

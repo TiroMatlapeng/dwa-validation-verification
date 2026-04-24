@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
+[Authorize(Policy = DwsPolicies.CanRead)]
 public class PropertyController : Controller
 {
     private readonly ILogger<PropertyController> _logger;
@@ -28,6 +30,7 @@ public class PropertyController : Controller
 
     // GET: Property/Register
     [HttpGet]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Register()
     {
         ViewBag.WaterManagementAreas = new SelectList(
@@ -44,6 +47,7 @@ public class PropertyController : Controller
     // POST: Property/Register
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Register(Property property)
     {
         if (ModelState.IsValid)
@@ -65,6 +69,7 @@ public class PropertyController : Controller
 
     // GET: Property/Edit/{id}
     [HttpGet]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Edit(Guid id)
     {
         var property = await _propertyRepository.GetByIdAsync(id);
@@ -88,6 +93,7 @@ public class PropertyController : Controller
     // POST: Property/Edit/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Edit(Guid id, Property property)
     {
         if (id != property.PropertyId)
@@ -128,6 +134,7 @@ public class PropertyController : Controller
 
     // GET: Property/Delete/{id}
     [HttpGet]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var property = await _propertyRepository.GetByIdAsync(id);
@@ -143,6 +150,7 @@ public class PropertyController : Controller
     // POST: Property/Delete/{id}
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> DeleteConfirmed(Guid id)
     {
         var property = await _propertyRepository.DeleteAsync(id);
