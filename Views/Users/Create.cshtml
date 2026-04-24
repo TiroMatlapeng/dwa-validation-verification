@@ -1,0 +1,55 @@
+@model dwa_ver_val.ViewModels.Admin.CreateUserViewModel
+@{
+    ViewData["Title"] = "Add User";
+}
+
+<div class="dws-page-header">
+    <h1>Add User</h1>
+</div>
+
+<form asp-action="Create" method="post" class="dws-form">
+    <div asp-validation-summary="All" class="dws-validation-summary"></div>
+
+    <div class="dws-form-row">
+        <label asp-for="FirstName" class="dws-label"></label>
+        <input asp-for="FirstName" class="dws-input" />
+        <span asp-validation-for="FirstName" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="LastName" class="dws-label"></label>
+        <input asp-for="LastName" class="dws-input" />
+        <span asp-validation-for="LastName" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="Email" class="dws-label"></label>
+        <input asp-for="Email" class="dws-input" />
+        <span asp-validation-for="Email" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="EmployeeNumber" class="dws-label"></label>
+        <input asp-for="EmployeeNumber" class="dws-input" />
+        <span asp-validation-for="EmployeeNumber" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="Role" class="dws-label"></label>
+        <select asp-for="Role" class="dws-input" asp-items="@(new SelectList(Model.AvailableRoles))">
+            <option value="">-- select role --</option>
+        </select>
+        <span asp-validation-for="Role" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="OrgUnitId" class="dws-label"></label>
+        <select asp-for="OrgUnitId" class="dws-input"
+                asp-items="@(new SelectList(Model.AvailableOrgUnits, "Id", "Name"))">
+            <option value="">-- none (national scope) --</option>
+        </select>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="InitialPassword" class="dws-label"></label>
+        <input asp-for="InitialPassword" class="dws-input" type="password" />
+        <span asp-validation-for="InitialPassword" class="dws-field-error"></span>
+    </div>
+
+    <button type="submit" class="dws-btn dws-btn-primary">Create</button>
+    <a asp-action="Index" class="dws-btn dws-btn-ghost">Cancel</a>
+</form>

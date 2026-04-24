@@ -1,0 +1,52 @@
+@model dwa_ver_val.ViewModels.Admin.EditUserViewModel
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<div class="dws-page-header">
+    <h1>Edit User — @Model.Email</h1>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="dws-form">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="All" class="dws-validation-summary"></div>
+
+    <div class="dws-form-row">
+        <label asp-for="FirstName" class="dws-label"></label>
+        <input asp-for="FirstName" class="dws-input" />
+        <span asp-validation-for="FirstName" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="LastName" class="dws-label"></label>
+        <input asp-for="LastName" class="dws-input" />
+        <span asp-validation-for="LastName" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="EmployeeNumber" class="dws-label"></label>
+        <input asp-for="EmployeeNumber" class="dws-input" />
+        <span asp-validation-for="EmployeeNumber" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="Role" class="dws-label"></label>
+        <select asp-for="Role" class="dws-input" asp-items="@(new SelectList(Model.AvailableRoles))">
+            <option value="">-- select role --</option>
+        </select>
+        <span asp-validation-for="Role" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="OrgUnitId" class="dws-label"></label>
+        <select asp-for="OrgUnitId" class="dws-input"
+                asp-items="@(new SelectList(Model.AvailableOrgUnits, "Id", "Name"))">
+            <option value="">-- none (national scope) --</option>
+        </select>
+    </div>
+    <div class="dws-form-row">
+        <label class="dws-checkbox">
+            <input asp-for="IsActive" type="checkbox" />
+            @Html.DisplayNameFor(m => m.IsActive)
+        </label>
+    </div>
+
+    <button type="submit" class="dws-btn dws-btn-primary">Save</button>
+    <a asp-action="Index" class="dws-btn dws-btn-ghost">Cancel</a>
+</form>
