@@ -51,11 +51,11 @@ builder.Services.AddScoped<IAddress, AddressRepository>();
 builder.Services.AddScoped<IFileMaster, FileMasterRepository>();
 builder.Services.AddScoped<IForestation, ForestationRepository>();
 builder.Services.AddScoped<IWorkflowService, WorkflowService>();
-builder.Services.AddScoped<IScopedCaseQuery, ScopedCaseQuery>();
+// TODO(Phase 4): builder.Services.AddScoped<IScopedCaseQuery, ScopedCaseQuery>();
 
 // Seeders
 builder.Services.AddScoped<SeedDataService>();
-builder.Services.AddScoped<IdentitySeeder>();
+// TODO(Phase 5): builder.Services.AddScoped<IdentitySeeder>();
 
 var app = builder.Build();
 
@@ -68,8 +68,8 @@ using (var scope = app.Services.CreateScope())
     var refSeeder = scope.ServiceProvider.GetRequiredService<SeedDataService>();
     await refSeeder.SeedAsync();
 
-    var identitySeeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
-    await identitySeeder.SeedAsync();
+    // TODO(Phase 5): var identitySeeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
+    // TODO(Phase 5): await identitySeeder.SeedAsync();
 }
 
 // Pipeline
