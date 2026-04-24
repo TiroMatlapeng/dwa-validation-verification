@@ -143,6 +143,24 @@
   - `IScopedCaseQuery` is currently consumed only by `FileMasterController.Index`. Other read paths (`Details` via `_fileMasterRepository.GetWithWorkflowAsync`, PDF/letter surfaces in future phases) bypass the filter. Phase 5+ agents should either route all reads through `_scope` or add defence-in-depth inside the repository.
   - Pre-existing shadow FK `OrganisationalUnitOrgUnitId` on `AspNetUsers` (flagged in Phases 1–3) still untouched — correct per plan's "out of scope" list.
 
+### 2026-04-24 15:30 — controller (inline) — Phase 5 complete
+
+- **Read:** Plan Phase 5 (tasks 5.1–5.2); Phase 3 journal bridge-commit (`TODO(Phase 5)` markers on Program.cs:58, 71-72).
+- **Changed:**
+  - `Services/IdentitySeeder.cs` — new. Seeds 6 DwsRoles idempotently; seeds one demo user per role (admin, national, regional-{wmaCode}, validator-{wmaCode}, capturer-{wmaCode}, readonly) into the first Regional OrgUnit's WMA. Skips if `Identity:InitialDemoPassword` is unset (production safety).
+  - `appsettings.Development.json` — added `Identity:InitialDemoPassword = "Demo@Pass2026"`.
+  - `Program.cs:58` — uncommented `AddScoped<IdentitySeeder>()` registration.
+  - `Program.cs:71-72` — uncommented the `GetRequiredService<IdentitySeeder>()` + `SeedAsync()` startup invocation.
+- **Learned:**
+  - Smoke: `dotnet run` → app listens on `http://localhost:5088`; `/Account/Login` returns HTTP 200 anonymously; 6 AspNetRoles + 6 AspNetUsers present in DB (verified via sqlcmd). No exceptions at startup.
+  - Email convention: the WMA code lower-cased suffixes the middle-tier emails (`regional-<code>@dwa.demo`, etc.). The seeded WMA code is `"3"` per `SeedDataService`, so emails are `regional-3@dwa.demo`, `validator-3@dwa.demo`, etc. Not as pretty as `regional-limpopo@dwa.demo` would have been, but predictable and stable.
+  - All `TODO(Phase 5)` markers removed — `grep -c "TODO(Phase" Program.cs` returns 0.
+  - 51 tests still green (47 from Phase 4 + 4 IsInScope). No new tests in this phase; Phase 7 adds integration tests.
+- **Status:** DONE
+- **Concerns:**
+  - `SeedDataService`'s Regional WMA has `WmaCode = "3"` — a digit rather than a descriptive code. Demo-only concern; production seed will carry the real WmaCode.
+  - Shadow FK `OrganisationalUnitOrgUnitId` on `AspNetUsers` visible in EF-generated SQL on every user lookup. Still deferred — Phase 6 or a later housekeeping commit should add explicit `.HasForeignKey(au => au.OrgUnitId)` in `OnModelCreating` to eliminate the shadow column.
+
 ### 2026-04-24 14:45 — controller (inline) — Phase 4 addendum: close IDOR
 
 - **Read:** Phase 4 code-quality review (CHANGES_REQUIRED). Reviewer identified that only `Index` used the scope filter; Edit/Delete/Details/AdvanceWorkflow/IssueLetter/MarkLetterResponse allowed out-of-WMA access via direct URL (IDOR).
