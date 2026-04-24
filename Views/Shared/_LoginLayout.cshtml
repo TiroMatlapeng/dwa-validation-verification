@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — DWA V&V System</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dws.css" asp-append-version="true" />
+    <style>
+        body { background: var(--dws-navy-900); margin: 0; font-family: var(--dws-font-sans); color: var(--dws-text); }
+        .login-shell { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--dws-space-4); }
+        .login-shell__brand { color: var(--dws-white); margin-bottom: var(--dws-space-5); text-align: center; }
+        .login-shell__brand h2 { margin: 0; font-size: var(--dws-fs-h2); font-weight: 500; letter-spacing: 0.02em; }
+        .login-shell__brand p { margin: 4px 0 0 0; font-size: var(--dws-fs-sm); color: var(--dws-blue-100); }
+    </style>
+</head>
+<body>
+    <div class="login-shell">
+        <div class="login-shell__brand">
+            <h2>Department of Water &amp; Sanitation</h2>
+            <p>Validation &amp; Verification System</p>
+        </div>
+        @RenderBody()
+    </div>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
