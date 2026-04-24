@@ -76,6 +76,26 @@
 
 ---
 
+### 2026-04-24 14:05 — dotnet-architect — Phase 2 complete
+
+- **Read:** Phase 0 + Phase 1 journal entries; Plan 1 Phase 2 (Tasks 2.1–2.3) as supplied inline; current `Program.cs`, `Views/_ViewImports.cshtml`, `ViewModels/FileMasterDetailsViewModel.cs`, `Controllers/HomeController.cs`.
+- **Changed:**
+  - `Program.cs` — replaced entirely with AddIdentity<ApplicationUser, IdentityRole<Guid>> + cookie auth (LoginPath/AccessDeniedPath, 8h sliding expiry, SameSite=Lax, SecurePolicy=Always), IClaimsTransformation → DwsClaimsTransformation, AddAuthorization(DwsPolicies.Configure), IScopedCaseQuery DI, IdentitySeeder DI + startup invocation, UseAuthentication before UseAuthorization; appended `public partial class Program { }` for WebApplicationFactory.
+  - `ViewModels/LoginViewModel.cs` — new; `namespace dwa_ver_val.ViewModels`; Email/Password/RememberMe/ReturnUrl with DataAnnotations.
+  - `Controllers/AccountController.cs` — new; `[AllowAnonymous]`; SignInManager/UserManager injection; GET+POST Login (checks `user.IsActive` before PasswordSignInAsync, lockoutOnFailure: true, Url.IsLocalUrl returnUrl guard); POST Logout `[Authorize]` + antiforgery; GET AccessDenied.
+  - `Views/Account/Login.cshtml` + `Views/Account/AccessDenied.cshtml` — new; use dws-card / dws-form-row / dws-btn primitives; Layout=_Layout.
+- **Learned:**
+  - `dotnet build` after Task 2.1 fails with **exactly** 6 error lines naming the 5 expected missing types (`DwsClaimsTransformation`, `DwsPolicies`, `IScopedCaseQuery`, `ScopedCaseQuery`, `IdentitySeeder` — the last referenced twice in Program.cs so appears on two lines). No other compile errors in the project — the plan's "intermediate red state" is clean as specified.
+  - Pre-existing CS8618 warnings on `Models/Entitlement.cs:11` and `Models/Irrigation.cs:20` persist from Phase 0 baseline, unrelated to Phase 2.
+  - `ViewModels/` directory already existed at repo root (holds `FileMasterDetailsViewModel.cs`, which does NOT declare a namespace and relies on implicit root namespace). Plan's `LoginViewModel` uses explicit `namespace dwa_ver_val.ViewModels` — kept as-is; Login view references `@model dwa_ver_val.ViewModels.LoginViewModel` fully qualified so no `_ViewImports.cshtml` change needed. If future ViewModels also use `dwa_ver_val.ViewModels`, consider adding `@using dwa_ver_val.ViewModels` to `_ViewImports.cshtml` later.
+  - Controller file compiles cleanly in isolation (no errors attributable to `AccountController.cs` — only Program.cs has unresolved symbols). Confirms Task 2.2 acceptance criterion.
+  - Views directory did not yet have `Views/Account/`; created via Write tool's auto-parent-create.
+  - Shadow FK `OrganisationalUnitOrgUnitId` flagged by Phase 1 did NOT cause startup model validation concerns at this phase (not exercised — app not run). Deferred per plan guidance.
+- **Status:** DONE
+- **Concerns:** Build is intentionally RED — five types resolve in Phases 3/4/5. Do not run `dotnet test` against the web project until Phase 5 seeder lands (test project's own suite may or may not still pass with the main csproj red — did not attempt since plan forbids it). Journal header "Branch" still reads `demo/azure-deploy` from template; left as-is across phases for consistency with Phase 0/1 notes.
+
+---
+
 ## Retro (fill in on task completion)
 
 - **Converged:** <what landed cleanly>
