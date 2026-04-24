@@ -96,6 +96,22 @@ public class FileMaster
     // Workflow
     public Guid? WorkflowInstanceId { get; set; }
 
+    // Guard-flag columns (Plan 3) — timestamps captured when the human workflow step is confirmed.
+    [Display(Name = "Spatial Info Confirmed")]
+    public DateTime? SpatialInfoConfirmedAt { get; set; }
+
+    [Display(Name = "WARMS Reviewed")]
+    public DateTime? WarmsReviewedAt { get; set; }
+
+    [Display(Name = "Additional Info Reviewed")]
+    public DateTime? AdditionalInfoReviewedAt { get; set; }
+
+    [Display(Name = "Dam N/A")]
+    public bool DamMarkedNA { get; set; }
+
+    [Display(Name = "SFRA N/A")]
+    public bool SfraMarkedNA { get; set; }
+
     // Navigation collections
     public ICollection<Authorisation> Authorisations { get; set; } = new List<Authorisation>();
     public ICollection<LetterIssuance> LetterIssuances { get; set; } = new List<LetterIssuance>();

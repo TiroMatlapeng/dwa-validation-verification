@@ -41,7 +41,7 @@ public class WorkflowServiceTests
     public async Task StartWorkflowAsync_creates_instance_at_first_state_and_first_step_record()
     {
         var (ctx, fmId, firstStateId) = await SetupAsync();
-        var svc = new WorkflowService(ctx);
+        var svc = new WorkflowService(ctx, Array.Empty<dwa_ver_val.Services.Workflow.ITransitionGuard>(), new TestAuditService());
 
         var instance = await svc.StartWorkflowAsync(fmId);
 
@@ -56,7 +56,7 @@ public class WorkflowServiceTests
     public async Task AdvanceAsync_moves_to_next_state_and_completes_previous_step()
     {
         var (ctx, fmId, _) = await SetupAsync();
-        var svc = new WorkflowService(ctx);
+        var svc = new WorkflowService(ctx, Array.Empty<dwa_ver_val.Services.Workflow.ITransitionGuard>(), new TestAuditService());
         await svc.StartWorkflowAsync(fmId);
 
         var instance = await svc.AdvanceAsync(fmId, userId: null, notes: null);
@@ -75,7 +75,7 @@ public class WorkflowServiceTests
     public async Task AdvanceAsync_at_terminal_state_throws()
     {
         var (ctx, fmId, _) = await SetupAsync();
-        var svc = new WorkflowService(ctx);
+        var svc = new WorkflowService(ctx, Array.Empty<dwa_ver_val.Services.Workflow.ITransitionGuard>(), new TestAuditService());
         await svc.StartWorkflowAsync(fmId);
         await svc.AdvanceAsync(fmId, null, null); // -> CP1_B
         await svc.AdvanceAsync(fmId, null, null); // -> Closed (terminal)
@@ -87,7 +87,7 @@ public class WorkflowServiceTests
     public async Task TransitionToAsync_moves_to_named_state_and_records_step()
     {
         var (ctx, fmId, _) = await SetupAsync();
-        var svc = new WorkflowService(ctx);
+        var svc = new WorkflowService(ctx, Array.Empty<dwa_ver_val.Services.Workflow.ITransitionGuard>(), new TestAuditService());
         await svc.StartWorkflowAsync(fmId);
 
         var instance = await svc.TransitionToAsync(fmId, "Closed", userId: null, notes: "demo");

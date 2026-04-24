@@ -60,3 +60,52 @@
         <a asp-action="Delete" asp-route-id="@fm.FileMasterId" class="btn btn-danger">Delete</a>
     </div>
 </div>
+
+<div class="dws-panel" style="max-width: 900px; margin-top: 20px;">
+    <h2 style="margin-top: 0; font-size: var(--dws-fs-xl); color: var(--dws-primary);">Audit Trail</h2>
+    @if (!Model.AuditTrail.Any())
+    {
+        <p style="color: var(--dws-text-muted);">No audit entries yet.</p>
+    }
+    else
+    {
+        <table class="dws-table">
+            <thead>
+                <tr>
+                    <th>When (UTC)</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model.AuditTrail)
+                {
+                    <tr>
+                        <td>@a.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@(a.UserName ?? "system")</td>
+                        <td>@a.Action</td>
+                        <td>@(ExtractValue(a.OldValues))</td>
+                        <td>@(ExtractValue(a.NewValues))</td>
+                        <td>@(a.Description ?? "")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@functions {
+    static string ExtractValue(string? json)
+    {
+        if (string.IsNullOrEmpty(json)) return "";
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty("value", out var v) ? (v.GetString() ?? "") : json;
+        }
+        catch { return json; }
+    }
+}

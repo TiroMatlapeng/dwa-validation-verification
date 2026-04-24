@@ -5,6 +5,7 @@ public class FileMasterDetailsViewModel
     public List<WorkflowState> AllStates { get; set; } = new();
     public List<WorkflowStepRecord> History { get; set; } = new();
     public List<LetterIssuance> Letters { get; set; } = new();
+    public List<AuditLog> AuditTrail { get; set; } = new();
 
     public WorkflowState? CurrentState => WorkflowInstance?.CurrentWorkflowState;
 

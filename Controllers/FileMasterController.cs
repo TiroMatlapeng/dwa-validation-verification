@@ -125,6 +125,16 @@ public class FileMasterController : Controller
         vm.AllStates = await _context.WorkflowStates.OrderBy(s => s.DisplayOrder).ToListAsync();
         vm.Letters = fileMaster.LetterIssuances.OrderBy(l => l.IssuedDate).ToList();
 
+        // Audit trail for this case — includes FileMaster-entity events (workflow transitions, etc.)
+        // and letter-entity events linked to issuances on this case.
+        var letterIds = fileMaster.LetterIssuances.Select(l => l.LetterIssuanceId.ToString()).ToList();
+        vm.AuditTrail = await _context.AuditLogs
+            .Where(a =>
+                (a.EntityType == nameof(FileMaster) && a.EntityId == id.ToString())
+                || (a.EntityType == nameof(LetterIssuance) && letterIds.Contains(a.EntityId)))
+            .OrderByDescending(a => a.Timestamp)
+            .ToListAsync();
+
         return View(vm);
     }
 

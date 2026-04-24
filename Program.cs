@@ -52,6 +52,15 @@ builder.Services.AddScoped<IFileMaster, FileMasterRepository>();
 builder.Services.AddScoped<IForestation, ForestationRepository>();
 builder.Services.AddScoped<IWorkflowService, WorkflowService>();
 builder.Services.AddScoped<IScopedCaseQuery, ScopedCaseQuery>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+
+// Workflow transition guards — evaluated in registration order by WorkflowService.MoveToStateAsync.
+builder.Services.AddScoped<dwa_ver_val.Services.Workflow.ITransitionGuard, dwa_ver_val.Services.Workflow.Guards.Cp2SpatialInfoGuard>();
+builder.Services.AddScoped<dwa_ver_val.Services.Workflow.ITransitionGuard, dwa_ver_val.Services.Workflow.Guards.Cp3WarmsReviewedGuard>();
+builder.Services.AddScoped<dwa_ver_val.Services.Workflow.ITransitionGuard, dwa_ver_val.Services.Workflow.Guards.Cp4AdditionalInfoGuard>();
+builder.Services.AddScoped<dwa_ver_val.Services.Workflow.ITransitionGuard, dwa_ver_val.Services.Workflow.Guards.Cp5MapbookPresentGuard>();
+builder.Services.AddScoped<dwa_ver_val.Services.Workflow.ITransitionGuard, dwa_ver_val.Services.Workflow.Guards.Cp8DamOrNAGuard>();
+builder.Services.AddScoped<dwa_ver_val.Services.Workflow.ITransitionGuard, dwa_ver_val.Services.Workflow.Guards.Cp9SfraOrNAGuard>();
 
 // Seeders
 builder.Services.AddScoped<SeedDataService>();
