@@ -52,6 +52,30 @@
 
 ---
 
+### 2026-04-24 13:10 — sqlserver-ef-architect — Phase 1 complete
+
+- **Read:** Phase 0 journal entry; agents-in-concert SKILL.md Rules 2, 3, 6; `Interfaces/IEntitlement.cs`, `Models/ApplicationUser.cs`, `DatabaseContexts/ApplicationDBContext.cs`, `Controllers/FileMasterController.cs`, `Tests/Models/ModelValidationTests.cs`, `Tests/Models/EntityRelationshipTests.cs`, `Tests/DatabaseContexts/ApplicationDBContextTests.cs`.
+- **Changed:**
+  - `Interfaces/IEntitlement.cs` — no-op; interface was already `IEntitlement` in this worktree. Empty commit created to satisfy four-commit history requirement.
+  - `Models/ApplicationUser.cs` — base class `IdentityUser` → `IdentityUser<Guid>`; removed `ApplicationUserId` property; added `IsActive` bool.
+  - `DatabaseContexts/ApplicationDBContext.cs` — base class `DbContext` → `IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>`; added Identity usings; removed `DbSet<ApplicationUser> ApplicationUsers`; removed `HasKey(e => e.ApplicationUserId)`; added `base.OnModelCreating(modelBuilder)` as first statement.
+  - `Controllers/FileMasterController.cs:248-252` — `_context.ApplicationUsers` → `_context.Users`; `.ApplicationUserId` → `.Id` in SelectList projection.
+  - `Tests/Models/ModelValidationTests.cs:82-89,106` — `ApplicationUserId = Guid.NewGuid()` → `Id = userId`; `context.ApplicationUsers` → `context.Users`.
+  - `Tests/Models/EntityRelationshipTests.cs:57-73,90-91` — same pattern: `ApplicationUserId` → `Id`, `context.ApplicationUsers` → `context.Users`, `validator.ApplicationUserId` → `validator.Id`.
+  - `Tests/DatabaseContexts/ApplicationDBContextTests.cs:39` — `context.ApplicationUsers` → `context.Users`.
+  - `Migrations/20260424095531_FoundationsIdentity.cs` + `.Designer.cs` + snapshot — generated and applied.
+- **Learned:**
+  - `IEntitlement.cs` was already correctly named `IEntitlement` from the repo's initial commit (`fd7b7f3`) — the CLAUDE.md "known issue" was stale for this worktree. No file change needed; empty commit used.
+  - `ApplicationUsers` table had **0 rows** at migration time (confirmed via sqlcmd). The "data loss" scaffold warning was the `DropColumn("ApplicationUserId")` — safe to apply as-is.
+  - Migration pattern was **(A) — best case**: EF emitted `RenameTable("ApplicationUsers" → "AspNetUsers")` + column reshape, not a full drop/recreate. No hand-editing required.
+  - A stale double-FK `FK_ApplicationUsers_OrganisationalUnits_OrganisationalUnitOrgUnitId` exists in prior migrations; the generated migration renames it to `IX_AspNetUsers_OrganisationalUnitOrgUnitId`. This is a pre-existing model artifact — Phase 2 should investigate and clean it up with an explicit `HasForeignKey` on `ApplicationUser.OrgUnit` if it causes lint noise.
+  - All 5 files referencing `ApplicationUserId` outside Migrations/ were updated in Task 1.3; the controller fix (`_context.Users`) was bundled into the 1.3 commit rather than a separate one since the plan's scope said "verify FK targets still resolve."
+  - **43 tests pass** after all changes.
+- **Status:** DONE
+- **Concerns:** The stale `OrganisationalUnitOrgUnitId` shadow FK on `AspNetUsers` (producing the duplicate index) is pre-existing noise from the old `IdentityUser` (string Id) era. Phase 2 agent: if `Program.cs` wiring of `AddIdentity` triggers a model validation error on startup, check `ApplicationUser.OrgUnit` navigation — it may need an explicit `HasForeignKey(au => au.OrgUnitId)` to disambiguate. Journal header "Branch" field still reads `demo/azure-deploy` per Phase 0's note — left as-is.
+
+---
+
 ## Retro (fill in on task completion)
 
 - **Converged:** <what landed cleanly>
