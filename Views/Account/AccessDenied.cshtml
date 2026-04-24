@@ -1,6 +1,6 @@
 @{
     ViewData["Title"] = "Access denied";
-    Layout = "_Layout";
+    Layout = User?.Identity?.IsAuthenticated == true ? "_Layout" : "_LoginLayout";
 }
 
 <div class="dws-card">
