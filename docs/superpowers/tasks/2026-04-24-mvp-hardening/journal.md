@@ -120,6 +120,31 @@
 
 ---
 
+### 2026-04-24 16:15 — dotnet-architect — Phase 4 complete
+
+- **Read:** Phase 0–3 journal entries; Plan 1 Phase 4 (Tasks 4.1–4.3) as supplied inline; `docs/contracts/auth-claims.md` (consumer view); `Models/FileMaster.cs` (8 required fields confirmed); current `Controllers/FileMasterController.cs`, `Program.cs`, `Services/Auth/DwsPolicies.cs`, `Services/Auth/DwsRoles.cs`.
+- **Changed:**
+  - `Tests/Services/Auth/ScopedCaseQueryTests.cs` — new; two tests (Validator-WMA-filter + NationalManager-sees-all). Added `CreateTestFileMaster` helper (Option B) to satisfy 8 required `FileMaster` fields cleanly.
+  - `Services/Auth/IScopedCaseQuery.cs` — new; `FilterFileMasters`, `FilterProperties`, `IsInScope`. Verbatim from plan.
+  - `Services/Auth/ScopedCaseQuery.cs` — new; SystemAdmin/NationalManager bypass; missing `wmaId` → empty query (fail-closed); else filter on `Property.WmaId == <claim>`. Verbatim.
+  - `Program.cs:54` — uncommented `builder.Services.AddScoped<IScopedCaseQuery, ScopedCaseQuery>();`. Two `TODO(Phase 5)` markers on lines 58, 71–72 remain untouched (IdentitySeeder DI + startup invocation).
+  - `Controllers/FileMasterController.cs` — class-level `[Authorize(CanRead)]`; ctor now injects `IScopedCaseQuery _scope`; `Index` rewritten to `_scope.FilterFileMasters(_context.FileMasters.AsQueryable(), User).Include(Property).OrderBy(FileNumber).ToListAsync()`; `[Authorize(CanCreateCase)]` on Create/Edit/Delete GET+POST; `[Authorize(CanTransitionWorkflow)]` on `AdvanceWorkflow`; `[Authorize(CanIssueLetter)]` on `IssueLetter` + `MarkLetterResponse` (committed separately).
+- **Learned:**
+  - `FileMaster` has 8 `required` fields (`RegistrationNumber`, `SurveyorGeneralCode`, `PrimaryCatchment`, `QuaternaryCatchment`, `FarmName`, `FarmNumber`, `RegistrationDivision`, `FarmPortion`) — plan's inline test literals would not compile. Chose **Option B** (helper method) per task hint; `CreateTestFileMaster(propertyId, fileNumber)` sets sensible `"N/A"`/`0` defaults in one place.
+  - RED → GREEN was clean: RED showed two `CS0246: ScopedCaseQuery not found`; after implementation both tests pass on first run.
+  - `FileMasterController.Index` rewrite required an explicit `.Include(fm => fm.Property)` so the pre-filtered `.Where(fm => fm.Property!.WmaId == wmaId)` projection still loads the nav for the Razor view (otherwise the list view would null-ref on `Model[i].Property.SGCode` after filtering).
+  - `AdvanceWorkflow` **does** exist in this controller (line 108 pre-edit, 122 post-edit) — plan's hedge "may not exist yet" was outdated; grep confirmed one existing POST action matching the workflow-advance pattern.
+  - Found an **extra, unplanned authorisation gap**: `IssueLetter` and `MarkLetterResponse` are letter-stage mutations that advance state via `TransitionToAsync` — they must be `CanIssueLetter`-gated (NWA requires RegionalManager+ to sign S35 letters). Plan only called out Create/Edit/Delete + workflow-advance; adding letter auth was a clear extension of the same role-boundary rule. Split into its own commit per explicit instruction.
+  - `dotnet build`: **0 Error(s)**, 4 warnings (all pre-existing: 2× CS8618 baseline, 1× ASP0026 from Phase 2, 1× xUnit2031 from Phase 3).
+  - `dotnet test`: **47 passed, 0 failed** (45 from Phase 3 + 2 new ScopedCaseQueryTests), matching the plan's expected count.
+- **Status:** DONE
+- **Concerns:**
+  - `_scope.FilterFileMasters` returns `source.Where(_ => false)` for non-bypass roles with no `wmaId` claim — correct fail-closed default per the contract, but any `Validator` whose `OrganisationalUnit` lacks a `WmaId` will see an empty list with no UI hint. Phase 6 (user admin) should enforce WmaId non-null at user-creation time, or Phase 7 should surface a "your account is not scoped to a WMA — contact an admin" banner.
+  - `IScopedCaseQuery` is currently consumed only by `FileMasterController.Index`. Other read paths (`Details` via `_fileMasterRepository.GetWithWorkflowAsync`, PDF/letter surfaces in future phases) bypass the filter. Phase 5+ agents should either route all reads through `_scope` or add defence-in-depth inside the repository.
+  - Pre-existing shadow FK `OrganisationalUnitOrgUnitId` on `AspNetUsers` (flagged in Phases 1–3) still untouched — correct per plan's "out of scope" list.
+
+---
+
 ## Retro (fill in on task completion)
 
 - **Converged:** <what landed cleanly>
