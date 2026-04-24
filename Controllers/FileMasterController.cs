@@ -1,30 +1,43 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
+[Authorize(Policy = DwsPolicies.CanRead)]
 public class FileMasterController : Controller
 {
     private readonly IFileMaster _fileMasterRepository;
     private readonly ApplicationDBContext _context;
     private readonly IWorkflowService _workflow;
+    private readonly IScopedCaseQuery _scope;
 
-    public FileMasterController(IFileMaster fileMasterRepository, ApplicationDBContext context, IWorkflowService workflow)
+    public FileMasterController(
+        IFileMaster fileMasterRepository,
+        ApplicationDBContext context,
+        IWorkflowService workflow,
+        IScopedCaseQuery scope)
     {
         _fileMasterRepository = fileMasterRepository;
         _context = context;
         _workflow = workflow;
+        _scope = scope;
     }
 
     // GET: FileMaster
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var fileMasters = await _fileMasterRepository.ListAllAsync();
+        var query = _scope.FilterFileMasters(_context.FileMasters.AsQueryable(), User);
+        var fileMasters = await query
+            .Include(fm => fm.Property)
+            .OrderBy(fm => fm.FileNumber)
+            .ToListAsync();
         return View(fileMasters);
     }
 
     // GET: FileMaster/Create
     [HttpGet]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Create()
     {
         await PopulateDropdownsAsync();
@@ -34,6 +47,7 @@ public class FileMasterController : Controller
     // POST: FileMaster/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Create(FileMaster fileMaster)
     {
         if (ModelState.IsValid)
@@ -49,11 +63,14 @@ public class FileMasterController : Controller
 
     // GET: FileMaster/Edit/{id}
     [HttpGet]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Edit(Guid id)
     {
         var fileMaster = await _fileMasterRepository.GetByIdAsync(id);
         if (fileMaster == null)
             return NotFound();
+        if (!_scope.IsInScope(fileMaster, User))
+            return Forbid();
 
         await PopulateDropdownsAsync(fileMaster);
         return View(fileMaster);
@@ -62,10 +79,17 @@ public class FileMasterController : Controller
     // POST: FileMaster/Edit/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Edit(Guid id, FileMaster fileMaster)
     {
         if (id != fileMaster.FileMasterId)
             return BadRequest();
+
+        var existing = await _fileMasterRepository.GetByIdAsync(id);
+        if (existing == null)
+            return NotFound();
+        if (!_scope.IsInScope(existing, User))
+            return Forbid();
 
         if (ModelState.IsValid)
         {
@@ -83,6 +107,7 @@ public class FileMasterController : Controller
     {
         var fileMaster = await _fileMasterRepository.GetWithWorkflowAsync(id);
         if (fileMaster == null) return NotFound();
+        if (!_scope.IsInScope(fileMaster, User)) return Forbid();
 
         var vm = new FileMasterDetailsViewModel { FileMaster = fileMaster };
 
@@ -105,8 +130,13 @@ public class FileMasterController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanTransitionWorkflow)]
     public async Task<IActionResult> AdvanceWorkflow(Guid id, string? notes)
     {
+        var fm = await _fileMasterRepository.GetByIdAsync(id);
+        if (fm == null) return NotFound();
+        if (!_scope.IsInScope(fm, User)) return Forbid();
+
         try
         {
             await _workflow.AdvanceAsync(id, userId: null, notes: notes);
@@ -120,11 +150,14 @@ public class FileMasterController : Controller
 
     // GET: FileMaster/Delete/{id}
     [HttpGet]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var fileMaster = await _fileMasterRepository.GetByIdAsync(id);
         if (fileMaster == null)
             return NotFound();
+        if (!_scope.IsInScope(fileMaster, User))
+            return Forbid();
 
         return View(fileMaster);
     }
@@ -132,8 +165,15 @@ public class FileMasterController : Controller
     // POST: FileMaster/Delete/{id}
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> DeleteConfirmed(Guid id)
     {
+        var fileMaster = await _fileMasterRepository.GetByIdAsync(id);
+        if (fileMaster == null)
+            return NotFound();
+        if (!_scope.IsInScope(fileMaster, User))
+            return Forbid();
+
         await _fileMasterRepository.DeleteAsync(id);
         return RedirectToAction(nameof(Index));
     }
@@ -155,8 +195,13 @@ public class FileMasterController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanIssueLetter)]
     public async Task<IActionResult> IssueLetter(Guid id, string letterAction, string recipient, string deliveryMethod, DateTime issuedDate)
     {
+        var caseFm = await _fileMasterRepository.GetByIdAsync(id);
+        if (caseFm == null) return NotFound();
+        if (!_scope.IsInScope(caseFm, User)) return Forbid();
+
         if (!LetterActionMap.TryGetValue(letterAction, out var map))
         {
             TempData["WorkflowError"] = $"Unknown letter action '{letterAction}'.";
@@ -197,6 +242,7 @@ public class FileMasterController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanIssueLetter)]
     public async Task<IActionResult> MarkLetterResponse(Guid id, string letterAction)
     {
         if (!ResponseActionMap.TryGetValue(letterAction, out var targetState))
@@ -209,6 +255,7 @@ public class FileMasterController : Controller
             .Include(f => f.LetterIssuances)
             .FirstOrDefaultAsync(f => f.FileMasterId == id);
         if (fm == null) return NotFound();
+        if (!_scope.IsInScope(fm, User)) return Forbid();
 
         var latestPending = fm.LetterIssuances
             .Where(l => l.ResponseStatus == "Pending")
@@ -245,11 +292,11 @@ public class FileMasterController : Controller
             await _context.OrganisationalUnits.OrderBy(o => o.Name).ToListAsync(),
             "OrgUnitId", "Name", fileMaster?.OrgUnitId);
 
-        var users = await _context.ApplicationUsers
-            .Select(u => new { u.ApplicationUserId, Display = u.FirstName + " " + u.LastName })
+        var users = await _context.Users
+            .Select(u => new { u.Id, Display = u.FirstName + " " + u.LastName })
             .ToListAsync();
-        ViewBag.Validators = new SelectList(users, "ApplicationUserId", "Display", fileMaster?.ValidatorId);
-        ViewBag.CapturePersons = new SelectList(users, "ApplicationUserId", "Display", fileMaster?.CapturePersonId);
+        ViewBag.Validators = new SelectList(users, "Id", "Display", fileMaster?.ValidatorId);
+        ViewBag.CapturePersons = new SelectList(users, "Id", "Display", fileMaster?.CapturePersonId);
 
         ViewBag.CatchmentAreas = new SelectList(
             await _context.CatchmentAreas.OrderBy(c => c.CatchmentCode).ToListAsync(),

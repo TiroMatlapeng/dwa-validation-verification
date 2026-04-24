@@ -36,7 +36,7 @@ public class ApplicationDBContextTests
         Assert.NotNull(context.Provinces);
         Assert.NotNull(context.WaterManagementAreas);
         Assert.NotNull(context.OrganisationalUnits);
-        Assert.NotNull(context.ApplicationUsers);
+        Assert.NotNull(context.Users);
     }
 
     [Fact]
