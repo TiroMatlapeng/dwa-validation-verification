@@ -1,3 +1,4 @@
+using dwa_ver_val.Services.Letters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -10,17 +11,32 @@ public class FileMasterController : Controller
     private readonly ApplicationDBContext _context;
     private readonly IWorkflowService _workflow;
     private readonly IScopedCaseQuery _scope;
+    private readonly ILetterService _letters;
 
     public FileMasterController(
         IFileMaster fileMasterRepository,
         ApplicationDBContext context,
         IWorkflowService workflow,
-        IScopedCaseQuery scope)
+        IScopedCaseQuery scope,
+        ILetterService letters)
     {
         _fileMasterRepository = fileMasterRepository;
         _context = context;
         _workflow = workflow;
         _scope = scope;
+        _letters = letters;
+    }
+
+    // GET: FileMaster/LetterPreview/{id}?code=S35_L1
+    // Returns an on-the-fly preview PDF for the given case + letter code. Scope-guarded like the rest.
+    [HttpGet]
+    public async Task<IActionResult> LetterPreview(Guid id, string code)
+    {
+        var fm = await _fileMasterRepository.GetByIdAsync(id);
+        if (fm == null) return NotFound();
+        if (!_scope.IsInScope(fm, User)) return Forbid();
+        var bytes = await _letters.RenderPreviewAsync(id, code);
+        return File(bytes, "application/pdf", $"preview-{code}-{id:N}.pdf");
     }
 
     // GET: FileMaster
