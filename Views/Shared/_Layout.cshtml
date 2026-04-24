@@ -10,6 +10,7 @@
     <title>DWA - V&V System</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dws.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/dwa_ver_val.styles.css" asp-append-version="true" />
 </head>
 <body>
@@ -42,11 +43,18 @@
                 <span class="sidebar-icon">&#9632;</span> Validation
             </a>
 
-            <div class="sidebar-section">System</div>
-            <a asp-controller="Owner" asp-action="Index"
-               class="sidebar-item @(controllerName == "Owner" ? "active" : "")">
-                <span class="sidebar-icon">&#9632;</span> Admin
-            </a>
+            @if (User.IsInRole("SystemAdmin"))
+            {
+                <div class="sidebar-section">System</div>
+                <a href="/Admin/Users/Index"
+                   class="sidebar-item @(controllerName == "Users" ? "active" : "")">
+                    <span class="sidebar-icon">&#9632;</span> Manage Users
+                </a>
+                <a asp-controller="Owner" asp-action="Index"
+                   class="sidebar-item @(controllerName == "Owner" ? "active" : "")">
+                    <span class="sidebar-icon">&#9632;</span> Property Owners
+                </a>
+            }
         </nav>
 
         <!-- Main Content -->
@@ -72,7 +80,28 @@
                     <input type="text" class="global-search" placeholder="Search properties, cases, WARMS reg..." />
                 </div>
                 <div class="top-bar-right">
-                    <div class="user-avatar">TM</div>
+                    @if (User?.Identity?.IsAuthenticated == true)
+                    {
+                        var displayName = User.FindFirst("displayName")?.Value
+                                          ?? User.Identity?.Name
+                                          ?? "User";
+                        var initials = string.Concat(displayName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                            .Take(2)
+                            .Select(p => char.ToUpperInvariant(p[0])));
+                        var role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value
+                                   ?? "";
+                        <div class="top-bar-user">
+                            <div class="top-bar-user__meta">
+                                <div class="top-bar-user__name">@displayName</div>
+                                <div class="top-bar-user__role">@role</div>
+                            </div>
+                            <div class="user-avatar" title="@displayName">@initials</div>
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="dws-inline-form">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="dws-btn dws-btn-ghost">Sign out</button>
+                            </form>
+                        </div>
+                    }
                 </div>
             </div>
 

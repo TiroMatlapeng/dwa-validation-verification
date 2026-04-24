@@ -263,3 +263,23 @@ select.dws-input:focus {
     margin: 0;
     padding: 0;
 }
+
+/* Top bar user cluster */
+.top-bar-user {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--dws-space-3);
+}
+.top-bar-user__meta {
+    text-align: right;
+    line-height: 1.2;
+}
+.top-bar-user__name {
+    font-size: var(--dws-fs-sm);
+    font-weight: 600;
+    color: var(--dws-text);
+}
+.top-bar-user__role {
+    font-size: var(--dws-fs-xs);
+    color: var(--dws-text-muted);
+}
