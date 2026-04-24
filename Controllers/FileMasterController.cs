@@ -69,6 +69,8 @@ public class FileMasterController : Controller
         var fileMaster = await _fileMasterRepository.GetByIdAsync(id);
         if (fileMaster == null)
             return NotFound();
+        if (!_scope.IsInScope(fileMaster, User))
+            return Forbid();
 
         await PopulateDropdownsAsync(fileMaster);
         return View(fileMaster);
@@ -82,6 +84,12 @@ public class FileMasterController : Controller
     {
         if (id != fileMaster.FileMasterId)
             return BadRequest();
+
+        var existing = await _fileMasterRepository.GetByIdAsync(id);
+        if (existing == null)
+            return NotFound();
+        if (!_scope.IsInScope(existing, User))
+            return Forbid();
 
         if (ModelState.IsValid)
         {
@@ -99,6 +107,7 @@ public class FileMasterController : Controller
     {
         var fileMaster = await _fileMasterRepository.GetWithWorkflowAsync(id);
         if (fileMaster == null) return NotFound();
+        if (!_scope.IsInScope(fileMaster, User)) return Forbid();
 
         var vm = new FileMasterDetailsViewModel { FileMaster = fileMaster };
 
@@ -124,6 +133,10 @@ public class FileMasterController : Controller
     [Authorize(Policy = DwsPolicies.CanTransitionWorkflow)]
     public async Task<IActionResult> AdvanceWorkflow(Guid id, string? notes)
     {
+        var fm = await _fileMasterRepository.GetByIdAsync(id);
+        if (fm == null) return NotFound();
+        if (!_scope.IsInScope(fm, User)) return Forbid();
+
         try
         {
             await _workflow.AdvanceAsync(id, userId: null, notes: notes);
@@ -143,6 +156,8 @@ public class FileMasterController : Controller
         var fileMaster = await _fileMasterRepository.GetByIdAsync(id);
         if (fileMaster == null)
             return NotFound();
+        if (!_scope.IsInScope(fileMaster, User))
+            return Forbid();
 
         return View(fileMaster);
     }
@@ -153,6 +168,12 @@ public class FileMasterController : Controller
     [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> DeleteConfirmed(Guid id)
     {
+        var fileMaster = await _fileMasterRepository.GetByIdAsync(id);
+        if (fileMaster == null)
+            return NotFound();
+        if (!_scope.IsInScope(fileMaster, User))
+            return Forbid();
+
         await _fileMasterRepository.DeleteAsync(id);
         return RedirectToAction(nameof(Index));
     }
@@ -177,6 +198,10 @@ public class FileMasterController : Controller
     [Authorize(Policy = DwsPolicies.CanIssueLetter)]
     public async Task<IActionResult> IssueLetter(Guid id, string letterAction, string recipient, string deliveryMethod, DateTime issuedDate)
     {
+        var caseFm = await _fileMasterRepository.GetByIdAsync(id);
+        if (caseFm == null) return NotFound();
+        if (!_scope.IsInScope(caseFm, User)) return Forbid();
+
         if (!LetterActionMap.TryGetValue(letterAction, out var map))
         {
             TempData["WorkflowError"] = $"Unknown letter action '{letterAction}'.";
@@ -230,6 +255,7 @@ public class FileMasterController : Controller
             .Include(f => f.LetterIssuances)
             .FirstOrDefaultAsync(f => f.FileMasterId == id);
         if (fm == null) return NotFound();
+        if (!_scope.IsInScope(fm, User)) return Forbid();
 
         var latestPending = fm.LetterIssuances
             .Where(l => l.ResponseStatus == "Pending")

@@ -92,4 +92,71 @@ public class ScopedCaseQueryTests
 
         Assert.Equal(2, result.Count);
     }
+
+    [Fact]
+    public async Task IsInScope_Validator_OutOfWmaCase_ReturnsFalse()
+    {
+        using var db = CreateDb();
+        var limpopoWma = Guid.NewGuid();
+        var mpumalangaWma = Guid.NewGuid();
+        var mpumalangaProperty = new Property { PropertyId = Guid.NewGuid(), SGCode = "MP-01", WmaId = mpumalangaWma };
+        db.Properties.Add(mpumalangaProperty);
+        var fm = CreateTestFileMaster(mpumalangaProperty.PropertyId, "MP-0001");
+        db.FileMasters.Add(fm);
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var limpopoValidator = UserWithRoleAndOrgUnit(DwsRoles.Validator, orgUnitId: Guid.NewGuid(), wmaId: limpopoWma);
+
+        Assert.False(sut.IsInScope(fm, limpopoValidator));
+    }
+
+    [Fact]
+    public async Task IsInScope_Validator_InWmaCase_ReturnsTrue()
+    {
+        using var db = CreateDb();
+        var limpopoWma = Guid.NewGuid();
+        var property = new Property { PropertyId = Guid.NewGuid(), SGCode = "LIM-01", WmaId = limpopoWma };
+        db.Properties.Add(property);
+        var fm = CreateTestFileMaster(property.PropertyId, "LIM-0001");
+        db.FileMasters.Add(fm);
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var validator = UserWithRoleAndOrgUnit(DwsRoles.Validator, orgUnitId: Guid.NewGuid(), wmaId: limpopoWma);
+
+        Assert.True(sut.IsInScope(fm, validator));
+    }
+
+    [Fact]
+    public async Task IsInScope_NationalManager_AnyCase_ReturnsTrue()
+    {
+        using var db = CreateDb();
+        var property = new Property { PropertyId = Guid.NewGuid(), SGCode = "X", WmaId = Guid.NewGuid() };
+        db.Properties.Add(property);
+        var fm = CreateTestFileMaster(property.PropertyId, "X");
+        db.FileMasters.Add(fm);
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var national = UserWithRoleAndOrgUnit(DwsRoles.NationalManager, orgUnitId: null, wmaId: null);
+
+        Assert.True(sut.IsInScope(fm, national));
+    }
+
+    [Fact]
+    public async Task IsInScope_SystemAdmin_AnyCase_ReturnsTrue()
+    {
+        using var db = CreateDb();
+        var property = new Property { PropertyId = Guid.NewGuid(), SGCode = "Y", WmaId = Guid.NewGuid() };
+        db.Properties.Add(property);
+        var fm = CreateTestFileMaster(property.PropertyId, "Y");
+        db.FileMasters.Add(fm);
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var admin = UserWithRoleAndOrgUnit(DwsRoles.SystemAdmin, orgUnitId: null, wmaId: null);
+
+        Assert.True(sut.IsInScope(fm, admin));
+    }
 }

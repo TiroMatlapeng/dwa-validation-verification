@@ -40,6 +40,13 @@ public class ScopedCaseQuery : IScopedCaseQuery
         if (BypassesScope(user)) return true;
         var wmaId = GetScopeWma(user);
         if (wmaId is null) return false;
-        return _db.Entry(fileMaster).Reference(fm => fm.Property).CurrentValue?.WmaId == wmaId;
+
+        var propertyWmaId = fileMaster.Property?.WmaId
+            ?? _db.Properties.AsNoTracking()
+                .Where(p => p.PropertyId == fileMaster.PropertyId)
+                .Select(p => p.WmaId)
+                .FirstOrDefault();
+
+        return propertyWmaId == wmaId;
     }
 }
