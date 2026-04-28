@@ -204,22 +204,34 @@ public class FileMasterController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // letterAction (HTML form value) -> (LetterType.LetterName / template code, target workflow state)
-    // The LetterName position is the canonical short code consumed by ILetterTemplate registrations,
+    // letterAction (HTML form value) -> (LetterType.LetterName / template code, target workflow state).
+    // The LetterCode is the canonical short code consumed by ILetterTemplate registrations,
     // matching SeedDataService.SeedLetterTypesAsync.
     private static readonly Dictionary<string, (string LetterCode, string TargetState)> LetterActionMap = new()
     {
-        ["IssueLetter1"] = ("S35_L1", "S35_Letter1Issued"),
-        ["IssueLetter2"] = ("S35_L2", "S35_Letter2Issued"),
-        ["IssueLetter3"] = ("S35_L3", "S35_Letter3Issued"),
+        // Section 35 verification track
+        ["IssueLetter1"]   = ("S35_L1",      "S35_Letter1Issued"),
+        ["IssueLetter1A"]  = ("S35_L1A",     "S35_Letter1AIssued"),
+        ["IssueLetter2"]   = ("S35_L2",      "S35_Letter2Issued"),
+        ["IssueLetter2A"]  = ("S35_L2A",     "S35_Letter2AIssued"),
+        ["IssueLetter3"]   = ("S35_L3",      "S35_Letter3Issued"),
+        ["IssueLetter4A"]  = ("S35_L4A",     "S35_Letter4AIssued"),
+        ["IssueLetter4_5"] = ("S35_L4_5",    "S35_Letter4And5Issued"),
+        // Section 33(3) declaration track (S33(2) Kader Asmal is auto-issued via track-skip in WorkflowService)
+        ["IssueS33_3a"]    = ("S33_3a_Decl", "S33_3_DeclarationIssued"),
+        ["IssueS33_3b"]    = ("S33_3b_Decl", "S33_3_DeclarationIssued"),
     };
 
+    // letterAction values that are pure response/determination updates — no PDF generated.
     private static readonly Dictionary<string, string> ResponseActionMap = new()
     {
-        ["MarkLetter1Responded"] = "S35_Letter1Responded",
-        ["MarkLetter2Responded"] = "S35_Letter2Responded",
-        ["MarkELUConfirmed"]     = "S35_ELUConfirmed",
-        ["CloseCase"]            = "Closed",
+        ["MarkLetter1Responded"]  = "S35_Letter1Responded",
+        ["MarkLetter1AResponded"] = "S35_Letter1Responded",   // 1A response feeds the same downstream paths as Letter 1 response.
+        ["MarkLetter2Responded"]  = "S35_Letter2Responded",
+        ["MarkLetter2AResponded"] = "S35_Letter2Responded",
+        ["MarkELUConfirmed"]      = "S35_ELUConfirmed",
+        ["MarkUnlawfulUseFound"]  = "S35_UnlawfulUseFound",
+        ["CloseCase"]             = "Closed",
     };
 
     [HttpPost]
