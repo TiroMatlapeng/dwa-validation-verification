@@ -244,3 +244,26 @@
   - Adding a tiny private `AssertPdf` helper in the test class kept the 7 new tests DRY without altering the existing three (which the brief told me not to refactor).
 - **Status:** DONE
 - **Concerns:** Letter wording is plausible-sounding standard administrative-law boilerplate (S151 enforcement reference, PAJA representations clause for the S53(1) pre-directive). A Validator user (or a DWS legal officer) should review the text before any letter goes out under signature. Template structure, signing block, and rendering are correct; the legal *prose* is the only area where review is wise.
+
+---
+
+## 2026-04-28 — Property subdivide / consolidate flow
+
+**Branch:** `feat/property-lineage` from `demo/azure-deploy@7c8088d`.
+**Worktree:** `/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val ai/.worktrees/property-lineage`
+
+**Scope:** Per CLAUDE.md client feedback — properties get subdivided into N children OR consolidated into a single new property. Old properties are PRESERVED with `PropertyStatus = "Subdivided"` or `"Consolidated"`. New properties inherit some attributes from their predecessor(s).
+
+**Schema:** existing model has `ParentPropertyId` (single FK) and `PropertyStatus`. Need a second self-referencing FK `SuccessorPropertyId` so consolidation lineage is unambiguous (subdivision children point UP via Parent; consolidated old properties point FORWARD via Successor). One migration.
+
+**Acceptance:**
+- `Property.SuccessorPropertyId` (Guid?) + `SuccessorProperty` nav added; OnModelCreating wires the FK with DeleteBehavior.Restrict.
+- Migration `PropertyLineageSuccessor` adds the column.
+- `PropertyController` gains `Subdivide(GET/POST)`, `Consolidate(GET/POST)` actions, all gated by `CanCreateCase` policy + scope check. Audit events written for both lifecycle changes.
+- `Views/Property/Subdivide.cshtml` and `Views/Property/Consolidate.cshtml` (with dws-* classes).
+- `Views/Property/Details.cshtml` (or partial) renders lineage section: Predecessor (if any), Successor (if any), Subdivision children, Consolidation predecessors.
+- `Views/Property/Index.cshtml` Subdivide/Consolidate entry points.
+- Audit rows: `PropertySubdivided` on the original (with reason listing child IDs), `PropertyConsolidated` on each old property (with reason naming the new property), `PropertyCreated` on each new property.
+- Inheritance: subdivision children inherit `WmaId`, `CatchmentAreaId` from parent; user provides SG Code, PropertyReferenceNumber, PropertySize per child. Consolidation new property inherits `WmaId`, `CatchmentAreaId` from sources (must all match), user provides SG Code, PropertyReferenceNumber; PropertySize defaults to sum of sources.
+- Tests: subdivide-creates-N-children, consolidate-marks-N-sources-consolidated, scope-filter-blocks-out-of-WMA-property.
+- 92 → 95 tests, all green.
