@@ -53,6 +53,10 @@ public class Property
     public Property? ParentProperty { get; set; }
     public ICollection<Property> ChildProperties { get; set; } = new List<Property>();
 
+    [Display(Name = "Successor Property")]
+    public Guid? SuccessorPropertyId { get; set; }
+    public Property? SuccessorProperty { get; set; }
+
     public ICollection<PropertyOwnership> PropertyOwnerships { get; set; } = new List<PropertyOwnership>();
     public ICollection<FileMaster> FileMasters { get; set; } = new List<FileMaster>();
     public ICollection<Irrigation> Irrigations { get; set; } = new List<Irrigation>();

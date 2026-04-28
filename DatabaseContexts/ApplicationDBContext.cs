@@ -168,6 +168,15 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasForeignKey(p => p.ParentPropertyId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Property → Successor (consolidation forward link). No inverse collection —
+        // a property has at most one successor, and its predecessors are discovered
+        // via the back-pointing query rather than a navigation collection.
+        modelBuilder.Entity<Property>()
+            .HasOne(p => p.SuccessorProperty)
+            .WithMany()
+            .HasForeignKey(p => p.SuccessorPropertyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // PropertyOwnership many-to-many
         modelBuilder.Entity<PropertyOwnership>()
             .HasOne(po => po.Property)
