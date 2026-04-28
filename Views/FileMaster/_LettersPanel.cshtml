@@ -1,20 +1,31 @@
 @model FileMasterDetailsViewModel
 
 <div class="card" style="max-width: 900px; margin-top: 16px;">
-    <div class="form-section-title">Section 35 Letters</div>
+    <div class="form-section-title">Section 35 / Section 33 Letters</div>
 
     <div class="letter-actions">
         @foreach (var action in Model.AvailableLetterActions)
         {
             var (label, cssClass) = action switch
             {
-                "IssueLetter1"          => ("Issue Letter 1 (S35(1) Notice)", "btn btn-primary"),
-                "MarkLetter1Responded"  => ("Mark Letter 1 Responded", "btn btn-outline"),
-                "IssueLetter2"          => ("Issue Letter 2 (S35(3)(a) Info Request)", "btn btn-primary"),
-                "MarkLetter2Responded"  => ("Mark Letter 2 Responded", "btn btn-outline"),
-                "IssueLetter3"          => ("Issue Letter 3 (S35(4) ELU Confirmation)", "btn btn-primary"),
-                "MarkELUConfirmed"      => ("Confirm ELU Determination", "btn btn-primary"),
-                "CloseCase"             => ("Close Case", "btn btn-outline"),
+                // PDF-generating issue actions
+                "IssueLetter1"          => ("Issue Letter 1 (S35(1) Notice)",                              "btn btn-primary"),
+                "IssueLetter1A"         => ("Issue Letter 1A (S53(1) Directive — non-response)",           "btn btn-danger"),
+                "IssueLetter2"          => ("Issue Letter 2 (S35(3)(a) Info Request)",                     "btn btn-primary"),
+                "IssueLetter2A"         => ("Issue Letter 2A (S35(1) Directive — non-response)",           "btn btn-danger"),
+                "IssueLetter3"          => ("Issue Letter 3 (S35(4) ELU Confirmation)",                    "btn btn-primary"),
+                "IssueLetter4A"         => ("Issue Letter 4A (S53(1) Notice of Intent to Stop)",           "btn btn-danger"),
+                "IssueLetter4_5"        => ("Issue Letter 4 & 5 (S53(1) Stop Directive)",                  "btn btn-danger"),
+                "IssueS33_3a"           => ("Issue S33(3)(a) Declaration",                                  "btn btn-primary"),
+                "IssueS33_3b"           => ("Issue S33(3)(b) Declaration",                                  "btn btn-primary"),
+                // Response / determination updates (no PDF)
+                "MarkLetter1Responded"  => ("Mark Letter 1 Responded",                                      "btn btn-outline"),
+                "MarkLetter1AResponded" => ("Mark Letter 1A Responded",                                     "btn btn-outline"),
+                "MarkLetter2Responded"  => ("Mark Letter 2 Responded",                                      "btn btn-outline"),
+                "MarkLetter2AResponded" => ("Mark Letter 2A Responded",                                     "btn btn-outline"),
+                "MarkELUConfirmed"      => ("Confirm ELU Determination",                                    "btn btn-primary"),
+                "MarkUnlawfulUseFound"  => ("Determine Unlawful Use (escalate to Letter 4A)",               "btn btn-danger"),
+                "CloseCase"             => ("Close Case",                                                   "btn btn-outline"),
                 _                       => (action, "btn btn-outline")
             };
 
