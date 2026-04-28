@@ -189,4 +189,41 @@ public class PropertyLineageTests
         Assert.Equal(initialCount, await db.Properties.CountAsync());
         Assert.Empty(audit.Events);
     }
+
+    [Fact]
+    public async Task Subdivide_OutOfWmaProperty_ReturnsForbidAndDoesNotMutate()
+    {
+        using var db = CreateDb();
+        var parentWma = Guid.NewGuid();
+        var validatorWma = Guid.NewGuid();   // different WMA — out of scope
+        var parent = new Property
+        {
+            PropertyId = Guid.NewGuid(),
+            SGCode = "MP-OUT-OF-SCOPE",
+            PropertySize = 100m,
+            PropertyStatus = "Active",
+            WmaId = parentWma
+        };
+        db.Properties.Add(parent);
+        await db.SaveChangesAsync();
+        var initialCount = await db.Properties.CountAsync();
+
+        var audit = new TestAuditService();
+        var sut = CreateController(db, audit, Validator(validatorWma));
+        var form = new SubdivideViewModel
+        {
+            Children = new List<SubdivideChildRow>
+            {
+                new() { SGCode = "MP-A", PropertySize = 40m },
+                new() { SGCode = "MP-B", PropertySize = 60m }
+            }
+        };
+
+        var result = await sut.Subdivide(parent.PropertyId, form);
+
+        Assert.IsType<ForbidResult>(result);
+        Assert.Equal(initialCount, await db.Properties.CountAsync());
+        Assert.Equal("Active", (await db.Properties.FindAsync(parent.PropertyId))!.PropertyStatus);
+        Assert.Empty(audit.Events);
+    }
 }

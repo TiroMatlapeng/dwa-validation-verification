@@ -273,6 +273,9 @@ public class PropertyController : Controller
             WmaId = parent.WmaId,
             CatchmentAreaId = parent.CatchmentAreaId,
             QuaternaryDrainage = parent.QuaternaryDrainage,
+            // MVP: children inherit the parent's AddressId (FK reuse, not deep-clone of the
+            // Address row). Per-child distinct addresses are a follow-up; capture via the
+            // Property/Edit page after subdivision lands.
             AddressId = parent.AddressId,
             PropertyStatus = StatusActive,
             ParentPropertyId = parent.PropertyId
