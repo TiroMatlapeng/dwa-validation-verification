@@ -6,13 +6,30 @@
 
 <div class="dws-card dws-card--login">
     <h1>Sign in to DWA V&V</h1>
-    <form asp-action="Login" method="post">
+
+    @if (Model.EntraEnabled)
+    {
+        <form asp-action="ExternalLogin" method="post" class="dws-form" style="margin-bottom: var(--dws-space-4);">
+            <input type="hidden" name="provider" value="Microsoft" />
+            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+            <button type="submit" class="dws-btn dws-btn-secondary" style="width: 100%;">
+                Sign in with Microsoft
+            </button>
+        </form>
+        <div style="display: flex; align-items: center; gap: var(--dws-space-3); color: var(--dws-text-muted); font-size: var(--dws-fs-sm); margin-bottom: var(--dws-space-4);">
+            <span style="flex: 1; height: 1px; background: var(--dws-border);"></span>
+            <span>or use email and password</span>
+            <span style="flex: 1; height: 1px; background: var(--dws-border);"></span>
+        </div>
+    }
+
+    <form asp-action="Login" method="post" class="dws-form">
         <input type="hidden" asp-for="ReturnUrl" />
         <div asp-validation-summary="All" class="dws-validation-summary"></div>
 
         <div class="dws-form-row">
             <label asp-for="Email" class="dws-label"></label>
-            <input asp-for="Email" class="dws-input" autocomplete="username" />
+            <input asp-for="Email" class="dws-input" autocomplete="username" autofocus />
             <span asp-validation-for="Email" class="dws-field-error"></span>
         </div>
 

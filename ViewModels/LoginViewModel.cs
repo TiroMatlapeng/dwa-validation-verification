@@ -18,4 +18,7 @@ public class LoginViewModel
     public bool RememberMe { get; set; }
 
     public string? ReturnUrl { get; set; }
+
+    /// <summary>True when AzureAd configuration is present — show the "Sign in with Microsoft" button.</summary>
+    public bool EntraEnabled { get; set; }
 }
