@@ -217,3 +217,30 @@
   - **Yes:** feedback memory — "when a spec or plan pastes test code that `new`s up a model, grep the model for `required` modifiers and include them in the paste; subagents will otherwise hit a `CS9035` and lose time."
   - **Yes:** feedback memory — "when a plan introduces an authorisation scope filter (`IScopedCaseQuery`-style), explicitly list EVERY controller action that should be guarded, not just the list action. Code review will catch missed ones, but prevention beats review."
   - Save both under `feedback_plan_authoring.md`.
+
+---
+
+## 2026-04-28 — Plan 4 follow-up: remaining 7 letter templates
+
+**Branch:** `feat/more-letter-templates` from `demo/azure-deploy@ca86fca`.
+**Worktree:** `/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val ai/.worktrees/more-letter-templates`
+
+**Acceptance:**
+- Seven new files under `Services/Letters/Templates/`.
+- Seven new `AddScoped<ILetterTemplate, ...>()` lines in `Program.cs` (in the same block as the existing three).
+- Seven new render tests in `Tests/Services/Letters/LetterTemplateTests.cs` (one per code) asserting the produced PDF starts with the `%PDF` magic header.
+- All `LetterCode` strings match the canonical SeedDataService codes already deployed: `S35_L1A`, `S35_L2`, `S35_L2A`, `S35_L4A`, `S35_L4_5`, `S33_3a_Decl`, `S33_3b_Decl`.
+- Build green; full test suite 85 + 7 = 92 passing.
+
+### 2026-04-28 11:30 — dotnet-architect — ship 7 letter templates (Plan 4 follow-up)
+
+- **Read:** existing `S35Letter1Template.cs`, `S35Letter3Template.cs`, `S33_2DeclarationTemplate.cs` for style/signing-block convention; `LetterContext.cs` for nullable-field handling; `LetterTemplateTests.cs` for fixture loader pattern; `IPdfRenderer.cs` for `%PDF` magic header check; `SeedDataService.SeedLetterTypesAsync` to confirm canonical letter codes.
+- **Changed:**
+  - 7 new templates under `Services/Letters/Templates/`: `S35Letter1ATemplate.cs` (S53(1) directive after Letter 1 silence), `S35Letter2Template.cs` (S35(3)(a) request for additional info, with bulleted document list), `S35Letter2ATemplate.cs` (S35(1) directive after Letter 2 silence), `S35Letter4ATemplate.cs` (S53(1) pre-directive notice with `#fff8e1` amber unlawful-volume panel + PAJA representations clause), `S35Letter4_5Template.cs` (S53(1) stop directive with `#ffebee` red panel + S151 enforcement language), `S33_3aDeclarationTemplate.cs` and `S33_3bDeclarationTemplate.cs` (individual-application ELU declarations, `#e3f2fd` blue panel matching S33(2)).
+  - `Program.cs:99-110` — added 7 `AddScoped<ILetterTemplate, ...>()` registrations alongside the existing three.
+  - `Tests/Services/Letters/LetterTemplateTests.cs` — 7 new `[Fact]` render tests using the fixture loader and a private `AssertPdf` helper to dedupe the magic-header check; Letter 4A and 4&5 tests set `UnlawfulVolumeM3 = 5000m`, S33(3)(a)/(b) set `LawfulVolumeM3 = 25000m`.
+- **Learned:**
+  - The brief's `.Italic()` warning was a real trap — `col.Item().Text(...).Italic();` was needed in every template that uses the optional notes line. The pattern in the existing three made this mechanical, but easy to invert without the heads-up.
+  - Adding a tiny private `AssertPdf` helper in the test class kept the 7 new tests DRY without altering the existing three (which the brief told me not to refactor).
+- **Status:** DONE
+- **Concerns:** Letter wording is plausible-sounding standard administrative-law boilerplate (S151 enforcement reference, PAJA representations clause for the S53(1) pre-directive). A Validator user (or a DWS legal officer) should review the text before any letter goes out under signature. Template structure, signing block, and rendering are correct; the legal *prose* is the only area where review is wise.

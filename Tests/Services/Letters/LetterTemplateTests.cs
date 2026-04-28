@@ -75,4 +75,66 @@ public class LetterTemplateTests
         Assert.Equal("S33_2_Decl", reg.Get("S33_2_Decl").LetterCode);
         Assert.Throws<InvalidOperationException>(() => reg.Get("Nonsense"));
     }
+
+    private static void AssertPdf(byte[] bytes)
+    {
+        Assert.NotEmpty(bytes);
+        Assert.True(bytes[0] == 0x25 && bytes[1] == 0x50 && bytes[2] == 0x44 && bytes[3] == 0x46);
+    }
+
+    [Fact]
+    public void S35Letter1A_Renders_Fixture_ToNonEmptyPdf()
+    {
+        var ctx = LoadFixture();
+        var bytes = new QuestPdfRenderer().RenderLetter(new S35Letter1ATemplate(), ctx);
+        AssertPdf(bytes);
+    }
+
+    [Fact]
+    public void S35Letter2_Renders_Fixture_ToNonEmptyPdf()
+    {
+        var ctx = LoadFixture();
+        var bytes = new QuestPdfRenderer().RenderLetter(new S35Letter2Template(), ctx);
+        AssertPdf(bytes);
+    }
+
+    [Fact]
+    public void S35Letter2A_Renders_Fixture_ToNonEmptyPdf()
+    {
+        var ctx = LoadFixture();
+        var bytes = new QuestPdfRenderer().RenderLetter(new S35Letter2ATemplate(), ctx);
+        AssertPdf(bytes);
+    }
+
+    [Fact]
+    public void S35Letter4A_Renders_WithUnlawfulVolume_ProducesPdf()
+    {
+        var ctx = LoadFixture() with { UnlawfulVolumeM3 = 5000m };
+        var bytes = new QuestPdfRenderer().RenderLetter(new S35Letter4ATemplate(), ctx);
+        AssertPdf(bytes);
+    }
+
+    [Fact]
+    public void S35Letter4_5_Renders_WithUnlawfulVolume_ProducesPdf()
+    {
+        var ctx = LoadFixture() with { UnlawfulVolumeM3 = 5000m };
+        var bytes = new QuestPdfRenderer().RenderLetter(new S35Letter4_5Template(), ctx);
+        AssertPdf(bytes);
+    }
+
+    [Fact]
+    public void S33_3aDeclaration_Renders_WithLawfulVolume_ProducesPdf()
+    {
+        var ctx = LoadFixture() with { LawfulVolumeM3 = 25000m };
+        var bytes = new QuestPdfRenderer().RenderLetter(new S33_3aDeclarationTemplate(), ctx);
+        AssertPdf(bytes);
+    }
+
+    [Fact]
+    public void S33_3bDeclaration_Renders_WithLawfulVolume_ProducesPdf()
+    {
+        var ctx = LoadFixture() with { LawfulVolumeM3 = 25000m };
+        var bytes = new QuestPdfRenderer().RenderLetter(new S33_3bDeclarationTemplate(), ctx);
+        AssertPdf(bytes);
+    }
 }

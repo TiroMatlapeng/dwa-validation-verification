@@ -98,8 +98,15 @@ builder.Services.AddScoped<dwa_ver_val.Services.Workflow.ITransitionGuard, dwa_v
 
 // Letter generation (Plan 4)
 builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S35Letter1Template>();
+builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S35Letter1ATemplate>();
+builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S35Letter2Template>();
+builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S35Letter2ATemplate>();
 builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S35Letter3Template>();
+builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S35Letter4ATemplate>();
+builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S35Letter4_5Template>();
 builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S33_2DeclarationTemplate>();
+builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S33_3aDeclarationTemplate>();
+builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplate, dwa_ver_val.Services.Letters.Templates.S33_3bDeclarationTemplate>();
 builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplateRegistry, dwa_ver_val.Services.Letters.LetterTemplateRegistry>();
 builder.Services.AddSingleton<dwa_ver_val.Services.Letters.IPdfRenderer, dwa_ver_val.Services.Letters.QuestPdfRenderer>();
 builder.Services.AddSingleton<dwa_ver_val.Services.Letters.IBlobStore>(sp =>
