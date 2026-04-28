@@ -43,6 +43,36 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
+// Microsoft (Entra ID) sign-in via the OpenID Connect external-login provider.
+// This integrates with ASP.NET Identity's existing cookie session: after successful
+// OIDC sign-in, AccountController.ExternalLoginCallback uses SignInManager to
+// link/create the local ApplicationUser and creates the standard Identity cookie.
+// Tenant + client + secret come from configuration (App Service settings or user-secrets).
+var entraTenantId = builder.Configuration["AzureAd:TenantId"];
+var entraClientId = builder.Configuration["AzureAd:ClientId"];
+var entraClientSecret = builder.Configuration["AzureAd:ClientSecret"];
+if (!string.IsNullOrEmpty(entraTenantId) && !string.IsNullOrEmpty(entraClientId) && !string.IsNullOrEmpty(entraClientSecret))
+{
+    builder.Services.AddAuthentication()
+        .AddOpenIdConnect("Microsoft", "Microsoft", options =>
+        {
+            options.Authority = $"https://login.microsoftonline.com/{entraTenantId}/v2.0";
+            options.ClientId = entraClientId;
+            options.ClientSecret = entraClientSecret;
+            options.ResponseType = "code";
+            options.UsePkce = true;
+            options.SaveTokens = true;
+            options.GetClaimsFromUserInfoEndpoint = true;
+            options.CallbackPath = builder.Configuration["AzureAd:CallbackPath"] ?? "/signin-oidc";
+            options.SignedOutCallbackPath = builder.Configuration["AzureAd:SignedOutCallbackPath"] ?? "/signout-callback-oidc";
+            options.SignInScheme = IdentityConstants.ExternalScheme;
+            options.Scope.Add("openid");
+            options.Scope.Add("profile");
+            options.Scope.Add("email");
+            options.TokenValidationParameters.NameClaimType = "name";
+        });
+}
+
 // Claims transformation (populates role + scope claims on every request)
 builder.Services.AddScoped<IClaimsTransformation, DwsClaimsTransformation>();
 
