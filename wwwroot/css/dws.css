@@ -100,8 +100,34 @@
     box-shadow: var(--dws-shadow-sm);
 }
 .dws-card--login {
-    max-width: 420px;
-    margin: 48px auto;
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto;
+    padding: var(--dws-space-6) var(--dws-space-6) var(--dws-space-5);
+    box-shadow: 0 12px 32px rgba(0, 26, 58, 0.18), 0 2px 6px rgba(0, 26, 58, 0.10);
+}
+.dws-card--login h1 {
+    font-size: 22px;
+    margin-bottom: var(--dws-space-5);
+    text-align: center;
+}
+/* Login form takes the full width of the card and stacks with generous rhythm. */
+.dws-card--login .dws-form {
+    max-width: none;
+    gap: var(--dws-space-4);
+}
+.dws-card--login .dws-input {
+    font-size: var(--dws-fs-md);
+    padding: 11px 12px;
+}
+.dws-card--login .dws-btn {
+    padding: 11px 16px;
+    font-size: var(--dws-fs-md);
+    width: 100%;
+}
+.dws-card--login .dws-checkbox {
+    font-size: var(--dws-fs-sm);
+    color: var(--dws-text-muted);
 }
 .dws-card h1 {
     font-size: var(--dws-fs-xl);
@@ -262,6 +288,25 @@ select.dws-input:focus {
     display: inline-block;
     margin: 0;
     padding: 0;
+}
+
+/* "or use email and password" divider on the login card */
+.dws-or-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--dws-space-3);
+    color: var(--dws-text-muted);
+    font-size: var(--dws-fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: var(--dws-space-4) 0;
+}
+.dws-or-divider::before,
+.dws-or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--dws-border);
 }
 
 /* Top bar user cluster */
