@@ -27,6 +27,42 @@ public class IdentitySeeder
     {
         await SeedRolesAsync();
         await SeedDemoUsersAsync();
+        await PromoteAllowlistedAdminsAsync();
+    }
+
+    /// <summary>
+    /// After seeding finishes, any ApplicationUser whose email appears in
+    /// Identity:GrantAdminToEmails (comma-separated list) is auto-promoted to SystemAdmin.
+    /// Idempotent: skips users already in the role. Designed for the demo so that the
+    /// developer's own Microsoft account (after first JIT sign-in) lands as admin without
+    /// needing a manual click through Manage Users.
+    /// </summary>
+    private async Task PromoteAllowlistedAdminsAsync()
+    {
+        var raw = _config["Identity:GrantAdminToEmails"];
+        if (string.IsNullOrWhiteSpace(raw)) return;
+
+        var emails = raw
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(e => e.ToLowerInvariant())
+            .ToHashSet();
+
+        foreach (var email in emails)
+        {
+            var user = await _users.FindByEmailAsync(email);
+            if (user is null) continue;
+            if (await _users.IsInRoleAsync(user, DwsRoles.SystemAdmin)) continue;
+            var add = await _users.AddToRoleAsync(user, DwsRoles.SystemAdmin);
+            if (add.Succeeded)
+            {
+                _logger.LogInformation("Promoted {Email} to SystemAdmin via Identity:GrantAdminToEmails allowlist.", email);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to promote {Email} to SystemAdmin: {Errors}",
+                    email, string.Join(", ", add.Errors.Select(e => e.Description)));
+            }
+        }
     }
 
     private async Task SeedRolesAsync()

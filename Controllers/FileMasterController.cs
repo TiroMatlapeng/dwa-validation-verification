@@ -204,11 +204,14 @@ public class FileMasterController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private static readonly Dictionary<string, (string LetterName, string TargetState)> LetterActionMap = new()
+    // letterAction (HTML form value) -> (LetterType.LetterName / template code, target workflow state)
+    // The LetterName position is the canonical short code consumed by ILetterTemplate registrations,
+    // matching SeedDataService.SeedLetterTypesAsync.
+    private static readonly Dictionary<string, (string LetterCode, string TargetState)> LetterActionMap = new()
     {
-        ["IssueLetter1"] = ("Letter 1", "S35_Letter1Issued"),
-        ["IssueLetter2"] = ("Letter 2", "S35_Letter2Issued"),
-        ["IssueLetter3"] = ("Letter 3", "S35_Letter3Issued"),
+        ["IssueLetter1"] = ("S35_L1", "S35_Letter1Issued"),
+        ["IssueLetter2"] = ("S35_L2", "S35_Letter2Issued"),
+        ["IssueLetter3"] = ("S35_L3", "S35_Letter3Issued"),
     };
 
     private static readonly Dictionary<string, string> ResponseActionMap = new()
@@ -234,29 +237,44 @@ public class FileMasterController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        var letterType = await _context.LetterTypes.SingleOrDefaultAsync(t => t.LetterName == map.LetterName);
-        if (letterType == null)
-        {
-            TempData["WorkflowError"] = $"Letter type '{map.LetterName}' not seeded.";
-            return RedirectToAction(nameof(Details), new { id });
-        }
-
-        _context.LetterIssuances.Add(new LetterIssuance
-        {
-            LetterIssuanceId = Guid.NewGuid(),
-            FileMasterId = id,
-            LetterTypeId = letterType.LetterTypeId,
-            IssuedDate = DateOnly.FromDateTime(issuedDate),
-            IssueMethod = deliveryMethod,
-            ServingOfficialName = recipient,
-            ResponseStatus = "Pending",
-            DueDate = DateOnly.FromDateTime(issuedDate.AddDays(60)),
-        });
-        await _context.SaveChangesAsync();
+        // Build the IssueLetterRequest, falling back gracefully when the signed-in user
+        // hasn't fully populated their profile (no FirstName/LastName claim).
+        var signedInId = Guid.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var u)
+            ? u
+            : Guid.Empty;
+        var displayName = User.FindFirst("displayName")?.Value
+                          ?? User.Identity?.Name
+                          ?? "(unknown signatory)";
+        var orgUnit = caseFm.OrgUnit?.Name ?? "DWS Regional Office";
+        var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Regional Manager";
 
         try
         {
-            await _workflow.TransitionToAsync(id, map.TargetState, userId: null, notes: $"{map.LetterName} issued to {recipient}");
+            await _letters.IssueAsync(id, map.LetterCode, new dwa_ver_val.Services.Letters.IssueLetterRequest(
+                RecipientName: recipient,
+                RecipientAddress: null,
+                IssueMethod: deliveryMethod,
+                IssueDate: DateOnly.FromDateTime(issuedDate),
+                DueDate: DateOnly.FromDateTime(issuedDate.AddDays(60)),
+                ServedByOfficialId: string.Equals(deliveryMethod, "InPerson", StringComparison.OrdinalIgnoreCase) && signedInId != Guid.Empty
+                    ? signedInId
+                    : null,
+                AdditionalNotes: null,
+                SignedByUserId: signedInId,
+                SignedByDisplayName: displayName,
+                SignedByTitle: role,
+                SignedByOrgUnit: orgUnit));
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["WorkflowError"] = $"Could not issue letter: {ex.Message}";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        try
+        {
+            await _workflow.TransitionToAsync(id, map.TargetState, userId: signedInId == Guid.Empty ? null : signedInId,
+                notes: $"{map.LetterCode} issued to {recipient}");
         }
         catch (InvalidOperationException ex)
         {
@@ -264,6 +282,25 @@ public class FileMasterController : Controller
         }
 
         return RedirectToAction(nameof(Details), new { id });
+    }
+
+    /// <summary>Returns the signed PDF for an issued letter, scope-guarded.</summary>
+    [HttpGet]
+    public async Task<IActionResult> LetterPdf(Guid id, Guid letterIssuanceId)
+    {
+        var fm = await _fileMasterRepository.GetByIdAsync(id);
+        if (fm is null) return NotFound();
+        if (!_scope.IsInScope(fm, User)) return Forbid();
+
+        var issuance = await _context.LetterIssuances
+            .Include(l => l.LetterType)
+            .FirstOrDefaultAsync(l => l.LetterIssuanceId == letterIssuanceId && l.FileMasterId == id);
+        if (issuance is null || string.IsNullOrEmpty(issuance.BlobPath)) return NotFound();
+
+        var blobs = HttpContext.RequestServices.GetRequiredService<dwa_ver_val.Services.Letters.IBlobStore>();
+        var bytes = await blobs.ReadAsync(issuance.BlobPath);
+        var fileName = $"{issuance.LetterType?.LetterName ?? "letter"}-{issuance.IssuedDate:yyyyMMdd}.pdf";
+        return File(bytes, "application/pdf", fileName);
     }
 
     [HttpPost]

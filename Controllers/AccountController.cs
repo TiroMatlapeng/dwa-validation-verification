@@ -1,9 +1,11 @@
 using System.Security.Claims;
+using dwa_ver_val.Services.Audit;
 using dwa_ver_val.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace dwa_ver_val.Controllers;
 
@@ -14,6 +16,7 @@ public class AccountController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole<Guid>> _roleManager;
     private readonly IConfiguration _config;
+    private readonly IAuditService _audit;
     private readonly ILogger<AccountController> _logger;
 
     public AccountController(
@@ -21,12 +24,14 @@ public class AccountController : Controller
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole<Guid>> roleManager,
         IConfiguration config,
+        IAuditService audit,
         ILogger<AccountController> logger)
     {
         _signInManager = signInManager;
         _userManager = userManager;
         _roleManager = roleManager;
         _config = config;
+        _audit = audit;
         _logger = logger;
     }
 
@@ -44,9 +49,17 @@ public class AccountController : Controller
     {
         if (!ModelState.IsValid) return View(model);
 
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user is null || !user.IsActive)
         {
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: user?.Id.ToString() ?? "(unknown)",
+                Action: "SignInFailed",
+                UserDisplayName: model.Email,
+                Reason: user is null ? "Unknown email" : "Account is deactivated",
+                IPAddress: ipAddress));
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
             return View(model);
         }
@@ -57,6 +70,13 @@ public class AccountController : Controller
         if (result.Succeeded)
         {
             _logger.LogInformation("User {Email} signed in.", model.Email);
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: user.Id.ToString(),
+                Action: "SignedIn",
+                UserId: user.Id,
+                UserDisplayName: $"{user.FirstName} {user.LastName}",
+                IPAddress: ipAddress));
             if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 return Redirect(model.ReturnUrl);
             return RedirectToAction("Index", "Home");
@@ -64,10 +84,26 @@ public class AccountController : Controller
 
         if (result.IsLockedOut)
         {
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: user.Id.ToString(),
+                Action: "AccountLockedOut",
+                UserId: user.Id,
+                UserDisplayName: $"{user.FirstName} {user.LastName}",
+                Reason: "Too many failed sign-in attempts",
+                IPAddress: ipAddress));
             ModelState.AddModelError(string.Empty, "Account locked. Try again later.");
             return View(model);
         }
 
+        await _audit.LogAsync(new AuditEvent(
+            EntityType: nameof(ApplicationUser),
+            EntityId: user.Id.ToString(),
+            Action: "SignInFailed",
+            UserId: user.Id,
+            UserDisplayName: $"{user.FirstName} {user.LastName}",
+            Reason: "Wrong password",
+            IPAddress: ipAddress));
         ModelState.AddModelError(string.Empty, "Invalid login attempt.");
         return View(model);
     }
@@ -93,8 +129,15 @@ public class AccountController : Controller
     [HttpGet]
     public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
     {
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
         if (!string.IsNullOrEmpty(remoteError))
         {
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: "(unknown)",
+                Action: "ExternalSignInFailed",
+                Reason: remoteError,
+                IPAddress: ipAddress));
             ModelState.AddModelError(string.Empty, $"Error from external provider: {remoteError}");
             return View(nameof(Login), new LoginViewModel { ReturnUrl = returnUrl, EntraEnabled = true });
         }
@@ -113,6 +156,17 @@ public class AccountController : Controller
         if (loginResult.Succeeded)
         {
             _logger.LogInformation("External login {Provider} succeeded for {Subject}.", info.LoginProvider, info.ProviderKey);
+            var existingFromLogin = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: existingFromLogin?.Id.ToString() ?? "(unknown)",
+                Action: "ExternalSignedIn",
+                UserId: existingFromLogin?.Id,
+                UserDisplayName: existingFromLogin is null
+                    ? info.Principal.Identity?.Name
+                    : $"{existingFromLogin.FirstName} {existingFromLogin.LastName}",
+                ToValue: info.LoginProvider,
+                IPAddress: ipAddress));
             return RedirectLocal(returnUrl);
         }
 
@@ -127,8 +181,10 @@ public class AccountController : Controller
         }
 
         var existing = await _userManager.FindByEmailAsync(email);
+        var jitProvisioned = false;
         if (existing is null)
         {
+            jitProvisioned = true;
             var givenName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "(Microsoft)";
             var surname = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "User";
 
@@ -151,17 +207,42 @@ public class AccountController : Controller
                 return View(nameof(Login), new LoginViewModel { ReturnUrl = returnUrl, EntraEnabled = true });
             }
 
-            // Default JIT-created Entra users to ReadOnly until a SystemAdmin promotes them.
-            // Lower-friction than locking them out entirely on first sign-in.
-            if (await _roleManager.RoleExistsAsync(DwsRoles.ReadOnly))
+            // Promote to SystemAdmin if the email appears in the GrantAdminToEmails allowlist;
+            // otherwise default to ReadOnly until a SystemAdmin upgrades the row.
+            var adminEmails = _config["Identity:GrantAdminToEmails"]?
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                ?? Array.Empty<string>();
+            var isAllowlistedAdmin = adminEmails.Any(e =>
+                string.Equals(e, email, StringComparison.OrdinalIgnoreCase));
+            var roleToAssign = isAllowlistedAdmin ? DwsRoles.SystemAdmin : DwsRoles.ReadOnly;
+            if (await _roleManager.RoleExistsAsync(roleToAssign))
             {
-                await _userManager.AddToRoleAsync(existing, DwsRoles.ReadOnly);
+                await _userManager.AddToRoleAsync(existing, roleToAssign);
             }
-            _logger.LogInformation("JIT-created ApplicationUser {Email} from external login {Provider}.", email, info.LoginProvider);
+
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: existing.Id.ToString(),
+                Action: "ExternalUserJitProvisioned",
+                UserId: existing.Id,
+                UserDisplayName: $"{existing.FirstName} {existing.LastName}",
+                ToValue: roleToAssign,
+                Reason: $"Created from {info.LoginProvider} sign-in",
+                IPAddress: ipAddress));
+            _logger.LogInformation("JIT-created ApplicationUser {Email} as {Role} from external login {Provider}.",
+                email, roleToAssign, info.LoginProvider);
         }
 
         if (!existing.IsActive)
         {
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: existing.Id.ToString(),
+                Action: "ExternalSignInFailed",
+                UserId: existing.Id,
+                UserDisplayName: $"{existing.FirstName} {existing.LastName}",
+                Reason: "Account is deactivated",
+                IPAddress: ipAddress));
             ModelState.AddModelError(string.Empty, "Account is deactivated.");
             return View(nameof(Login), new LoginViewModel { ReturnUrl = returnUrl, EntraEnabled = true });
         }
@@ -176,6 +257,19 @@ public class AccountController : Controller
 
         await _signInManager.SignInAsync(existing, isPersistent: false);
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+
+        if (!jitProvisioned)
+        {
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: existing.Id.ToString(),
+                Action: "ExternalSignedIn",
+                UserId: existing.Id,
+                UserDisplayName: $"{existing.FirstName} {existing.LastName}",
+                ToValue: info.LoginProvider,
+                IPAddress: ipAddress));
+        }
+
         _logger.LogInformation("External login linked + signed in {Email} via {Provider}.", email, info.LoginProvider);
         return RedirectLocal(returnUrl);
     }
@@ -185,14 +279,122 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var displayName = User.FindFirstValue("displayName") ?? User.Identity?.Name;
         await _signInManager.SignOutAsync();
+
+        if (Guid.TryParse(userId, out var parsed))
+        {
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: parsed.ToString(),
+                Action: "SignedOut",
+                UserId: parsed,
+                UserDisplayName: displayName,
+                IPAddress: HttpContext.Connection.RemoteIpAddress?.ToString()));
+        }
         return RedirectToAction("Index", "Home");
     }
 
     [HttpGet]
-    public IActionResult AccessDenied()
+    public IActionResult AccessDenied() => View();
+
+    [HttpGet]
+    public IActionResult ForgotPassword() => View();
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
     {
-        return View();
+        if (!ModelState.IsValid) return View(model);
+
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        // Always return the same view so we don't reveal whether the email is registered.
+        if (user is null || !user.IsActive)
+        {
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: user?.Id.ToString() ?? "(unknown)",
+                Action: "PasswordResetRequested",
+                UserDisplayName: model.Email,
+                Reason: user is null ? "Unknown email" : "Account is deactivated",
+                IPAddress: HttpContext.Connection.RemoteIpAddress?.ToString()));
+            return View("ForgotPasswordConfirmation", new ForgotPasswordResultViewModel { Email = model.Email, ResetLink = null });
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var encoded = WebEncoders.Base64UrlEncode(System.Text.Encoding.UTF8.GetBytes(token));
+        var resetLink = Url.Action(
+            nameof(ResetPassword),
+            "Account",
+            new { email = user.Email, token = encoded },
+            protocol: Request.Scheme)!;
+
+        await _audit.LogAsync(new AuditEvent(
+            EntityType: nameof(ApplicationUser),
+            EntityId: user.Id.ToString(),
+            Action: "PasswordResetRequested",
+            UserId: user.Id,
+            UserDisplayName: $"{user.FirstName} {user.LastName}",
+            IPAddress: HttpContext.Connection.RemoteIpAddress?.ToString()));
+
+        // Demo: surface the reset link directly. Production: send via email service.
+        return View("ForgotPasswordConfirmation", new ForgotPasswordResultViewModel
+        {
+            Email = user.Email!,
+            ResetLink = resetLink
+        });
+    }
+
+    [HttpGet]
+    public IActionResult ResetPassword(string email, string token)
+    {
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
+        {
+            return BadRequest("A reset token is required.");
+        }
+        return View(new ResetPasswordViewModel { Email = email, Token = token });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user is null)
+        {
+            // Don't reveal whether the email is registered.
+            return View("ResetPasswordConfirmation");
+        }
+
+        string decodedToken;
+        try
+        {
+            decodedToken = System.Text.Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
+        }
+        catch (FormatException)
+        {
+            ModelState.AddModelError(string.Empty, "Reset link is malformed.");
+            return View(model);
+        }
+
+        var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.NewPassword);
+        if (!result.Succeeded)
+        {
+            foreach (var e in result.Errors) ModelState.AddModelError(string.Empty, e.Description);
+            return View(model);
+        }
+
+        await _audit.LogAsync(new AuditEvent(
+            EntityType: nameof(ApplicationUser),
+            EntityId: user.Id.ToString(),
+            Action: "PasswordReset",
+            UserId: user.Id,
+            UserDisplayName: $"{user.FirstName} {user.LastName}",
+            IPAddress: HttpContext.Connection.RemoteIpAddress?.ToString()));
+        return View("ResetPasswordConfirmation");
     }
 
     private IActionResult RedirectLocal(string? returnUrl)
