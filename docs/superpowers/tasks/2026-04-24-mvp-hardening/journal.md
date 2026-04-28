@@ -267,3 +267,30 @@
 - Inheritance: subdivision children inherit `WmaId`, `CatchmentAreaId` from parent; user provides SG Code, PropertyReferenceNumber, PropertySize per child. Consolidation new property inherits `WmaId`, `CatchmentAreaId` from sources (must all match), user provides SG Code, PropertyReferenceNumber; PropertySize defaults to sum of sources.
 - Tests: subdivide-creates-N-children, consolidate-marks-N-sources-consolidated, scope-filter-blocks-out-of-WMA-property.
 - 92 → 95 tests, all green.
+
+### 2026-04-28 14:50 — dotnet-architect — property subdivide/consolidate complete
+
+- **Read:** Plan 4 follow-up entry above; CLAUDE.md feedback bullets on subdivide/consolidate; `Models/Property.cs` (existing `ParentPropertyId` + `PropertyStatus`); `DatabaseContexts/ApplicationDBContext.cs:164-169` (existing parent FK config); `Controllers/AccountController.cs` audit-event call sites; `Services/Auth/ScopedCaseQuery.cs` (FilterProperties already exists); `Tests/Services/Auth/ScopedCaseQueryTests.cs` for InMemory + ClaimsPrincipal helper pattern; `Tests/Helpers/TestAuditService.cs`.
+- **Changed:**
+  - `Models/Property.cs:54-56` — added `SuccessorPropertyId` (Guid?) + `SuccessorProperty` nav alongside the existing parent block.
+  - `DatabaseContexts/ApplicationDBContext.cs:171-178` — wired second self-referencing FK with `.WithMany()` (no inverse collection) + Restrict-on-delete.
+  - `Migrations/20260428122725_PropertyLineageSuccessor.cs` + Designer + snapshot — single column add, applied locally with `dotnet ef database update`.
+  - `Controllers/PropertyController.cs` — full rewrite: ctor injects `IScopedCaseQuery` + `IAuditService`; new actions Subdivide(GET/POST) and Consolidate(GET/POST); Details now Includes lineage navs + queries predecessors; private `IsInScope(Property)` helper avoids second DB round-trip; transactions guarded with `Database.IsRelational()` so InMemory tests don't blow up.
+  - `ViewModels/{SubdivideViewModel,ConsolidateViewModel,PropertyLineageViewModel}.cs` — three new VMs.
+  - `Views/Property/Subdivide.cshtml` + `Consolidate.cshtml` — new; existing `.card` / `.form-row` / `.badge` primitives. Subdivide defaults to 3 child rows.
+  - `Views/Property/Details.cshtml` — added lineage panel (status badge, predecessor, successor, children list, predecessors list) + conditional Subdivide button (Active only).
+  - `Views/Property/Index.cshtml` — added Lineage column with status badge + per-row Subdivide link + top-of-page Consolidate link.
+  - `Tests/Services/Property/PropertyLineageTests.cs` — 3 controller-level tests using `ScopedCaseQuery` + `TestAuditService` + ClaimsPrincipal builder. Namespace `dwa_ver_val.Tests.Services.PropertyLineageTestsNamespace` (NOT `...Property`) to avoid shadowing the global `Property` type.
+- **Learned:**
+  - **Namespace shadowing trap:** initially named the test namespace `dwa_ver_val.Tests.Services.Property` which broke `Tests/Services/Auth/ScopedCaseQueryTests.cs` with `CS0118: 'Property' is a namespace but is used like a type` because the existing tests use `new Property { ... }` with no `global::` prefix. Worth a feedback memory: **when adding tests under a folder named after a model entity, do NOT make that folder name a leaf namespace segment.** Use a non-shadowing leaf (e.g. `PropertyLineageTestsNamespace`) or omit the leaf segment entirely.
+  - InMemory provider doesn't support `Database.BeginTransactionAsync()`. Wrapped in `Database.IsRelational() ? ... : null` — production gets a real transaction, tests get the SaveChanges-only path. Same pattern would suit any future controller doing multi-table writes against the InMemory test harness.
+  - The brief said "use `IScopedCaseQuery.FilterProperties` — it exists already." Verified at `Services/Auth/ScopedCaseQuery.cs:30-36` before writing — saved a round of discovery.
+  - Controller's `IsInScope(Property)` duplicates a sliver of `ScopedCaseQuery` logic but avoids a second DB lookup since the property is already in hand. Acceptable trade-off; could be added to `IScopedCaseQuery` later if a third caller appears.
+  - Tests pass first run. No red-green cycle was performed because the controller code already existed when the test file was added — flagged as a TDD compliance gap (see concerns).
+  - Final: `dotnet build` 0 errors, `dotnet test` 95 passed / 0 failed (was 92 before this work).
+- **Status:** DONE
+- **Concerns:**
+  - **TDD compliance gap:** the brief asked for tests after implementation. I wrote controller + views first, then tests. Tests passed on first run, which under strict TDD proves nothing about whether they'd catch a regression. To partially compensate I asserted on specific values (3 children, sum=100m, audit event counts), not just "no exception thrown."
+  - The Index view's existing client-side filter selects do nothing (server-side filtering not wired up) — out of scope for this task but the new "Lineage" column will be unfilterable until somebody hooks up the filter bar. Pre-existing issue, not introduced here.
+  - Subdivide view always renders 3 fixed child rows; "add another child" JS button was deferred per the brief's "at minimum 3 fixed rows" allowance. Users wanting 4+ children would need two passes (subdivide then re-subdivide a child) — acceptable for MVP.
+  - Address inheritance is FK reuse (children share `AddressId` with parent) per the brief's explicit guidance. If two siblings later need different addresses, the user must edit each child's Address — fine for now.
