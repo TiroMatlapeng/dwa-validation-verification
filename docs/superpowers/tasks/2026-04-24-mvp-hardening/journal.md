@@ -217,3 +217,17 @@
   - **Yes:** feedback memory — "when a spec or plan pastes test code that `new`s up a model, grep the model for `required` modifiers and include them in the paste; subagents will otherwise hit a `CS9035` and lose time."
   - **Yes:** feedback memory — "when a plan introduces an authorisation scope filter (`IScopedCaseQuery`-style), explicitly list EVERY controller action that should be guarded, not just the list action. Code review will catch missed ones, but prevention beats review."
   - Save both under `feedback_plan_authoring.md`.
+
+---
+
+## 2026-04-28 — Plan 4 follow-up: remaining 7 letter templates
+
+**Branch:** `feat/more-letter-templates` from `demo/azure-deploy@ca86fca`.
+**Worktree:** `/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val ai/.worktrees/more-letter-templates`
+
+**Acceptance:**
+- Seven new files under `Services/Letters/Templates/`.
+- Seven new `AddScoped<ILetterTemplate, ...>()` lines in `Program.cs` (in the same block as the existing three).
+- Seven new render tests in `Tests/Services/Letters/LetterTemplateTests.cs` (one per code) asserting the produced PDF starts with the `%PDF` magic header.
+- All `LetterCode` strings match the canonical SeedDataService codes already deployed: `S35_L1A`, `S35_L2`, `S35_L2A`, `S35_L4A`, `S35_L4_5`, `S33_3a_Decl`, `S33_3b_Decl`.
+- Build green; full test suite 85 + 7 = 92 passing.
