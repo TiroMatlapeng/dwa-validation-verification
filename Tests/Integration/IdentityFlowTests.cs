@@ -1,57 +1,40 @@
 using System.Net;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace dwa_ver_val.Tests.Integration;
 
-public class IdentityFlowTests : IClassFixture<WebApplicationFactory<Program>>
+public class IdentityFlowTests : IClassFixture<IntegrationTestFixture>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly IntegrationTestFixture _factory;
 
-    public IdentityFlowTests(WebApplicationFactory<Program> factory)
+    public IdentityFlowTests(IntegrationTestFixture factory)
     {
-        _factory = factory.WithWebHostBuilder(b =>
-        {
-            b.UseEnvironment("Development");
-            b.ConfigureServices(services =>
-            {
-                // Allow auth cookies over plain HTTP so the test client (which doesn't do TLS)
-                // can carry the Identity cookie between requests. Do NOT relax this in prod.
-                services.Configure<CookieAuthenticationOptions>(IdentityConstants.ApplicationScheme, o =>
-                {
-                    o.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-                });
-            });
-        });
+        _factory = factory;
     }
 
     [Theory]
     [InlineData("/Account/Login")]
     [InlineData("/Account/AccessDenied")]
-    public async Task PublicPage_IsReachableAnonymously(string path)
+    [InlineData("/Account/ForgotPassword")]
+    [InlineData("/css/dws.css")]
+    public async Task PublicResource_IsReachableAnonymously(string path)
     {
-        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
+        using var client = IntegrationTestHelpers.CreateAuthenticatedClient(_factory);
         var response = await client.GetAsync(path);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
-    public async Task ProtectedPage_RedirectsAnonymousToLogin()
+    [Theory]
+    [InlineData("/")]
+    [InlineData("/FileMaster")]
+    [InlineData("/Property")]
+    [InlineData("/Validation")]
+    [InlineData("/Owner")]
+    [InlineData("/Admin/Users/Index")]
+    public async Task ProtectedPage_RedirectsAnonymousToLogin(string path)
     {
-        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
-        var response = await client.GetAsync("/FileMaster");
+        using var client = IntegrationTestHelpers.CreateAuthenticatedClient(_factory);
+        var response = await client.GetAsync(path);
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Contains("/Account/Login", response.Headers.Location!.OriginalString);
     }
@@ -59,20 +42,8 @@ public class IdentityFlowTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task AdminUsersPage_NonAdmin_RedirectsToAccessDenied()
     {
-        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false,
-            HandleCookies = true
-        });
-
-        var token = await GetAntiForgeryToken(client, "/Account/Login");
-        var login = await client.PostAsync("/Account/Login", new FormUrlEncodedContent(new[]
-        {
-            new KeyValuePair<string, string>("Email", "readonly@dwa.demo"),
-            new KeyValuePair<string, string>("Password", "Demo@Pass2026"),
-            new KeyValuePair<string, string>("RememberMe", "false"),
-            new KeyValuePair<string, string>("__RequestVerificationToken", token)
-        }));
+        using var client = IntegrationTestHelpers.CreateAuthenticatedClient(_factory);
+        var login = await IntegrationTestHelpers.LoginAsDemoUser(client, "readonly@dwa.demo");
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
 
         var response = await client.GetAsync("/Admin/Users/Index");
@@ -80,22 +51,18 @@ public class IdentityFlowTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Contains("/Account/AccessDenied", response.Headers.Location!.OriginalString);
     }
 
-    private static async Task<string> GetAntiForgeryToken(HttpClient client, string path)
+    [Fact]
+    public async Task AdminUsersPage_AdminUser_ReturnsTheList()
     {
-        var body = await client.GetStringAsync(path);
-        // Razor emits: <input name="__RequestVerificationToken" type="hidden" value="...">
-        // Search by name= first, then back out to the value= on the same tag.
-        var nameMarker = "name=\"__RequestVerificationToken\"";
-        var nameIdx = body.IndexOf(nameMarker);
-        if (nameIdx < 0)
-            throw new InvalidOperationException("Antiforgery token input not found on " + path);
+        using var client = IntegrationTestHelpers.CreateAuthenticatedClient(_factory);
+        var login = await IntegrationTestHelpers.LoginAsDemoUser(client, "admin@dwa.demo");
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
 
-        var valueMarker = "value=\"";
-        var valueIdx = body.IndexOf(valueMarker, nameIdx);
-        if (valueIdx < 0)
-            throw new InvalidOperationException("Antiforgery token value attribute not found on " + path);
-        var start = valueIdx + valueMarker.Length;
-        var end = body.IndexOf('"', start);
-        return body[start..end];
+        var response = await client.GetAsync("/Admin/Users/Index");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Manage Users", body);
+        // Demo seed users land in the table — at least one of them should be present by email.
+        Assert.Contains("admin@dwa.demo", body);
     }
 }
