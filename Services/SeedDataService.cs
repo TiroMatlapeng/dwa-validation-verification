@@ -171,85 +171,44 @@ public class SeedDataService
 
     private async Task SeedLetterTypesAsync()
     {
-        if (await _context.LetterTypes.AnyAsync())
-            return;
-
-        var letterTypes = new List<LetterType>
+        // LetterName is the canonical lookup key consumed by ILetterTemplate registrations
+        // and FileMasterController.LetterActionMap. We use short codes (S35_L1, S33_2_Decl)
+        // rather than human names so the same string round-trips between code and DB.
+        // Idempotent: this runs every startup; missing rows are added; rows with the legacy
+        // human names ("Letter 1" etc.) are auto-renamed to their canonical code.
+        var canonical = new (string LegacyName, string Code, string Description, string NWASection)[]
         {
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 1",
-                LetterDescription = "S35(1) Notice to apply for verification",
-                NWASection = "S35(1)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 1A",
-                LetterDescription = "S53(1) Directive to apply for verification",
-                NWASection = "S53(1)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 2",
-                LetterDescription = "S35(3)(a) Request for additional information",
-                NWASection = "S35(3)(a)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 2A",
-                LetterDescription = "S35(1) Directive to provide additional information",
-                NWASection = "S35(1)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 3",
-                LetterDescription = "S35(4) Confirmation of extent and lawfulness of water use",
-                NWASection = "S35(4)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 4A",
-                LetterDescription = "S53(1) Notice of intent to issue directive to stop unlawful use",
-                NWASection = "S53(1)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 4 & 5",
-                LetterDescription = "S53(1) Directive to stop unlawful water use",
-                NWASection = "S53(1)"
-            },
-            // Section 33 Declaration Letters
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "S33(2) Declaration",
-                LetterDescription = "Kader Asmal Declaration — confirms ELU for irrigation board scheduled area",
-                NWASection = "S33(2)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "S33(3)(a) Declaration",
-                LetterDescription = "Declaration of ELU on individual application — category A",
-                NWASection = "S33(3)(a)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "S33(3)(b) Declaration",
-                LetterDescription = "Declaration of ELU on individual application — category B",
-                NWASection = "S33(3)(b)"
-            },
+            ("Letter 1",                "S35_L1",      "S35(1) Notice to apply for verification",                              "S35(1)"),
+            ("Letter 1A",               "S35_L1A",     "S53(1) Directive to apply for verification",                           "S53(1)"),
+            ("Letter 2",                "S35_L2",      "S35(3)(a) Request for additional information",                         "S35(3)(a)"),
+            ("Letter 2A",               "S35_L2A",     "S35(1) Directive to provide additional information",                   "S35(1)"),
+            ("Letter 3",                "S35_L3",      "S35(4) Confirmation of extent and lawfulness of water use",            "S35(4)"),
+            ("Letter 4A",               "S35_L4A",     "S53(1) Notice of intent to issue directive to stop unlawful use",      "S53(1)"),
+            ("Letter 4 & 5",            "S35_L4_5",    "S53(1) Directive to stop unlawful water use",                          "S53(1)"),
+            ("S33(2) Declaration",      "S33_2_Decl",  "Kader Asmal Declaration — confirms ELU for irrigation board scheduled area", "S33(2)"),
+            ("S33(3)(a) Declaration",   "S33_3a_Decl", "Declaration of ELU on individual application — category A",            "S33(3)(a)"),
+            ("S33(3)(b) Declaration",   "S33_3b_Decl", "Declaration of ELU on individual application — category B",            "S33(3)(b)"),
         };
 
-        _context.LetterTypes.AddRange(letterTypes);
+        foreach (var row in canonical)
+        {
+            var existing = await _context.LetterTypes
+                .FirstOrDefaultAsync(t => t.LetterName == row.LegacyName || t.LetterName == row.Code);
+            if (existing is null)
+            {
+                _context.LetterTypes.Add(new LetterType
+                {
+                    LetterTypeId = Guid.NewGuid(),
+                    LetterName = row.Code,
+                    LetterDescription = row.Description,
+                    NWASection = row.NWASection
+                });
+            }
+            else if (existing.LetterName != row.Code)
+            {
+                existing.LetterName = row.Code;
+            }
+        }
         await _context.SaveChangesAsync();
     }
 
