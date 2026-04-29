@@ -1,6 +1,17 @@
 # Build output
 bin/
 obj/
+publish/
+publish-azure/
+publish-azure.zip
+app.zip
+
+# Office temp / lock files (e.g. ~$Document.docx that Office writes while open)
+~$*
+**/~$*
+
+# Claude Code local state (agents, settings.local.json) — personal, not project
+.claude/
 
 # Visual Studio / Rider
 .vs/
