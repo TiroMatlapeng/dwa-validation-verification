@@ -56,7 +56,7 @@ namespace dwa_ver_val.Migrations
 
             modelBuilder.Entity("ApplicationUser", b =>
                 {
-                    b.Property<Guid>("ApplicationUserId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
@@ -64,10 +64,12 @@ namespace dwa_ver_val.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
@@ -80,8 +82,8 @@ namespace dwa_ver_val.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -94,10 +96,12 @@ namespace dwa_ver_val.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("NormalizedEmail")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("NormalizedUserName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<Guid?>("OrgUnitId")
                         .HasColumnType("uniqueidentifier");
@@ -121,15 +125,24 @@ namespace dwa_ver_val.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("UserName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
-                    b.HasKey("ApplicationUserId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.HasIndex("OrgUnitId");
 
                     b.HasIndex("OrganisationalUnitOrgUnitId");
 
-                    b.ToTable("ApplicationUsers");
+                    b.ToTable("AspNetUsers", (string)null);
                 });
 
             modelBuilder.Entity("AuditLog", b =>
@@ -275,6 +288,33 @@ namespace dwa_ver_val.Migrations
                     b.HasIndex("PublicUserId");
 
                     b.ToTable("CaseComments");
+                });
+
+            modelBuilder.Entity("CatchmentArea", b =>
+                {
+                    b.Property<Guid>("CatchmentAreaId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CatchmentCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CatchmentName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("WmaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("CatchmentAreaId");
+
+                    b.HasIndex("CatchmentCode")
+                        .IsUnique();
+
+                    b.HasIndex("WmaId");
+
+                    b.ToTable("CatchmentAreas");
                 });
 
             modelBuilder.Entity("Crop", b =>
@@ -573,11 +613,26 @@ namespace dwa_ver_val.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("AdditionalInfoReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AssessmentTrack")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("BatchDescription")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("CapturePersonId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CaseNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("CatchmentAreaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("DamMarkedNA")
+                        .HasColumnType("bit");
 
                     b.Property<Guid?>("EntitlementId")
                         .HasColumnType("uniqueidentifier");
@@ -639,6 +694,12 @@ namespace dwa_ver_val.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("SfraMarkedNA")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("SpatialInfoConfirmedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("SurveyorGeneralCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -652,12 +713,17 @@ namespace dwa_ver_val.Migrations
                     b.Property<string>("WarmsApplicant")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("WarmsReviewedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<Guid?>("WorkflowInstanceId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("FileMasterId");
 
                     b.HasIndex("CapturePersonId");
+
+                    b.HasIndex("CatchmentAreaId");
 
                     b.HasIndex("EntitlementId");
 
@@ -769,9 +835,15 @@ namespace dwa_ver_val.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("GovernmentGazetteReference")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("GovernmentWaterControlAreaName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateOnly?>("ProclamationDate")
+                        .HasColumnType("date");
 
                     b.Property<Guid?>("WaterControlAddressAddressId")
                         .HasColumnType("uniqueidentifier");
@@ -799,6 +871,48 @@ namespace dwa_ver_val.Migrations
                     b.HasKey("WaterSchemeId");
 
                     b.ToTable("GovernmentWaterSchemes");
+                });
+
+            modelBuilder.Entity("GwcaProclamationRule", b =>
+                {
+                    b.Property<Guid>("RuleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly?>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
+                    b.Property<string>("GovernmentGazetteReference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("NumericLimit")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<string>("RuleCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RuleDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Unit")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("WaterControlAreaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("RuleId");
+
+                    b.HasIndex("WaterControlAreaId", "RuleCode");
+
+                    b.ToTable("GwcaProclamationRules");
                 });
 
             modelBuilder.Entity("Irrigation", b =>
@@ -910,6 +1024,9 @@ namespace dwa_ver_val.Migrations
                     b.Property<string>("BatchNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("BlobPath")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid?>("DigitalSignatureId")
                         .HasColumnType("uniqueidentifier");
 
@@ -924,6 +1041,12 @@ namespace dwa_ver_val.Migrations
 
                     b.Property<DateOnly?>("GeneratedDate")
                         .HasColumnType("date");
+
+                    b.Property<bool>("IncludesDormantVolume")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("IrrigationBoardId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("IssueMethod")
                         .HasColumnType("nvarchar(max)");
@@ -964,7 +1087,13 @@ namespace dwa_ver_val.Migrations
                     b.Property<bool>("ReturnedToSender")
                         .HasColumnType("bit");
 
+                    b.Property<Guid?>("ServedByOfficialId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("ServingOfficialName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SignatureHash")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("SignedById")
@@ -981,11 +1110,15 @@ namespace dwa_ver_val.Migrations
 
                     b.HasIndex("FileMasterId");
 
+                    b.HasIndex("IrrigationBoardId");
+
                     b.HasIndex("LetterTypeId");
 
                     b.HasIndex("PropertyOwnerId");
 
                     b.HasIndex("ReissuedFromId");
+
+                    b.HasIndex("ServedByOfficialId");
 
                     b.HasIndex("SignedById");
 
@@ -1012,6 +1145,209 @@ namespace dwa_ver_val.Migrations
                     b.HasKey("LetterTypeId");
 
                     b.ToTable("LetterTypes");
+                });
+
+            modelBuilder.Entity("Mapbook", b =>
+                {
+                    b.Property<Guid>("MapbookId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("DocumentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FileMasterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("GisLayerReference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MapType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MapbookTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("PeriodId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly?>("ProcessedDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid?>("PropertyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("MapbookId");
+
+                    b.HasIndex("DocumentId");
+
+                    b.HasIndex("FileMasterId");
+
+                    b.HasIndex("PeriodId");
+
+                    b.HasIndex("PropertyId");
+
+                    b.ToTable("Mapbooks");
+                });
+
+            modelBuilder.Entity("MapbookImage", b =>
+                {
+                    b.Property<Guid>("MapbookImageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("LayerOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("MapbookId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("SateliteImageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("MapbookImageId");
+
+                    b.HasIndex("MapbookId");
+
+                    b.HasIndex("SateliteImageId");
+
+                    b.ToTable("MapbookImages");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
                 });
 
             modelBuilder.Entity("Notification", b =>
@@ -1075,10 +1411,65 @@ namespace dwa_ver_val.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("Objection", b =>
+                {
+                    b.Property<Guid>("ObjectionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FileMasterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("LodgedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("PublicUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ResolutionNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ObjectionId");
+
+                    b.HasIndex("FileMasterId");
+
+                    b.HasIndex("PublicUserId");
+
+                    b.ToTable("Objections");
+                });
+
+            modelBuilder.Entity("ObjectionDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ObjectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentId");
+
+                    b.HasIndex("ObjectionId");
+
+                    b.ToTable("ObjectionDocuments");
+                });
+
             modelBuilder.Entity("OrganisationalUnit", b =>
                 {
                     b.Property<Guid>("OrgUnitId")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CatchmentAreaId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -1102,6 +1493,8 @@ namespace dwa_ver_val.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("OrgUnitId");
+
+                    b.HasIndex("CatchmentAreaId");
 
                     b.HasIndex("ParentOrgUnitId");
 
@@ -1138,11 +1531,17 @@ namespace dwa_ver_val.Migrations
                     b.Property<Guid?>("AddressId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("CatchmentAreaId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal?>("Latitude")
                         .HasColumnType("decimal(9, 6)");
 
                     b.Property<decimal?>("Longitude")
                         .HasColumnType("decimal(9, 6)");
+
+                    b.Property<Guid?>("ParentPropertyId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateOnly?>("ProclamationDate")
                         .HasColumnType("date");
@@ -1153,6 +1552,9 @@ namespace dwa_ver_val.Migrations
                     b.Property<decimal>("PropertySize")
                         .HasColumnType("decimal(18, 2)");
 
+                    b.Property<string>("PropertyStatus")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("QuaternaryDrainage")
                         .HasColumnType("nvarchar(max)");
 
@@ -1162,12 +1564,21 @@ namespace dwa_ver_val.Migrations
                     b.Property<string>("SGCode")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("SuccessorPropertyId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("WmaId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("PropertyId");
 
                     b.HasIndex("AddressId");
+
+                    b.HasIndex("CatchmentAreaId");
+
+                    b.HasIndex("ParentPropertyId");
+
+                    b.HasIndex("SuccessorPropertyId");
 
                     b.HasIndex("WmaId");
 
@@ -1201,6 +1612,9 @@ namespace dwa_ver_val.Migrations
 
                     b.Property<string>("IdentityDocumentNumber")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsHDI")
+                        .HasColumnType("bit");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -1248,58 +1662,6 @@ namespace dwa_ver_val.Migrations
                     b.ToTable("PropertyOwnerships");
                 });
 
-            modelBuilder.Entity("Protest", b =>
-                {
-                    b.Property<Guid>("ProtestId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("FileMasterId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("LodgedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("PublicUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ResolutionNotes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("ProtestId");
-
-                    b.HasIndex("FileMasterId");
-
-                    b.HasIndex("PublicUserId");
-
-                    b.ToTable("Protests");
-                });
-
-            modelBuilder.Entity("ProtestDocument", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ProtestId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DocumentId");
-
-                    b.HasIndex("ProtestId");
-
-                    b.ToTable("ProtestDocuments");
-                });
-
             modelBuilder.Entity("Province", b =>
                 {
                     b.Property<Guid>("ProvinceId")
@@ -1341,6 +1703,9 @@ namespace dwa_ver_val.Migrations
 
                     b.Property<string>("IdentityNumber")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsHDI")
+                        .HasColumnType("bit");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -1801,6 +2166,17 @@ namespace dwa_ver_val.Migrations
                     b.Navigation("PublicUser");
                 });
 
+            modelBuilder.Entity("CatchmentArea", b =>
+                {
+                    b.HasOne("WaterManagementArea", "WaterManagementArea")
+                        .WithMany()
+                        .HasForeignKey("WmaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("WaterManagementArea");
+                });
+
             modelBuilder.Entity("Crop", b =>
                 {
                     b.HasOne("CropType", "CropType")
@@ -1946,6 +2322,11 @@ namespace dwa_ver_val.Migrations
                         .HasForeignKey("CapturePersonId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("CatchmentArea", "CatchmentArea")
+                        .WithMany("FileMasters")
+                        .HasForeignKey("CatchmentAreaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Entitlement", "Entitlement")
                         .WithMany()
                         .HasForeignKey("EntitlementId")
@@ -1968,6 +2349,8 @@ namespace dwa_ver_val.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("CapturePerson");
+
+                    b.Navigation("CatchmentArea");
 
                     b.Navigation("Entitlement");
 
@@ -2004,6 +2387,17 @@ namespace dwa_ver_val.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("WaterControlAddress");
+                });
+
+            modelBuilder.Entity("GwcaProclamationRule", b =>
+                {
+                    b.HasOne("GovernmentWaterControlArea", "WaterControlArea")
+                        .WithMany("ProclamationRules")
+                        .HasForeignKey("WaterControlAreaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("WaterControlArea");
                 });
 
             modelBuilder.Entity("Irrigation", b =>
@@ -2067,6 +2461,11 @@ namespace dwa_ver_val.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("IrrigationBoard", "IrrigationBoard")
+                        .WithMany()
+                        .HasForeignKey("IrrigationBoardId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("LetterType", "LetterType")
                         .WithMany()
                         .HasForeignKey("LetterTypeId")
@@ -2083,6 +2482,11 @@ namespace dwa_ver_val.Migrations
                         .HasForeignKey("ReissuedFromId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("ApplicationUser", "ServedByOfficial")
+                        .WithMany()
+                        .HasForeignKey("ServedByOfficialId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ApplicationUser", "SignedBy")
                         .WithMany()
                         .HasForeignKey("SignedById")
@@ -2094,13 +2498,117 @@ namespace dwa_ver_val.Migrations
 
                     b.Navigation("FileMaster");
 
+                    b.Navigation("IrrigationBoard");
+
                     b.Navigation("LetterType");
 
                     b.Navigation("PropertyOwner");
 
                     b.Navigation("ReissuedFrom");
 
+                    b.Navigation("ServedByOfficial");
+
                     b.Navigation("SignedBy");
+                });
+
+            modelBuilder.Entity("Mapbook", b =>
+                {
+                    b.HasOne("Document", "Document")
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("FileMaster", "FileMaster")
+                        .WithMany("Mapbooks")
+                        .HasForeignKey("FileMasterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Period", "Period")
+                        .WithMany()
+                        .HasForeignKey("PeriodId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Property", null)
+                        .WithMany("Mapbooks")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Document");
+
+                    b.Navigation("FileMaster");
+
+                    b.Navigation("Period");
+                });
+
+            modelBuilder.Entity("MapbookImage", b =>
+                {
+                    b.HasOne("Mapbook", "Mapbook")
+                        .WithMany("MapbookImages")
+                        .HasForeignKey("MapbookId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SateliteImage", "SateliteImage")
+                        .WithMany()
+                        .HasForeignKey("SateliteImageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Mapbook");
+
+                    b.Navigation("SateliteImage");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
+                {
+                    b.HasOne("ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
+                {
+                    b.HasOne("ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
+                {
+                    b.HasOne("ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Notification", b =>
@@ -2127,8 +2635,51 @@ namespace dwa_ver_val.Migrations
                     b.Navigation("PublicUser");
                 });
 
+            modelBuilder.Entity("Objection", b =>
+                {
+                    b.HasOne("FileMaster", "FileMaster")
+                        .WithMany()
+                        .HasForeignKey("FileMasterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("PublicUser", "PublicUser")
+                        .WithMany()
+                        .HasForeignKey("PublicUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FileMaster");
+
+                    b.Navigation("PublicUser");
+                });
+
+            modelBuilder.Entity("ObjectionDocument", b =>
+                {
+                    b.HasOne("Document", "Document")
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Objection", "Objection")
+                        .WithMany("ObjectionDocuments")
+                        .HasForeignKey("ObjectionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Document");
+
+                    b.Navigation("Objection");
+                });
+
             modelBuilder.Entity("OrganisationalUnit", b =>
                 {
+                    b.HasOne("CatchmentArea", "CatchmentArea")
+                        .WithMany()
+                        .HasForeignKey("CatchmentAreaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("OrganisationalUnit", "ParentOrgUnit")
                         .WithMany("ChildOrgUnits")
                         .HasForeignKey("ParentOrgUnitId")
@@ -2149,6 +2700,8 @@ namespace dwa_ver_val.Migrations
                         .HasForeignKey("WmaId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.Navigation("CatchmentArea");
+
                     b.Navigation("ParentOrgUnit");
 
                     b.Navigation("Province");
@@ -2163,12 +2716,33 @@ namespace dwa_ver_val.Migrations
                         .HasForeignKey("AddressId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("CatchmentArea", "CatchmentArea")
+                        .WithMany("Properties")
+                        .HasForeignKey("CatchmentAreaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Property", "ParentProperty")
+                        .WithMany("ChildProperties")
+                        .HasForeignKey("ParentPropertyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Property", "SuccessorProperty")
+                        .WithMany()
+                        .HasForeignKey("SuccessorPropertyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("WaterManagementArea", "WaterManagementArea")
                         .WithMany()
                         .HasForeignKey("WmaId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Address");
+
+                    b.Navigation("CatchmentArea");
+
+                    b.Navigation("ParentProperty");
+
+                    b.Navigation("SuccessorProperty");
 
                     b.Navigation("WaterManagementArea");
                 });
@@ -2207,44 +2781,6 @@ namespace dwa_ver_val.Migrations
                     b.Navigation("Property");
 
                     b.Navigation("PropertyOwner");
-                });
-
-            modelBuilder.Entity("Protest", b =>
-                {
-                    b.HasOne("FileMaster", "FileMaster")
-                        .WithMany()
-                        .HasForeignKey("FileMasterId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("PublicUser", "PublicUser")
-                        .WithMany()
-                        .HasForeignKey("PublicUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("FileMaster");
-
-                    b.Navigation("PublicUser");
-                });
-
-            modelBuilder.Entity("ProtestDocument", b =>
-                {
-                    b.HasOne("Document", "Document")
-                        .WithMany()
-                        .HasForeignKey("DocumentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Protest", "Protest")
-                        .WithMany("ProtestDocuments")
-                        .HasForeignKey("ProtestId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Document");
-
-                    b.Navigation("Protest");
                 });
 
             modelBuilder.Entity("PublicUserProperty", b =>
@@ -2455,6 +2991,13 @@ namespace dwa_ver_val.Migrations
                     b.Navigation("Replies");
                 });
 
+            modelBuilder.Entity("CatchmentArea", b =>
+                {
+                    b.Navigation("FileMasters");
+
+                    b.Navigation("Properties");
+                });
+
             modelBuilder.Entity("FileMaster", b =>
                 {
                     b.Navigation("Authorisations");
@@ -2465,7 +3008,24 @@ namespace dwa_ver_val.Migrations
 
                     b.Navigation("LetterIssuances");
 
+                    b.Navigation("Mapbooks");
+
                     b.Navigation("Notifications");
+                });
+
+            modelBuilder.Entity("GovernmentWaterControlArea", b =>
+                {
+                    b.Navigation("ProclamationRules");
+                });
+
+            modelBuilder.Entity("Mapbook", b =>
+                {
+                    b.Navigation("MapbookImages");
+                });
+
+            modelBuilder.Entity("Objection", b =>
+                {
+                    b.Navigation("ObjectionDocuments");
                 });
 
             modelBuilder.Entity("OrganisationalUnit", b =>
@@ -2477,6 +3037,8 @@ namespace dwa_ver_val.Migrations
 
             modelBuilder.Entity("Property", b =>
                 {
+                    b.Navigation("ChildProperties");
+
                     b.Navigation("DamCalculations");
 
                     b.Navigation("FieldAndCrops");
@@ -2486,6 +3048,8 @@ namespace dwa_ver_val.Migrations
                     b.Navigation("Forestations");
 
                     b.Navigation("Irrigations");
+
+                    b.Navigation("Mapbooks");
 
                     b.Navigation("PropertyOwnerships");
 
@@ -2497,11 +3061,6 @@ namespace dwa_ver_val.Migrations
             modelBuilder.Entity("PropertyOwner", b =>
                 {
                     b.Navigation("PropertyOwnerships");
-                });
-
-            modelBuilder.Entity("Protest", b =>
-                {
-                    b.Navigation("ProtestDocuments");
                 });
 
             modelBuilder.Entity("Province", b =>

@@ -1,0 +1,75 @@
+@model FileMasterDetailsViewModel
+
+@if (Model.WorkflowInstance == null)
+{
+    <div class="card" style="max-width: 900px; margin-top: 16px;">
+        <div class="form-section-title">Workflow</div>
+        <div style="color:#6c757d; font-size:13px;">No workflow started for this case.</div>
+    </div>
+}
+else
+{
+    <div class="card" style="max-width: 900px; margin-top: 16px;">
+        <div class="flex-between">
+            <div class="form-section-title" style="margin:0;">V&amp;V Workflow</div>
+            @if (Model.CurrentState != null && !Model.CurrentState.IsTerminal && !Model.IsReadyForLetters)
+            {
+                <form asp-action="AdvanceWorkflow" asp-route-id="@Model.FileMaster.FileMasterId" method="post" style="margin:0;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-primary btn-sm">Advance to Next CP &rarr;</button>
+                </form>
+            }
+        </div>
+
+        <div class="phase-tracker">
+            @foreach (var phase in new[] { "Inception", "Validation", "Verification" })
+            {
+                var statesInPhase = Model.AllStates.Where(s => s.Phase == phase).OrderBy(s => s.DisplayOrder).ToList();
+                var currentInPhase = Model.CurrentState != null && Model.CurrentState.Phase == phase;
+                <div class="phase-segment @(currentInPhase ? "phase-active" : "")">
+                    <div class="phase-label">Phase @(Array.IndexOf(new[] { "Inception", "Validation", "Verification" }, phase) + 1): @phase</div>
+                    <div class="cp-row">
+                        @foreach (var st in statesInPhase)
+                        {
+                            var isCurrent = Model.CurrentState?.WorkflowStateId == st.WorkflowStateId;
+                            var isPast = Model.CurrentState != null && st.DisplayOrder < Model.CurrentState.DisplayOrder;
+                            var cls = isCurrent ? "cp-pill current" : isPast ? "cp-pill past" : "cp-pill future";
+                            <span class="@cls" title="@st.StateName">@st.StateName</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="current-state-line">
+            <strong>Current:</strong>
+            @(Model.CurrentState?.StateName ?? "--")
+            @if (Model.CurrentState?.IsTerminal == true)
+            {
+                <span class="badge badge-green" style="margin-left:8px;">Closed</span>
+            }
+        </div>
+
+        <div class="form-section-title" style="margin-top:20px;">History</div>
+        <div class="timeline">
+            @foreach (var step in Model.History.OrderByDescending(h => h.StartedDate))
+            {
+                <div class="timeline-item @(step.StepStatus == "InProgress" ? "in-progress" : "")">
+                    <div class="timeline-state">@(step.WorkflowState?.StateName ?? "--")</div>
+                    <div class="timeline-meta">
+                        @step.StepStatus ·
+                        Started @step.StartedDate?.ToString("dd MMM yyyy HH:mm")
+                        @if (step.CompletedDate.HasValue)
+                        {
+                            <span> · Completed @step.CompletedDate.Value.ToString("dd MMM yyyy HH:mm")</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(step.Notes))
+                        {
+                            <span> · @step.Notes</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

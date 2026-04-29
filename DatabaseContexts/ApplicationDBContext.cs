@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-public class ApplicationDBContext : DbContext
+public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
     public ApplicationDBContext(DbContextOptions<ApplicationDBContext> dbContextOption) : base(dbContextOption)
-    {}
+    { }
 
     // ── Core domain ──
     public DbSet<Property> Properties { get; set; }
@@ -54,9 +56,6 @@ public class ApplicationDBContext : DbContext
     public DbSet<CatchmentArea> CatchmentAreas { get; set; }
     public DbSet<OrganisationalUnit> OrganisationalUnits { get; set; }
 
-    // ── Users ──
-    public DbSet<ApplicationUser> ApplicationUsers { get; set; }
-
     // ── Workflow ──
     public DbSet<WorkflowState> WorkflowStates { get; set; }
     public DbSet<WorkflowInstance> WorkflowInstances { get; set; }
@@ -84,6 +83,8 @@ public class ApplicationDBContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         // ── Primary keys ──
         modelBuilder.Entity<Property>().HasKey(e => e.PropertyId);
         modelBuilder.Entity<FileMaster>().HasKey(e => e.FileMasterId);
@@ -125,8 +126,6 @@ public class ApplicationDBContext : DbContext
         modelBuilder.Entity<CatchmentArea>().HasKey(e => e.CatchmentAreaId);
         modelBuilder.Entity<OrganisationalUnit>().HasKey(e => e.OrgUnitId);
 
-        modelBuilder.Entity<ApplicationUser>().HasKey(e => e.ApplicationUserId);
-
         modelBuilder.Entity<WorkflowState>().HasKey(e => e.WorkflowStateId);
         modelBuilder.Entity<WorkflowInstance>().HasKey(e => e.WorkflowInstanceId);
         modelBuilder.Entity<WorkflowStepRecord>().HasKey(e => e.WorkflowStepRecordId);
@@ -167,6 +166,15 @@ public class ApplicationDBContext : DbContext
             .HasOne(p => p.ParentProperty)
             .WithMany(p => p.ChildProperties)
             .HasForeignKey(p => p.ParentPropertyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Property → Successor (consolidation forward link). No inverse collection —
+        // a property has at most one successor, and its predecessors are discovered
+        // via the back-pointing query rather than a navigation collection.
+        modelBuilder.Entity<Property>()
+            .HasOne(p => p.SuccessorProperty)
+            .WithMany()
+            .HasForeignKey(p => p.SuccessorPropertyId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // PropertyOwnership many-to-many

@@ -11,6 +11,7 @@
     </div>
     <div style="display:flex; gap:8px;">
         <button class="btn btn-outline">Export CSV</button>
+        <a asp-controller="Property" asp-action="Consolidate" class="btn btn-outline">Consolidate properties</a>
         <a asp-controller="Property" asp-action="Register" class="btn btn-primary">+ New Property</a>
     </div>
 </div>
@@ -48,6 +49,7 @@
                 <th>Quaternary Drainage</th>
                 <th>Property Size</th>
                 <th>V&amp;V Status</th>
+                <th>Lineage</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -62,8 +64,29 @@
                     <td>@item.PropertySize</td>
                     <td><span class="badge badge-grey">Not Commenced</span></td>
                     <td>
+                        @{
+                            var lineageStatus = item.PropertyStatus ?? "Active";
+                        }
+                        @switch (lineageStatus)
+                        {
+                            case "Subdivided":
+                                <span class="badge badge-orange">Subdivided</span>
+                                break;
+                            case "Consolidated":
+                                <span class="badge badge-purple">Consolidated</span>
+                                break;
+                            default:
+                                <span class="badge badge-green">Active</span>
+                                break;
+                        }
+                    </td>
+                    <td>
                         <a asp-action="Edit" asp-route-id="@item.PropertyId" class="btn btn-sm btn-outline">Edit</a>
                         <a asp-action="Details" asp-route-id="@item.PropertyId" class="btn btn-sm btn-outline">Details</a>
+                        @if (lineageStatus == "Active")
+                        {
+                            <a asp-action="Subdivide" asp-route-id="@item.PropertyId" class="btn btn-sm btn-outline">Subdivide</a>
+                        }
                         <a asp-action="Delete" asp-route-id="@item.PropertyId" class="btn btn-sm btn-danger">Delete</a>
                     </td>
                 </tr>

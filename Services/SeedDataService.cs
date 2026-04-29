@@ -18,6 +18,7 @@ public class SeedDataService
         await SeedAuthorisationTypesAsync();
         await SeedPeriodsAsync();
         await SeedGwcaProclamationRulesAsync();
+        await SeedSampleCasesAsync();
     }
 
     // ── 1. Provinces (9) ──────────────────────────────────────────────
@@ -148,8 +149,8 @@ public class SeedDataService
             new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter2Responded",        Phase = "Verification", DisplayOrder = 23, IsTerminal = false },
             new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter2ARequired",        Phase = "Verification", DisplayOrder = 24, IsTerminal = false },
             new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter2AIssued",          Phase = "Verification", DisplayOrder = 25, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_ELUConfirmed",            Phase = "Verification", DisplayOrder = 26, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter3Issued",           Phase = "Verification", DisplayOrder = 27, IsTerminal = false },
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter3Issued",           Phase = "Verification", DisplayOrder = 26, IsTerminal = false },
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_ELUConfirmed",            Phase = "Verification", DisplayOrder = 27, IsTerminal = false },
             new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_UnlawfulUseFound",        Phase = "Verification", DisplayOrder = 28, IsTerminal = false },
             new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter4AIssued",          Phase = "Verification", DisplayOrder = 29, IsTerminal = false },
             new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter4And5Issued",       Phase = "Verification", DisplayOrder = 30, IsTerminal = false },
@@ -170,85 +171,44 @@ public class SeedDataService
 
     private async Task SeedLetterTypesAsync()
     {
-        if (await _context.LetterTypes.AnyAsync())
-            return;
-
-        var letterTypes = new List<LetterType>
+        // LetterName is the canonical lookup key consumed by ILetterTemplate registrations
+        // and FileMasterController.LetterActionMap. We use short codes (S35_L1, S33_2_Decl)
+        // rather than human names so the same string round-trips between code and DB.
+        // Idempotent: this runs every startup; missing rows are added; rows with the legacy
+        // human names ("Letter 1" etc.) are auto-renamed to their canonical code.
+        var canonical = new (string LegacyName, string Code, string Description, string NWASection)[]
         {
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 1",
-                LetterDescription = "S35(1) Notice to apply for verification",
-                NWASection = "S35(1)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 1A",
-                LetterDescription = "S53(1) Directive to apply for verification",
-                NWASection = "S53(1)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 2",
-                LetterDescription = "S35(3)(a) Request for additional information",
-                NWASection = "S35(3)(a)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 2A",
-                LetterDescription = "S35(1) Directive to provide additional information",
-                NWASection = "S35(1)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 3",
-                LetterDescription = "S35(4) Confirmation of extent and lawfulness of water use",
-                NWASection = "S35(4)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 4A",
-                LetterDescription = "S53(1) Notice of intent to issue directive to stop unlawful use",
-                NWASection = "S53(1)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "Letter 4 & 5",
-                LetterDescription = "S53(1) Directive to stop unlawful water use",
-                NWASection = "S53(1)"
-            },
-            // Section 33 Declaration Letters
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "S33(2) Declaration",
-                LetterDescription = "Kader Asmal Declaration — confirms ELU for irrigation board scheduled area",
-                NWASection = "S33(2)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "S33(3)(a) Declaration",
-                LetterDescription = "Declaration of ELU on individual application — category A",
-                NWASection = "S33(3)(a)"
-            },
-            new LetterType
-            {
-                LetterTypeId = Guid.NewGuid(),
-                LetterName = "S33(3)(b) Declaration",
-                LetterDescription = "Declaration of ELU on individual application — category B",
-                NWASection = "S33(3)(b)"
-            },
+            ("Letter 1",                "S35_L1",      "S35(1) Notice to apply for verification",                              "S35(1)"),
+            ("Letter 1A",               "S35_L1A",     "S53(1) Directive to apply for verification",                           "S53(1)"),
+            ("Letter 2",                "S35_L2",      "S35(3)(a) Request for additional information",                         "S35(3)(a)"),
+            ("Letter 2A",               "S35_L2A",     "S35(1) Directive to provide additional information",                   "S35(1)"),
+            ("Letter 3",                "S35_L3",      "S35(4) Confirmation of extent and lawfulness of water use",            "S35(4)"),
+            ("Letter 4A",               "S35_L4A",     "S53(1) Notice of intent to issue directive to stop unlawful use",      "S53(1)"),
+            ("Letter 4 & 5",            "S35_L4_5",    "S53(1) Directive to stop unlawful water use",                          "S53(1)"),
+            ("S33(2) Declaration",      "S33_2_Decl",  "Kader Asmal Declaration — confirms ELU for irrigation board scheduled area", "S33(2)"),
+            ("S33(3)(a) Declaration",   "S33_3a_Decl", "Declaration of ELU on individual application — category A",            "S33(3)(a)"),
+            ("S33(3)(b) Declaration",   "S33_3b_Decl", "Declaration of ELU on individual application — category B",            "S33(3)(b)"),
         };
 
-        _context.LetterTypes.AddRange(letterTypes);
+        foreach (var row in canonical)
+        {
+            var existing = await _context.LetterTypes
+                .FirstOrDefaultAsync(t => t.LetterName == row.LegacyName || t.LetterName == row.Code);
+            if (existing is null)
+            {
+                _context.LetterTypes.Add(new LetterType
+                {
+                    LetterTypeId = Guid.NewGuid(),
+                    LetterName = row.Code,
+                    LetterDescription = row.Description,
+                    NWASection = row.NWASection
+                });
+            }
+            else if (existing.LetterName != row.Code)
+            {
+                existing.LetterName = row.Code;
+            }
+        }
         await _context.SaveChangesAsync();
     }
 
@@ -390,5 +350,147 @@ public class SeedDataService
 
         _context.GwcaProclamationRules.AddRange(rules);
         await _context.SaveChangesAsync();
+    }
+
+    // ── 8. Sample cases for demo ────────────────────────────────────
+
+    private async Task SeedSampleCasesAsync()
+    {
+        if (await _context.FileMasters.AnyAsync())
+            return;
+
+        var mpumalanga = await _context.Provinces.SingleAsync(p => p.ProvinceCode == "MP");
+        var inkomati = await _context.WaterManagementAreas.SingleAsync(w => w.WmaName == "Inkomati-Usuthu");
+
+        // Catchment area if none exists
+        var catchment = await _context.CatchmentAreas.FirstOrDefaultAsync(c => c.CatchmentCode == "X21A");
+        if (catchment == null)
+        {
+            catchment = new CatchmentArea
+            {
+                CatchmentAreaId = Guid.NewGuid(),
+                CatchmentCode = "X21A",
+                CatchmentName = "Upper Komati Quaternary",
+                WmaId = inkomati.WmaId,
+            };
+            _context.CatchmentAreas.Add(catchment);
+        }
+
+        // Org unit if none exists
+        var orgUnit = await _context.OrganisationalUnits.FirstOrDefaultAsync(o => o.Name == "Mpumalanga Regional Office");
+        if (orgUnit == null)
+        {
+            orgUnit = new OrganisationalUnit
+            {
+                OrgUnitId = Guid.NewGuid(),
+                Name = "Mpumalanga Regional Office",
+                Type = "Regional",
+                ProvinceId = mpumalanga.ProvinceId,
+                WmaId = inkomati.WmaId,
+            };
+            _context.OrganisationalUnits.Add(orgUnit);
+        }
+
+        var prop1 = new Property
+        {
+            PropertyId = Guid.NewGuid(),
+            PropertyReferenceNumber = "DRN-123",
+            SGCode = "T0HT00000000012300000",
+            QuaternaryDrainage = "X21A",
+            WmaId = inkomati.WmaId,
+            CatchmentAreaId = catchment.CatchmentAreaId,
+        };
+        var prop2 = new Property
+        {
+            PropertyId = Guid.NewGuid(),
+            PropertyReferenceNumber = "LWF-456",
+            SGCode = "T0HT00000000045600000",
+            QuaternaryDrainage = "X21A",
+            WmaId = inkomati.WmaId,
+            CatchmentAreaId = catchment.CatchmentAreaId,
+        };
+        _context.Properties.AddRange(prop1, prop2);
+
+        await _context.SaveChangesAsync();
+
+        var samples = new[]
+        {
+            new { Reg = "WARMS-2024-001", Farm = "Doornhoek",  FarmNo = 123, Portion = "0", Prop = prop1, TargetState = "CP1_WARMSObtained" },
+            new { Reg = "WARMS-2024-002", Farm = "Leeuwfontein", FarmNo = 456, Portion = "1", Prop = prop2, TargetState = "CP5_GISAnalysis" },
+            new { Reg = "WARMS-2024-003", Farm = "Doornhoek",  FarmNo = 123, Portion = "2", Prop = prop1, TargetState = "CP9_SFRACalculated" },
+        };
+
+        foreach (var s in samples)
+        {
+            var fm = new FileMaster
+            {
+                FileMasterId = Guid.NewGuid(),
+                RegistrationNumber = s.Reg,
+                CaseNumber = $"VV-2026-{s.Reg.Substring(s.Reg.Length - 3)}",
+                PropertyId = s.Prop.PropertyId,
+                OrgUnitId = orgUnit.OrgUnitId,
+                CatchmentAreaId = catchment.CatchmentAreaId,
+                SurveyorGeneralCode = s.Prop.SGCode!,
+                PrimaryCatchment = "X",
+                QuaternaryCatchment = "X21A",
+                FarmName = s.Farm,
+                FarmNumber = s.FarmNo,
+                RegistrationDivision = "JR",
+                FarmPortion = s.Portion,
+                FileCreatedDate = DateOnly.FromDateTime(DateTime.Today),
+                AssessmentTrack = "S35_Verification",
+                ValidationStatusName = s.TargetState == "CP1_WARMSObtained" ? "Not Commenced" : "In Process",
+                RegisteredForTakingWater = true,
+                RegisteredForStoring = false,
+                RegisteredForForestation = false,
+            };
+            _context.FileMasters.Add(fm);
+            await _context.SaveChangesAsync();
+
+            // Build workflow instance inline (avoid calling WorkflowService from here)
+            var targetState = await _context.WorkflowStates.SingleAsync(w => w.StateName == s.TargetState);
+            var firstState = await _context.WorkflowStates.OrderBy(w => w.DisplayOrder).FirstAsync();
+
+            var instance = new WorkflowInstance
+            {
+                WorkflowInstanceId = Guid.NewGuid(),
+                FileMasterId = fm.FileMasterId,
+                CurrentWorkflowStateId = targetState.WorkflowStateId,
+                Status = "Active",
+                CreatedDate = DateTime.UtcNow.AddDays(-10),
+            };
+            _context.WorkflowInstances.Add(instance);
+
+            // Synthesise history: Completed step per state from first up to (but not including) target, then InProgress for target.
+            var traversed = await _context.WorkflowStates
+                .Where(w => w.DisplayOrder < targetState.DisplayOrder)
+                .OrderBy(w => w.DisplayOrder)
+                .ToListAsync();
+
+            var baseTime = DateTime.UtcNow.AddDays(-10);
+            for (int i = 0; i < traversed.Count; i++)
+            {
+                _context.WorkflowStepRecords.Add(new WorkflowStepRecord
+                {
+                    WorkflowStepRecordId = Guid.NewGuid(),
+                    WorkflowInstanceId = instance.WorkflowInstanceId,
+                    WorkflowStateId = traversed[i].WorkflowStateId,
+                    StepStatus = "Completed",
+                    StartedDate = baseTime.AddHours(i),
+                    CompletedDate = baseTime.AddHours(i + 1),
+                });
+            }
+            _context.WorkflowStepRecords.Add(new WorkflowStepRecord
+            {
+                WorkflowStepRecordId = Guid.NewGuid(),
+                WorkflowInstanceId = instance.WorkflowInstanceId,
+                WorkflowStateId = targetState.WorkflowStateId,
+                StepStatus = "InProgress",
+                StartedDate = baseTime.AddHours(traversed.Count + 1),
+            });
+
+            fm.WorkflowInstanceId = instance.WorkflowInstanceId;
+            await _context.SaveChangesAsync();
+        }
     }
 }

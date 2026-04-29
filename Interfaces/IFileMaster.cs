@@ -6,4 +6,5 @@ public interface IFileMaster
     Task<ICollection<FileMaster>> ListByPropertyIdAsync(Guid propertyId);
     Task<FileMaster> UpdateAsync(FileMaster fileMaster);
     Task<FileMaster?> DeleteAsync(Guid id);
+    Task<FileMaster?> GetWithWorkflowAsync(Guid id);
 }

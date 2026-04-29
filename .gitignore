@@ -1,6 +1,20 @@
 # Build output
 bin/
 obj/
+publish/
+publish-azure/
+publish-azure.zip
+app.zip
+
+# Office temp / lock files (e.g. ~$Document.docx that Office writes while open)
+~$*
+**/~$*
+
+# Claude Code local state (agents, settings.local.json) — personal, not project
+.claude/
+
+# Wireframe screenshots — 8MB+ of PNGs that take-screenshots.js regenerates
+docs/wireframes/screenshots-v2/
 
 # Visual Studio / Rider
 .vs/
@@ -33,3 +47,6 @@ logs/
 appsettings.Local.json
 appsettings.Production.json
 secrets.json
+
+# Git worktrees
+.worktrees/

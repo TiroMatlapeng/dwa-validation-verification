@@ -38,4 +38,10 @@ public class LetterIssuance
     public Guid? PortalAcknowledgedByPublicUserId { get; set; }
     public string? ServingOfficialName { get; set; }
     public DateOnly? PhysicalDeliveryDate { get; set; }
+
+    // Plan 4 additions — generated PDF + signature metadata
+    public string? BlobPath { get; set; }                 // Path/URL into IBlobStore; null until rendered
+    public string? SignatureHash { get; set; }            // SHA-256 of the PDF bytes at sign time
+    public Guid? ServedByOfficialId { get; set; }         // For Letter 1: required when IssueMethod == "InPerson"
+    public ApplicationUser? ServedByOfficial { get; set; }
 }
