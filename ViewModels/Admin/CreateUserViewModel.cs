@@ -26,5 +26,5 @@ public class CreateUserViewModel
     public string InitialPassword { get; set; } = string.Empty;
 
     public IEnumerable<string> AvailableRoles { get; set; } = Array.Empty<string>();
-    public IEnumerable<(Guid Id, string Name)> AvailableOrgUnits { get; set; } = Array.Empty<(Guid, string)>();
+    public IEnumerable<OrgUnitOption> AvailableOrgUnits { get; set; } = Array.Empty<OrgUnitOption>();
 }

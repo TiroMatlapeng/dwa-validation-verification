@@ -229,9 +229,9 @@ public class UsersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task<IEnumerable<(Guid Id, string Name)>> LoadOrgUnits() =>
+    private async Task<IEnumerable<OrgUnitOption>> LoadOrgUnits() =>
         await _db.OrganisationalUnits
             .OrderBy(ou => ou.Name)
-            .Select(ou => new ValueTuple<Guid, string>(ou.OrgUnitId, ou.Name))
+            .Select(ou => new OrgUnitOption { Id = ou.OrgUnitId, Name = ou.Name })
             .ToListAsync();
 }

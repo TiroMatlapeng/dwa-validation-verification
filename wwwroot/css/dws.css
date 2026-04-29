@@ -290,6 +290,15 @@ select.dws-input:focus {
     padding: 0;
 }
 
+/* Row-action cluster: keeps Edit / Reset password / (De)activate on one line */
+.dws-row-actions {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--dws-space-2);
+    white-space: nowrap;
+}
+
 /* "or use email and password" divider on the login card */
 .dws-or-divider {
     display: flex;

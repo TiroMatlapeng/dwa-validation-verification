@@ -40,22 +40,24 @@
                 }
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@u.Id" class="dws-btn dws-btn-ghost">Edit</a>
-                <a asp-action="ResetPassword" asp-route-id="@u.Id" class="dws-btn dws-btn-ghost">Reset password</a>
-                @if (u.IsActive)
-                {
-                    <form asp-action="Deactivate" asp-route-id="@u.Id" method="post" class="dws-inline-form">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="dws-btn dws-btn-danger">Deactivate</button>
-                    </form>
-                }
-                else
-                {
-                    <form asp-action="Reactivate" asp-route-id="@u.Id" method="post" class="dws-inline-form">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="dws-btn dws-btn-ghost">Reactivate</button>
-                    </form>
-                }
+                <div class="dws-row-actions">
+                    <a asp-action="Edit" asp-route-id="@u.Id" class="dws-btn dws-btn-ghost">Edit</a>
+                    <a asp-action="ResetPassword" asp-route-id="@u.Id" class="dws-btn dws-btn-ghost">Reset password</a>
+                    @if (u.IsActive)
+                    {
+                        <form asp-action="Deactivate" asp-route-id="@u.Id" method="post" class="dws-inline-form">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dws-btn dws-btn-danger">Deactivate</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="Reactivate" asp-route-id="@u.Id" method="post" class="dws-inline-form">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dws-btn dws-btn-ghost">Reactivate</button>
+                        </form>
+                    }
+                </div>
             </td>
         </tr>
     }
