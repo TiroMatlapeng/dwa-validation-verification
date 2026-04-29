@@ -30,6 +30,10 @@ set -euo pipefail
 : "${AZ_RUNTIME:=DOTNETCORE:10.0}"
 : "${AZ_PLAN_SKU:=B1}"
 : "${AZ_SQL_SKU:=Basic}"
+# Seed password used by IdentitySeeder.SeedDemoUsersAsync(). In Development this
+# comes from appsettings.Development.json; on Azure (Production) we must set it
+# as an App Setting or no demo users get created and login fails.
+: "${IDENTITY_DEMO_PASSWORD:=Demo@Pass2026}"
 # ----------------------------------
 
 echo "==> Using subscription: $(az account show --query name -o tsv)"
@@ -86,7 +90,10 @@ az webapp config connection-string set \
 
 az webapp config appsettings set \
   -g "$AZ_RG" -n "$AZ_APP" \
-  --settings ASPNETCORE_ENVIRONMENT=Production -o none
+  --settings \
+    ASPNETCORE_ENVIRONMENT=Production \
+    "Identity__InitialDemoPassword=${IDENTITY_DEMO_PASSWORD}" \
+  -o none
 
 echo
 echo "==============================================================="

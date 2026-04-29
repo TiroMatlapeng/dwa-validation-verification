@@ -110,7 +110,34 @@ public class IdentitySeeder
         foreach (var demo in demos)
         {
             var existing = await _users.FindByEmailAsync(demo.Email);
-            if (existing is not null) continue;
+            if (existing is not null)
+            {
+                // Idempotently sync the password to the current Identity:InitialDemoPassword
+                // value. Without this, rotating the config (e.g. promoting from dev → demo)
+                // would never propagate, because seeded users created with the old password
+                // are skipped here forever. Only the 6 hard-coded *@dwa.demo emails are touched.
+                var token = await _users.GeneratePasswordResetTokenAsync(existing);
+                var reset = await _users.ResetPasswordAsync(existing, token, initialPassword);
+                if (!reset.Succeeded)
+                {
+                    _logger.LogWarning("Failed to sync password for demo user {Email}: {Errors}",
+                        demo.Email, string.Join(", ", reset.Errors.Select(e => e.Description)));
+                }
+
+                // Idempotently ensure the role assignment. If a previous run / manual cleanup
+                // stripped AspNetUserRoles, this restores it without touching any other user.
+                var currentRoles = await _users.GetRolesAsync(existing);
+                if (!currentRoles.Contains(demo.Role))
+                {
+                    var addRole = await _users.AddToRoleAsync(existing, demo.Role);
+                    if (!addRole.Succeeded)
+                    {
+                        _logger.LogWarning("Failed to restore role {Role} for demo user {Email}: {Errors}",
+                            demo.Role, demo.Email, string.Join(", ", addRole.Errors.Select(e => e.Description)));
+                    }
+                }
+                continue;
+            }
 
             var user = new ApplicationUser
             {
