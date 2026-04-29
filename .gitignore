@@ -13,6 +13,9 @@ app.zip
 # Claude Code local state (agents, settings.local.json) — personal, not project
 .claude/
 
+# Wireframe screenshots — 8MB+ of PNGs that take-screenshots.js regenerates
+docs/wireframes/screenshots-v2/
+
 # Visual Studio / Rider
 .vs/
 *.user
