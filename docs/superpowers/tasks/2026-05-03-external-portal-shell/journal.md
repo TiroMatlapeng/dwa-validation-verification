@@ -198,3 +198,14 @@ Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-po
 - Verification: `dotnet build` green (0 errors, 6 pre-existing warnings unchanged). `dotnet test --filter "FullyQualifiedName~PortalSchemaConfigurationTests"` returns 5/5 passed (was 4/4). `dotnet test --filter "All_Delete_Behaviors_Are_Restrict_Except_Whitelisted"` returns 1/1 passed. Full suite: 95 passed / 19 failed / 114 total — exactly one more pass than the Task 7 baseline (94 → 95). The 19 pre-existing parallel-startup integration failures unchanged.
 - Implementation commit: `79cbb0f` — three files (DBContext + two test files). Journal commit follows separately.
 - Status: DONE.
+
+### 2026-05-04 — Stage 1 Task 9 agent (Opus 4.7) — NotFoundException helper
+- Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read journal to date and Stage 1 plan Task 9.
+- Pre-state: `Helpers/` directory at project root did not exist; `Tests/Helpers/` exists (PublicUserBuilder.cs etc.). Test file needed both `using Xunit;` and `using dwa_ver_val.Helpers;` — plan only listed Xunit, added the second per plan note.
+- Step 1: created `Tests/Helpers/NotFoundExceptionTests.cs` with two `[Fact]` tests (`Constructor_SetsMessage`, `IsAnException`) verbatim from plan + the missing `using dwa_ver_val.Helpers;`.
+- Step 2 verification (pre-type): `dotnet test --filter FullyQualifiedName~NotFoundExceptionTests` failed with `error CS0234: The type or namespace name 'Helpers' does not exist in the namespace 'dwa_ver_val'` — expected.
+- Step 3: created `Helpers/NotFoundException.cs` per plan VERBATIM — namespace `dwa_ver_val.Helpers`, single `(string message)` constructor, XML doc comment about HTTP 404 mapping by `PortalExceptionHandler`. Created the new `Helpers/` directory at project root.
+- Step 4 verification (post-type): `dotnet test --filter FullyQualifiedName~NotFoundExceptionTests` returns Passed: 2, Failed: 0, Total: 2 (12 ms).
+- Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 97, Total: 116 — exactly two more passes than the Task 7 follow-up baseline (95 → 97). Matches the plan-stated 97/19 target. The 19 pre-existing parallel-startup integration failures unchanged.
+- Implementation commit: `40597a8` — `Add NotFoundException helper for 404-mapped portal errors` (two files: production type + test). Journal commit follows separately.
+- Status: DONE. No consumers yet (Tasks 10 + 15 will reference this type).
