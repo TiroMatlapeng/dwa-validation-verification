@@ -203,7 +203,7 @@ Check constraints:
 
 | Column | Type | Nullable | Notes |
 |---|---|---|---|
-| `EvidenceType` | `nvarchar(20) NOT NULL` | no | Stored as string via EF value converter from enum `PropertyClaimEvidenceType { IDMatch, TitleDeedUpload }`. |
+| `EvidenceType` | `nvarchar(20) NOT NULL` | no | Stored as string via EF value converter from enum `PropertyClaimEvidenceType { IdMatch, TitleDeedUpload }`. |
 | `EvidenceDocumentId` | `uniqueidentifier` | yes | FK → `Documents(DocumentId)`. **Configured before** the cascade-override loop with `OnDelete(DeleteBehavior.SetNull)`. |
 | `RequestedDate` | `datetime2(0) NOT NULL` | no | `HasDefaultValueSql("GETUTCDATE()")`. |
 | `RejectionReason` | `nvarchar(1000)` | yes | Set when `Status = "Rejected"`. |
@@ -293,7 +293,7 @@ Password verified → cookie issued with `MfaEnrolled=false` + `EmailConfirmed=t
 Password OK → 5-min cookie with `MfaPending=true` claim only (`/Account/Mfa` reachable) → 6-digit code verified (window ± 1, replay-prevented via `LastUsedOtpTimestamp`) → full cookie issued → dashboard.
 
 ### 4.4 Property claim — auto-suggest
-Service queries `PropertyOwner` JOIN `PropertyOwnership` JOIN `Property` WHERE `IdentityDocumentNumber = currentUser.IdentityNumber` → presents un-claimed matches → user ticks → `PublicUserProperty` rows created with `EvidenceType=IDMatch`, `Status=Pending`. **Never auto-grants access.**
+Service queries `PropertyOwner` JOIN `PropertyOwnership` JOIN `Property` WHERE `IdentityDocumentNumber = currentUser.IdentityNumber` → presents un-claimed matches → user ticks → `PublicUserProperty` rows created with `EvidenceType=IdMatch`, `Status=Pending`. **Never auto-grants access.**
 
 ### 4.5 Property claim — manual
 Search by `Property.SgCode` → upload PDF (≤10 MB, magic-byte sniffed for `application/pdf`) → `IFileStorage.SaveAsync` writes to `{ContentRootPath}/portal-uploads/{yyyy/MM}/{guid}.pdf` → `Document` row with `DocumentType="TitleDeedClaim"`, `VirusScanStatus="Pending"`, SHA-256 hash → `PublicUserProperty` with `EvidenceType=TitleDeedUpload`, `EvidenceDocumentId=...`.

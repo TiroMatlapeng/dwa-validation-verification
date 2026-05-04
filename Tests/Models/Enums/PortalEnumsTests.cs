@@ -6,9 +6,9 @@ namespace dwa_ver_val.Tests.Models.Enums;
 public class PortalEnumsTests
 {
     [Fact]
-    public void PropertyClaimEvidenceType_HasIDMatchAndTitleDeedUpload()
+    public void PropertyClaimEvidenceType_HasIdMatchAndTitleDeedUpload()
     {
-        Assert.Equal("IDMatch", PropertyClaimEvidenceType.IDMatch.ToString());
+        Assert.Equal("IdMatch", PropertyClaimEvidenceType.IdMatch.ToString());
         Assert.Equal("TitleDeedUpload", PropertyClaimEvidenceType.TitleDeedUpload.ToString());
     }
 

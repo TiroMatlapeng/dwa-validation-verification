@@ -22,7 +22,7 @@
 
 | Path | Responsibility |
 |---|---|
-| `Models/Enums/PropertyClaimEvidenceType.cs` | Enum: `IDMatch` \| `TitleDeedUpload` |
+| `Models/Enums/PropertyClaimEvidenceType.cs` | Enum: `IdMatch` \| `TitleDeedUpload` |
 | `Models/Enums/PropertyClaimStatus.cs` | Enum: `Pending` \| `Approved` \| `Rejected` |
 | `Models/PublicUserRecoveryCode.cs` | Recovery code entity (10 per user, hashed, atomic redemption) |
 | `Helpers/NotFoundException.cs` | App exception → mapped to HTTP 404 by `PortalExceptionHandler` |
@@ -168,9 +168,9 @@ namespace dwa_ver_val.Tests.Models.Enums;
 public class PortalEnumsTests
 {
     [Fact]
-    public void PropertyClaimEvidenceType_HasIDMatchAndTitleDeedUpload()
+    public void PropertyClaimEvidenceType_HasIdMatchAndTitleDeedUpload()
     {
-        Assert.Equal("IDMatch", PropertyClaimEvidenceType.IDMatch.ToString());
+        Assert.Equal("IdMatch", PropertyClaimEvidenceType.IdMatch.ToString());
         Assert.Equal("TitleDeedUpload", PropertyClaimEvidenceType.TitleDeedUpload.ToString());
     }
 
@@ -199,7 +199,7 @@ namespace dwa_ver_val.Models.Enums;
 
 public enum PropertyClaimEvidenceType
 {
-    IDMatch = 0,
+    IdMatch = 0,
     TitleDeedUpload = 1
 }
 ```
@@ -370,12 +370,12 @@ public class PublicUserPropertyModelTests
             PublicUserId = Guid.NewGuid(),
             PropertyId = Guid.NewGuid(),
             Status = PropertyClaimStatus.Pending,
-            EvidenceType = PropertyClaimEvidenceType.IDMatch,
+            EvidenceType = PropertyClaimEvidenceType.IdMatch,
             RequestedDate = new DateTime(2026, 5, 4)
         };
 
         Assert.Equal(PropertyClaimStatus.Pending, pup.Status);
-        Assert.Equal(PropertyClaimEvidenceType.IDMatch, pup.EvidenceType);
+        Assert.Equal(PropertyClaimEvidenceType.IdMatch, pup.EvidenceType);
         Assert.Null(pup.EvidenceDocumentId);
         Assert.Equal(new DateTime(2026, 5, 4), pup.RequestedDate);
         Assert.Null(pup.RejectionReason);
@@ -659,7 +659,7 @@ public class PortalSchemaConfigurationTests
             PublicUserId = publicUser.PublicUserId,
             PropertyId = prop.PropertyId,
             Status = PropertyClaimStatus.Approved,
-            EvidenceType = PropertyClaimEvidenceType.IDMatch,
+            EvidenceType = PropertyClaimEvidenceType.IdMatch,
             RequestedDate = DateTime.UtcNow
         };
         ctx.PublicUserProperties.Add(pup);
@@ -667,7 +667,7 @@ public class PortalSchemaConfigurationTests
 
         var fetched = ctx.PublicUserProperties.AsNoTracking().Single(x => x.Id == pup.Id);
         Assert.Equal(PropertyClaimStatus.Approved, fetched.Status);
-        Assert.Equal(PropertyClaimEvidenceType.IDMatch, fetched.EvidenceType);
+        Assert.Equal(PropertyClaimEvidenceType.IdMatch, fetched.EvidenceType);
     }
 
     [Fact]
@@ -1049,9 +1049,9 @@ public class PublicUserPropertyAccessorTests
         ctx.Properties.AddRange(p1, p2, p3);
 
         ctx.PublicUserProperties.AddRange(
-            new PublicUserProperty { PublicUserId = user.PublicUserId, PropertyId = p1.PropertyId, Status = PropertyClaimStatus.Approved, EvidenceType = PropertyClaimEvidenceType.IDMatch, RequestedDate = DateTime.UtcNow },
-            new PublicUserProperty { PublicUserId = user.PublicUserId, PropertyId = p2.PropertyId, Status = PropertyClaimStatus.Pending,  EvidenceType = PropertyClaimEvidenceType.IDMatch, RequestedDate = DateTime.UtcNow },
-            new PublicUserProperty { PublicUserId = user.PublicUserId, PropertyId = p3.PropertyId, Status = PropertyClaimStatus.Rejected, EvidenceType = PropertyClaimEvidenceType.IDMatch, RequestedDate = DateTime.UtcNow }
+            new PublicUserProperty { PublicUserId = user.PublicUserId, PropertyId = p1.PropertyId, Status = PropertyClaimStatus.Approved, EvidenceType = PropertyClaimEvidenceType.IdMatch, RequestedDate = DateTime.UtcNow },
+            new PublicUserProperty { PublicUserId = user.PublicUserId, PropertyId = p2.PropertyId, Status = PropertyClaimStatus.Pending,  EvidenceType = PropertyClaimEvidenceType.IdMatch, RequestedDate = DateTime.UtcNow },
+            new PublicUserProperty { PublicUserId = user.PublicUserId, PropertyId = p3.PropertyId, Status = PropertyClaimStatus.Rejected, EvidenceType = PropertyClaimEvidenceType.IdMatch, RequestedDate = DateTime.UtcNow }
         );
         await ctx.SaveChangesAsync();
 
@@ -1108,7 +1108,7 @@ public class PublicUserPropertyAccessorTests
             PublicUserId = user.PublicUserId,
             PropertyId = p.PropertyId,
             Status = PropertyClaimStatus.Approved,
-            EvidenceType = PropertyClaimEvidenceType.IDMatch,
+            EvidenceType = PropertyClaimEvidenceType.IdMatch,
             RequestedDate = DateTime.UtcNow
         });
         await ctx.SaveChangesAsync();
@@ -1135,7 +1135,7 @@ public class PublicUserPropertyAccessorTests
             PublicUserId = user.PublicUserId,
             PropertyId = p.PropertyId,
             Status = PropertyClaimStatus.Pending,
-            EvidenceType = PropertyClaimEvidenceType.IDMatch,
+            EvidenceType = PropertyClaimEvidenceType.IdMatch,
             RequestedDate = DateTime.UtcNow
         });
         await ctx.SaveChangesAsync();
