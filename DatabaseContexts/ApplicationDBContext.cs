@@ -4,6 +4,19 @@ using Microsoft.EntityFrameworkCore;
 
 public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
+    /// <summary>
+    /// FKs that must retain a non-Restrict delete behaviour, identified by
+    /// (DependentType, PrincipalType, FkPropertyName, ExpectedBehavior).
+    /// Single source of truth for both the OnModelCreating cascade-override
+    /// loop and the ApplicationDBContextTests guard test.
+    /// </summary>
+    public static readonly IReadOnlyCollection<(Type Dependent, Type Principal, string FkProperty, DeleteBehavior Behavior)> NonRestrictForeignKeys = new[]
+    {
+        (typeof(PublicUserRecoveryCode), typeof(PublicUser), nameof(PublicUserRecoveryCode.PublicUserId), DeleteBehavior.Cascade),
+        (typeof(PublicUserProperty), typeof(Document), nameof(PublicUserProperty.EvidenceDocumentId), DeleteBehavior.SetNull),
+        (typeof(LetterIssuance), typeof(PublicUser), nameof(LetterIssuance.RecipientPublicUserId), DeleteBehavior.SetNull),
+    };
+
     public ApplicationDBContext(DbContextOptions<ApplicationDBContext> dbContextOption) : base(dbContextOption)
     { }
 
@@ -744,21 +757,15 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasDatabaseName("IX_PropertyOwners_IdentityDocumentNumber")
             .HasFilter("[IdentityDocumentNumber] IS NOT NULL");
 
-        // ── Global: disable cascade delete for all relationships, except explicitly
-        //    configured FKs that must retain their delete behaviour (Cascade / SetNull).
+        // ── Global: disable cascade delete for all relationships, except whitelisted FKs.
+        //    Source of truth: ApplicationDBContext.NonRestrictForeignKeys (static).
         //    We identify exemptions by (dependent CLR type, principal CLR type, FK property name)
         //    because constraint names are not yet materialised when the loop runs.
         // SQL Server does not allow multiple cascade paths; Restrict is safer
         // and forces explicit deletion in correct order.
-        var cascadeFkExemptions = new HashSet<(Type Dependent, Type Principal, string FkProperty)>
-        {
-            // PublicUserRecoveryCode → PublicUser: orphan codes with no parent are incoherent.
-            (typeof(PublicUserRecoveryCode), typeof(PublicUser), nameof(PublicUserRecoveryCode.PublicUserId)),
-            // PublicUserProperty → Document (EvidenceDocumentId): nullify reference when document deleted.
-            (typeof(PublicUserProperty), typeof(Document), nameof(PublicUserProperty.EvidenceDocumentId)),
-            // LetterIssuance → PublicUser (RecipientPublicUserId): nullify addressee when user deleted.
-            (typeof(LetterIssuance), typeof(PublicUser), nameof(LetterIssuance.RecipientPublicUserId)),
-        };
+        var cascadeFkExemptions = NonRestrictForeignKeys
+            .Select(x => (x.Dependent, x.Principal, x.FkProperty))
+            .ToHashSet();
 
         foreach (var relationship in modelBuilder.Model.GetEntityTypes()
             .SelectMany(e => e.GetForeignKeys()))

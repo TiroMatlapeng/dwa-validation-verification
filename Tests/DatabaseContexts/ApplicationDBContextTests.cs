@@ -148,14 +148,10 @@ public class ApplicationDBContextTests
     [Fact]
     public async Task All_Delete_Behaviors_Are_Restrict_Except_Whitelisted()
     {
-        // FKs that are explicitly configured with non-Restrict delete behaviour.
-        // Each entry is (DependentType, PrincipalType, FKPropertyName, AllowedBehavior).
-        var allowList = new HashSet<(Type, Type, string, DeleteBehavior)>
-        {
-            (typeof(PublicUserRecoveryCode), typeof(PublicUser), nameof(PublicUserRecoveryCode.PublicUserId), DeleteBehavior.Cascade),
-            (typeof(PublicUserProperty), typeof(Document), nameof(PublicUserProperty.EvidenceDocumentId), DeleteBehavior.SetNull),
-            (typeof(LetterIssuance), typeof(PublicUser), nameof(LetterIssuance.RecipientPublicUserId), DeleteBehavior.SetNull),
-        };
+        // FKs explicitly configured with non-Restrict delete behaviour.
+        // Single source of truth: ApplicationDBContext.NonRestrictForeignKeys.
+        var allowList = ApplicationDBContext.NonRestrictForeignKeys
+            .ToDictionary(x => (x.Dependent, x.Principal, x.FkProperty), x => x.Behavior);
 
         using var context = TestDbContextFactory.Create();
 
@@ -171,17 +167,12 @@ public class ApplicationDBContextTests
             var principal = fk.PrincipalEntityType.ClrType;
             var fkProp = fk.Properties.FirstOrDefault()?.Name ?? string.Empty;
 
-            var expectedBehavior = allowList
-                .Where(a => a.Item1 == dependent && a.Item2 == principal && a.Item3 == fkProp)
-                .Select(a => (DeleteBehavior?)a.Item4)
-                .FirstOrDefault();
-
-            if (expectedBehavior.HasValue)
+            if (allowList.TryGetValue((dependent, principal, fkProp), out var expectedBehavior))
             {
                 Assert.True(
-                    fk.DeleteBehavior == expectedBehavior.Value,
+                    fk.DeleteBehavior == expectedBehavior,
                     $"FK {fk.DeclaringEntityType.Name} → {fk.PrincipalEntityType.Name} ({fkProp}) " +
-                    $"expected {expectedBehavior.Value} but was {fk.DeleteBehavior}");
+                    $"expected {expectedBehavior} but was {fk.DeleteBehavior}");
             }
             else
             {

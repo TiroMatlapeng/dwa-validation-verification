@@ -62,4 +62,15 @@ public class PortalSchemaConfigurationTests
                          && f.Properties.Any(p => p.Name == "EvidenceDocumentId"));
         Assert.Equal(DeleteBehavior.SetNull, fk.DeleteBehavior);
     }
+
+    [Fact]
+    public void RecipientPublicUserId_FK_To_PublicUser_IsSetNull_NotRestrict()
+    {
+        using var ctx = TestDbContextFactory.Create();
+        var entityType = ctx.Model.FindEntityType(typeof(LetterIssuance))!;
+        var fk = entityType.GetForeignKeys()
+            .Single(f => f.PrincipalEntityType.ClrType == typeof(PublicUser)
+                         && f.Properties.Any(p => p.Name == "RecipientPublicUserId"));
+        Assert.Equal(DeleteBehavior.SetNull, fk.DeleteBehavior);
+    }
 }
