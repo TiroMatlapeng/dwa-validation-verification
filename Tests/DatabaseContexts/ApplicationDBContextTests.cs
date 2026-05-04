@@ -146,8 +146,13 @@ public class ApplicationDBContextTests
     }
 
     [Fact]
-    public async Task All_Delete_Behaviors_Are_Restrict()
+    public async Task All_Delete_Behaviors_Are_Restrict_Except_Whitelisted()
     {
+        // FKs explicitly configured with non-Restrict delete behaviour.
+        // Single source of truth: ApplicationDBContext.NonRestrictForeignKeys.
+        var allowList = ApplicationDBContext.NonRestrictForeignKeys
+            .ToDictionary(x => (x.Dependent, x.Principal, x.FkProperty), x => x.Behavior);
+
         using var context = TestDbContextFactory.Create();
 
         var foreignKeys = context.Model.GetEntityTypes()
@@ -158,10 +163,24 @@ public class ApplicationDBContextTests
 
         foreach (var fk in foreignKeys)
         {
-            Assert.True(
-                fk.DeleteBehavior == DeleteBehavior.Restrict,
-                $"FK {fk.DeclaringEntityType.Name} → {fk.PrincipalEntityType.Name} " +
-                $"should be Restrict but was {fk.DeleteBehavior}");
+            var dependent = fk.DeclaringEntityType.ClrType;
+            var principal = fk.PrincipalEntityType.ClrType;
+            var fkProp = fk.Properties.FirstOrDefault()?.Name ?? string.Empty;
+
+            if (allowList.TryGetValue((dependent, principal, fkProp), out var expectedBehavior))
+            {
+                Assert.True(
+                    fk.DeleteBehavior == expectedBehavior,
+                    $"FK {fk.DeclaringEntityType.Name} → {fk.PrincipalEntityType.Name} ({fkProp}) " +
+                    $"expected {expectedBehavior} but was {fk.DeleteBehavior}");
+            }
+            else
+            {
+                Assert.True(
+                    fk.DeleteBehavior == DeleteBehavior.Restrict,
+                    $"FK {fk.DeclaringEntityType.Name} → {fk.PrincipalEntityType.Name} ({fkProp}) " +
+                    $"should be Restrict but was {fk.DeleteBehavior}");
+            }
         }
     }
 }

@@ -22,7 +22,7 @@
 
 | Path | Responsibility |
 |---|---|
-| `Models/Enums/PropertyClaimEvidenceType.cs` | Enum: `IDMatch` \| `TitleDeedUpload` |
+| `Models/Enums/PropertyClaimEvidenceType.cs` | Enum: `IdMatch` \| `TitleDeedUpload` |
 | `Models/Enums/PropertyClaimStatus.cs` | Enum: `Pending` \| `Approved` \| `Rejected` |
 | `Models/PublicUserRecoveryCode.cs` | Recovery code entity (10 per user, hashed, atomic redemption) |
 | `Helpers/NotFoundException.cs` | App exception → mapped to HTTP 404 by `PortalExceptionHandler` |
@@ -168,9 +168,9 @@ namespace dwa_ver_val.Tests.Models.Enums;
 public class PortalEnumsTests
 {
     [Fact]
-    public void PropertyClaimEvidenceType_HasIDMatchAndTitleDeedUpload()
+    public void PropertyClaimEvidenceType_HasIdMatchAndTitleDeedUpload()
     {
-        Assert.Equal("IDMatch", PropertyClaimEvidenceType.IDMatch.ToString());
+        Assert.Equal("IdMatch", PropertyClaimEvidenceType.IdMatch.ToString());
         Assert.Equal("TitleDeedUpload", PropertyClaimEvidenceType.TitleDeedUpload.ToString());
     }
 
@@ -199,7 +199,7 @@ namespace dwa_ver_val.Models.Enums;
 
 public enum PropertyClaimEvidenceType
 {
-    IDMatch = 0,
+    IdMatch = 0,
     TitleDeedUpload = 1
 }
 ```
@@ -370,12 +370,12 @@ public class PublicUserPropertyModelTests
             PublicUserId = Guid.NewGuid(),
             PropertyId = Guid.NewGuid(),
             Status = PropertyClaimStatus.Pending,
-            EvidenceType = PropertyClaimEvidenceType.IDMatch,
+            EvidenceType = PropertyClaimEvidenceType.IdMatch,
             RequestedDate = new DateTime(2026, 5, 4)
         };
 
         Assert.Equal(PropertyClaimStatus.Pending, pup.Status);
-        Assert.Equal(PropertyClaimEvidenceType.IDMatch, pup.EvidenceType);
+        Assert.Equal(PropertyClaimEvidenceType.IdMatch, pup.EvidenceType);
         Assert.Null(pup.EvidenceDocumentId);
         Assert.Equal(new DateTime(2026, 5, 4), pup.RequestedDate);
         Assert.Null(pup.RejectionReason);
@@ -659,7 +659,7 @@ public class PortalSchemaConfigurationTests
             PublicUserId = publicUser.PublicUserId,
             PropertyId = prop.PropertyId,
             Status = PropertyClaimStatus.Approved,
-            EvidenceType = PropertyClaimEvidenceType.IDMatch,
+            EvidenceType = PropertyClaimEvidenceType.IdMatch,
             RequestedDate = DateTime.UtcNow
         };
         ctx.PublicUserProperties.Add(pup);
@@ -667,7 +667,7 @@ public class PortalSchemaConfigurationTests
 
         var fetched = ctx.PublicUserProperties.AsNoTracking().Single(x => x.Id == pup.Id);
         Assert.Equal(PropertyClaimStatus.Approved, fetched.Status);
-        Assert.Equal(PropertyClaimEvidenceType.IDMatch, fetched.EvidenceType);
+        Assert.Equal(PropertyClaimEvidenceType.IdMatch, fetched.EvidenceType);
     }
 
     [Fact]
@@ -1049,9 +1049,9 @@ public class PublicUserPropertyAccessorTests
         ctx.Properties.AddRange(p1, p2, p3);
 
         ctx.PublicUserProperties.AddRange(
-            new PublicUserProperty { PublicUserId = user.PublicUserId, PropertyId = p1.PropertyId, Status = PropertyClaimStatus.Approved, EvidenceType = PropertyClaimEvidenceType.IDMatch, RequestedDate = DateTime.UtcNow },
-            new PublicUserProperty { PublicUserId = user.PublicUserId, PropertyId = p2.PropertyId, Status = PropertyClaimStatus.Pending,  EvidenceType = PropertyClaimEvidenceType.IDMatch, RequestedDate = DateTime.UtcNow },
-            new PublicUserProperty { PublicUserId = user.PublicUserId, PropertyId = p3.PropertyId, Status = PropertyClaimStatus.Rejected, EvidenceType = PropertyClaimEvidenceType.IDMatch, RequestedDate = DateTime.UtcNow }
+            new PublicUserProperty { PublicUserId = user.PublicUserId, PropertyId = p1.PropertyId, Status = PropertyClaimStatus.Approved, EvidenceType = PropertyClaimEvidenceType.IdMatch, RequestedDate = DateTime.UtcNow },
+            new PublicUserProperty { PublicUserId = user.PublicUserId, PropertyId = p2.PropertyId, Status = PropertyClaimStatus.Pending,  EvidenceType = PropertyClaimEvidenceType.IdMatch, RequestedDate = DateTime.UtcNow },
+            new PublicUserProperty { PublicUserId = user.PublicUserId, PropertyId = p3.PropertyId, Status = PropertyClaimStatus.Rejected, EvidenceType = PropertyClaimEvidenceType.IdMatch, RequestedDate = DateTime.UtcNow }
         );
         await ctx.SaveChangesAsync();
 
@@ -1108,7 +1108,7 @@ public class PublicUserPropertyAccessorTests
             PublicUserId = user.PublicUserId,
             PropertyId = p.PropertyId,
             Status = PropertyClaimStatus.Approved,
-            EvidenceType = PropertyClaimEvidenceType.IDMatch,
+            EvidenceType = PropertyClaimEvidenceType.IdMatch,
             RequestedDate = DateTime.UtcNow
         });
         await ctx.SaveChangesAsync();
@@ -1135,7 +1135,7 @@ public class PublicUserPropertyAccessorTests
             PublicUserId = user.PublicUserId,
             PropertyId = p.PropertyId,
             Status = PropertyClaimStatus.Pending,
-            EvidenceType = PropertyClaimEvidenceType.IDMatch,
+            EvidenceType = PropertyClaimEvidenceType.IdMatch,
             RequestedDate = DateTime.UtcNow
         });
         await ctx.SaveChangesAsync();
@@ -1663,29 +1663,40 @@ git commit -m "Add IFileStorage abstraction with LocalDiskFileStorage impl"
 
 **Files:**
 - Modify: `Services/Auth/DwsClaimsTransformation.cs`
-- Create: `Tests/Services/Auth/DwsClaimsTransformationTests.cs`
+- Modify: `Tests/Services/Auth/DwsClaimsTransformationTests.cs` (file already exists; add 2 new tests + update 2 existing tests' authenticationType)
 
 > The existing transformation hits the DB looking for an `ApplicationUser` on EVERY authenticated request, regardless of scheme. Once `PublicPortalScheme` is wired (Task 16), portal requests would be making a useless DB round-trip per request. Fix it to early-return when not the Identity scheme.
+>
+> **⚠️ Plan revision (2026-05-04):** the test file already exists with two tests using `authenticationType: "Test"`. Those tests would break after the early-return change (since `"Test" != IdentityConstants.ApplicationScheme`). This task therefore (a) updates the two existing tests to use `IdentityConstants.ApplicationScheme`, and (b) adds two new tests for the early-return behaviour.
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Update the two existing tests' authentication type**
 
-Create `Tests/Services/Auth/DwsClaimsTransformationTests.cs`:
+Edit `Tests/Services/Auth/DwsClaimsTransformationTests.cs`:
+
+**1a.** Add `using Microsoft.AspNetCore.Identity;` to the top of the file (after the existing `using` block).
+
+**1b.** Find both occurrences of:
 
 ```csharp
-using System.Security.Claims;
-using dwa_ver_val.Tests.Helpers;
-using Microsoft.AspNetCore.Identity;
-using Xunit;
+        var identity = new ClaimsIdentity(authenticationType: "Test");
+```
 
-namespace dwa_ver_val.Tests.Services.Auth;
+(There are exactly two — at lines 71 and 110 of the existing file.) Replace **both** with:
 
-public class DwsClaimsTransformationTests
-{
+```csharp
+        var identity = new ClaimsIdentity(authenticationType: IdentityConstants.ApplicationScheme);
+```
+
+- [ ] **Step 2: Add two new tests for the early-return behaviour**
+
+Append the following two test methods inside the existing `DwsClaimsTransformationTests` class (before the final closing `}` of the class — keep the `private record ExpectedClaims(...)` at the bottom):
+
+```csharp
     [Fact]
     public async Task TransformAsync_DoesNothing_WhenSchemeIsNotIdentityApplication()
     {
-        using var ctx = TestDbContextFactory.Create();
-        var transformer = new DwsClaimsTransformation(ctx);
+        using var db = CreateDb();
+        var transformer = new DwsClaimsTransformation(db);
 
         // Simulate a portal cookie principal (different AuthenticationType).
         var identity = new ClaimsIdentity(
@@ -1704,8 +1715,8 @@ public class DwsClaimsTransformationTests
     [Fact]
     public async Task TransformAsync_DoesNothing_ForUnauthenticatedPrincipal()
     {
-        using var ctx = TestDbContextFactory.Create();
-        var transformer = new DwsClaimsTransformation(ctx);
+        using var db = CreateDb();
+        var transformer = new DwsClaimsTransformation(db);
 
         var principal = new ClaimsPrincipal(new ClaimsIdentity()); // no auth type
 
@@ -1713,22 +1724,37 @@ public class DwsClaimsTransformationTests
 
         Assert.False(result.HasClaim(c => c.Type == "displayName"));
     }
-}
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+(Note: this file uses its own `CreateDb()` helper rather than `TestDbContextFactory`. Reuse it for consistency with the existing tests in the class.)
+
+- [ ] **Step 3: Run tests to verify expected state**
 
 Run: `dotnet test Tests/dwa_ver_val.Tests.csproj --filter FullyQualifiedName~DwsClaimsTransformationTests`
 
-Expected: the first test fails because `TransformAsync` will currently process any authenticated principal regardless of scheme. (The second test passes already because of the existing `IsAuthenticated` check.)
+Expected:
+- The two **existing** tests STILL PASS (they now use `IdentityConstants.ApplicationScheme`, which is exactly what the production code will accept).
+- `TransformAsync_DoesNothing_WhenSchemeIsNotIdentityApplication` **FAILS** because `TransformAsync` currently processes any authenticated principal regardless of scheme.
+- `TransformAsync_DoesNothing_ForUnauthenticatedPrincipal` PASSES (existing `IsAuthenticated` check covers it).
 
-- [ ] **Step 3: Add the early-return**
+So 3 pass, 1 fails. The 1 failing is the test for the new behaviour we're about to add.
 
-Edit `Services/Auth/DwsClaimsTransformation.cs` — replace the body of `TransformAsync` so the FIRST check after the `IsAuthenticated` guard is the scheme check:
+- [ ] **Step 4: Add the early-return to production code**
+
+Edit `Services/Auth/DwsClaimsTransformation.cs` — insert the scheme check immediately after the existing `IsAuthenticated` guard, BEFORE the `Marker` check:
+
+Find:
 
 ```csharp
-    public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
-    {
+        if (principal.Identity is not ClaimsIdentity identity || !identity.IsAuthenticated)
+            return principal;
+
+        if (identity.HasClaim(c => c.Type == Marker)) return principal;
+```
+
+Replace with:
+
+```csharp
         if (principal.Identity is not ClaimsIdentity identity || !identity.IsAuthenticated)
             return principal;
 
@@ -1739,21 +1765,19 @@ Edit `Services/Auth/DwsClaimsTransformation.cs` — replace the body of `Transfo
             return principal;
 
         if (identity.HasClaim(c => c.Type == Marker)) return principal;
-
-        // ... rest of existing implementation unchanged ...
 ```
 
-(Add `using Microsoft.AspNetCore.Identity;` at the top if not already present — it should be.)
+The `using Microsoft.AspNetCore.Identity;` directive is already present at the top of `DwsClaimsTransformation.cs`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [ ] **Step 5: Run tests to verify they all pass**
 
 Run: `dotnet test Tests/dwa_ver_val.Tests.csproj --filter FullyQualifiedName~DwsClaimsTransformationTests`
 
-Expected: 2 tests pass.
+Expected: 4 tests pass (2 existing + 2 new).
 
-Run: `dotnet test Tests/dwa_ver_val.Tests.csproj` — expected: green (no regressions in existing identity flow tests).
+Run: `dotnet test Tests/dwa_ver_val.Tests.csproj` — expected: same baseline as before this task (no NEW regressions; the 19 pre-existing seeder-race integration failures remain unchanged).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add Services/Auth/DwsClaimsTransformation.cs Tests/Services/Auth/DwsClaimsTransformationTests.cs

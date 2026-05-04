@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 public class DwsClaimsTransformation : IClaimsTransformation
@@ -16,6 +17,12 @@ public class DwsClaimsTransformation : IClaimsTransformation
     public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
     {
         if (principal.Identity is not ClaimsIdentity identity || !identity.IsAuthenticated)
+            return principal;
+
+        // Only enrich Identity-cookie principals. Portal users (PublicPortalScheme)
+        // and other schemes have their own claim pipelines and don't need DWS-staff
+        // enrichment — running this DB query for them would be a waste.
+        if (identity.AuthenticationType != IdentityConstants.ApplicationScheme)
             return principal;
 
         if (identity.HasClaim(c => c.Type == Marker)) return principal;

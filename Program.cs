@@ -1,6 +1,10 @@
+using dwa_ver_val.Services.Infrastructure.Email;
+using dwa_ver_val.Services.Infrastructure.Storage;
+using dwa_ver_val.Services.Portal.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
 
@@ -43,41 +47,47 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
-// Microsoft (Entra ID) sign-in via the OpenID Connect external-login provider.
-// This integrates with ASP.NET Identity's existing cookie session: after successful
-// OIDC sign-in, AccountController.ExternalLoginCallback uses SignInManager to
-// link/create the local ApplicationUser and creates the standard Identity cookie.
-// Tenant + client + secret come from configuration (App Service settings or user-secrets).
+// Build the auth scheme list incrementally:
+//   - PublicPortalScheme cookie (always present, for /Areas/ExternalPortal/*).
+//   - Microsoft (Entra ID) OIDC (added only when env vars are configured).
+// The default scheme remains Identity.Application, set by AddIdentity above.
+var authBuilder = builder.Services.AddAuthentication();
+
+authBuilder.AddCookie(PortalCookieOptions.SchemeName, PortalCookieOptions.Configure);
+
 var entraTenantId = builder.Configuration["AzureAd:TenantId"];
 var entraClientId = builder.Configuration["AzureAd:ClientId"];
 var entraClientSecret = builder.Configuration["AzureAd:ClientSecret"];
 if (!string.IsNullOrEmpty(entraTenantId) && !string.IsNullOrEmpty(entraClientId) && !string.IsNullOrEmpty(entraClientSecret))
 {
-    builder.Services.AddAuthentication()
-        .AddOpenIdConnect("Microsoft", "Microsoft", options =>
-        {
-            options.Authority = $"https://login.microsoftonline.com/{entraTenantId}/v2.0";
-            options.ClientId = entraClientId;
-            options.ClientSecret = entraClientSecret;
-            options.ResponseType = "code";
-            options.UsePkce = true;
-            options.SaveTokens = true;
-            options.GetClaimsFromUserInfoEndpoint = true;
-            options.CallbackPath = builder.Configuration["AzureAd:CallbackPath"] ?? "/signin-oidc";
-            options.SignedOutCallbackPath = builder.Configuration["AzureAd:SignedOutCallbackPath"] ?? "/signout-callback-oidc";
-            options.SignInScheme = IdentityConstants.ExternalScheme;
-            options.Scope.Add("openid");
-            options.Scope.Add("profile");
-            options.Scope.Add("email");
-            options.TokenValidationParameters.NameClaimType = "name";
-        });
+    authBuilder.AddOpenIdConnect("Microsoft", "Microsoft", options =>
+    {
+        options.Authority = $"https://login.microsoftonline.com/{entraTenantId}/v2.0";
+        options.ClientId = entraClientId;
+        options.ClientSecret = entraClientSecret;
+        options.ResponseType = "code";
+        options.UsePkce = true;
+        options.SaveTokens = true;
+        options.GetClaimsFromUserInfoEndpoint = true;
+        options.CallbackPath = builder.Configuration["AzureAd:CallbackPath"] ?? "/signin-oidc";
+        options.SignedOutCallbackPath = builder.Configuration["AzureAd:SignedOutCallbackPath"] ?? "/signout-callback-oidc";
+        options.SignInScheme = IdentityConstants.ExternalScheme;
+        options.Scope.Add("openid");
+        options.Scope.Add("profile");
+        options.Scope.Add("email");
+        options.TokenValidationParameters.NameClaimType = "name";
+    });
 }
 
 // Claims transformation (populates role + scope claims on every request)
 builder.Services.AddScoped<IClaimsTransformation, DwsClaimsTransformation>();
 
-// Authorisation policies
-builder.Services.AddAuthorization(DwsPolicies.Configure);
+// Authorisation policies — single AddAuthorization merges DWS-staff and portal policies.
+builder.Services.AddAuthorization(options =>
+{
+    DwsPolicies.Configure(options);
+    PortalPolicies.Configure(options);
+});
 
 // Repository DI
 builder.Services.AddScoped<IPropertyInterface, PropertyRepository>();
@@ -114,11 +124,52 @@ builder.Services.AddSingleton<dwa_ver_val.Services.Letters.IBlobStore>(sp =>
         Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "_uploads")));
 builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterService, dwa_ver_val.Services.Letters.LetterService>();
 
+// Portal infrastructure abstractions
+builder.Services.AddSingleton<IEmailSender, LoggingEmailSender>();
+builder.Services.AddSingleton<IFileStorage>(sp =>
+    new LocalDiskFileStorage(
+        Path.Combine(builder.Environment.ContentRootPath, "portal-uploads")));
+builder.Services.AddScoped<IPublicUserPropertyAccessor, PublicUserPropertyAccessor>();
+
+// Portal exception handler + ProblemDetails
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<PortalExceptionHandler>();
+
+// Portal rate limiter
+builder.Services.AddRateLimiter(PortalRateLimitPolicies.Configure);
+
 // Seeders
 builder.Services.AddScoped<SeedDataService>();
 builder.Services.AddScoped<IdentitySeeder>();
 
 var app = builder.Build();
+
+// POPIA guard: refuse to start in Production while PublicUser.IdentityNumber is
+// stored unencrypted, unless an explicit acknowledgement flag is set. This
+// prevents accidental promotion to prod before Task 10.3 wires DataProtection
+// encryption. See design spec §5.6.
+if (app.Environment.IsProduction()
+    && !builder.Configuration.GetValue<bool>("Portal:AllowPlaintextIdentityNumber"))
+{
+    throw new InvalidOperationException(
+        "PublicUser.IdentityNumber is stored unencrypted. Set " +
+        "Portal:AllowPlaintextIdentityNumber=true to acknowledge for non-production data, " +
+        "or wire IDataProtectionProvider encryption (Task 10.3).");
+}
+
+// Warn if LoggingEmailSender is in use under Production — emails will leak
+// PII (user names, confirmation links) into the log sink. Replace before
+// production go-live.
+if (app.Environment.IsProduction())
+{
+    var emailSender = app.Services.GetRequiredService<IEmailSender>();
+    if (emailSender is LoggingEmailSender)
+    {
+        var startupLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+        startupLogger.LogWarning(
+            "LoggingEmailSender is active under Production. Email bodies (containing PII) will be written to the log. Wire a real IEmailSender before any production data lands.");
+    }
+}
 
 // Apply migrations and seed on startup
 using (var scope = app.Services.CreateScope())
@@ -134,19 +185,37 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Pipeline
+app.UseExceptionHandler();          // routes through the IExceptionHandler chain (PortalExceptionHandler first)
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
+// Honour X-Forwarded-For so RemoteIpAddress is the real client IP behind
+// Azure App Service / front door. PortalRateLimitPolicies partitions by IP;
+// without this, every external user collapses onto a single proxy partition
+// and one attacker would trip a global lockout. Must run BEFORE UseRouting.
+app.UseForwardedHeaders(new Microsoft.AspNetCore.Builder.ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor
+                       | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+});
+
 app.UseHttpsRedirection();
 app.UseRouting();
+
+app.UseRateLimiter();               // must run between UseRouting and UseAuthentication
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
+// Area route — must be registered BEFORE the default route so Areas resolve.
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",
