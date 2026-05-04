@@ -433,3 +433,13 @@ Stage 1 done. Ready for user review and merge to demo/azure-deploy (or open a PR
 - Implementation commit: `87fd8e1` — `Add SaIdValidator (13-digit Luhn) helper` (2 files changed, 75 insertions). Journal commit follows separately.
 - Plan-bug note: to make all 11 cases pass without touching the helper, the plan should swap `9202204720082` → `9202204720083` (correct Luhn check digit for prefix `920220472008`) and `0000000000000` → e.g. `0000000000001` (so the sum is 1, not 0). Suggested as a follow-up plan amendment by the orchestrator; this agent did not silently fix the plan's data so the contradiction stays visible.
 - Status: DONE_WITH_CONCERNS — implementation and tests ship verbatim from the plan; 2/151 tests fail because the plan's "known-valid" / "all-zeros invalid" data points contradict the plan's own algorithm.
+
+### 2026-05-04 — Stage 2a Task 7 fix-up agent (Opus 4.7) — Correct two SaIdValidator test data points
+- Branch confirmed: `feat/external-portal-stage-2a` in worktree `.worktrees/external-portal-stage-2a`. Addresses the DONE_WITH_CONCERNS flagged by the Task 7 implementer at commit `87fd8e1`. The Luhn helper itself is correct; the plan's verbatim test data contained two contradictions caught by the implementer.
+- Plan-authoring error: the plan listed `9202204720082` as a "known-valid" ID (Luhn sum 39, NOT divisible by 10) and `0000000000000` as a "bad checksum" (Luhn sum 0, IS divisible by 10 — so the algorithm correctly returns true). Both data points were inconsistent with the plan's own algorithm specification.
+- Corrections applied to `Tests/Helpers/SaIdValidatorTests.cs` (2 InlineData strings changed, no production code touched):
+  - `IsValid_ReturnsTrueForKnownValidIds`: `9202204720082` → `9202204720083` (sum 40, divisible by 10 — valid).
+  - `IsValid_ReturnsFalseForBadChecksum`: `0000000000000` → `0000000000001` (sum 1, NOT divisible by 10 — invalid); inline comment updated to `// all zeros except last — sum is 1, not divisible by 10`.
+- Verification: `dotnet test Tests/dwa_ver_val.Tests.csproj --filter FullyQualifiedName~SaIdValidatorTests --nologo` → Failed: 0, Passed: 11, Total: 11 (33 ms) — was 9/2/11 before this fix. Full suite `dotnet test Tests/dwa_ver_val.Tests.csproj --nologo` → Failed: 0, Passed: 151, Total: 151 (3 s) — was 149/2/151 before this fix.
+- Implementation commit: `3b7566a` — `Task 7 fix-up: correct two SaIdValidator test data points` (1 file changed, 2 insertions, 2 deletions). Journal commit follows separately.
+- Status: DONE — Task 7 now ships clean (151/0/151). Lesson for future plans: any plan listing `[Theory]` `[InlineData]` rows for a Luhn/checksum algorithm must trace each value through the algorithm before pasting the row.
