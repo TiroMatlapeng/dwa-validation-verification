@@ -129,3 +129,14 @@ Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-po
 - Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 87, Total: 106 — exactly two more passes than the Task 3 baseline (85 → 87). The 19 pre-existing parallel-startup integration failures unchanged.
 - Implementation commit: `Convert PublicUserProperty.Status to enum + add claim evidence columns` (5878f11) — three files: model + new test + the EntityRelationshipTests call-site fix.
 - Status: DONE.
+
+### 2026-05-04 — Stage 1 Task 5 agent (Opus 4.7) — LetterIssuance.RecipientPublicUserId
+- Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read journal to date and Stage 1 plan Task 5.
+- Pre-state: `LetterIssuance` already has `PortalAcknowledgedByPublicUserId` at line 38 (the user who marked acknowledged) — distinct from the new `RecipientPublicUserId` (the user the letter is ADDRESSED to). Model is top-level (no namespace), matching existing convention.
+- Step 1: created `Tests/Models/LetterIssuanceModelTests.cs` with the single `[Fact]` `RecipientPublicUserId_DefaultsToNull_AndIsSettable` verbatim from the plan.
+- Step 2 verification (pre-column): `dotnet test --filter FullyQualifiedName~LetterIssuanceModelTests` failed with 3 × CS1061 (`'LetterIssuance' does not contain a definition for 'RecipientPublicUserId'`) — expected.
+- Step 3: edited `Models/LetterIssuance.cs` — added `Guid? RecipientPublicUserId` + `PublicUser? RecipientPublicUser` immediately after `PortalAcknowledgedByPublicUserId` (line 39-40), keeping the portal-public-user fields grouped per plan note.
+- Step 4 verification (post-column): `dotnet test --filter FullyQualifiedName~LetterIssuanceModelTests` returns Passed: 1, Failed: 0, Total: 1 (7 ms).
+- Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 88, Total: 107 — exactly one more pass than the Task 4 baseline (87 → 88). The 19 pre-existing parallel-startup integration failures unchanged.
+- Implementation commit: `Add RecipientPublicUserId addressee column to LetterIssuance` (68d4085) — two files: model + new test. No DBContext config changes (deferred to Task 7 per plan).
+- Status: DONE.
