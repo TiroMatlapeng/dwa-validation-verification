@@ -122,18 +122,39 @@ public class DwsClaimsTransformationTests
     [Fact]
     public async Task TransformAsync_DoesNothing_WhenSchemeIsNotIdentityApplication()
     {
+        // The user EXISTS in the DB. Without the early-return, TransformAsync
+        // would find them and add the displayName claim. With the early-return,
+        // it should bail out before the DB lookup because the auth scheme is
+        // not IdentityConstants.ApplicationScheme — so no claims get added.
         using var db = CreateDb();
-        var transformer = new DwsClaimsTransformation(db);
 
-        // Simulate a portal cookie principal (different AuthenticationType).
+        var userId = Guid.NewGuid();
+        db.Users.Add(new ApplicationUser
+        {
+            Id = userId,
+            UserName = "portal-user@example.test",
+            NormalizedUserName = "PORTAL-USER@EXAMPLE.TEST",
+            Email = "portal-user@example.test",
+            NormalizedEmail = "PORTAL-USER@EXAMPLE.TEST",
+            FirstName = "Portal",
+            LastName = "User",
+            EmployeeNumber = "PU-001",
+            IsActive = true,
+            OrgUnitId = null
+        });
+        await db.SaveChangesAsync();
+
+        // Simulate a portal cookie principal — different AuthenticationType.
         var identity = new ClaimsIdentity(
-            new[] { new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()) },
+            new[] { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) },
             authenticationType: "PublicPortalScheme");
         var principal = new ClaimsPrincipal(identity);
 
+        var transformer = new DwsClaimsTransformation(db);
         var result = await transformer.TransformAsync(principal);
 
-        // No "displayName" or other DWS claims should have been added.
+        // No DWS-staff claims should have been added — the early-return must
+        // bail before the DB lookup, even though the user exists.
         Assert.False(result.HasClaim(c => c.Type == "displayName"));
         Assert.False(result.HasClaim(c => c.Type == "employeeNumber"));
         Assert.False(result.HasClaim(c => c.Type == "dws:augmented"));
