@@ -140,3 +140,14 @@ Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-po
 - Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 88, Total: 107 — exactly one more pass than the Task 4 baseline (87 → 88). The 19 pre-existing parallel-startup integration failures unchanged.
 - Implementation commit: `Add RecipientPublicUserId addressee column to LetterIssuance` (68d4085) — two files: model + new test. No DBContext config changes (deferred to Task 7 per plan).
 - Status: DONE.
+
+### 2026-05-04 — Stage 1 Task 6 agent (Opus 4.7) — PublicUserRecoveryCode entity
+- Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read journal to date and Stage 1 plan Task 6.
+- Pre-state: neither `Models/PublicUserRecoveryCode.cs` nor `Tests/Models/PublicUserRecoveryCodeModelTests.cs` existed. `PublicUser` confirmed top-level (no namespace) — matched for new entity.
+- Step 1: created `Tests/Models/PublicUserRecoveryCodeModelTests.cs` with the two `[Fact]` tests verbatim from the plan (`NewRecoveryCode_HasExpectedDefaults`, `Redemption_FlipsUsedAndUsedDate`).
+- Step 2 verification (pre-entity): `dotnet test --filter FullyQualifiedName~PublicUserRecoveryCodeModelTests` failed with 2 × CS0246 (`type or namespace name 'PublicUserRecoveryCode' could not be found`) — expected.
+- Step 3: created `Models/PublicUserRecoveryCode.cs` per plan VERBATIM — top-level (no namespace), 8 properties: `Id Guid`, `PublicUserId Guid`, `PublicUser PublicUser?`, `CodeHash required string`, `Used bool`, `UsedDate DateTime?`, `CreatedDate DateTime`, `ExpiresDate DateTime?`. Cascade-delete config explicitly deferred to Task 7.
+- Step 4 verification (post-entity): `dotnet test --filter FullyQualifiedName~PublicUserRecoveryCodeModelTests` returns Passed: 2, Failed: 0, Total: 2 (13 ms).
+- Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 90, Total: 109 — exactly two more passes than the Task 5 baseline (88 → 90). The 19 pre-existing parallel-startup integration failures unchanged.
+- Implementation commit: `Add PublicUserRecoveryCode entity` (b4e3997) — two files: model + new test.
+- Status: DONE.
