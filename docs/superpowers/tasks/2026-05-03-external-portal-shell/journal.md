@@ -576,3 +576,39 @@ Stage 1 done. Ready for user review and merge to demo/azure-deploy (or open a PR
 - Implementation commit: `c08c5c7` — `Integration test: portal register → confirm → login → dashboard happy path` (2 files changed, 139 insertions). Commit message exact verbatim from plan including the unicode arrows. Journal commit follows separately.
 - Self-review: (1) 1 file modified (`IntegrationTestBase.cs`) + 1 file created (`PortalRegistrationFlowTests.cs`) — matches the checklist (2 file changes total). (2) All 3 integration tests pass on first run. (3) Full suite 182/0/182 — exact match with plan prediction (was 179, +3). (4) Implementation commit message verbatim from plan including the arrows. (5) Happy-path test (longest, most fragile) — passes; exercises the full register → email-token → confirm → DB-assert → login → cookie → dashboard pipeline end-to-end, including the TempData demo-confirm-URL Razor render that Task 14 introduced. (6) Security-critical dashboard-redirect test — passes; proves `PortalAuthorizationConvention` (Task 5) is correctly wired into MVC by Task 6 and applied to `DashboardController`. (7) Wrong-password test — passes; the generic "Login failed." string surfaces via `ModelState.AddModelError("", result.Error ?? "Login failed.")` in `AccountController.Login` POST, exactly matching the plan listing's Task 15 controller body. (8) `RegisterPublicUser` helper appended INSIDE `IntegrationTestHelpers` static class (not at file scope) — verified by reading the file post-edit. (9) Tests use a unique `Guid.NewGuid():N` email per test so they don't collide with each other or with prior runs against the shared dev SQL DB.
 - Status: DONE — Stage 2a Task 17 complete; Stage 2a is now feature-complete pending Tasks 18–19 (plan-author wrap-up tasks: README + sign-off).
+
+### 2026-05-04 — Stage 2a implementation COMPLETE
+- 18 plan tasks executed via subagent-driven workflow.
+- Final test suite: **182 passed / 0 failed / 182 total** (was 137 / 0 at end of Stage 1; +45 new tests).
+- 4 plan-authoring misses caught and fixed inline by implementers (DONE_WITH_CONCERNS each):
+  1. Task 7: two `[InlineData]` strings (`9202204720082`, `0000000000000`) didn't match the plan's own Luhn algorithm — fixed in follow-up commit.
+  2. Task 12: `_ViewImports.cshtml` referenced `Areas.ExternalPortal.ViewModels` namespace before Task 13 created it — temporary placeholder added, removed in Task 13.
+  3. Task 14: `Url.Action(...)!` would NRE in unit tests where `Url` is null — softened to `Url?.Action(...)`.
+  4. Task 15: `SignInResult` was ambiguous between `Microsoft.AspNetCore.Mvc.SignInResult` and `dwa_ver_val.Services.Portal.Auth.SignInResult` — fully-qualified in tests.
+- Stage 1 entry conditions addressed: #2 (NetArchTest fence), #4 (PortalPolicies real claims), #5 (PublicUserBuilder factories). #6 deferred (no claim creation in 2a).
+- New files (production):
+  - `Areas/ExternalPortal/Controllers/{Account, Dashboard}Controller.cs`
+  - `Areas/ExternalPortal/ViewModels/{Register, Login}ViewModel.cs`
+  - `Areas/ExternalPortal/Views/_ViewStart.cshtml`, `_ViewImports.cshtml`, `Shared/_PortalLayout.cshtml`, `Account/{Register, RegisterConfirmation, ConfirmEmail, Login, AccessDenied}.cshtml`, `Dashboard/Index.cshtml`
+  - `Helpers/{SaIdValidator, PortalPasswordPolicy}.cs`
+  - `Services/Portal/Auth/{IPublicUserRegistrationService, PublicUserRegistrationService, IPublicUserSignInService, PublicUserSignInService, PortalCookieEvents, PortalAuthorizationConvention}.cs`
+- Files modified:
+  - `Tests/Helpers/PublicUserBuilder.cs` (Pending + Suspended factories)
+  - `Tests/Architecture/PortalBoundaryTests.cs` (third fence: Areas/ExternalPortal can't reference ApplicationDBContext directly)
+  - `Services/Portal/Auth/PortalPolicies.cs` (real claim requirements + claim-name constants)
+  - `Program.cs` (PortalAuthorizationConvention into MVC; PortalCookieEvents into cookie scheme; new service DI; PasswordHasher singleton; AddHttpContextAccessor)
+  - `Tests/Integration/IntegrationTestBase.cs` (RegisterPublicUser helper)
+
+## Stage 2b entry conditions captured
+
+1. The `Login` action currently signs in any user with confirmed email — Stage 2b must add `MfaEnabled` check and route MFA-not-enrolled users to `/ExternalPortal/Account/EnrolMfa` instead of the dashboard.
+2. `PortalPolicies.PortalAuthenticated` currently requires `EmailConfirmed=true` only. Stage 2b must add `MfaEnrolled=true` and `Status=Active` claims.
+3. `PortalCookieEvents.OnValidatePrincipal` must be implemented to re-check `PublicUser.Status` from DB on every sliding refresh and reject suspended/deactivated users (the stub class already exists).
+4. The `LoggingEmailSender` currently logs the raw confirmation token. Stage 2b should move the link substitution into `PublicUserRegistrationService` so the email contains a clickable URL rather than a token to copy/paste.
+5. Account lockout (`FailedLoginAttempts`, `LockoutUntil`) must be added to `PublicUserSignInService` — Stage 1 added the columns.
+6. Password reset flow (ForgotPassword → ResetPassword) must be added; reuse the same DataProtection-tokened pattern as email confirmation but with a separate purpose string `PortalPasswordReset:v1`.
+7. TOTP MFA enrolment (Otp.NET + QR code + recovery codes) is the centerpiece of Stage 2b.
+8. The dashboard placeholder will be replaced by Stage 3 with the property-claim flow + My Cases.
+9. `_NamespacePlaceholder.cs` workaround was removed in Task 13 — no follow-up needed.
+
+Stage 2a done. Ready for user review and merge to demo/azure-deploy.
