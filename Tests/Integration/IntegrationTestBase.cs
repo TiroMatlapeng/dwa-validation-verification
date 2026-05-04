@@ -76,4 +76,30 @@ public static class IntegrationTestHelpers
             AllowAutoRedirect = false,
             HandleCookies = true
         });
+
+    /// <summary>
+    /// Posts the portal registration form. Returns the response so the caller can inspect
+    /// status/Location and (for Stage 2a) the TempData demo confirm URL via following the redirect.
+    /// </summary>
+    public static async Task<HttpResponseMessage> RegisterPublicUser(
+        HttpClient client,
+        string email,
+        string password = "Validuserpassword12!",
+        string firstName = "Test",
+        string lastName = "User",
+        string identityNumber = "8001015009087")
+    {
+        var token = await GetAntiForgeryToken(client, "/ExternalPortal/Account/Register");
+        return await client.PostAsync("/ExternalPortal/Account/Register", new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("Email", email),
+            new KeyValuePair<string, string>("Password", password),
+            new KeyValuePair<string, string>("ConfirmPassword", password),
+            new KeyValuePair<string, string>("FirstName", firstName),
+            new KeyValuePair<string, string>("LastName", lastName),
+            new KeyValuePair<string, string>("IdentityNumber", identityNumber),
+            new KeyValuePair<string, string>("AcceptTerms", "true"),
+            new KeyValuePair<string, string>("__RequestVerificationToken", token)
+        }));
+    }
 }
