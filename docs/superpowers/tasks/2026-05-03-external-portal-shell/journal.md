@@ -294,3 +294,10 @@ Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-po
 - Implementation commit: `32114d0` — `Add PortalExceptionHandler with NotFound + generic mapping` (2 files: production + test). Journal commit follows separately.
 - Confirmed handler does NOT write any response body content — verified by code inspection: only `httpContext.Response.StatusCode = ...` assignments + `_logger.LogXxx(...)` calls. No `WriteAsync`, `WriteAsJsonAsync`, or `Body` access anywhere. Stage 2 security-review constraint #1 satisfied.
 - Status: DONE.
+
+### 2026-05-04 — Stage 1 Task 16 (controller-completed) — Program.cs wiring
+- Implementer agent timed out mid-report after Step 6 (pipeline middleware). Implementation was actually complete: the diff to Program.cs matched the plan exactly (all 6 sub-steps applied). Controller ran the smoke test and committed.
+- Curl smoke from a freshly-restarted local server (port 5099): `GET /` → 302 (existing redirect to `/Account/Login`), `GET /Account/Login` → 200 (internal login renders), `GET /ExternalPortal/Account/Login` → 404 (no portal controller yet — correct), `GET /ExternalPortal/Dashboard` → 404 (NOT a redirect to /Account/Login — confirms area route exists and portal scheme is properly scoped, not silently catching portal paths).
+- Test suite: 134 / 0 / 134 (was 115 / 19 / 134 before this task — the 19 pre-existing parallel-startup integration failures resolved themselves between Tasks 13 and 16; likely the dev DB warmed up across earlier test runs and the seeder race no longer fires because `Provinces.AnyAsync()` returns true for all parallel hosts now).
+- Implementation commit: `9da3f62 Wire portal cookie scheme, rate limiter, exception handler, infra DI` (85+/26-, single file).
+- Status: DONE.
