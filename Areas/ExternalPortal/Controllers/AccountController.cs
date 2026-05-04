@@ -78,4 +78,35 @@ public class AccountController : Controller
         ViewData["Error"] = result.Success ? null : (result.Errors.FirstOrDefault() ?? "The confirmation link is invalid.");
         return View();
     }
+
+    [HttpGet, AllowAnonymous]
+    public IActionResult Login(string? returnUrl = null) => View(new LoginViewModel { ReturnUrl = returnUrl });
+
+    [HttpPost, AllowAnonymous, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Login(LoginViewModel vm, CancellationToken ct)
+    {
+        if (!ModelState.IsValid) return View(vm);
+
+        var result = await _signIn.SignInAsync(vm.Email, vm.Password, ct);
+        if (!result.Success)
+        {
+            ModelState.AddModelError("", result.Error ?? "Login failed.");
+            return View(vm);
+        }
+
+        if (!string.IsNullOrEmpty(vm.ReturnUrl) && Url.IsLocalUrl(vm.ReturnUrl))
+            return Redirect(vm.ReturnUrl);
+
+        return RedirectToAction("Index", "Dashboard", new { area = "ExternalPortal" });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Logout(CancellationToken ct)
+    {
+        await _signIn.SignOutAsync(ct);
+        return RedirectToAction(nameof(Login));
+    }
+
+    [HttpGet, AllowAnonymous]
+    public IActionResult AccessDenied() => View();
 }
