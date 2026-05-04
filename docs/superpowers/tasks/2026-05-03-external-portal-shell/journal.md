@@ -167,3 +167,11 @@ Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-po
 - Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 90, Total: 109 — exactly two more passes than the Task 5 baseline (88 → 90). The 19 pre-existing parallel-startup integration failures unchanged.
 - Implementation commit: `Add PublicUserRecoveryCode entity` (b4e3997) — two files: model + new test.
 - Status: DONE.
+
+### 2026-05-04 — Stage 1 Task 7 follow-up agent (Opus 4.7) — code review fix-ups
+- Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read journal to date and the two Important nits raised by review agent `afa457f919a90520f`.
+- Fix 1 (DRY): added `public static readonly IReadOnlyCollection<(Type Dependent, Type Principal, string FkProperty, DeleteBehavior Behavior)> NonRestrictForeignKeys` on `ApplicationDBContext` (after class declaration, before constructor). The OnModelCreating cascade-override loop now derives its `cascadeFkExemptions` HashSet from this list via `Select(...).ToHashSet()`. The `All_Delete_Behaviors_Are_Restrict_Except_Whitelisted` test in `ApplicationDBContextTests` now derives its `allowList` Dictionary from the same source via `ToDictionary(...)`, replacing the LINQ `Where`/`FirstOrDefault` matching with a cleaner `TryGetValue`. Adding a 4th non-Restrict FK now requires a single edit.
+- Fix 2 (test gap): added a 5th `[Fact]` to `PortalSchemaConfigurationTests.cs`: `RecipientPublicUserId_FK_To_PublicUser_IsSetNull_NotRestrict` — same pattern as `EvidenceDocument_FK_To_Document_IsSetNull_NotRestrict`, asserts `LetterIssuance.RecipientPublicUserId → PublicUser` is `DeleteBehavior.SetNull`.
+- Verification: `dotnet build` green (0 errors, 6 pre-existing warnings unchanged). `dotnet test --filter "FullyQualifiedName~PortalSchemaConfigurationTests"` returns 5/5 passed (was 4/4). `dotnet test --filter "All_Delete_Behaviors_Are_Restrict_Except_Whitelisted"` returns 1/1 passed. Full suite: 95 passed / 19 failed / 114 total — exactly one more pass than the Task 7 baseline (94 → 95). The 19 pre-existing parallel-startup integration failures unchanged.
+- Implementation commit: `79cbb0f` — three files (DBContext + two test files). Journal commit follows separately.
+- Status: DONE.
