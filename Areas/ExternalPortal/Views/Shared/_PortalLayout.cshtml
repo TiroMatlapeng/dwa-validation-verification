@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — DWA V&V Public Portal</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dws.css" asp-append-version="true" />
+    <style>
+        body {
+            background: linear-gradient(160deg, var(--dws-navy-900) 0%, var(--dws-teal-600) 60%, var(--dws-blue-600) 130%);
+            margin: 0;
+            font-family: var(--dws-font-sans);
+            color: var(--dws-text);
+            min-height: 100vh;
+        }
+        .portal-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--dws-space-5) var(--dws-space-4);
+        }
+        .portal-shell__brand {
+            color: var(--dws-white);
+            margin-bottom: var(--dws-space-6);
+            text-align: center;
+        }
+        .portal-shell__brand h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+        }
+        .portal-shell__brand p {
+            margin: 6px 0 0 0;
+            font-size: var(--dws-fs-sm);
+            color: var(--dws-blue-100);
+            letter-spacing: 0.02em;
+        }
+        .portal-card {
+            background: var(--dws-surface);
+            border-radius: 8px;
+            padding: var(--dws-space-5);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+            width: 100%;
+            max-width: 480px;
+        }
+        .portal-card h1 {
+            margin: 0 0 var(--dws-space-3) 0;
+            font-size: 20px;
+            color: var(--dws-primary);
+        }
+        .portal-card .muted {
+            color: var(--dws-text-muted);
+            font-size: var(--dws-fs-sm);
+            margin: 0 0 var(--dws-space-4) 0;
+        }
+        .portal-card label {
+            display: block;
+            margin-top: var(--dws-space-3);
+            font-size: var(--dws-fs-sm);
+            color: var(--dws-text);
+        }
+        .portal-card input[type=text],
+        .portal-card input[type=email],
+        .portal-card input[type=password],
+        .portal-card input[type=tel] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px 10px;
+            border: 1px solid var(--dws-border);
+            border-radius: 4px;
+            font-size: var(--dws-fs-sm);
+            margin-top: 4px;
+        }
+        .portal-card .inline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: var(--dws-space-3);
+        }
+        .portal-card .actions {
+            margin-top: var(--dws-space-5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .portal-card .btn-primary {
+            background: var(--dws-primary);
+            color: var(--dws-white);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 4px;
+            font-size: var(--dws-fs-sm);
+            cursor: pointer;
+        }
+        .portal-card .btn-primary:hover { background: var(--dws-primary-hover); }
+        .portal-card .errors {
+            background: #fff3f3;
+            border: 1px solid var(--dws-red-700);
+            color: var(--dws-red-700);
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-bottom: var(--dws-space-4);
+        }
+        .portal-card .errors ul { margin: 6px 0 0 18px; padding: 0; }
+        .portal-shell__footer {
+            margin-top: var(--dws-space-5);
+            color: var(--dws-blue-100);
+            font-size: var(--dws-fs-xs);
+            opacity: 0.8;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="portal-shell">
+        <div class="portal-shell__brand">
+            <h2>DWA V&amp;V Public Portal</h2>
+            <p>Verification of Existing Lawful Water Use</p>
+        </div>
+        @RenderBody()
+        <div class="portal-shell__footer">
+            National Water Act 38 of 1998 — Sections 32–35
+        </div>
+    </div>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
