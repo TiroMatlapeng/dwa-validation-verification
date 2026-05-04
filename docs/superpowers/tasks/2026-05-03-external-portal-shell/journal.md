@@ -312,3 +312,45 @@ Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-po
 - Step 4 (full suite): `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 0, Passed: 137, Total: 137 — exactly matches the plan-stated 137/0 target. Test 2 (`/ExternalPortal/Dashboard`) returns 404 (NOT a redirect) — confirms the security-critical assertion that the default Identity scheme isn't wrongly answering portal paths. The Task 16 area-route + cookie-scope wiring is verified end-to-end.
 - Implementation commit: `b6ab9bc` — `Add portal integration fixture + cookie scheme isolation tests` (2 files, 84 insertions). Journal commit follows separately.
 - Status: DONE_WITH_CONCERNS — single deviation from plan: probed `/Admin/Users/Index` instead of `/Admin/Users` (plan-authoring miss; the latter route doesn't exist). Functionally identical assertion, just the correct URL. All 3 tests pass and the security-critical isolation check (Test 2) is verified.
+
+### 2026-05-04 — Stage 1 implementation COMPLETE
+- All 18 plan tasks (and 4 fix-up follow-ups for plan-authoring misses or review-flagged issues) executed via subagent-driven workflow.
+- Final test suite: **137 passed / 0 failed / 137 total**. Full green. (Began at 79 passed / 19 failed; the 19 pre-existing parallel-startup integration failures resolved themselves between Tasks 13 and 16.)
+- New files created (Stage 1 production):
+  - `Models/Enums/PropertyClaimEvidenceType.cs`, `Models/Enums/PropertyClaimStatus.cs`
+  - `Models/PublicUserRecoveryCode.cs`
+  - `Helpers/NotFoundException.cs`
+  - `Services/Infrastructure/Email/{IEmailSender, EmailMessage, LoggingEmailSender}.cs`
+  - `Services/Infrastructure/Storage/{IFileStorage, StoredFileResult, LocalDiskFileStorage}.cs`
+  - `Services/Portal/Auth/{IPublicUserPropertyAccessor, PublicUserPropertyAccessor, PortalCookieOptions, PortalPolicies, PortalRateLimitPolicies, PortalExceptionHandler}.cs`
+- Files modified:
+  - `Models/PublicUser.cs` (+7 columns), `Models/PublicUserProperty.cs` (status enum + 4 claim columns), `Models/LetterIssuance.cs` (+RecipientPublicUserId)
+  - `DatabaseContexts/ApplicationDBContext.cs` (DbSet, indexes, check constraints, value converters, FKs, cascade exemption set with NonRestrictForeignKeys static)
+  - `Services/Auth/DwsClaimsTransformation.cs` (early-return for non-Identity scheme)
+  - `Program.cs` (portal cookie scheme, AddRateLimiter, AddProblemDetails, IExceptionHandler, infra DI, POPIA fail-fast guard, area route)
+  - `Tests/dwa_ver_val.Tests.csproj` (NetArchTest.Rules package)
+  - `Tests/Services/Auth/DwsClaimsTransformationTests.cs` (existing tests updated to use IdentityConstants.ApplicationScheme + 2 new load-bearing tests added)
+  - `Tests/Models/EntityRelationshipTests.cs` (call-site fix for new PublicUserProperty enum status)
+  - `Tests/DatabaseContexts/ApplicationDBContextTests.cs` (allow-list now derived from ApplicationDBContext.NonRestrictForeignKeys)
+- Test files added: 11 new test classes spanning architecture, models, helpers, services/portal/auth, services/infrastructure, database-contexts, and integration.
+- Migration: single migration `20260504094618_ExternalPortalShellPortalAuthAndClaims.cs` applied to dev DB cleanly. All 6 filtered indexes, 2 check constraints, FK cascade behaviours, and `defaultValue: 0` on `FailedLoginAttempts` verified.
+- Rollout plan row 9.1 updated to In Progress with status date 2026-05-04 and explanatory notes.
+
+## Stage 2 entry conditions captured (from this stage's reviews)
+1. **`PortalExceptionHandler` (already built) MUST stay silent on response body.** It currently sets `StatusCode` only and logs. Stage 2 author MUST NOT add `Response.WriteAsync` to this handler — `NotFoundException` messages contain GUIDs that must not bleed to HTTP responses.
+2. **NetArchTest fence expansion needed.** Currently `Areas/ExternalPortal/*` is blocked from `UserManager`/`SignInManager`. Stage 2 must add an additional fence prohibiting `Areas/ExternalPortal/*` from `ApplicationDBContext` directly — they must go through `Services/Portal/*` services. Note: `PublicUserPropertyAccessor` itself uses `ApplicationDBContext` (intentional); the fence applies to controllers/views.
+3. **Pattern A for child-record access.** Every Stage 2 controller that receives a child-record ID (LetterIssuanceId, NotificationId, DocumentId, CommentId, etc.) MUST call `IPublicUserPropertyAccessor.AssertHasAccessToFileMasterAsync` with the resolved `FileMasterId` BEFORE returning data. Avoid Pattern B (typed assert methods per child entity) which scales poorly.
+4. **`PublicUserBuilder` extensions.** Stage 2 will need `Pending()` (post-registration, pre-email-confirm) and `Suspended()` factory methods on the existing `PublicUserBuilder` test helper.
+5. **`PortalPolicies` placeholder requirements.** Currently all 3 portal policies just `RequireAuthenticatedUser()`. Stage 2 must replace with real claim requirements: `PortalAuthenticated` needs `Status=Active` + `EmailConfirmed=true` + `MfaEnrolled=true`; `PortalRegistrationComplete` needs `EmailConfirmed=true` only; `PortalMfaPending` needs `MfaPending=true` claim.
+6. **`PublicUserProperty.RequestedDate`** defaults to `DateTime.MinValue` if uninitialised (DB has `GETUTCDATE()` default but EF ignores DB defaults for non-nullable structs). Set `RequestedDate = DateTime.UtcNow` in the registration service when creating claim rows.
+
+## Retro
+What converged: subagent-driven workflow handled the 18 tasks reliably. Implementer agents consistently reported truthful status (5 of 18 returned `DONE_WITH_CONCERNS`, all of which were legitimate plan-authoring misses or required call-site fixes — none were unjustified). The two-stage review pattern (spec compliance + code quality) caught real issues on Tasks 2 (IDMatch → IdMatch rename), 7 (DRY violation between exemption set + test allow-list), 10 (missing cross-user isolation test), and 13 (test was not load-bearing without strengthening). Each fix-up was a small commit that left the codebase cleaner than the original task.
+
+What drifted: the plan claimed `using Microsoft.AspNetCore.Identity;` was already present in DwsClaimsTransformation.cs (Task 13) — wasn't. The plan said `relationship.GetConstraintName()` would work for the cascade exemption keys (Task 7) — doesn't, EF builds names lazily. The plan said no other code constructed `PublicUserProperty` with a string Status (Task 4) — `EntityRelationshipTests.cs` did. None of these blocked progress; implementers caught and fixed them inline and reported as DONE_WITH_CONCERNS.
+
+Failed prompt patterns: none significant. The "Your task description verbatim from plan" + "Important context" + "Self-review checklist" + "Report format" structure produced consistent, complete reports from agents.
+
+Cross-boundary verdict: not strictly applicable — Stage 1 is single-codebase. Stage 2-5 will need this pattern when they cross to UI / view layer.
+
+Stage 1 done. Ready for user review and merge to demo/azure-deploy (or open a PR).
