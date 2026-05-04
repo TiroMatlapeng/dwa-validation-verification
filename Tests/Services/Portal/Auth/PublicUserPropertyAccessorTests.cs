@@ -130,4 +130,37 @@ public class PublicUserPropertyAccessorTests
         await Assert.ThrowsAsync<NotFoundException>(() =>
             accessor.AssertHasAccessToFileMasterAsync(user.PublicUserId, fm.FileMasterId, default));
     }
+
+    [Fact]
+    public async Task AssertHasAccessToFileMasterAsync_ThrowsForOtherUsersApprovedLink()
+    {
+        // User B has an Approved link to property P; user A must NOT inherit that access.
+        using var ctx = TestDbContextFactory.Create();
+        var userA = PublicUserBuilder.Active("a@cross-user.test");
+        var userB = PublicUserBuilder.Active("b@cross-user.test");
+        ctx.PublicUsers.AddRange(userA, userB);
+
+        var p = new Property { PropertyId = Guid.NewGuid(), SGCode = "P" };
+        ctx.Properties.Add(p);
+
+        var fm = NewFileMaster(p.PropertyId);
+        ctx.FileMasters.Add(fm);
+
+        // Only user B is approved on the property.
+        ctx.PublicUserProperties.Add(new PublicUserProperty
+        {
+            PublicUserId = userB.PublicUserId,
+            PropertyId = p.PropertyId,
+            Status = PropertyClaimStatus.Approved,
+            EvidenceType = PropertyClaimEvidenceType.IdMatch,
+            RequestedDate = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var accessor = new PublicUserPropertyAccessor(ctx);
+
+        // User A — no link at all — must throw 404.
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            accessor.AssertHasAccessToFileMasterAsync(userA.PublicUserId, fm.FileMasterId, default));
+    }
 }
