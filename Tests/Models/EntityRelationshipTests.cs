@@ -382,7 +382,9 @@ public class EntityRelationshipTests
             Id = Guid.NewGuid(),
             PublicUserId = publicUser.PublicUserId,
             PropertyId = property.PropertyId,
-            Status = "Approved",
+            Status = dwa_ver_val.Models.Enums.PropertyClaimStatus.Approved,
+            EvidenceType = dwa_ver_val.Models.Enums.PropertyClaimEvidenceType.IdMatch,
+            RequestedDate = DateTime.UtcNow,
             ApprovedDate = DateTime.UtcNow
         };
         context.PublicUserProperties.Add(link);
@@ -393,7 +395,7 @@ public class EntityRelationshipTests
             .FirstAsync(pu => pu.PublicUserId == publicUser.PublicUserId);
 
         Assert.Single(user.PublicUserProperties);
-        Assert.Equal("Approved", user.PublicUserProperties.First().Status);
+        Assert.Equal(dwa_ver_val.Models.Enums.PropertyClaimStatus.Approved, user.PublicUserProperties.First().Status);
     }
 
     [Fact]
