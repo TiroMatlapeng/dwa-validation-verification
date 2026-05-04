@@ -95,3 +95,14 @@ Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-po
 - Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 81, Total: 100 — matches the documented baseline (the 19 pre-existing parallel-startup integration failures are unchanged). No new failures introduced.
 - Single commit: `Add NetArchTest boundary fence for portal namespaces` (touched only the two files listed in the plan).
 - Status: DONE.
+
+### 2026-05-04 — Stage 1 Task 2 agent (Opus 4.7) — portal claim enums
+- Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read journal to date and Stage 1 plan Task 2.
+- Verified pre-state: `Models/Enums/` directory did not exist; `Tests/Models/Enums/` did not exist; `Tests/dwa_ver_val.Tests.csproj` only globally imports `Xunit` (no `dwa_ver_val.Models` `<Using>`), so the test file needs an explicit `using dwa_ver_val.Models.Enums;`.
+- Step 1: created `Tests/Models/Enums/PortalEnumsTests.cs` with two `[Fact]` tests (`PropertyClaimEvidenceType_HasIDMatchAndTitleDeedUpload`, `PropertyClaimStatus_HasPendingApprovedRejected`). Added `using dwa_ver_val.Models.Enums;` per plan note.
+- Step 2 verification (pre-enums): `dotnet test --filter FullyQualifiedName~PortalEnumsTests` failed with `error CS0234: The type or namespace name 'Enums' does not exist in the namespace 'dwa_ver_val.Models'` — expected.
+- Step 3: created `Models/Enums/PropertyClaimEvidenceType.cs` (IDMatch=0, TitleDeedUpload=1) and `Models/Enums/PropertyClaimStatus.cs` (Pending=0, Approved=1, Rejected=2). Both in namespace `dwa_ver_val.Models.Enums`.
+- Step 4 verification (post-enums): `dotnet test --filter FullyQualifiedName~PortalEnumsTests` returns Passed: 2, Failed: 0, Total: 2 (11 ms).
+- Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 83, Total: 102 — exactly two more passes than the Task 1 baseline (81 → 83). The 19 pre-existing parallel-startup integration failures unchanged.
+- Implementation commit: `Add PropertyClaimEvidenceType and PropertyClaimStatus enums` (e9fd585) — touched only the three files listed in the plan.
+- Status: DONE.
