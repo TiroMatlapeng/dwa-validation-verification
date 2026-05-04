@@ -141,6 +141,22 @@ Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-po
 - Implementation commit: `Add RecipientPublicUserId addressee column to LetterIssuance` (68d4085) — two files: model + new test. No DBContext config changes (deferred to Task 7 per plan).
 - Status: DONE.
 
+### 2026-05-03 — Stage 1 Task 7 agent (Sonnet 4.6) — EF schema config, indexes, cascade exemption
+
+- Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read journal to date, plan Task 7, and full `ApplicationDBContext.cs`.
+- Baseline: 90 passed / 19 failed (109 total). Cascade loop confirmed at line 634 (not 637 as plan stated — shifted by earlier edits).
+- Step 1: created `Tests/DatabaseContexts/PortalSchemaConfigurationTests.cs` with 4 `[Fact]` tests per plan.
+- Step 2 verification (pre-implementation): build failed with `CS1061` on `PublicUserRecoveryCodes` — expected.
+- Step 3a: added `DbSet<PublicUserRecoveryCode> PublicUserRecoveryCodes` at line 80 (after `PublicUserProperties`).
+- Step 3b: inserted all new `OnModelCreating` config immediately before the cascade loop — `PublicUserRecoveryCode` key/columns/Cascade FK/filtered index; `PublicUser` column types/MaxLength/defaults/unique index/filtered index/check constraint; `PublicUserProperty` enum converters/column types/MaxLength/EvidenceDocumentId SetNull FK/three indexes/check constraint; `LetterIssuance` RecipientPublicUser SetNull FK + timeline composite index; `Notification` unread filtered index; `PropertyOwner` IdentityDocumentNumber filtered index.
+- Step 3c deviation: the plan's constraint-name exemption strategy (`GetConstraintName()`) doesn't work because EF Core hasn't materialised constraint names at loop-execution time — they're generated lazily. Replaced with a `HashSet<(Type Dependent, Type Principal, string FkProperty)>` key that is available at loop time. This is mechanically equivalent but more robust.
+- Step 4 first run: 2/4 passed; `RecoveryCode_FK_IsCascade` and `EvidenceDocument_FK_IsSetNull` both failed with `Restrict` — proved the original plan's constraint-name approach would never have worked. Applied the type-triple exemption fix.
+- Step 4 second run: 4/4 passed. Full suite: 94 passed / 20 failed — one new failure: `All_Delete_Behaviors_Are_Restrict` in `ApplicationDBContextTests.cs`. That test was added in a prior task and asserts every FK is Restrict. Updated it to `All_Delete_Behaviors_Are_Restrict_Except_Whitelisted` with the same allow-list logic.
+- Final full suite: 94 passed / 19 failed (113 total). Matches plan target.
+- Files changed: `DatabaseContexts/ApplicationDBContext.cs`, `Tests/DatabaseContexts/PortalSchemaConfigurationTests.cs`, `Tests/DatabaseContexts/ApplicationDBContextTests.cs` (guard test update — one deviation from the plan's two-file list, justified by the pre-existing test collision).
+- Implementation commit: `db4f5da` — `Configure portal schema: indexes, check constraints, cascade exemption`.
+- Status: DONE_WITH_CONCERNS (cascade exemption strategy deviated from plan; guard test required update; both are improvements, not regressions).
+
 ### 2026-05-04 — Stage 1 Task 6 agent (Opus 4.7) — PublicUserRecoveryCode entity
 - Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read journal to date and Stage 1 plan Task 6.
 - Pre-state: neither `Models/PublicUserRecoveryCode.cs` nor `Tests/Models/PublicUserRecoveryCodeModelTests.cs` existed. `PublicUser` confirmed top-level (no namespace) — matched for new entity.
