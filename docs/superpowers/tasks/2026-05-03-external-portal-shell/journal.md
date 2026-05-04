@@ -388,3 +388,12 @@ Stage 1 done. Ready for user review and merge to demo/azure-deploy (or open a PR
 - Step 4 verification: `dotnet test --nologo` returns Failed: 0, Passed: 138, Total: 138 (3 s) — exactly matches the 138 baseline from Task 2 (no test count delta; this task tightens existing policies, claim-stamping by `PublicUserSignInService` and policy-guarded controllers come in subsequent Stage 2a tasks).
 - Implementation commit: `e08a0bb` — `PortalPolicies: enforce EmailConfirmed claim (Stage 2a)` (1 file changed, 19 insertions, 6 deletions). Journal commit follows separately.
 - Status: DONE.
+
+### 2026-05-04 — Stage 2a Task 4 agent (Opus 4.7) — PortalCookieEvents stub
+- Branch confirmed: `feat/external-portal-stage-2a` in worktree `.worktrees/external-portal-stage-2a`. Implements Stage 2a Task 4 of `docs/superpowers/plans/2026-05-04-stage-2a-portal-registration-and-login.md`. Spec § 2.3 calls for status revalidation on every cookie sliding refresh; Stage 2a creates the events class as a no-op stub so Program.cs can wire `options.EventsType = typeof(PortalCookieEvents)` once and Stage 2b adds the `OnValidatePrincipal` override without touching the wiring.
+- Pre-state: `Services/Portal/Auth/` contained `IPublicUserPropertyAccessor.cs`, `PortalCookieOptions.cs`, `PortalExceptionHandler.cs`, `PortalPolicies.cs`, `PortalRateLimitPolicies.cs`, `PublicUserPropertyAccessor.cs` — no `PortalCookieEvents.cs`.
+- Step 1: created `Services/Portal/Auth/PortalCookieEvents.cs` (16 lines) verbatim from plan — class inherits `Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationEvents` with empty body and Stage 2a/2b explanatory XML doc + inline comment. No overrides; defers entirely to base behaviour.
+- Step 2 verification: `dotnet build` returns 0 errors / 6 warnings (all pre-existing — Models/Entitlement.cs, Models/Irrigation.cs, Controllers/ValidationController.cs ×2, Controllers/AccountController.cs, Tests/Services/Auth/DwsClaimsTransformationTests.cs). Build elapsed 3.58 s.
+- Step 3 verification: `dotnet test Tests/dwa_ver_val.Tests.csproj --nologo --verbosity quiet` returns Failed: 0, Passed: 138, Total: 138 (3 s) — exactly matches the 138 baseline from Task 3 (no test count delta; this task adds an empty events class, wiring into Program.cs and the Stage 2b `OnValidatePrincipal` override come later).
+- Implementation commit: `6c82331` — `PortalCookieEvents: stub for Stage 2a (Stage 2b adds status revalidation)` (1 file changed, 16 insertions). Journal commit follows separately.
+- Status: DONE.
