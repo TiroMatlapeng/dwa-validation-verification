@@ -361,3 +361,12 @@ Stage 1 done. Ready for user review and merge to demo/azure-deploy (or open a PR
 - Build green; 137/0/137 tests still passing.
 - Note: the reviewer also flagged a missing `Cookie.Path` assignment on the portal cookie, but that was a false positive — `PortalCookieOptions.cs:15` already sets `options.Cookie.Path = CookiePath`. The reviewer misread the file.
 - Other Stage 2 entry conditions (PortalPolicies placeholders, NetArchTest fence expansion, etc.) remain as documented in the closing entry above.
+
+### 2026-05-04 — Stage 2a Task 1 agent (Opus 4.7) — PublicUserBuilder Pending/Suspended factories
+- Branch confirmed: `feat/external-portal-stage-2a` in worktree `.worktrees/external-portal-stage-2a`. Read journal to date and Stage 2a plan Task 1. Addresses Stage 1 closing entry condition #5 ("Stage 2 will need `Pending()` and `Suspended()` factory methods on the existing `PublicUserBuilder`").
+- Pre-state: `Tests/Helpers/PublicUserBuilder.cs` had a single `Active(string email = "test@example.com")` factory (18 lines, no XML doc, no namespace import drama — `PublicUser` lives top-level so unqualified reference works).
+- Step 2: replaced the entire file content verbatim from plan — added XML doc summary + two new factories (`Pending` returns `Status="Pending"`, `EmailConfirmed=false`; `Suspended` returns `Status="Suspended"`, `EmailConfirmed=true`). Existing `Active` factory preserved unchanged with same default-email signature.
+- Step 3 verification: `dotnet build` returns 0 errors / 1 warning (pre-existing xUnit2031 in `DwsClaimsTransformationTests.cs` unrelated to this change). All existing call sites of `PublicUserBuilder.Active(...)` still compile (PublicUserPropertyAccessorTests + others).
+- Step 4 verification: `dotnet test Tests/dwa_ver_val.Tests.csproj --nologo --verbosity quiet` returns Failed: 0, Passed: 137, Total: 137 (3 s) — exactly matches the pre-task baseline (no test count delta; this task adds factories only, callers come in subsequent Stage 2a tasks).
+- Implementation commit: `29ac4e9` — `PublicUserBuilder: add Pending and Suspended factories for Stage 2` (1 file changed, 32 insertions). Journal commit follows separately.
+- Status: DONE.
