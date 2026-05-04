@@ -138,6 +138,10 @@ builder.Services.AddSingleton<IFileStorage>(sp =>
     new LocalDiskFileStorage(
         Path.Combine(builder.Environment.ContentRootPath, "portal-uploads")));
 builder.Services.AddScoped<IPublicUserPropertyAccessor, PublicUserPropertyAccessor>();
+builder.Services.AddScoped<IPublicUserRegistrationService, PublicUserRegistrationService>();
+builder.Services.AddScoped<IPublicUserSignInService, PublicUserSignInService>();
+builder.Services.AddSingleton<PasswordHasher<PublicUser>>();
+builder.Services.AddHttpContextAccessor();
 
 // Portal exception handler + ProblemDetails
 builder.Services.AddProblemDetails();
