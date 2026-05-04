@@ -408,3 +408,13 @@ Stage 1 done. Ready for user review and merge to demo/azure-deploy (or open a PR
 - Step 5 verification: full suite `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 0, Passed: 140, Total: 140 (4 s) — exactly +2 over the 138 baseline from Tasks 3 and 4 (no test deletions, no regressions).
 - Implementation commit: `756388b` — `Add PortalAuthorizationConvention to auto-apply [Authorize] to area` (3 files changed, 98 insertions, 6 deletions; the 6 deletions are the four Task 5 step checkbox flips in the plan file). Journal commit follows separately.
 - Status: DONE.
+
+### 2026-05-04 — Stage 2a Task 6 agent (Opus 4.7) — Wire PortalAuthorizationConvention + PortalCookieEvents into Program.cs
+- Branch confirmed: `feat/external-portal-stage-2a` in worktree `.worktrees/external-portal-stage-2a`. Implements Stage 2a Task 6 of `docs/superpowers/plans/2026-05-04-stage-2a-portal-registration-and-login.md`. Activates the convention class (Task 5) and the cookie events stub (Task 4) by wiring both into the composition root.
+- Pre-state grep confirmed: line 3 already has `using dwa_ver_val.Services.Portal.Auth;` from Stage 1; line 17 had bare `builder.Services.AddControllersWithViews();`; line 56 had `authBuilder.AddCookie(PortalCookieOptions.SchemeName, PortalCookieOptions.Configure);`. No prior `PortalAuthorizationConvention` or `PortalCookieEvents` references in Program.cs.
+- Step 2: replaced `AddControllersWithViews()` with the lambda overload adding `new PortalAuthorizationConvention()` to `options.Conventions` — exact text from plan.
+- Step 3: replaced the single-line `AddCookie` call with the multi-line form that registers `PortalCookieEvents` as a scoped service, calls `PortalCookieOptions.Configure(options)` first, then sets `options.EventsType = typeof(PortalCookieEvents)` so DI activates the events on each request — exact text from plan.
+- Step 4 verification: `dotnet build` returns 0 errors / 6 warnings (all pre-existing — same set as Tasks 4 and 5). Build elapsed 3.96 s.
+- Step 5 verification: full suite `dotnet test --nologo` returns Failed: 0, Passed: 140, Total: 140 (4 s) — exactly matches the 140 baseline from Task 5 (no test count delta; this is wiring only, no new behaviours under test until Stage 2b adds `OnValidatePrincipal`).
+- Implementation commit: `37d8993` — `Program.cs: wire PortalAuthorizationConvention + PortalCookieEvents` (1 file changed, 10 insertions, 2 deletions). Journal commit follows separately.
+- Status: DONE.
