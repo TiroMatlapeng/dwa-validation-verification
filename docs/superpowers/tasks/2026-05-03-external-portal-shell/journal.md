@@ -85,3 +85,13 @@ Failed prompt pattern: none significant. The "Your slice — Design under review
 Cross-boundary verdict (Rule 7): not strictly applicable since this was a design critique, not implementation. But the three independent critiques served as a proxy for the two-sided verdict pattern, and the convergence on top items was the signal that the design's foundations were sound (modulo the listed corrections).
 
 Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-portal-shell-design.md` end-to-end. If approved, invoke `superpowers:writing-plans` to produce a per-stage implementation plan (Stages 1-5 are pre-decomposed in §7).
+
+### 2026-05-04 — Stage 1 Task 1 agent (Opus 4.7) — NetArchTest boundary fence skeleton
+- Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read full journal to date and Stage 1 plan task 1.
+- Created `Tests/Architecture/PortalBoundaryTests.cs` with two `[Fact]` tests asserting that `dwa_ver_val.Services.Portal.*` and `dwa_ver_val.Areas.ExternalPortal.*` types must not depend on `Microsoft.AspNetCore.Identity.UserManager``1` or `SignInManager``1`. Both tests pass trivially today (those namespaces don't exist yet) and will start enforcing once Stage 2+ adds portal code.
+- Modified `Tests/dwa_ver_val.Tests.csproj` — added `<PackageReference Include="NetArchTest.Rules" Version="1.3.2" />` inside the existing `<ItemGroup>` that already holds the other PackageReference entries.
+- Step 2 verification (pre-package): `dotnet test --filter PortalBoundaryTests` failed with `error CS0246: The type or namespace name 'NetArchTest' could not be found` — expected.
+- Step 4 verification (post-package): `dotnet test --filter PortalBoundaryTests` returns Passed: 2, Failed: 0, Total: 2 (44 ms). Package version 1.3.2 restored cleanly from NuGet.
+- Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 81, Total: 100 — matches the documented baseline (the 19 pre-existing parallel-startup integration failures are unchanged). No new failures introduced.
+- Single commit: `Add NetArchTest boundary fence for portal namespaces` (touched only the two files listed in the plan).
+- Status: DONE.
