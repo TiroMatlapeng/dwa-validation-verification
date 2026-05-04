@@ -13,5 +13,12 @@ public class PublicUser
     public required string Status { get; set; } // Pending, Active, Suspended, Deactivated
     public bool IsHDI { get; set; } // Historically Disadvantaged Individual (Black people and women)
     public DateTime RegistrationDate { get; set; }
+    public string? MfaSecret { get; set; }
+    public DateTime? MfaEnrolledDate { get; set; }
+    public DateTime? LastLoginDate { get; set; }
+    public int FailedLoginAttempts { get; set; }
+    public DateTime? LockoutUntil { get; set; }
+    public long? LastUsedOtpTimestamp { get; set; }
+    public DateTime? HdiConsentGivenDate { get; set; }
     public ICollection<PublicUserProperty> PublicUserProperties { get; set; } = new List<PublicUserProperty>();
 }
