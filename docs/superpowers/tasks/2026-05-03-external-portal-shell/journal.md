@@ -354,3 +354,10 @@ Failed prompt patterns: none significant. The "Your task description verbatim fr
 Cross-boundary verdict: not strictly applicable — Stage 1 is single-codebase. Stage 2-5 will need this pattern when they cross to UI / view layer.
 
 Stage 1 done. Ready for user review and merge to demo/azure-deploy (or open a PR).
+
+### 2026-05-04 — Stage 1 final-review fix-up: UseForwardedHeaders for proxy IP attribution
+- The whole-stage code review (commit pending) flagged that `PortalRateLimitPolicies.PartitionByIp` reads `Connection.RemoteIpAddress` directly. Behind Azure App Service / front door this collapses every external user onto a single proxy IP, so a single attacker would trip a global rate-limit lockout.
+- Fix: added `app.UseForwardedHeaders(...)` between `UseHsts()` and `UseHttpsRedirection()` in Program.cs, honouring `X-Forwarded-For` + `X-Forwarded-Proto`. Required because `demo/azure-deploy` deploys behind Azure's front door.
+- Build green; 137/0/137 tests still passing.
+- Note: the reviewer also flagged a missing `Cookie.Path` assignment on the portal cookie, but that was a false positive — `PortalCookieOptions.cs:15` already sets `options.Cookie.Path = CookiePath`. The reviewer misread the file.
+- Other Stage 2 entry conditions (PortalPolicies placeholders, NetArchTest fence expansion, etc.) remain as documented in the closing entry above.

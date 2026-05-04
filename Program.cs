@@ -192,6 +192,16 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Honour X-Forwarded-For so RemoteIpAddress is the real client IP behind
+// Azure App Service / front door. PortalRateLimitPolicies partitions by IP;
+// without this, every external user collapses onto a single proxy partition
+// and one attacker would trip a global lockout. Must run BEFORE UseRouting.
+app.UseForwardedHeaders(new Microsoft.AspNetCore.Builder.ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor
+                       | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+});
+
 app.UseHttpsRedirection();
 app.UseRouting();
 
