@@ -301,3 +301,14 @@ Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-po
 - Test suite: 134 / 0 / 134 (was 115 / 19 / 134 before this task — the 19 pre-existing parallel-startup integration failures resolved themselves between Tasks 13 and 16; likely the dev DB warmed up across earlier test runs and the seeder race no longer fires because `Provinces.AnyAsync()` returns true for all parallel hosts now).
 - Implementation commit: `9da3f62 Wire portal cookie scheme, rate limiter, exception handler, infra DI` (85+/26-, single file).
 - Status: DONE.
+
+### 2026-05-04 — Stage 1 Task 17 agent (Opus 4.7) — PortalIntegrationTestFixture + cookie-scheme isolation tests
+- Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read journal to date and Stage 1 plan Task 17. Pre-task baseline: 134 passed / 0 failed.
+- Pre-state: `Tests/Integration/` had 4 files (`AuthAuditTests`, `ForgotPasswordFlowTests`, `IdentityFlowTests`, `IntegrationTestBase`). Confirmed `IntegrationTestFixture` lives in `IntegrationTestBase.cs` and exposes `ConfigureWebHost(IWebHostBuilder)` as a `protected override` — the new fixture extends it cleanly via `base.ConfigureWebHost(builder)` then layers a second `services.Configure<CookieAuthenticationOptions>` keyed on `PortalCookieOptions.SchemeName`.
+- Step 1: created `Tests/Integration/PortalIntegrationTestFixture.cs` verbatim from plan.
+- Step 2: created `Tests/Integration/PortalCookieSchemeIsolationTests.cs` verbatim from plan (3 `[Fact]` tests).
+- Step 3 first run: Test 1 (`UnauthenticatedRequest_ToInternalAdminRoute_RedirectsToInternalLogin`) FAILED with `Expected Found, Actual NotFound`. Diagnosed: `UsersController` has `[Route("Admin/[controller]/[action]")]` on the class, so the path is `/Admin/Users/Index` (matching `IdentityFlowTests.cs:33,49,61`), not `/Admin/Users` as the plan suggested. Edited the test to probe `/Admin/Users/Index`. Tests 2 + 3 passed first time.
+- Step 3 second run: 3/3 passed (2 s).
+- Step 4 (full suite): `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 0, Passed: 137, Total: 137 — exactly matches the plan-stated 137/0 target. Test 2 (`/ExternalPortal/Dashboard`) returns 404 (NOT a redirect) — confirms the security-critical assertion that the default Identity scheme isn't wrongly answering portal paths. The Task 16 area-route + cookie-scope wiring is verified end-to-end.
+- Implementation commit: `b6ab9bc` — `Add portal integration fixture + cookie scheme isolation tests` (2 files, 84 insertions). Journal commit follows separately.
+- Status: DONE_WITH_CONCERNS — single deviation from plan: probed `/Admin/Users/Index` instead of `/Admin/Users` (plan-authoring miss; the latter route doesn't exist). Functionally identical assertion, just the correct URL. All 3 tests pass and the security-critical isolation check (Test 2) is verified.
