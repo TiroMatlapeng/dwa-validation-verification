@@ -379,3 +379,12 @@ Stage 1 done. Ready for user review and merge to demo/azure-deploy (or open a PR
 - Step 4 verification: full suite `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 0, Passed: 138, Total: 138 (3 s) — exactly +1 over the 137 baseline carried forward from Task 1.
 - Implementation commit: `a289534` — `NetArchTest: block direct ApplicationDBContext from portal area` (1 file changed, 19 insertions). Journal commit follows separately.
 - Status: DONE.
+
+### 2026-05-04 — Stage 2a Task 3 agent (Opus 4.7) — PortalPolicies enforces EmailConfirmed claim
+- Branch confirmed: `feat/external-portal-stage-2a` in worktree `.worktrees/external-portal-stage-2a`. Addresses Stage 1 closing entry condition #4 ("Stage 2 must replace placeholder `RequireAuthenticatedUser()` with real claim requirements"). Stage 2a slice only enforces `EmailConfirmed=true`; `MfaEnrolled=true` and `Status=Active` are deferred to Stage 2b.
+- Pre-state: `Services/Portal/Auth/PortalPolicies.cs` (28 lines) had three policies (`PortalAuthenticated`, `PortalRegistrationComplete`, `PortalMfaPending`), all collapsed to `RequireAuthenticatedUser()` only — no claim names exposed as constants and no claim guards.
+- Step 2: replaced the entire file content verbatim from plan. New file (43 lines) adds three claim-name constants (`EmailConfirmedClaim="EmailConfirmed"`, `MfaEnrolledClaim="MfaEnrolled"`, `StatusClaim="Status"`) and tightens all three policies. `PortalAuthenticated` and `PortalRegistrationComplete` now require `EmailConfirmed=true`; `PortalMfaPending` requires `MfaPending=true`. Both keep `AddAuthenticationSchemes(PortalCookieOptions.SchemeName)` so they only ever resolve against the portal cookie.
+- Step 3 verification: `dotnet build` returns 0 errors / 6 warnings (all pre-existing — Models/Entitlement.cs, Models/Irrigation.cs, Controllers/ValidationController.cs, Controllers/AccountController.cs, Tests/Services/Auth/DwsClaimsTransformationTests.cs — none introduced by this change). Build elapsed 3.64 s.
+- Step 4 verification: `dotnet test --nologo` returns Failed: 0, Passed: 138, Total: 138 (3 s) — exactly matches the 138 baseline from Task 2 (no test count delta; this task tightens existing policies, claim-stamping by `PublicUserSignInService` and policy-guarded controllers come in subsequent Stage 2a tasks).
+- Implementation commit: `e08a0bb` — `PortalPolicies: enforce EmailConfirmed claim (Stage 2a)` (1 file changed, 19 insertions, 6 deletions). Journal commit follows separately.
+- Status: DONE.
