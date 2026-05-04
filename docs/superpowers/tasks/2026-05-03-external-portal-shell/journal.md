@@ -370,3 +370,12 @@ Stage 1 done. Ready for user review and merge to demo/azure-deploy (or open a PR
 - Step 4 verification: `dotnet test Tests/dwa_ver_val.Tests.csproj --nologo --verbosity quiet` returns Failed: 0, Passed: 137, Total: 137 (3 s) — exactly matches the pre-task baseline (no test count delta; this task adds factories only, callers come in subsequent Stage 2a tasks).
 - Implementation commit: `29ac4e9` — `PublicUserBuilder: add Pending and Suspended factories for Stage 2` (1 file changed, 32 insertions). Journal commit follows separately.
 - Status: DONE.
+
+### 2026-05-04 — Stage 2a Task 2 agent (Opus 4.7) — NetArchTest fence: block ApplicationDBContext from portal area
+- Branch confirmed: `feat/external-portal-stage-2a` in worktree `.worktrees/external-portal-stage-2a`. Addresses Stage 1 closing entry condition #2 ("Stage 2 must add an additional fence prohibiting `Areas/ExternalPortal/*` from `ApplicationDBContext` directly").
+- Pre-state: `Tests/Architecture/PortalBoundaryTests.cs` had 2 `[Fact]` methods — `PortalServices_MustNotReferenceIdentityUserManager` (Services/Portal/* fence) and `ExternalPortalArea_MustNotReferenceIdentityUserManager` (Areas/ExternalPortal/* fence against UserManager/SignInManager).
+- Step 2: appended a third `[Fact]` `ExternalPortalArea_MustNotReferenceApplicationDBContext` inside the existing class. Uses `Types.InAssembly(AppAssembly).That().ResideInNamespace("dwa_ver_val.Areas.ExternalPortal").ShouldNot().HaveDependencyOn("ApplicationDBContext")`. `ApplicationDBContext` lives in the global namespace, so passing the bare type name to `HaveDependencyOn` is correct (NetArchTest matches by full type name and the global-namespace type's full name is `ApplicationDBContext`).
+- Step 3 verification: `dotnet test --filter FullyQualifiedName~PortalBoundaryTests` returns Failed: 0, Passed: 3, Total: 3 (69 ms) — exactly the expected +1 over the pre-task 2 tests. Test passes trivially today since no `Areas/ExternalPortal` types exist yet; the fence will start enforcing as Stage 2a controllers land.
+- Step 4 verification: full suite `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 0, Passed: 138, Total: 138 (3 s) — exactly +1 over the 137 baseline carried forward from Task 1.
+- Implementation commit: `a289534` — `NetArchTest: block direct ApplicationDBContext from portal area` (1 file changed, 19 insertions). Journal commit follows separately.
+- Status: DONE.
