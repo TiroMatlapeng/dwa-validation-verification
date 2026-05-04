@@ -106,3 +106,14 @@ Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-po
 - Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 83, Total: 102 — exactly two more passes than the Task 1 baseline (81 → 83). The 19 pre-existing parallel-startup integration failures unchanged.
 - Implementation commit: `Add PropertyClaimEvidenceType and PropertyClaimStatus enums` (e9fd585) — touched only the three files listed in the plan.
 - Status: DONE.
+
+### 2026-05-04 — Stage 1 Task 3 agent (Opus 4.7) — PublicUser auth columns
+- Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read journal to date and Stage 1 plan Task 3.
+- Verified pre-state: `Tests/Helpers/` directory did not exist; `PublicUser` lives in the global namespace (no `namespace` declaration in `Models/PublicUser.cs`), so the test file references `PublicUser` unqualified — confirmed working. Test csproj globally imports `Xunit` only, so the test file needs explicit `using dwa_ver_val.Tests.Helpers;`. PublicUser already has 5 `required` props (EmailAddress, PasswordHash, FirstName, LastName, Status) — builder sets all five.
+- Step 1: created `Tests/Helpers/PublicUserBuilder.cs` (`PublicUserBuilder.Active()` factory) and `Tests/Models/PublicUserModelTests.cs` with two `[Fact]` tests verifying default + setter behaviour for the 7 new columns.
+- Step 2 verification (pre-columns): `dotnet test --filter FullyQualifiedName~PublicUserModelTests` failed with 17 × CS1061 (`'PublicUser' does not contain a definition for 'MfaSecret'` etc.) — expected.
+- Step 3: edited `Models/PublicUser.cs` — added 7 properties (`MfaSecret string?`, `MfaEnrolledDate DateTime?`, `LastLoginDate DateTime?`, `FailedLoginAttempts int`, `LockoutUntil DateTime?`, `LastUsedOtpTimestamp long?`, `HdiConsentGivenDate DateTime?`) immediately after `RegistrationDate` and before `PublicUserProperties`, exactly per plan.
+- Step 4 verification (post-columns): `dotnet test --filter FullyQualifiedName~PublicUserModelTests` returns Passed: 2, Failed: 0, Total: 2 (15 ms).
+- Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 85, Total: 104 — exactly two more passes than the Task 2 baseline (83 → 85). The 19 pre-existing parallel-startup integration failures unchanged.
+- Implementation commit: `Add MFA, lockout, and HDI consent columns to PublicUser` (351c075) — touched only the three files listed in the plan.
+- Status: DONE.
