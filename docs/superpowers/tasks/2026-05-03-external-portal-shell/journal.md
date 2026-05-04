@@ -168,6 +168,29 @@ Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-po
 - Implementation commit: `Add PublicUserRecoveryCode entity` (b4e3997) — two files: model + new test.
 - Status: DONE.
 
+### 2026-05-04 — Stage 1 Task 8 agent (Sonnet 4.6) — EF migration generate + apply
+
+- Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read full journal.
+- Pre-state: Docker SQL Server container healthy on port 1433. Last migration `20260428122725_PropertyLineageSuccessor`. `dotnet ef database update` correctly rejected with `PendingModelChangesWarning` — Task 7 config committed but not yet migrated.
+- Step 2: `dotnet ef migrations add ExternalPortalShellPortalAuthAndClaims` succeeded. Timestamp: `20260504094618`. EF warned "may result in loss of data" — expected; the `Status` column on `PublicUserProperties` is narrowed from `nvarchar(max)` to `nvarchar(20)` (enum value converter). Table is currently empty in dev DB, so no actual data loss.
+- Step 3 — all 11 inspection items PASSED AS GENERATED, no manual edits required:
+  - `FailedLoginAttempts defaultValue: 0` — present (line 48)
+  - All `DateTime` columns use `datetime2(0)` — confirmed for 7 columns across `PublicUsers` and `PublicUserRecoveryCodes`
+  - `MaxLength` on all strings — `MfaSecret` 256, `EvidenceType` 20, `RejectionReason` 1000, `CodeHash` 128 — all correct
+  - Filtered unique index `[Status] <> 'Rejected'` — present
+  - Pending-claims filtered index `[Status] = 'Pending'` — present
+  - Unread-notifications filtered index `[IsRead] = 0 AND [PublicUserId] IS NOT NULL` — present
+  - `IdentityDocumentNumber` filtered index `[IdentityDocumentNumber] IS NOT NULL` — present
+  - Two `AddCheckConstraint` calls (`CK_PublicUsers_HdiConsent`, `CK_PublicUserProperties_EvidenceDocumentId`) — both present
+  - `PublicUserRecoveryCodes` FK is `ReferentialAction.Cascade` — correct
+  - `EvidenceDocumentId` FK is `ReferentialAction.SetNull` — correct
+  - `RecipientPublicUserId` FK is `ReferentialAction.SetNull` — correct
+  - `Down()` drops everything cleanly — confirmed
+- Step 4: `dotnet ef database update` applied cleanly. All DDL executed without errors — `ALTER TABLE`, `CREATE TABLE PublicUserRecoveryCodes`, all `CREATE INDEX ... WHERE [...]` filtered indexes, both `ALTER TABLE ... ADD CONSTRAINT ... CHECK`, and both `ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY ... ON DELETE SET NULL`. Migration row inserted into `__EFMigrationsHistory`.
+- Step 5: full suite `dotnet test Tests/dwa_ver_val.Tests.csproj` — Failed: 19, Passed: 95, Total: 114. Exact pre-task baseline maintained.
+- Step 6: implementation commit `2ceabbb` — three files: new `.cs`, new `.Designer.cs`, modified `ApplicationDBContextModelSnapshot.cs`.
+- Status: DONE. No manual migration edits required — the Task 7 EF config was complete and correct, and EF scaffolded the migration cleanly.
+
 ### 2026-05-04 — Stage 1 Task 7 follow-up agent (Opus 4.7) — code review fix-ups
 - Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read journal to date and the two Important nits raised by review agent `afa457f919a90520f`.
 - Fix 1 (DRY): added `public static readonly IReadOnlyCollection<(Type Dependent, Type Principal, string FkProperty, DeleteBehavior Behavior)> NonRestrictForeignKeys` on `ApplicationDBContext` (after class declaration, before constructor). The OnModelCreating cascade-override loop now derives its `cascadeFkExemptions` HashSet from this list via `Select(...).ToHashSet()`. The `All_Delete_Behaviors_Are_Restrict_Except_Whitelisted` test in `ApplicationDBContextTests` now derives its `allowList` Dictionary from the same source via `ToDictionary(...)`, replacing the LINQ `Where`/`FirstOrDefault` matching with a cleaner `TryGetValue`. Adding a 4th non-Restrict FK now requires a single edit.
