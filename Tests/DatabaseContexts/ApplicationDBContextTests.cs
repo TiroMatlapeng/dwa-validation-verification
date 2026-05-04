@@ -146,8 +146,17 @@ public class ApplicationDBContextTests
     }
 
     [Fact]
-    public async Task All_Delete_Behaviors_Are_Restrict()
+    public async Task All_Delete_Behaviors_Are_Restrict_Except_Whitelisted()
     {
+        // FKs that are explicitly configured with non-Restrict delete behaviour.
+        // Each entry is (DependentType, PrincipalType, FKPropertyName, AllowedBehavior).
+        var allowList = new HashSet<(Type, Type, string, DeleteBehavior)>
+        {
+            (typeof(PublicUserRecoveryCode), typeof(PublicUser), nameof(PublicUserRecoveryCode.PublicUserId), DeleteBehavior.Cascade),
+            (typeof(PublicUserProperty), typeof(Document), nameof(PublicUserProperty.EvidenceDocumentId), DeleteBehavior.SetNull),
+            (typeof(LetterIssuance), typeof(PublicUser), nameof(LetterIssuance.RecipientPublicUserId), DeleteBehavior.SetNull),
+        };
+
         using var context = TestDbContextFactory.Create();
 
         var foreignKeys = context.Model.GetEntityTypes()
@@ -158,10 +167,29 @@ public class ApplicationDBContextTests
 
         foreach (var fk in foreignKeys)
         {
-            Assert.True(
-                fk.DeleteBehavior == DeleteBehavior.Restrict,
-                $"FK {fk.DeclaringEntityType.Name} → {fk.PrincipalEntityType.Name} " +
-                $"should be Restrict but was {fk.DeleteBehavior}");
+            var dependent = fk.DeclaringEntityType.ClrType;
+            var principal = fk.PrincipalEntityType.ClrType;
+            var fkProp = fk.Properties.FirstOrDefault()?.Name ?? string.Empty;
+
+            var expectedBehavior = allowList
+                .Where(a => a.Item1 == dependent && a.Item2 == principal && a.Item3 == fkProp)
+                .Select(a => (DeleteBehavior?)a.Item4)
+                .FirstOrDefault();
+
+            if (expectedBehavior.HasValue)
+            {
+                Assert.True(
+                    fk.DeleteBehavior == expectedBehavior.Value,
+                    $"FK {fk.DeclaringEntityType.Name} → {fk.PrincipalEntityType.Name} ({fkProp}) " +
+                    $"expected {expectedBehavior.Value} but was {fk.DeleteBehavior}");
+            }
+            else
+            {
+                Assert.True(
+                    fk.DeleteBehavior == DeleteBehavior.Restrict,
+                    $"FK {fk.DeclaringEntityType.Name} → {fk.PrincipalEntityType.Name} ({fkProp}) " +
+                    $"should be Restrict but was {fk.DeleteBehavior}");
+            }
         }
     }
 }

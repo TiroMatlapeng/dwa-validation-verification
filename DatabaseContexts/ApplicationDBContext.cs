@@ -77,6 +77,7 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
     // ── Public portal ──
     public DbSet<PublicUser> PublicUsers { get; set; }
     public DbSet<PublicUserProperty> PublicUserProperties { get; set; }
+    public DbSet<PublicUserRecoveryCode> PublicUserRecoveryCodes { get; set; }
     public DbSet<CaseComment> CaseComments { get; set; }
     public DbSet<Objection> Objections { get; set; }
     public DbSet<ObjectionDocument> ObjectionDocuments { get; set; }
@@ -631,12 +632,142 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasForeignKey(li => li.IrrigationBoardId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // ── Global: disable cascade delete for all relationships ──
+        // ── PublicUserRecoveryCode ──
+        modelBuilder.Entity<PublicUserRecoveryCode>().HasKey(e => e.Id);
+        modelBuilder.Entity<PublicUserRecoveryCode>()
+            .Property(e => e.CodeHash)
+            .HasMaxLength(128)
+            .IsRequired();
+        modelBuilder.Entity<PublicUserRecoveryCode>()
+            .Property(e => e.CreatedDate)
+            .HasColumnType("datetime2(0)")
+            .HasDefaultValueSql("GETUTCDATE()");
+        modelBuilder.Entity<PublicUserRecoveryCode>()
+            .Property(e => e.UsedDate)
+            .HasColumnType("datetime2(0)");
+        modelBuilder.Entity<PublicUserRecoveryCode>()
+            .Property(e => e.ExpiresDate)
+            .HasColumnType("datetime2(0)");
+        modelBuilder.Entity<PublicUserRecoveryCode>()
+            .HasOne(e => e.PublicUser)
+            .WithMany()
+            .HasForeignKey(e => e.PublicUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<PublicUserRecoveryCode>()
+            .HasIndex(e => e.PublicUserId)
+            .HasDatabaseName("IX_PublicUserRecoveryCodes_PublicUserId_Unused")
+            .HasFilter("[Used] = 0");
+
+        // ── PublicUser new column constraints ──
+        modelBuilder.Entity<PublicUser>()
+            .Property(e => e.MfaSecret).HasMaxLength(256);
+        modelBuilder.Entity<PublicUser>()
+            .Property(e => e.MfaEnrolledDate).HasColumnType("datetime2(0)");
+        modelBuilder.Entity<PublicUser>()
+            .Property(e => e.LastLoginDate).HasColumnType("datetime2(0)");
+        modelBuilder.Entity<PublicUser>()
+            .Property(e => e.FailedLoginAttempts).HasDefaultValue(0);
+        modelBuilder.Entity<PublicUser>()
+            .Property(e => e.LockoutUntil).HasColumnType("datetime2(0)");
+        modelBuilder.Entity<PublicUser>()
+            .Property(e => e.HdiConsentGivenDate).HasColumnType("datetime2(0)");
+        modelBuilder.Entity<PublicUser>()
+            .HasIndex(e => e.EmailAddress)
+            .IsUnique()
+            .HasDatabaseName("IX_PublicUsers_EmailAddress");
+        modelBuilder.Entity<PublicUser>()
+            .HasIndex(e => e.IdentityNumber)
+            .HasDatabaseName("IX_PublicUsers_IdentityNumber")
+            .HasFilter("[IdentityNumber] IS NOT NULL");
+        modelBuilder.Entity<PublicUser>()
+            .ToTable(t => t.HasCheckConstraint(
+                "CK_PublicUsers_HdiConsent",
+                "[IsHDI] = 0 OR [HdiConsentGivenDate] IS NOT NULL"));
+
+        // ── PublicUserProperty new column constraints + enum converters ──
+        modelBuilder.Entity<PublicUserProperty>()
+            .Property(e => e.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+        modelBuilder.Entity<PublicUserProperty>()
+            .Property(e => e.EvidenceType)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+        modelBuilder.Entity<PublicUserProperty>()
+            .Property(e => e.RequestedDate)
+            .HasColumnType("datetime2(0)")
+            .HasDefaultValueSql("GETUTCDATE()");
+        modelBuilder.Entity<PublicUserProperty>()
+            .Property(e => e.RejectionReason).HasMaxLength(1000);
+        modelBuilder.Entity<PublicUserProperty>()
+            .HasOne(e => e.EvidenceDocument)
+            .WithMany()
+            .HasForeignKey(e => e.EvidenceDocumentId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<PublicUserProperty>()
+            .HasIndex(e => new { e.PublicUserId, e.PropertyId })
+            .IsUnique()
+            .HasDatabaseName("IX_PublicUserProperties_UserId_Property_Active")
+            .HasFilter("[Status] <> 'Rejected'");
+        modelBuilder.Entity<PublicUserProperty>()
+            .HasIndex(e => e.RequestedDate)
+            .HasDatabaseName("IX_PublicUserProperties_Pending")
+            .HasFilter("[Status] = 'Pending'");
+        modelBuilder.Entity<PublicUserProperty>()
+            .HasIndex(e => new { e.PublicUserId, e.Status })
+            .HasDatabaseName("IX_PublicUserProperties_UserId_Status")
+            .IncludeProperties(e => e.PropertyId);
+        modelBuilder.Entity<PublicUserProperty>()
+            .ToTable(t => t.HasCheckConstraint(
+                "CK_PublicUserProperties_EvidenceDocumentId",
+                "[EvidenceType] <> 'TitleDeedUpload' OR [EvidenceDocumentId] IS NOT NULL"));
+
+        // ── LetterIssuance recipient FK + timeline index ──
+        modelBuilder.Entity<LetterIssuance>()
+            .HasOne(e => e.RecipientPublicUser)
+            .WithMany()
+            .HasForeignKey(e => e.RecipientPublicUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<LetterIssuance>()
+            .HasIndex(e => new { e.FileMasterId, e.IssuedDate })
+            .HasDatabaseName("IX_LetterIssuances_FileMasterId_IssuedDate");
+
+        // ── Notification unread filtered index for portal bell ──
+        modelBuilder.Entity<Notification>()
+            .HasIndex(e => e.PublicUserId)
+            .HasDatabaseName("IX_Notifications_PublicUserId_Unread")
+            .HasFilter("[IsRead] = 0 AND [PublicUserId] IS NOT NULL");
+
+        // ── PropertyOwner.IdentityDocumentNumber index for auto-match ──
+        modelBuilder.Entity<PropertyOwner>()
+            .HasIndex(e => e.IdentityDocumentNumber)
+            .HasDatabaseName("IX_PropertyOwners_IdentityDocumentNumber")
+            .HasFilter("[IdentityDocumentNumber] IS NOT NULL");
+
+        // ── Global: disable cascade delete for all relationships, except explicitly
+        //    configured FKs that must retain their delete behaviour (Cascade / SetNull).
+        //    We identify exemptions by (dependent CLR type, principal CLR type, FK property name)
+        //    because constraint names are not yet materialised when the loop runs.
         // SQL Server does not allow multiple cascade paths; Restrict is safer
         // and forces explicit deletion in correct order.
+        var cascadeFkExemptions = new HashSet<(Type Dependent, Type Principal, string FkProperty)>
+        {
+            // PublicUserRecoveryCode → PublicUser: orphan codes with no parent are incoherent.
+            (typeof(PublicUserRecoveryCode), typeof(PublicUser), nameof(PublicUserRecoveryCode.PublicUserId)),
+            // PublicUserProperty → Document (EvidenceDocumentId): nullify reference when document deleted.
+            (typeof(PublicUserProperty), typeof(Document), nameof(PublicUserProperty.EvidenceDocumentId)),
+            // LetterIssuance → PublicUser (RecipientPublicUserId): nullify addressee when user deleted.
+            (typeof(LetterIssuance), typeof(PublicUser), nameof(LetterIssuance.RecipientPublicUserId)),
+        };
+
         foreach (var relationship in modelBuilder.Model.GetEntityTypes()
             .SelectMany(e => e.GetForeignKeys()))
         {
+            var dependent = relationship.DeclaringEntityType.ClrType;
+            var principal = relationship.PrincipalEntityType.ClrType;
+            var fkProp = relationship.Properties.FirstOrDefault()?.Name ?? string.Empty;
+            if (cascadeFkExemptions.Contains((dependent, principal, fkProp)))
+                continue;
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
         }
     }
