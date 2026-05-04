@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -68,7 +69,7 @@ public class DwsClaimsTransformationTests
         });
         await db.SaveChangesAsync();
 
-        var identity = new ClaimsIdentity(authenticationType: "Test");
+        var identity = new ClaimsIdentity(authenticationType: IdentityConstants.ApplicationScheme);
         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId.ToString()));
         identity.AddClaim(new Claim(ClaimTypes.Name, expected.UserName));
         identity.AddClaim(new Claim(ClaimTypes.Email, expected.Email));
@@ -107,7 +108,7 @@ public class DwsClaimsTransformationTests
         });
         await db.SaveChangesAsync();
 
-        var identity = new ClaimsIdentity(authenticationType: "Test");
+        var identity = new ClaimsIdentity(authenticationType: IdentityConstants.ApplicationScheme);
         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId.ToString()));
         var principal = new ClaimsPrincipal(identity);
 
@@ -116,6 +117,39 @@ public class DwsClaimsTransformationTests
         var twice = await sut.TransformAsync(once);
 
         Assert.Single(twice.Claims.Where(c => c.Type == "displayName"));
+    }
+
+    [Fact]
+    public async Task TransformAsync_DoesNothing_WhenSchemeIsNotIdentityApplication()
+    {
+        using var db = CreateDb();
+        var transformer = new DwsClaimsTransformation(db);
+
+        // Simulate a portal cookie principal (different AuthenticationType).
+        var identity = new ClaimsIdentity(
+            new[] { new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()) },
+            authenticationType: "PublicPortalScheme");
+        var principal = new ClaimsPrincipal(identity);
+
+        var result = await transformer.TransformAsync(principal);
+
+        // No "displayName" or other DWS claims should have been added.
+        Assert.False(result.HasClaim(c => c.Type == "displayName"));
+        Assert.False(result.HasClaim(c => c.Type == "employeeNumber"));
+        Assert.False(result.HasClaim(c => c.Type == "dws:augmented"));
+    }
+
+    [Fact]
+    public async Task TransformAsync_DoesNothing_ForUnauthenticatedPrincipal()
+    {
+        using var db = CreateDb();
+        var transformer = new DwsClaimsTransformation(db);
+
+        var principal = new ClaimsPrincipal(new ClaimsIdentity()); // no auth type
+
+        var result = await transformer.TransformAsync(principal);
+
+        Assert.False(result.HasClaim(c => c.Type == "displayName"));
     }
 
     private record ExpectedClaims(
