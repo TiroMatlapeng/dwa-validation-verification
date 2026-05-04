@@ -117,3 +117,15 @@ Next-session pickup: user to read `docs/superpowers/specs/2026-05-03-external-po
 - Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 85, Total: 104 — exactly two more passes than the Task 2 baseline (83 → 85). The 19 pre-existing parallel-startup integration failures unchanged.
 - Implementation commit: `Add MFA, lockout, and HDI consent columns to PublicUser` (351c075) — touched only the three files listed in the plan.
 - Status: DONE.
+
+### 2026-05-04 — Stage 1 Task 4 agent (Opus 4.7) — PublicUserProperty claim columns + Status enum
+- Branch confirmed: `feat/external-portal-stage-1` in worktree `.worktrees/external-portal-stage-1`. Read journal to date and Stage 1 plan Task 4.
+- Pre-state grep `PublicUserProperty` --include='*.cs': 1 active call site found that constructs the entity — `Tests/Models/EntityRelationshipTests.cs:380` (uses `Status = "Approved"`, no `EvidenceType`/`RequestedDate`). Migration snapshot mentions are unaffected by source changes. Confirmed `PropertyClaimEvidenceType.IdMatch` casing per d20b35d (test code in plan already updated).
+- Step 1: created `Tests/Models/PublicUserPropertyModelTests.cs` with the two `[Fact]` tests verbatim from the plan (defaults + EvidenceDocumentId/RejectionReason setters).
+- Step 2 verification (pre-changes): `dotnet test --filter FullyQualifiedName~PublicUserPropertyModelTests` failed with build errors CS0029/CS0117/CS1503/CS1061 — `Status` is string, missing `EvidenceType`/`EvidenceDocumentId`/`RequestedDate`/`RejectionReason` — expected.
+- Step 3: rewrote `Models/PublicUserProperty.cs` per plan VERBATIM — `Status` now `required PropertyClaimStatus`, added `required PropertyClaimEvidenceType EvidenceType`, `Guid? EvidenceDocumentId`, `Document? EvidenceDocument`, `DateTime RequestedDate`, `string? RejectionReason`. File kept top-level (no namespace) to match existing convention, with `using dwa_ver_val.Models.Enums;` directive at top.
+- Out-of-plan call-site fix: `Tests/Models/EntityRelationshipTests.cs:380-396` — converted `Status = "Approved"` → `Status = dwa_ver_val.Models.Enums.PropertyClaimStatus.Approved`, added required `EvidenceType = PropertyClaimEvidenceType.IdMatch` + `RequestedDate = DateTime.UtcNow`, and updated the assertion to compare enum values. Folded into the same implementation commit since the file was on the listed grep call-site list per the plan's "fix the call sites" guidance.
+- Step 4 verification (post-changes): `dotnet test --filter FullyQualifiedName~PublicUserPropertyModelTests` returns Passed: 2, Failed: 0, Total: 2 (13 ms). `dotnet build` returns 0 Warning(s)/0 Error(s).
+- Full-suite regression: `dotnet test Tests/dwa_ver_val.Tests.csproj` returns Failed: 19, Passed: 87, Total: 106 — exactly two more passes than the Task 3 baseline (85 → 87). The 19 pre-existing parallel-startup integration failures unchanged.
+- Implementation commit: `Convert PublicUserProperty.Status to enum + add claim evidence columns` (5878f11) — three files: model + new test + the EntityRelationshipTests call-site fix.
+- Status: DONE.
