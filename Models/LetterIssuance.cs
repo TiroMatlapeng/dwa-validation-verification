@@ -36,6 +36,8 @@ public class LetterIssuance
     public DateTime? PortalFirstViewedDate { get; set; }
     public DateTime? PortalAcknowledgedDate { get; set; }
     public Guid? PortalAcknowledgedByPublicUserId { get; set; }
+    public Guid? RecipientPublicUserId { get; set; }
+    public PublicUser? RecipientPublicUser { get; set; }
     public string? ServingOfficialName { get; set; }
     public DateOnly? PhysicalDeliveryDate { get; set; }
 
