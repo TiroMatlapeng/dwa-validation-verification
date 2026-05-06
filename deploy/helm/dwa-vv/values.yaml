@@ -1,0 +1,96 @@
+# ── Default values (used by all environments unless overridden) ──────────────
+#
+# Override per environment:
+#   helm upgrade --install dwa-vv deploy/helm/dwa-vv \
+#     -f deploy/helm/dwa-vv/values.prod.yaml \
+#     --set image.tag=$GIT_SHA
+#
+# Required secrets are mounted from Azure Key Vault via the CSI driver.
+# See templates/secret-keyvault-csi.yaml.
+
+replicaCount: 2
+
+image:
+  # ACR login server — set during deploy: <acr-name>.azurecr.io/dwa-vv
+  repository: dwaregistry.azurecr.io/dwa-vv
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Azure Workload Identity — bind the K8s service account to a managed identity
+# that has Key Vault Secrets User on the KV.  Set in environment-specific values.
+workloadIdentity:
+  clientId: ""          # Azure managed-identity client ID — set per environment
+  tenantId: ""          # Azure tenant ID — set per environment
+
+keyVault:
+  name: ""              # Key Vault name, e.g. kv-dwa-vv-prod
+  # Secret names as they appear in Key Vault:
+  secrets:
+    connectionString: ConnectionStrings--Default         # maps to ConnectionStrings:Default
+    demoPwd:          Identity--InitialDemoPassword
+    popiaAck:         Portal--AllowPlaintextIdentityNumber
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080      # Kestrel binds to PORT env var (default 8080)
+
+ingress:
+  enabled: true
+  className: nginx      # or webapprouting.io/nginx when using AKS App Routing add-on
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"    # allow document uploads
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+  host: dwa-vv.example.com   # REPLACE with your real DNS name
+  tls:
+    enabled: true
+    secretName: dwa-vv-tls
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# Horizontal Pod Autoscaler
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+# Pod Disruption Budget — keep at least 1 pod running during node drain
+pdb:
+  enabled: true
+  minAvailable: 1
+
+# Liveness / readiness probes
+probes:
+  liveness:
+    path: /
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    failureThreshold: 5
+  readiness:
+    path: /
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    failureThreshold: 3
+
+# ASPNETCORE environment variables injected into the pod (non-secret)
+env:
+  ASPNETCORE_ENVIRONMENT: Production
+  DOTNET_RUNNING_IN_CONTAINER: "true"
+  PORT: "8080"
+
+# Upload storage — blob path prefix inside the storage account
+# The app currently writes to local filesystem (FileSystemBlobStore).
+# Before scale-out, replace with Azure Blob (Task 10.x).
+# Interim: use a single-replica deployment (replicaCount: 1) or a shared RWX PVC.
+blobStore:
+  useLocalDisk: true    # set false when Azure Blob is wired
+  # persistentVolumeClaim name if useLocalDisk=true with shared storage
+  pvcName: ""

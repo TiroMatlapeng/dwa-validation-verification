@@ -1,0 +1,168 @@
+name: Deploy to AKS
+
+# Manual-only trigger.  AKS is the Stage-3+ path; App Service handles today's demo.
+# See .github/workflows/deploy-azure.yml for the active App Service workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to deploy"
+        required: true
+        default: "demo/azure-deploy"
+      image_tag:
+        description: "Image tag (defaults to the triggering SHA)"
+        required: false
+        default: ""
+      environment:
+        description: "Target environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - prod
+
+# One rollout per environment at a time.
+concurrency:
+  group: aks-${{ inputs.environment }}
+  cancel-in-progress: false   # don't silently cancel an in-flight deploy; queue it
+
+jobs:
+  # ── Build validation (fast check before we touch the cluster) ────────────────
+  build-check:
+    name: Build check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+          dotnet-quality: "ga"
+
+      - name: Restore
+        run: dotnet restore dwa_ver_val.csproj
+
+      - name: Build
+        run: dotnet build dwa_ver_val.csproj --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Tests/dwa_ver_val.Tests.csproj --configuration Release --no-build --verbosity minimal
+
+  # ── Deploy ───────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to AKS (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    needs: build-check
+
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ steps.smoke.outputs.url }}
+
+    outputs:
+      url: ${{ steps.smoke.outputs.url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      # Resolve image tag: explicit input wins; fall back to short SHA of the checked-out commit.
+      - name: Resolve image tag
+        id: tag
+        run: |
+          if [[ -n "${{ inputs.image_tag }}" ]]; then
+            echo "tag=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Select values file
+        id: values
+        run: |
+          if [[ "${{ inputs.environment }}" == "prod" ]]; then
+            echo "file=deploy/helm/dwa-vv/values.prod.yaml" >> "$GITHUB_OUTPUT"
+          else
+            echo "file=deploy/helm/dwa-vv/values.dev.yaml" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Azure login — service principal JSON stored in AZURE_CREDENTIALS secret.
+      # The SP needs: AcrPush on ACR, Azure Kubernetes Service Cluster User Role on AKS.
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Install kubectl and helm so deploy.sh can call them.
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      # The deploy.sh script owns all deploy logic.  We only set env vars here.
+      - name: Run deploy.sh
+        id: deploy
+        env:
+          ACR_NAME:    ${{ vars.ACR_NAME }}
+          RG:          ${{ vars.AZURE_RG }}
+          AKS_CLUSTER: ${{ vars.AKS_CLUSTER_NAME }}
+          IMAGE_TAG:   ${{ steps.tag.outputs.tag }}
+          RELEASE_NAME: dwa-vv
+          NAMESPACE:   dwa-vv
+          VALUES_FILE: ${{ steps.values.outputs.file }}
+          # Workload Identity + Key Vault — stored as repository/environment variables.
+          # Set these in GitHub → Settings → Variables for each environment.
+          MANAGED_IDENTITY_CLIENT_ID: ${{ vars.MANAGED_IDENTITY_CLIENT_ID }}
+          AZURE_TENANT_ID:            ${{ vars.AZURE_TENANT_ID }}
+          KEY_VAULT_NAME:             ${{ vars.KEY_VAULT_NAME }}
+        run: bash deploy/aks/deploy.sh
+
+      # Capture the ingress URL for the environment badge and job output.
+      - name: Capture URL
+        id: smoke
+        env:
+          NAMESPACE: dwa-vv
+          RELEASE_NAME: dwa-vv
+        run: |
+          HOST=$(kubectl -n "$NAMESPACE" get ingress \
+            -o jsonpath='{.items[0].spec.rules[0].host}' 2>/dev/null || true)
+          if [[ -n "$HOST" ]]; then
+            echo "url=https://${HOST}/" >> "$GITHUB_OUTPUT"
+          else
+            LB_IP=$(kubectl -n "$NAMESPACE" get svc "$RELEASE_NAME" \
+              -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+            echo "url=http://${LB_IP:-unknown}/" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ── On failure: dump diagnostics for post-mortem ────────────────────────
+      - name: Collect diagnostics on failure
+        if: failure()
+        env:
+          NAMESPACE: dwa-vv
+          RELEASE_NAME: dwa-vv
+        run: |
+          mkdir -p /tmp/aks-diag
+          kubectl -n "$NAMESPACE" describe pods  > /tmp/aks-diag/describe-pods.txt  2>&1 || true
+          kubectl -n "$NAMESPACE" describe deploy "$RELEASE_NAME" \
+                                                 > /tmp/aks-diag/describe-deploy.txt 2>&1 || true
+          kubectl -n "$NAMESPACE" get events --sort-by=.lastTimestamp \
+                                             > /tmp/aks-diag/events.txt             2>&1 || true
+          kubectl -n "$NAMESPACE" logs \
+            --selector app.kubernetes.io/name=dwa-vv \
+            --all-containers=true \
+            --tail=200                           > /tmp/aks-diag/pod-logs.txt       2>&1 || true
+
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aks-diag-${{ inputs.environment }}-${{ github.run_id }}
+          path: /tmp/aks-diag/
+          retention-days: 7

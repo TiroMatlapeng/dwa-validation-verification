@@ -1,0 +1,31 @@
+# Production cluster overrides.  Apply on top of values.yaml:
+#   helm upgrade --install dwa-vv deploy/helm/dwa-vv \
+#     -f deploy/helm/dwa-vv/values.prod.yaml \
+#     --set image.tag=$GIT_SHA \
+#     --set workloadIdentity.clientId=$MANAGED_IDENTITY_CLIENT_ID \
+#     --set workloadIdentity.tenantId=$AZURE_TENANT_ID \
+#     --set keyVault.name=$KV_NAME
+
+replicaCount: 3
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 768Mi
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+
+hpa:
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 65
+
+pdb:
+  minAvailable: 2
+
+ingress:
+  host: dwa-vv.yourdomain.gov.za     # REPLACE with real domain
+  tls:
+    enabled: true
+    secretName: dwa-vv-prod-tls

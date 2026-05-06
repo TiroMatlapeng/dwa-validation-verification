@@ -1,0 +1,31 @@
+# Dev / demo cluster overrides.  Apply on top of values.yaml:
+#   helm upgrade --install dwa-vv deploy/helm/dwa-vv -f deploy/helm/dwa-vv/values.dev.yaml
+
+replicaCount: 1
+
+hpa:
+  enabled: false
+
+pdb:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+ingress:
+  host: dwa-vv-dev.example.com
+  tls:
+    enabled: false       # use HTTP for local dev clusters; enable for Azure dev cluster
+
+# Override these per-environment. In CI, pass --set workloadIdentity.clientId=$CLIENT_ID
+workloadIdentity:
+  clientId: ""
+  tenantId: ""
+
+keyVault:
+  name: kv-dwa-vv-dev
