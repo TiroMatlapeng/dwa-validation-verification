@@ -1,5 +1,10 @@
 # Dev / demo cluster overrides.  Apply on top of values.yaml:
 #   helm upgrade --install dwa-vv deploy/helm/dwa-vv -f deploy/helm/dwa-vv/values.dev.yaml
+#
+# Stage 2a testing path: NO domain, NO TLS, NO ingress.
+# Service is exposed as a LoadBalancer so the AKS cluster gets a public IP.
+# Browse to http://<external-ip>/ExternalPortal/Account/Register to test.
+# Replace this config with values.prod.yaml + ingress when a real domain lands.
 
 replicaCount: 1
 
@@ -17,15 +22,30 @@ resources:
     cpu: 500m
     memory: 512Mi
 
-ingress:
-  host: dwa-vv-dev.example.com
-  tls:
-    enabled: false       # use HTTP for local dev clusters; enable for Azure dev cluster
+# IP-only testing — skip ingress, expose pod via LoadBalancer.
+# AKS provisions an Azure public IP; kubectl get svc dwa-vv prints the EXTERNAL-IP.
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8080
 
-# Override these per-environment. In CI, pass --set workloadIdentity.clientId=$CLIENT_ID
+ingress:
+  enabled: false        # No domain yet — using raw LoadBalancer IP.
+  host: ""
+  tls:
+    enabled: false
+
+# Override these per-environment. provision.sh prints the values to export.
 workloadIdentity:
   clientId: ""
   tenantId: ""
 
 keyVault:
-  name: kv-dwa-vv-dev
+  name: kv-dwa-vv-aks    # matches AZ_KV default in deploy/aks/provision.sh
+
+# Stage 2a uses LocalDiskFileStorage (no Blob yet).
+# replicaCount: 1 above ensures DataProtection keys + uploads stay coherent
+# until Stage 2b wires Azure Blob.
+blobStore:
+  useLocalDisk: true
+  pvcName: ""

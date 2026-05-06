@@ -161,6 +161,83 @@ A record at that IP, then update `ingress.host` in `values.prod.yaml`.
 
 ---
 
+## IP-only testing path (no domain, no TLS) — the Stage 2a default
+
+`values.dev.yaml` is configured for this path — `ingress.enabled: false` and
+`service.type: LoadBalancer`. After `deploy.sh` finishes, AKS provisions an Azure
+public IP and assigns it to the Service. **NGINX ingress and cert-manager are not
+required** for this flow.
+
+Get the public IP:
+
+```bash
+kubectl -n dwa-vv get svc dwa-vv
+# NAME     TYPE           CLUSTER-IP    EXTERNAL-IP    PORT(S)
+# dwa-vv   LoadBalancer   10.0.X.Y      <PENDING>      80:32xxx/TCP
+#
+# Wait 1-3 minutes for Azure to assign the public IP, then:
+# EXTERNAL-IP shows e.g. 4.231.X.Y
+```
+
+Browse to `http://<EXTERNAL-IP>/ExternalPortal/Account/Register` to test the portal.
+
+**Critical caveat — login won't work over a raw HTTP IP.** The portal cookie is
+configured with `SecurePolicy = Always` for production safety. Browsers won't
+accept the cookie over plain HTTP, so the post-login redirect lands you back on
+the login page in a loop. Two workable testing flows:
+
+1. **Recommended for tomorrow's smoke: `kubectl port-forward`.** This is the
+   simplest path that exercises the full register → confirm → login → dashboard
+   flow over `http://localhost`, where browsers DO accept cookies without TLS:
+
+   ```bash
+   kubectl -n dwa-vv port-forward svc/dwa-vv 8080:80
+   # Open http://localhost:8080/ExternalPortal/Account/Register in your browser.
+   # Click through the demo confirm link, log in, see the dashboard.
+   ```
+
+   This proves the AKS pod is healthy AND the full flow works. The public
+   `EXTERNAL-IP` is still useful as a "is the LoadBalancer routing correctly"
+   smoke (`curl http://<EXTERNAL-IP>/` should return 302 to the login URL),
+   it just can't sustain a logged-in session over HTTP.
+
+2. **Browse the public IP for unauthenticated views only.** The Register form,
+   Login form, and AccessDenied page all render fine over HTTP — you just
+   can't complete a login. Useful for screenshotting the UI in front of
+   stakeholders without needing the full flow to work.
+
+When a real domain lands, switch to `values.prod.yaml`, point DNS at the
+ingress controller's IP, install cert-manager + cluster issuer, and the
+TLS-protected flow works end-to-end with no port-forward.
+
+---
+
+## Tearing down (cost control)
+
+AKS + 2 nodes + ACR + SQL + KV runs ~R1,100/month minimum. Tear down
+after every testing session:
+
+```bash
+bash deploy/aks/teardown.sh
+# Prompts you to type the resource group name to confirm.
+# Deletes the entire RG in the background; costs stop accruing in
+# ~10-15 minutes once Azure finishes.
+```
+
+**Re-provisioning the same Key Vault name:** Azure soft-deletes the KV when
+the RG is dropped, reserving the name for ~90 days. To reuse the name
+immediately, run teardown with `PURGE_KEYVAULT=true bash deploy/aks/teardown.sh`
+or manually `az keyvault purge --name kv-dwa-vv-aks` after teardown completes.
+
+**Tracking deletion progress:**
+
+```bash
+az group show -n rg-dwa-vv-aks --query properties.provisioningState -o tsv
+# Returns "Deleting" until done; "ResourceGroupNotFound" once complete.
+```
+
+---
+
 ## DNS and TLS
 
 1. Get the ingress controller's external IP:

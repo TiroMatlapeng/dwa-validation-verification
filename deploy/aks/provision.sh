@@ -170,7 +170,7 @@ az identity federated-credential create \
   --identity-name "$APP_MI_NAME" \
   --name "dwa-vv-aks-fed" \
   --issuer "$AKS_OIDC_ISSUER" \
-  --subject "system:serviceaccount:${K8S_NAMESPACE}:dwa-vv-dwa-vv" \
+  --subject "system:serviceaccount:${K8S_NAMESPACE}:dwa-vv" \
   --audience api://AzureADTokenExchange \
   -o none
 
