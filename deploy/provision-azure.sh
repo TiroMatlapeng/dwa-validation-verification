@@ -12,6 +12,7 @@
 #   - Firewall rule allowing Azure services + the App Service outbound IPs
 #   - Sets ConnectionStrings__Default as a Web App setting
 #   - Enables HTTPS-only + Always On
+#   - Sets Portal:AllowPlaintextIdentityNumber=true (POPIA guard acknowledgement for demo)
 #   - Prints the publish profile so it can be pasted into GitHub Secrets.
 #
 # Tear down with: ./deploy/teardown-azure.sh
@@ -82,7 +83,7 @@ fi
 
 CONN_STR="Server=tcp:${AZ_SQL_SERVER}.database.windows.net,1433;Initial Catalog=${AZ_SQL_DB};User Id=${AZ_SQL_ADMIN};Password=${AZ_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
 
-echo "==> Setting connection string on Web App..."
+echo "==> Setting connection string + app settings on Web App..."
 az webapp config connection-string set \
   -g "$AZ_RG" -n "$AZ_APP" \
   --connection-string-type SQLAzure \
@@ -93,7 +94,11 @@ az webapp config appsettings set \
   --settings \
     ASPNETCORE_ENVIRONMENT=Production \
     "Identity__InitialDemoPassword=${IDENTITY_DEMO_PASSWORD}" \
+    "Portal__AllowPlaintextIdentityNumber=true" \
   -o none
+# NOTE: Portal__AllowPlaintextIdentityNumber=true acknowledges that PublicUser.IdentityNumber
+# is stored unencrypted for this demo environment. Remove before any real production data lands.
+# This is resolved by Task 10.3 (DataProtection encryption).
 
 echo
 echo "==============================================================="
@@ -112,6 +117,11 @@ echo "  az webapp deployment list-publishing-profiles \\"
 echo "    -g $AZ_RG -n $AZ_APP --xml"
 echo
 echo "Copy the XML output and paste it into:"
-echo "  GitHub repo → Settings → Secrets and variables → Actions → New secret"
+echo "  GitHub repo -> Settings -> Secrets and variables -> Actions -> New secret"
 echo "  Name:  AZURE_WEBAPP_PUBLISH_PROFILE"
+echo
+echo "Then trigger the workflow:"
+echo "  1. Push to demo/azure-deploy  — deploys current branch."
+echo "  2. workflow_dispatch with source_branch=feat/external-portal-stage-2a"
+echo "     — deploys Stage 2a directly without merging first."
 echo "==============================================================="

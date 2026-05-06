@@ -2,12 +2,19 @@ name: Build and deploy to Azure App Service
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - demo/azure-deploy
   workflow_dispatch:
+    inputs:
+      source_branch:
+        description: "Branch to deploy (leave blank to use triggering branch)"
+        required: false
+        default: ""
 
 env:
   AZURE_WEBAPP_NAME: dwa-vv-demo
-  DOTNET_VERSION: '10.0.x'
+  DOTNET_VERSION: "10.0.x"
   CONFIGURATION: Release
   PUBLISH_DIR: ${{ github.workspace }}/publish
 
@@ -19,13 +26,25 @@ jobs:
       url: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net
 
     steps:
+      - name: Determine ref to deploy
+        id: ref
+        run: |
+          INPUT="${{ github.event.inputs.source_branch }}"
+          if [[ -n "$INPUT" ]]; then
+            echo "ref=$INPUT" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${{ github.ref }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.ref }}
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          dotnet-quality: 'ga'
+          dotnet-quality: "ga"
 
       - name: Restore
         run: dotnet restore dwa_ver_val.csproj
@@ -33,8 +52,26 @@ jobs:
       - name: Build
         run: dotnet build dwa_ver_val.csproj --configuration ${{ env.CONFIGURATION }} --no-restore
 
+      - name: Test
+        run: dotnet test Tests/dwa_ver_val.Tests.csproj --configuration ${{ env.CONFIGURATION }} --no-build --verbosity minimal
+
       - name: Publish
         run: dotnet publish dwa_ver_val.csproj --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ env.PUBLISH_DIR }}
+
+      # Inject the POPIA acknowledgement flag and demo password.
+      # These land inside the published artifact as environment overrides read by
+      # ASP.NET Core's layered configuration on App Service (ASPNETCORE_* env vars).
+      # The real connection string and any future secrets come from App Service
+      # "Application settings" (KeyVault-referenced), not from this workflow.
+      - name: Stamp appsettings overrides into publish output
+        run: |
+          cat > "${{ env.PUBLISH_DIR }}/appsettings.ProductionOverride.json" <<'EOF'
+          {
+            "Portal": {
+              "AllowPlaintextIdentityNumber": true
+            }
+          }
+          EOF
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -42,3 +79,19 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ${{ env.PUBLISH_DIR }}
+
+      - name: Smoke test — wait for app and check health
+        run: |
+          APP_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+          echo "Waiting for app to respond at $APP_URL ..."
+          for i in $(seq 1 12); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/" --max-time 10 || true)
+            echo "  Attempt $i: HTTP $STATUS"
+            if [[ "$STATUS" == "200" || "$STATUS" == "302" ]]; then
+              echo "App is up."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "ERROR: App did not respond with 200/302 after 120s."
+          exit 1
