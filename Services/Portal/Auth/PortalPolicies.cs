@@ -8,21 +8,34 @@ public static class PortalPolicies
     public const string PortalRegistrationComplete = "PortalRegistrationComplete";
     public const string PortalMfaPending = "PortalMfaPending";
 
+    // Claim names stamped at sign-in by PublicUserSignInService.
+    public const string EmailConfirmedClaim = "EmailConfirmed";
+    public const string MfaEnrolledClaim = "MfaEnrolled";
+    public const string StatusClaim = "Status";
+
     public static void Configure(AuthorizationOptions options)
     {
-        // Full-access policy — Stage 2 will enforce all of email-confirmed +
-        // MFA enrolled + status-active claims; for Stage 1 it requires
-        // authentication only, since claims are not yet stamped.
+        // Stage 2a: PortalAuthenticated requires the cookie + EmailConfirmed=true claim.
+        // (Stage 2b will add MfaEnrolled=true and Status=Active.)
         options.AddPolicy(PortalAuthenticated, p => p
             .AddAuthenticationSchemes(PortalCookieOptions.SchemeName)
-            .RequireAuthenticatedUser());
+            .RequireAuthenticatedUser()
+            .RequireClaim(EmailConfirmedClaim, "true"));
 
+        // Used during MFA enrolment in Stage 2b — for 2a it's reachable as soon
+        // as the email is confirmed, so the holding-page-on-dashboard works.
         options.AddPolicy(PortalRegistrationComplete, p => p
             .AddAuthenticationSchemes(PortalCookieOptions.SchemeName)
-            .RequireAuthenticatedUser());
+            .RequireAuthenticatedUser()
+            .RequireClaim(EmailConfirmedClaim, "true"));
 
+        // Stage 2b only: short-lived cookie carrying MfaPending=true between
+        // password verification and TOTP entry. Defined now so AccountController
+        // can reference the constant without a compile error if Stage 2b is
+        // partially landed.
         options.AddPolicy(PortalMfaPending, p => p
             .AddAuthenticationSchemes(PortalCookieOptions.SchemeName)
-            .RequireAuthenticatedUser());
+            .RequireAuthenticatedUser()
+            .RequireClaim("MfaPending", "true"));
     }
 }

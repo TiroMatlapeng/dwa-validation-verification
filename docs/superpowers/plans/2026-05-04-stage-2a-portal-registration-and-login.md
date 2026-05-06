@@ -363,7 +363,7 @@ git commit -m "PortalCookieEvents: stub for Stage 2a (Stage 2b adds status reval
 - Create: `Services/Portal/Auth/PortalAuthorizationConvention.cs`
 - Test: `Tests/Services/Portal/Auth/PortalAuthorizationConventionTests.cs`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `Tests/Services/Portal/Auth/PortalAuthorizationConventionTests.cs`:
 
@@ -425,12 +425,12 @@ public class PortalAuthorizationConventionTests
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `dotnet test Tests/dwa_ver_val.Tests.csproj --filter FullyQualifiedName~PortalAuthorizationConventionTests`
 Expected: build error — `PortalAuthorizationConvention` does not exist.
 
-- [ ] **Step 3: Create the convention**
+- [x] **Step 3: Create the convention**
 
 Create `Services/Portal/Auth/PortalAuthorizationConvention.cs`:
 
@@ -472,17 +472,17 @@ public class PortalAuthorizationConvention : IControllerModelConvention
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `dotnet test Tests/dwa_ver_val.Tests.csproj --filter FullyQualifiedName~PortalAuthorizationConventionTests`
 Expected: 2 tests pass.
 
-- [ ] **Step 5: Run full suite**
+- [x] **Step 5: Run full suite**
 
 Run: `dotnet test Tests/dwa_ver_val.Tests.csproj --nologo --verbosity quiet`
 Expected: 140 / 0 / 140 (was 138; +2).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add Services/Portal/Auth/PortalAuthorizationConvention.cs Tests/Services/Portal/Auth/PortalAuthorizationConventionTests.cs

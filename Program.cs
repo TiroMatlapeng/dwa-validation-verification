@@ -14,7 +14,10 @@ QuestPDF.Settings.License = LicenseType.Community;
 var builder = WebApplication.CreateBuilder(args);
 
 // MVC
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Conventions.Add(new PortalAuthorizationConvention());
+});
 
 // DbContext
 builder.Services.AddDbContext<ApplicationDBContext>(
@@ -53,7 +56,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 // The default scheme remains Identity.Application, set by AddIdentity above.
 var authBuilder = builder.Services.AddAuthentication();
 
-authBuilder.AddCookie(PortalCookieOptions.SchemeName, PortalCookieOptions.Configure);
+builder.Services.AddScoped<PortalCookieEvents>();
+authBuilder.AddCookie(PortalCookieOptions.SchemeName, options =>
+{
+    PortalCookieOptions.Configure(options);
+    options.EventsType = typeof(PortalCookieEvents);
+});
 
 var entraTenantId = builder.Configuration["AzureAd:TenantId"];
 var entraClientId = builder.Configuration["AzureAd:ClientId"];
@@ -130,6 +138,10 @@ builder.Services.AddSingleton<IFileStorage>(sp =>
     new LocalDiskFileStorage(
         Path.Combine(builder.Environment.ContentRootPath, "portal-uploads")));
 builder.Services.AddScoped<IPublicUserPropertyAccessor, PublicUserPropertyAccessor>();
+builder.Services.AddScoped<IPublicUserRegistrationService, PublicUserRegistrationService>();
+builder.Services.AddScoped<IPublicUserSignInService, PublicUserSignInService>();
+builder.Services.AddSingleton<PasswordHasher<PublicUser>>();
+builder.Services.AddHttpContextAccessor();
 
 // Portal exception handler + ProblemDetails
 builder.Services.AddProblemDetails();

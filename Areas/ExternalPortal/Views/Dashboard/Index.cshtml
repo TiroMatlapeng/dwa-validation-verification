@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    var email = ViewData["UserEmail"] as string ?? "you";
+}
+<div class="portal-card">
+    <h1>Welcome, @email</h1>
+    <p>You're now logged in to the DWA V&amp;V Public Portal.</p>
+
+    <div class="errors" style="background:#fff8e1; border-color: var(--dws-amber-700); color: var(--dws-amber-700);">
+        <strong>Coming soon (Stage 2b):</strong>
+        <ul>
+            <li>Set up two-factor authentication (TOTP)</li>
+            <li>Set a stronger password / reset password</li>
+            <li>Lock-out protection on failed sign-in attempts</li>
+        </ul>
+    </div>
+
+    <div class="errors" style="background:#e8f5e8; border-color: var(--dws-green-700); color: var(--dws-green-700); margin-top: var(--dws-space-4);">
+        <strong>Coming soon (Stage 3+):</strong>
+        <ul>
+            <li>Claim ownership of properties registered to your ID</li>
+            <li>Upload supporting evidence (title deeds)</li>
+            <li>View case status of your properties</li>
+            <li>Download statutory letters addressed to you</li>
+        </ul>
+    </div>
+
+    <form asp-action="Logout" asp-controller="Account" method="post" style="margin-top: var(--dws-space-5);">
+        <button type="submit" class="btn-primary">Log out</button>
+    </form>
+</div>

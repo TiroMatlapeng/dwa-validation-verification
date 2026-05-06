@@ -40,4 +40,23 @@ public class PortalBoundaryTests
             "Areas/ExternalPortal types must not depend on UserManager<ApplicationUser> or SignInManager<ApplicationUser>. " +
             "Offending types: " + string.Join(", ", result.FailingTypeNames ?? Array.Empty<string>()));
     }
+
+    [Fact]
+    public void ExternalPortalArea_MustNotReferenceApplicationDBContext()
+    {
+        // Portal controllers/views must go through Services/Portal/* services
+        // (e.g. IPublicUserPropertyAccessor) — direct EF access bypasses the
+        // row-level scoping spine and the audit hooks.
+        var result = Types.InAssembly(AppAssembly)
+            .That()
+            .ResideInNamespace("dwa_ver_val.Areas.ExternalPortal")
+            .ShouldNot()
+            .HaveDependencyOn("ApplicationDBContext")
+            .GetResult();
+
+        Assert.True(result.IsSuccessful,
+            "Areas/ExternalPortal types must not depend on ApplicationDBContext directly. " +
+            "Go through a Services/Portal/* service. Offending types: " +
+            string.Join(", ", result.FailingTypeNames ?? Array.Empty<string>()));
+    }
 }
