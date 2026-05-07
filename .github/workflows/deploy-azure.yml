@@ -73,11 +73,18 @@ jobs:
           }
           EOF
 
+      # Log in via service principal — publish-profile is unreliable on Linux App Services
+      # because the az CLI redacts credentials in all output streams (az >= 2.51).
+      # AZURE_CREDENTIALS contains the full SDK-auth JSON blob from az ad sp create-for-rbac.
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ${{ env.PUBLISH_DIR }}
 
       - name: Smoke test — wait for app and check health
