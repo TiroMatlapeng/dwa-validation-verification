@@ -2,6 +2,9 @@
 
 @{
     ViewData["Title"] = "V&V Cases";
+    bool canEdit = !User.IsInRole("ReadOnly");
+    bool canCreate = User.IsInRole("Validator") || User.IsInRole("RegionalManager")
+                  || User.IsInRole("NationalManager") || User.IsInRole("SystemAdmin");
 }
 
 <div class="flex-between mb-16">
@@ -10,25 +13,36 @@
         <div class="page-subtitle">@Model.Count() cases found</div>
     </div>
     <div style="display:flex; gap:8px;">
-        <a asp-controller="FileMaster" asp-action="Create" class="btn btn-primary">+ New Case</a>
+        @if (canCreate)
+        {
+            <a asp-controller="FileMaster" asp-action="Create" class="btn btn-primary">+ New Case</a>
+        }
     </div>
 </div>
 
 <!-- Filter Bar -->
-<div class="filter-bar">
-    <select class="form-select" style="width:auto; min-width:150px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;">
-        <option>All Statuses</option>
-        <option>Not Commenced</option>
-        <option>In Process</option>
-        <option>Completed</option>
-        <option>Compl require client interaction</option>
-        <option>Compl Not Client Interaction</option>
-        <option>Compl Post Interact Processing</option>
+<form method="get" class="filter-bar">
+    <select name="status" class="form-select" style="width:auto; min-width:200px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;">
+        <option value="">All Statuses</option>
+        @{
+            var statuses = new[] { "Not Commenced", "In Process", "Completed", "Compl require client interaction", "Compl Not Client Interaction", "Compl Post Interact Processing" };
+            foreach (var s in statuses)
+            {
+                if ((string?)ViewBag.FilterStatus == s)
+                {
+                    <option value="@s" selected>@s</option>
+                }
+                else
+                {
+                    <option value="@s">@s</option>
+                }
+            }
+        }
     </select>
-    <input type="text" class="form-input" style="width:250px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;" placeholder="Search by Reg No, Farm Name, SG Code..." />
-    <button class="btn btn-primary btn-sm">Filter</button>
-    <button class="btn btn-outline btn-sm">Clear</button>
-</div>
+    <input type="text" name="search" value="@ViewBag.FilterSearch" class="form-input" style="width:250px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;" placeholder="Search by Reg No, Farm Name, SG Code..." />
+    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+    <a asp-action="Index" class="btn btn-outline btn-sm">Clear</a>
+</form>
 
 <!-- Data Table -->
 <div class="data-table-wrap">
@@ -70,9 +84,12 @@
                         }
                     </td>
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.FileMasterId" class="btn btn-sm btn-outline">Edit</a>
                         <a asp-action="Details" asp-route-id="@item.FileMasterId" class="btn btn-sm btn-outline">Details</a>
-                        <a asp-action="Delete" asp-route-id="@item.FileMasterId" class="btn btn-sm btn-danger">Delete</a>
+                        @if (canEdit)
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.FileMasterId" class="btn btn-sm btn-outline">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@item.FileMasterId" class="btn btn-sm btn-danger">Delete</a>
+                        }
                     </td>
                 </tr>
             }

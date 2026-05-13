@@ -13,22 +13,22 @@
 
     <div class="dws-form-row">
         <label asp-for="FirstName" class="dws-label"></label>
-        <input asp-for="FirstName" class="dws-input" />
+        <input asp-for="FirstName" class="dws-input" tabindex="1" />
         <span asp-validation-for="FirstName" class="dws-field-error"></span>
     </div>
     <div class="dws-form-row">
         <label asp-for="LastName" class="dws-label"></label>
-        <input asp-for="LastName" class="dws-input" />
+        <input asp-for="LastName" class="dws-input" tabindex="2" />
         <span asp-validation-for="LastName" class="dws-field-error"></span>
     </div>
     <div class="dws-form-row">
         <label asp-for="EmployeeNumber" class="dws-label"></label>
-        <input asp-for="EmployeeNumber" class="dws-input" />
+        <input asp-for="EmployeeNumber" class="dws-input" tabindex="3" />
         <span asp-validation-for="EmployeeNumber" class="dws-field-error"></span>
     </div>
     <div class="dws-form-row">
         <label asp-for="Role" class="dws-label"></label>
-        <select asp-for="Role" class="dws-input" asp-items="@(new SelectList(Model.AvailableRoles))">
+        <select asp-for="Role" class="dws-input" asp-items="@(new SelectList(Model.AvailableRoles))" tabindex="4">
             <option value="">-- select role --</option>
         </select>
         <span asp-validation-for="Role" class="dws-field-error"></span>
@@ -36,13 +36,13 @@
     <div class="dws-form-row">
         <label asp-for="OrgUnitId" class="dws-label"></label>
         <select asp-for="OrgUnitId" class="dws-input"
-                asp-items="@(new SelectList(Model.AvailableOrgUnits, "Id", "Name"))">
+                asp-items="@(new SelectList(Model.AvailableOrgUnits, "Id", "Name"))" tabindex="5">
             <option value="">-- none (national scope) --</option>
         </select>
     </div>
     <div class="dws-form-row">
         <label class="dws-checkbox">
-            <input asp-for="IsActive" type="checkbox" />
+            <input asp-for="IsActive" type="checkbox" tabindex="6" />
             @Html.DisplayNameFor(m => m.IsActive)
         </label>
     </div>

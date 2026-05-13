@@ -35,10 +35,54 @@ public class PropertyController : Controller
 
     // GET: Property
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? sgCode = null, Guid? wmaId = null)
     {
-        var properties = await _propertyRepository.ListAllAsync();
+        var query = _context.Properties
+            .Include(p => p.WaterManagementArea)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(sgCode))
+            query = query.Where(p => p.SGCode.Contains(sgCode) || (p.PropertyReferenceNumber != null && p.PropertyReferenceNumber.Contains(sgCode)));
+
+        if (wmaId.HasValue)
+            query = query.Where(p => p.WmaId == wmaId);
+
+        var properties = await query.OrderBy(p => p.SGCode).ToListAsync();
+
+        ViewBag.WaterManagementAreas = await _context.WaterManagementAreas.OrderBy(w => w.WmaName).ToListAsync();
+        ViewBag.FilterSgCode = sgCode;
+        ViewBag.FilterWmaId = wmaId;
+
         return View(properties);
+    }
+
+    // GET: Property/ExportCsv
+    [HttpGet]
+    public async Task<IActionResult> ExportCsv(string? sgCode = null, Guid? wmaId = null)
+    {
+        var query = _context.Properties
+            .Include(p => p.WaterManagementArea)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(sgCode))
+            query = query.Where(p => p.SGCode.Contains(sgCode) || (p.PropertyReferenceNumber != null && p.PropertyReferenceNumber.Contains(sgCode)));
+
+        if (wmaId.HasValue)
+            query = query.Where(p => p.WmaId == wmaId);
+
+        var properties = await query.OrderBy(p => p.SGCode).ToListAsync();
+
+        static string Esc(string? v) => v == null ? "" : $"\"{v.Replace("\"", "\"\"")}\"";
+
+        var csv = new System.Text.StringBuilder();
+        csv.AppendLine("SG Code,Farm Name,WMA,Quaternary Drainage,Property Size (ha),Status");
+        foreach (var p in properties)
+        {
+            var status = Esc(p.PropertyStatus ?? "Active");
+            csv.AppendLine($"{Esc(p.SGCode)},{Esc(p.PropertyReferenceNumber)},{Esc(p.WaterManagementArea?.WmaName)},{Esc(p.QuaternaryDrainage)},{p.PropertySize},{status}");
+        }
+
+        return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "properties.csv");
     }
 
     // GET: Property/Register

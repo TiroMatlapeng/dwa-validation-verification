@@ -193,12 +193,14 @@ select.dws-input:focus {
     border-radius: var(--dws-radius-sm);
     font-size: var(--dws-fs-sm);
 }
+.dws-validation-summary.validation-summary-valid { display: none; }
 .dws-validation-summary:empty { display: none; }
 .dws-validation-summary ul { margin: 0; padding-left: var(--dws-space-5); }
 .dws-field-error {
     color: var(--dws-red-700);
     font-size: var(--dws-fs-xs);
 }
+.dws-field-error.field-validation-valid { display: none; }
 
 /* Tables */
 .dws-table {

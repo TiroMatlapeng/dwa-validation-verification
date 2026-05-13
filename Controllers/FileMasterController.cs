@@ -41,13 +41,26 @@ public class FileMasterController : Controller
 
     // GET: FileMaster
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search = null, string? status = null)
     {
         var query = _scope.FilterFileMasters(_context.FileMasters.AsQueryable(), User);
+
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(fm => fm.RegistrationNumber != null && fm.RegistrationNumber.Contains(search)
+                || fm.FarmName != null && fm.FarmName.Contains(search)
+                || fm.SurveyorGeneralCode != null && fm.SurveyorGeneralCode.Contains(search));
+
+        if (!string.IsNullOrWhiteSpace(status))
+            query = query.Where(fm => fm.ValidationStatusName == status);
+
         var fileMasters = await query
             .Include(fm => fm.Property)
             .OrderBy(fm => fm.FileNumber)
             .ToListAsync();
+
+        ViewBag.FilterSearch = search;
+        ViewBag.FilterStatus = status;
+
         return View(fileMasters);
     }
 
