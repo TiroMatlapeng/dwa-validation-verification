@@ -174,11 +174,16 @@ public class PropertyController : Controller
     public async Task<IActionResult> Delete(Guid id)
     {
         var property = await _propertyRepository.GetByIdAsync(id);
+        if (property == null) return NotFound();
 
-        if (property == null)
-        {
-            return NotFound();
-        }
+        var fileMasterCount = await _context.FileMasters.CountAsync(fm => fm.PropertyId == id);
+        var ownershipCount  = await _context.PropertyOwnerships.CountAsync(po => po.PropertyId == id);
+        var imageCount      = await _context.SateliteImages.CountAsync(si => si.PropertyId == id);
+
+        ViewBag.BlockingFileMasters  = fileMasterCount;
+        ViewBag.BlockingOwnerships   = ownershipCount;
+        ViewBag.BlockingImages       = imageCount;
+        ViewBag.CanDelete            = fileMasterCount == 0 && ownershipCount == 0 && imageCount == 0;
 
         return View(property);
     }
@@ -189,14 +194,33 @@ public class PropertyController : Controller
     [Authorize(Policy = DwsPolicies.CanCreateCase)]
     public async Task<IActionResult> DeleteConfirmed(Guid id)
     {
-        var property = await _propertyRepository.DeleteAsync(id);
+        // Re-check blocking relations before attempting delete
+        var fileMasterCount = await _context.FileMasters.CountAsync(fm => fm.PropertyId == id);
+        var ownershipCount  = await _context.PropertyOwnerships.CountAsync(po => po.PropertyId == id);
+        var imageCount      = await _context.SateliteImages.CountAsync(si => si.PropertyId == id);
 
-        if (property == null)
+        if (fileMasterCount > 0 || ownershipCount > 0 || imageCount > 0)
         {
-            return NotFound();
+            var reasons = new List<string>();
+            if (fileMasterCount > 0) reasons.Add($"{fileMasterCount} V&V case file(s)");
+            if (ownershipCount > 0)  reasons.Add($"{ownershipCount} ownership record(s)");
+            if (imageCount > 0)      reasons.Add($"{imageCount} satellite image(s)");
+            TempData["Error"] = $"Cannot delete this property — it has {string.Join(" and ", reasons)} linked to it. Remove those records first.";
+            return RedirectToAction(nameof(Delete), new { id });
         }
 
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            var property = await _propertyRepository.DeleteAsync(id);
+            if (property == null) return NotFound();
+            TempData["Success"] = $"Property {property.SGCode} has been deleted.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception)
+        {
+            TempData["Error"] = "Delete failed — this property has related records that prevent deletion. Remove all linked data first.";
+            return RedirectToAction(nameof(Delete), new { id });
+        }
     }
 
     // GET: Property/Subdivide/{id}

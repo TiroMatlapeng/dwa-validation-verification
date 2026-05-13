@@ -185,6 +185,15 @@ public class FileMasterController : Controller
         if (!_scope.IsInScope(fileMaster, User))
             return Forbid();
 
+        var letterCount        = await _context.LetterIssuances.CountAsync(l => l.FileMasterId == id);
+        var authorisationCount = await _context.Authorisations.CountAsync(a => a.FileMasterId == id);
+        var workflowCount      = await _context.WorkflowInstances.CountAsync(w => w.FileMasterId == id);
+
+        ViewBag.BlockingLetters        = letterCount;
+        ViewBag.BlockingAuthorisations = authorisationCount;
+        ViewBag.BlockingWorkflow       = workflowCount;
+        ViewBag.CanDelete              = letterCount == 0 && authorisationCount == 0 && workflowCount == 0;
+
         return View(fileMaster);
     }
 
@@ -200,8 +209,31 @@ public class FileMasterController : Controller
         if (!_scope.IsInScope(fileMaster, User))
             return Forbid();
 
-        await _fileMasterRepository.DeleteAsync(id);
-        return RedirectToAction(nameof(Index));
+        var letterCount        = await _context.LetterIssuances.CountAsync(l => l.FileMasterId == id);
+        var authorisationCount = await _context.Authorisations.CountAsync(a => a.FileMasterId == id);
+        var workflowCount      = await _context.WorkflowInstances.CountAsync(w => w.FileMasterId == id);
+
+        if (letterCount > 0 || authorisationCount > 0 || workflowCount > 0)
+        {
+            var reasons = new List<string>();
+            if (letterCount > 0)        reasons.Add($"{letterCount} letter(s)");
+            if (authorisationCount > 0) reasons.Add($"{authorisationCount} authorisation(s)");
+            if (workflowCount > 0)      reasons.Add($"{workflowCount} workflow instance(s)");
+            TempData["Error"] = $"Cannot delete this case — it has {string.Join(" and ", reasons)} linked to it. Remove those records first.";
+            return RedirectToAction(nameof(Delete), new { id });
+        }
+
+        try
+        {
+            await _fileMasterRepository.DeleteAsync(id);
+            TempData["Success"] = $"Case {fileMaster.RegistrationNumber ?? id.ToString()} has been deleted.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception)
+        {
+            TempData["Error"] = "Delete failed — this case has related records that prevent deletion.";
+            return RedirectToAction(nameof(Delete), new { id });
+        }
     }
 
     // letterAction (HTML form value) -> (LetterType.LetterName / template code, target workflow state).

@@ -15,6 +15,12 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
         (typeof(PublicUserRecoveryCode), typeof(PublicUser), nameof(PublicUserRecoveryCode.PublicUserId), DeleteBehavior.Cascade),
         (typeof(PublicUserProperty), typeof(Document), nameof(PublicUserProperty.EvidenceDocumentId), DeleteBehavior.SetNull),
         (typeof(LetterIssuance), typeof(PublicUser), nameof(LetterIssuance.RecipientPublicUserId), DeleteBehavior.SetNull),
+        // Data capture entities — cascade delete with their parent Property
+        (typeof(FieldAndCrop),   typeof(Property), nameof(FieldAndCrop.PropertyId),   DeleteBehavior.Cascade),
+        (typeof(Forestation),    typeof(Property), nameof(Forestation.PropertyId),    DeleteBehavior.Cascade),
+        (typeof(DamCalculation), typeof(Property), nameof(DamCalculation.PropertyId), DeleteBehavior.Cascade),
+        (typeof(Irrigation),     typeof(Property), nameof(Irrigation.PropertyId),     DeleteBehavior.Cascade),
+        (typeof(Storing),        typeof(Property), nameof(Storing.PropertyId),        DeleteBehavior.Cascade),
     };
 
     public ApplicationDBContext(DbContextOptions<ApplicationDBContext> dbContextOption) : base(dbContextOption)
@@ -111,6 +117,13 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
         modelBuilder.Entity<Forestation>().HasKey(e => e.ForestationId);
         modelBuilder.Entity<Storing>().HasKey(e => e.StoringId);
         modelBuilder.Entity<DamCalculation>().HasKey(e => e.DamCalculationId);
+
+        // Note: cascade delete from Property to the five data-capture entities
+        // (FieldAndCrop, Forestation, DamCalculation, Irrigation, Storing) is
+        // applied by the global override loop at the bottom of this method using
+        // the NonRestrictForeignKeys whitelist. We rely on EF Core's convention-
+        // discovered FK on each model's `Property` navigation rather than declaring
+        // a duplicate HasOne here (which would create a shadow PropertyId1 column).
 
         modelBuilder.Entity<PropertyOwner>().HasKey(e => e.OwnerId);
         modelBuilder.Entity<PropertyOwnership>().HasKey(e => e.Id);
@@ -762,10 +775,11 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
         //    We identify exemptions by (dependent CLR type, principal CLR type, FK property name)
         //    because constraint names are not yet materialised when the loop runs.
         // SQL Server does not allow multiple cascade paths; Restrict is safer
-        // and forces explicit deletion in correct order.
-        var cascadeFkExemptions = NonRestrictForeignKeys
-            .Select(x => (x.Dependent, x.Principal, x.FkProperty))
-            .ToHashSet();
+        // and forces explicit deletion in correct order. Whitelisted FKs are
+        // ACTIVELY SET to their declared Behavior (e.g. Cascade) so we don't have
+        // to add per-entity HasOne configs that risk duplicating a convention FK.
+        var whitelistByKey = NonRestrictForeignKeys
+            .ToDictionary(x => (x.Dependent, x.Principal, x.FkProperty), x => x.Behavior);
 
         foreach (var relationship in modelBuilder.Model.GetEntityTypes()
             .SelectMany(e => e.GetForeignKeys()))
@@ -773,8 +787,11 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             var dependent = relationship.DeclaringEntityType.ClrType;
             var principal = relationship.PrincipalEntityType.ClrType;
             var fkProp = relationship.Properties.FirstOrDefault()?.Name ?? string.Empty;
-            if (cascadeFkExemptions.Contains((dependent, principal, fkProp)))
+            if (whitelistByKey.TryGetValue((dependent, principal, fkProp), out var allowedBehavior))
+            {
+                relationship.DeleteBehavior = allowedBehavior;
                 continue;
+            }
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
         }
     }
