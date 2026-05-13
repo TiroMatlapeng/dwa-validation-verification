@@ -1,8 +1,9 @@
 public interface IForestation
 {
-    public Task<Forestation> RegisterForestation(Forestation forestation);
-    public ICollection<Forestation> ListAll();
-
-    public Task<Forestation> UpdateForestation(Forestation forestation);
-    
+    Task<Forestation> RegisterForestation(Forestation forestation);
+    Task<ICollection<Forestation>> ListAll();
+    Task<ICollection<Forestation>> GetByPropertyIdAsync(Guid propertyId);
+    Task<Forestation?> GetByIdAsync(Guid id);
+    Task<Forestation> UpdateForestation(Forestation forestation);
+    Task DeleteAsync(Guid id);
 }

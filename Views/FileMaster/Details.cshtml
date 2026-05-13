@@ -61,6 +61,21 @@
     </div>
 </div>
 
+<div class="card" style="max-width: 900px; margin-top: 20px;">
+    <div class="form-section-title">Data Capture</div>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;">
+        <a asp-controller="FieldAndCrop" asp-action="Index" asp-route-propertyId="@fm.PropertyId" class="btn btn-primary">
+            Field &amp; Crop Records
+        </a>
+        <a asp-controller="Forestation" asp-action="Index" asp-route-propertyId="@fm.PropertyId" class="btn btn-primary">
+            Forestation / SFRA
+        </a>
+        <a asp-controller="DamCalculation" asp-action="Index" asp-route-propertyId="@fm.PropertyId" class="btn btn-primary">
+            Dam Calculations
+        </a>
+    </div>
+</div>
+
 <div class="dws-panel" style="max-width: 900px; margin-top: 20px;">
     <h2 style="margin-top: 0; font-size: var(--dws-fs-xl); color: var(--dws-primary);">Audit Trail</h2>
     @if (!Model.AuditTrail.Any())

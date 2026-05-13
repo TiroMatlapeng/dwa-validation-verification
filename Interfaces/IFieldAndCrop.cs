@@ -3,7 +3,10 @@ using System.Threading.Tasks;
 
 public interface IFieldAndCrop
 {
-   public Task<FieldAndCrop> AddFieldAndCrop(FieldAndCrop fieldAndCrop);
-   public Task<FieldAndCrop> UpdateFieldAndCrop(FieldAndCrop fieldAndCrop);
-   public Task<ICollection<FieldAndCrop>> ListAll();
+    Task<FieldAndCrop> AddFieldAndCrop(FieldAndCrop fieldAndCrop);
+    Task<FieldAndCrop> UpdateFieldAndCrop(FieldAndCrop fieldAndCrop);
+    Task<ICollection<FieldAndCrop>> ListAll();
+    Task<ICollection<FieldAndCrop>> GetByPropertyIdAsync(Guid propertyId);
+    Task<FieldAndCrop?> GetByIdAsync(Guid id);
+    Task DeleteAsync(Guid id);
 }

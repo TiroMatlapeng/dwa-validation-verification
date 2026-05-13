@@ -102,6 +102,8 @@ builder.Services.AddScoped<IPropertyInterface, PropertyRepository>();
 builder.Services.AddScoped<IAddress, AddressRepository>();
 builder.Services.AddScoped<IFileMaster, FileMasterRepository>();
 builder.Services.AddScoped<IForestation, ForestationRepository>();
+builder.Services.AddScoped<IFieldAndCrop, FieldAndCropRepository>();
+builder.Services.AddScoped<IDamCalculation, DamCalculationRepository>();
 builder.Services.AddScoped<IWorkflowService, WorkflowService>();
 builder.Services.AddScoped<IScopedCaseQuery, ScopedCaseQuery>();
 builder.Services.AddScoped<IAuditService, AuditService>();
