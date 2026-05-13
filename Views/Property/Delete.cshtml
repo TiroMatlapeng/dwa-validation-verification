@@ -71,7 +71,7 @@
         </div>
     }
 
-    <form asp-action="DeleteConfirmed" asp-route-id="@Model.PropertyId" method="post" style="margin-top: 20px;">
+    <form asp-action="Delete" asp-route-id="@Model.PropertyId" method="post" style="margin-top: 20px;">
         <input type="hidden" asp-for="PropertyId" />
         <input type="submit" value="Delete Property" class="btn btn-danger" @(!canDelete ? "disabled" : "") />
         <a asp-action="Index" class="btn btn-outline" style="margin-left: 8px;">Cancel</a>
