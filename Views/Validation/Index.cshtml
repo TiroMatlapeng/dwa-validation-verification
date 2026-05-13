@@ -1,108 +1,73 @@
-                    
-<div class="container">
+@model IEnumerable<OngoingValidationRow>
+@{
+    ViewData["Title"] = "Ongoing Validations";
+}
 
-<!--<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />-->
+<div class="dws-page-header">
+    <h1>Ongoing Validations</h1>
+    <a asp-controller="FileMaster" asp-action="Create" class="dws-btn dws-btn-primary">Start a New Case</a>
+</div>
 
-<div class="container mt-5">
-    <h2 class="mb-4">Ongoing Validations</h2>
-
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped table-hover align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>#</th>
-                    <th>Property #</th>
-                    <th>Ownership</th>
-                    <th>Scheduled Start</th>
-                    <th>Planned Date</th>
-                    <th>Water Resource</th>
-                    <th class="text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Edwin</td>
-                    <td>Matlapeng</td>
-                    <td>edwin@example.com</td>
-                    <td>Admin</td>
-                    <td>
-                        <span class="badge bg-success">Active</span>
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-primary">Edit</button>
-                        <button class="btn btn-sm btn-danger">Delete</button>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>2</td>
-                    <td>Jane</td>
-                    <td>Doe</td>
-                    <td>jane@example.com</td>
-                    <td>User</td>
-                    <td>
-                        <span class="badge bg-warning text-dark">Pending</span>
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-primary">Edit</button>
-                        <button class="btn btn-sm btn-danger">Delete</button>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>3</td>
-                    <td>John</td>
-                    <td>Smith</td>
-                    <td>john@example.com</td>
-                    <td>Manager</td>
-                    <td>
-                        <span class="badge bg-danger">Inactive</span>
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-primary">Edit</button>
-                        <button class="btn btn-sm btn-danger">Delete</button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>4</td>
-                    <td>Zoran</td>
-                    <td>Mamdani</td>
-                    <td>zoran@example.com</td>
-                    <td>Owner</td>
-                    <td>
-                        <span class="badge bg-success">Active</span>
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-primary">Edit</button>
-                        <button class="btn btn-sm btn-danger">Delete</button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>5</td>
-                    <td>Al</td>
-                    <td>Sharpton</td>
-                    <td>alvin@example.com</td>
-                    <td>User</td>
-                    <td>
-                        <span class="badge bg-success">Active</span>
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-primary">Edit</button>
-                        <button class="btn btn-sm btn-danger">Delete</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+@if (!Model.Any())
+{
+    <div class="dws-panel">
+        <p style="color: var(--dws-text-muted); margin: 0;">
+            No cases are currently in validation. Create a new V&amp;V case from
+            <a asp-controller="FileMaster" asp-action="Index">V&amp;V Cases</a> to begin.
+        </p>
     </div>
-</div>
-
-<div class="m-4">
-    <a class="btn btn-primary"
-       inputmode="button"
-       asp-controller="Validation"
-       asp-action=""
-    >Add Validation</a>
-</div>
-
-</div> 
+}
+else
+{
+    <table class="dws-table">
+        <thead>
+            <tr>
+                <th>V&amp;V Case</th>
+                <th>Property</th>
+                <th>Farm</th>
+                <th>Track</th>
+                <th>Phase</th>
+                <th>Current State</th>
+                <th>Opened</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var row in Model)
+        {
+            var pillClass = row.ValidationStatus switch
+            {
+                "Completed" or "Compl Not Client Interaction" or "Compl Post Interact Processing"
+                                         => "dws-status-pill dws-status-pill--ok",
+                "In Process"             => "dws-status-pill dws-status-pill--warning",
+                _                        => "dws-status-pill"
+            };
+            <tr>
+                <td><strong>@row.CaseNumber</strong></td>
+                <td>@row.PropertyReference</td>
+                <td>@row.FarmName</td>
+                <td>
+                    @{
+                        var trackLabel = row.AssessmentTrack switch
+                        {
+                            "S35_Verification"   => "S35 Verification",
+                            "S33_2_Declaration"  => "S33(2) Declaration",
+                            "S33_3_Declaration"  => "S33(3) Declaration",
+                            _                    => row.AssessmentTrack
+                        };
+                    }
+                    @trackLabel
+                </td>
+                <td>@row.CurrentPhase</td>
+                <td><code>@row.CurrentStateName</code></td>
+                <td>@row.FileCreatedDate.ToString("dd MMM yyyy")</td>
+                <td><span class="@pillClass">@row.ValidationStatus</span></td>
+                <td>
+                    <a asp-controller="FileMaster" asp-action="Details" asp-route-id="@row.FileMasterId" class="dws-btn dws-btn-ghost">Open</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

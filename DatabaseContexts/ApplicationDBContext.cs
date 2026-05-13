@@ -1,9 +1,30 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-public class ApplicationDBContext : DbContext
+public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
+    /// <summary>
+    /// FKs that must retain a non-Restrict delete behaviour, identified by
+    /// (DependentType, PrincipalType, FkPropertyName, ExpectedBehavior).
+    /// Single source of truth for both the OnModelCreating cascade-override
+    /// loop and the ApplicationDBContextTests guard test.
+    /// </summary>
+    public static readonly IReadOnlyCollection<(Type Dependent, Type Principal, string FkProperty, DeleteBehavior Behavior)> NonRestrictForeignKeys = new[]
+    {
+        (typeof(PublicUserRecoveryCode), typeof(PublicUser), nameof(PublicUserRecoveryCode.PublicUserId), DeleteBehavior.Cascade),
+        (typeof(PublicUserProperty), typeof(Document), nameof(PublicUserProperty.EvidenceDocumentId), DeleteBehavior.SetNull),
+        (typeof(LetterIssuance), typeof(PublicUser), nameof(LetterIssuance.RecipientPublicUserId), DeleteBehavior.SetNull),
+        // Data capture entities — cascade delete with their parent Property
+        (typeof(FieldAndCrop),   typeof(Property), nameof(FieldAndCrop.PropertyId),   DeleteBehavior.Cascade),
+        (typeof(Forestation),    typeof(Property), nameof(Forestation.PropertyId),    DeleteBehavior.Cascade),
+        (typeof(DamCalculation), typeof(Property), nameof(DamCalculation.PropertyId), DeleteBehavior.Cascade),
+        (typeof(Irrigation),     typeof(Property), nameof(Irrigation.PropertyId),     DeleteBehavior.Cascade),
+        (typeof(Storing),        typeof(Property), nameof(Storing.PropertyId),        DeleteBehavior.Cascade),
+    };
+
     public ApplicationDBContext(DbContextOptions<ApplicationDBContext> dbContextOption) : base(dbContextOption)
-    {}
+    { }
 
     // ── Core domain ──
     public DbSet<Property> Properties { get; set; }
@@ -54,9 +75,6 @@ public class ApplicationDBContext : DbContext
     public DbSet<CatchmentArea> CatchmentAreas { get; set; }
     public DbSet<OrganisationalUnit> OrganisationalUnits { get; set; }
 
-    // ── Users ──
-    public DbSet<ApplicationUser> ApplicationUsers { get; set; }
-
     // ── Workflow ──
     public DbSet<WorkflowState> WorkflowStates { get; set; }
     public DbSet<WorkflowInstance> WorkflowInstances { get; set; }
@@ -78,12 +96,15 @@ public class ApplicationDBContext : DbContext
     // ── Public portal ──
     public DbSet<PublicUser> PublicUsers { get; set; }
     public DbSet<PublicUserProperty> PublicUserProperties { get; set; }
+    public DbSet<PublicUserRecoveryCode> PublicUserRecoveryCodes { get; set; }
     public DbSet<CaseComment> CaseComments { get; set; }
     public DbSet<Objection> Objections { get; set; }
     public DbSet<ObjectionDocument> ObjectionDocuments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         // ── Primary keys ──
         modelBuilder.Entity<Property>().HasKey(e => e.PropertyId);
         modelBuilder.Entity<FileMaster>().HasKey(e => e.FileMasterId);
@@ -96,6 +117,13 @@ public class ApplicationDBContext : DbContext
         modelBuilder.Entity<Forestation>().HasKey(e => e.ForestationId);
         modelBuilder.Entity<Storing>().HasKey(e => e.StoringId);
         modelBuilder.Entity<DamCalculation>().HasKey(e => e.DamCalculationId);
+
+        // Note: cascade delete from Property to the five data-capture entities
+        // (FieldAndCrop, Forestation, DamCalculation, Irrigation, Storing) is
+        // applied by the global override loop at the bottom of this method using
+        // the NonRestrictForeignKeys whitelist. We rely on EF Core's convention-
+        // discovered FK on each model's `Property` navigation rather than declaring
+        // a duplicate HasOne here (which would create a shadow PropertyId1 column).
 
         modelBuilder.Entity<PropertyOwner>().HasKey(e => e.OwnerId);
         modelBuilder.Entity<PropertyOwnership>().HasKey(e => e.Id);
@@ -124,8 +152,6 @@ public class ApplicationDBContext : DbContext
         modelBuilder.Entity<WaterManagementArea>().HasKey(e => e.WmaId);
         modelBuilder.Entity<CatchmentArea>().HasKey(e => e.CatchmentAreaId);
         modelBuilder.Entity<OrganisationalUnit>().HasKey(e => e.OrgUnitId);
-
-        modelBuilder.Entity<ApplicationUser>().HasKey(e => e.ApplicationUserId);
 
         modelBuilder.Entity<WorkflowState>().HasKey(e => e.WorkflowStateId);
         modelBuilder.Entity<WorkflowInstance>().HasKey(e => e.WorkflowInstanceId);
@@ -167,6 +193,15 @@ public class ApplicationDBContext : DbContext
             .HasOne(p => p.ParentProperty)
             .WithMany(p => p.ChildProperties)
             .HasForeignKey(p => p.ParentPropertyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Property → Successor (consolidation forward link). No inverse collection —
+        // a property has at most one successor, and its predecessors are discovered
+        // via the back-pointing query rather than a navigation collection.
+        modelBuilder.Entity<Property>()
+            .HasOne(p => p.SuccessorProperty)
+            .WithMany()
+            .HasForeignKey(p => p.SuccessorPropertyId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // PropertyOwnership many-to-many
@@ -623,12 +658,140 @@ public class ApplicationDBContext : DbContext
             .HasForeignKey(li => li.IrrigationBoardId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // ── Global: disable cascade delete for all relationships ──
+        // ── PublicUserRecoveryCode ──
+        modelBuilder.Entity<PublicUserRecoveryCode>().HasKey(e => e.Id);
+        modelBuilder.Entity<PublicUserRecoveryCode>()
+            .Property(e => e.CodeHash)
+            .HasMaxLength(128)
+            .IsRequired();
+        modelBuilder.Entity<PublicUserRecoveryCode>()
+            .Property(e => e.CreatedDate)
+            .HasColumnType("datetime2(0)")
+            .HasDefaultValueSql("GETUTCDATE()");
+        modelBuilder.Entity<PublicUserRecoveryCode>()
+            .Property(e => e.UsedDate)
+            .HasColumnType("datetime2(0)");
+        modelBuilder.Entity<PublicUserRecoveryCode>()
+            .Property(e => e.ExpiresDate)
+            .HasColumnType("datetime2(0)");
+        modelBuilder.Entity<PublicUserRecoveryCode>()
+            .HasOne(e => e.PublicUser)
+            .WithMany()
+            .HasForeignKey(e => e.PublicUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<PublicUserRecoveryCode>()
+            .HasIndex(e => e.PublicUserId)
+            .HasDatabaseName("IX_PublicUserRecoveryCodes_PublicUserId_Unused")
+            .HasFilter("[Used] = 0");
+
+        // ── PublicUser new column constraints ──
+        modelBuilder.Entity<PublicUser>()
+            .Property(e => e.MfaSecret).HasMaxLength(256);
+        modelBuilder.Entity<PublicUser>()
+            .Property(e => e.MfaEnrolledDate).HasColumnType("datetime2(0)");
+        modelBuilder.Entity<PublicUser>()
+            .Property(e => e.LastLoginDate).HasColumnType("datetime2(0)");
+        modelBuilder.Entity<PublicUser>()
+            .Property(e => e.FailedLoginAttempts).HasDefaultValue(0);
+        modelBuilder.Entity<PublicUser>()
+            .Property(e => e.LockoutUntil).HasColumnType("datetime2(0)");
+        modelBuilder.Entity<PublicUser>()
+            .Property(e => e.HdiConsentGivenDate).HasColumnType("datetime2(0)");
+        modelBuilder.Entity<PublicUser>()
+            .HasIndex(e => e.EmailAddress)
+            .IsUnique()
+            .HasDatabaseName("IX_PublicUsers_EmailAddress");
+        modelBuilder.Entity<PublicUser>()
+            .HasIndex(e => e.IdentityNumber)
+            .HasDatabaseName("IX_PublicUsers_IdentityNumber")
+            .HasFilter("[IdentityNumber] IS NOT NULL");
+        modelBuilder.Entity<PublicUser>()
+            .ToTable(t => t.HasCheckConstraint(
+                "CK_PublicUsers_HdiConsent",
+                "[IsHDI] = 0 OR [HdiConsentGivenDate] IS NOT NULL"));
+
+        // ── PublicUserProperty new column constraints + enum converters ──
+        modelBuilder.Entity<PublicUserProperty>()
+            .Property(e => e.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+        modelBuilder.Entity<PublicUserProperty>()
+            .Property(e => e.EvidenceType)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+        modelBuilder.Entity<PublicUserProperty>()
+            .Property(e => e.RequestedDate)
+            .HasColumnType("datetime2(0)")
+            .HasDefaultValueSql("GETUTCDATE()");
+        modelBuilder.Entity<PublicUserProperty>()
+            .Property(e => e.RejectionReason).HasMaxLength(1000);
+        modelBuilder.Entity<PublicUserProperty>()
+            .HasOne(e => e.EvidenceDocument)
+            .WithMany()
+            .HasForeignKey(e => e.EvidenceDocumentId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<PublicUserProperty>()
+            .HasIndex(e => new { e.PublicUserId, e.PropertyId })
+            .IsUnique()
+            .HasDatabaseName("IX_PublicUserProperties_UserId_Property_Active")
+            .HasFilter("[Status] <> 'Rejected'");
+        modelBuilder.Entity<PublicUserProperty>()
+            .HasIndex(e => e.RequestedDate)
+            .HasDatabaseName("IX_PublicUserProperties_Pending")
+            .HasFilter("[Status] = 'Pending'");
+        modelBuilder.Entity<PublicUserProperty>()
+            .HasIndex(e => new { e.PublicUserId, e.Status })
+            .HasDatabaseName("IX_PublicUserProperties_UserId_Status")
+            .IncludeProperties(e => e.PropertyId);
+        modelBuilder.Entity<PublicUserProperty>()
+            .ToTable(t => t.HasCheckConstraint(
+                "CK_PublicUserProperties_EvidenceDocumentId",
+                "[EvidenceType] <> 'TitleDeedUpload' OR [EvidenceDocumentId] IS NOT NULL"));
+
+        // ── LetterIssuance recipient FK + timeline index ──
+        modelBuilder.Entity<LetterIssuance>()
+            .HasOne(e => e.RecipientPublicUser)
+            .WithMany()
+            .HasForeignKey(e => e.RecipientPublicUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<LetterIssuance>()
+            .HasIndex(e => new { e.FileMasterId, e.IssuedDate })
+            .HasDatabaseName("IX_LetterIssuances_FileMasterId_IssuedDate");
+
+        // ── Notification unread filtered index for portal bell ──
+        modelBuilder.Entity<Notification>()
+            .HasIndex(e => e.PublicUserId)
+            .HasDatabaseName("IX_Notifications_PublicUserId_Unread")
+            .HasFilter("[IsRead] = 0 AND [PublicUserId] IS NOT NULL");
+
+        // ── PropertyOwner.IdentityDocumentNumber index for auto-match ──
+        modelBuilder.Entity<PropertyOwner>()
+            .HasIndex(e => e.IdentityDocumentNumber)
+            .HasDatabaseName("IX_PropertyOwners_IdentityDocumentNumber")
+            .HasFilter("[IdentityDocumentNumber] IS NOT NULL");
+
+        // ── Global: disable cascade delete for all relationships, except whitelisted FKs.
+        //    Source of truth: ApplicationDBContext.NonRestrictForeignKeys (static).
+        //    We identify exemptions by (dependent CLR type, principal CLR type, FK property name)
+        //    because constraint names are not yet materialised when the loop runs.
         // SQL Server does not allow multiple cascade paths; Restrict is safer
-        // and forces explicit deletion in correct order.
+        // and forces explicit deletion in correct order. Whitelisted FKs are
+        // ACTIVELY SET to their declared Behavior (e.g. Cascade) so we don't have
+        // to add per-entity HasOne configs that risk duplicating a convention FK.
+        var whitelistByKey = NonRestrictForeignKeys
+            .ToDictionary(x => (x.Dependent, x.Principal, x.FkProperty), x => x.Behavior);
+
         foreach (var relationship in modelBuilder.Model.GetEntityTypes()
             .SelectMany(e => e.GetForeignKeys()))
         {
+            var dependent = relationship.DeclaringEntityType.ClrType;
+            var principal = relationship.PrincipalEntityType.ClrType;
+            var fkProp = relationship.Properties.FirstOrDefault()?.Name ?? string.Empty;
+            if (whitelistByKey.TryGetValue((dependent, principal, fkProp), out var allowedBehavior))
+            {
+                relationship.DeleteBehavior = allowedBehavior;
+                continue;
+            }
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
         }
     }

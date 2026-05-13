@@ -1,0 +1,64 @@
+@model ICollection<FieldAndCropViewModel>
+
+@{
+    ViewData["Title"] = "Field & Crop Records";
+    var propertyId = ViewBag.PropertyId as Guid? ?? Guid.Empty;
+    var propertyRef = ViewBag.PropertyRef as string ?? "Property";
+}
+
+<a asp-controller="FileMaster" asp-action="Index" class="btn-back">&larr; Back to V&amp;V Cases</a>
+
+<div class="page-title">Field &amp; Crop Records</div>
+<div class="page-subtitle">Property: @propertyRef</div>
+
+<div style="margin-bottom: 16px;">
+    <a asp-action="Create" asp-route-propertyId="@propertyId" class="btn btn-primary">+ Add Field &amp; Crop Record</a>
+</div>
+
+<div class="card" style="max-width: 1100px;">
+    @if (!Model.Any())
+    {
+        <p style="color: var(--dws-text-muted); padding: 12px 0;">No field and crop records captured yet.</p>
+    }
+    else
+    {
+        <div class="data-table-wrap">
+            <table class="dws-table">
+                <thead>
+                    <tr>
+                        <th>Field No.</th>
+                        <th>Period</th>
+                        <th>Crop</th>
+                        <th>Field Area (ha)</th>
+                        <th>Crop Area (ha)</th>
+                        <th>Water Source</th>
+                        <th>SAPWAT (mm/ha/a)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model)
+                    {
+                        <tr>
+                            <td>@(row.FieldNumber ?? "--")</td>
+                            <td>@(row.PeriodName ?? "--")</td>
+                            <td>@(row.CropName ?? "--")</td>
+                            <td>@row.FieldArea.ToString("N2")</td>
+                            <td>@row.CropArea.ToString("N2")</td>
+                            <td>@(row.WaterSourceName ?? "--")</td>
+                            <td>@row.SAPWATCalculationResult.ToString("N2")</td>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@row.FieldAndCropId" class="btn btn-sm btn-primary">Edit</a>
+                                <form asp-action="Delete" asp-route-id="@row.FieldAndCropId" method="post" style="display:inline;"
+                                      onsubmit="return confirm('Delete this field and crop record?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

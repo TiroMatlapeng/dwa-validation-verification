@@ -2,6 +2,10 @@
 
 @{
     ViewData["Title"] = "Delete V&V Case";
+    bool canDelete = ViewBag.CanDelete == true;
+    int letterCount        = ViewBag.BlockingLetters       ?? 0;
+    int authorisationCount = ViewBag.BlockingAuthorisations ?? 0;
+    int workflowCount      = ViewBag.BlockingWorkflow       ?? 0;
 }
 
 <a asp-controller="FileMaster" asp-action="Index" class="btn-back">&larr; Back to V&amp;V Cases</a>
@@ -23,13 +27,37 @@
         <div>@Model.SurveyorGeneralCode</div>
     </div>
 
-    <div style="margin-top: 20px; padding: 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 4px; color: #991b1b; font-size: 13px;">
-        This action cannot be undone. All data associated with this V&amp;V case will be permanently removed.
-    </div>
+    @if (!canDelete)
+    {
+        <div style="margin-top: 16px; padding: 12px 16px; background-color: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; color: #92400e; font-size: 14px;">
+            <strong>Cannot delete this case.</strong> The following linked records must be removed first:
+            <ul style="margin: 6px 0 0 16px; padding: 0;">
+                @if (letterCount > 0)
+                {
+                    <li>@letterCount letter(s) issued</li>
+                }
+                @if (authorisationCount > 0)
+                {
+                    <li>@authorisationCount authorisation record(s)</li>
+                }
+                @if (workflowCount > 0)
+                {
+                    <li>@workflowCount workflow instance(s)</li>
+                }
+            </ul>
+        </div>
+    }
+    else
+    {
+        <div style="margin-top: 20px; padding: 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 4px; color: #991b1b; font-size: 13px;">
+            This action cannot be undone. All data associated with this V&amp;V case will be permanently removed.
+        </div>
+    }
 
-    <form asp-action="Delete" asp-route-id="@Model.FileMasterId" style="margin-top: 20px;">
+    <form asp-action="Delete" asp-route-id="@Model.FileMasterId" method="post" style="margin-top: 20px;">
+        @Html.AntiForgeryToken()
         <input type="hidden" asp-for="FileMasterId" />
-        <input type="submit" value="Delete Case" class="btn btn-danger" />
+        <input type="submit" value="Delete Case" class="btn btn-danger" @(!canDelete ? "disabled" : "") />
         <a asp-action="Index" class="btn btn-outline" style="margin-left: 8px;">Cancel</a>
     </form>
 </div>

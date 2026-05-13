@@ -1,0 +1,65 @@
+@model IEnumerable<dwa_ver_val.ViewModels.Admin.UserListItemViewModel>
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<div class="dws-page-header">
+    <h1>Manage Users</h1>
+    <a asp-action="Create" class="dws-btn dws-btn-primary">Add User</a>
+</div>
+
+<table class="dws-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Employee Number</th>
+            <th>Role</th>
+            <th>Organisational Unit</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var u in Model)
+    {
+        <tr>
+            <td>@u.FullName</td>
+            <td>@u.Email</td>
+            <td>@u.EmployeeNumber</td>
+            <td>@u.Role</td>
+            <td>@(u.OrgUnitName ?? "(national)")</td>
+            <td>
+                @if (u.IsActive)
+                {
+                    <span class="dws-status-pill dws-status-pill--ok">Active</span>
+                }
+                else
+                {
+                    <span class="dws-status-pill dws-status-pill--warning">Inactive</span>
+                }
+            </td>
+            <td>
+                <div class="dws-row-actions">
+                    <a asp-action="Edit" asp-route-id="@u.Id" class="dws-btn dws-btn-ghost">Edit</a>
+                    <a asp-action="ResetPassword" asp-route-id="@u.Id" class="dws-btn dws-btn-ghost">Reset password</a>
+                    @if (u.IsActive)
+                    {
+                        <form asp-action="Deactivate" asp-route-id="@u.Id" method="post" class="dws-inline-form">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dws-btn dws-btn-danger">Deactivate</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="Reactivate" asp-route-id="@u.Id" method="post" class="dws-inline-form">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dws-btn dws-btn-ghost">Reactivate</button>
+                        </form>
+                    }
+                </div>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

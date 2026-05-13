@@ -171,8 +171,8 @@
   <div class="cover-meta">
     <strong>Client:</strong> Department of Water and Sanitation (DWS)<br>
     <strong>Project:</strong> Electronic V&amp;V Information Management System<br>
-    <strong>Version:</strong> 1.0 &mdash; MVP Phase<br>
-    <strong>Date:</strong> 25 March 2026<br>
+    <strong>Version:</strong> 1.1 &mdash; MVP Phase<br>
+    <strong>Date:</strong> 9 April 2026<br>
     <strong>Classification:</strong> Internal &mdash; For Client Review
   </div>
   <div class="cover-footer">
@@ -197,6 +197,10 @@
   <li><a href="#workflow" style="color:#0066b3; text-decoration:none;">Screen: Workflow Overview</a></li>
   <li><a href="#letters" style="color:#0066b3; text-decoration:none;">Screen: Letter Management</a></li>
   <li><a href="#letter-sign" style="color:#0066b3; text-decoration:none;">Screen: Letter Signing</a></li>
+  <li><a href="#filemaster" style="color:#0066b3; text-decoration:none;">Screen: File Master / V&amp;V Case</a></li>
+  <li><a href="#users" style="color:#0066b3; text-decoration:none;">Screen: User Administration</a></li>
+  <li><a href="#reports" style="color:#0066b3; text-decoration:none;">Screen: Reports</a></li>
+  <li><a href="#portal" style="color:#0066b3; text-decoration:none;">External Water-User Portal</a></li>
   <li><a href="#typography" style="color:#0066b3; text-decoration:none;">Typography, Spacing &amp; Components</a></li>
   <li><a href="#responsive" style="color:#0066b3; text-decoration:none;">Responsive Behaviour</a></li>
   <li><a href="#accessibility" style="color:#0066b3; text-decoration:none;">Accessibility Considerations</a></li>
@@ -413,7 +417,7 @@
 </p>
 
 <figure>
-  <img src="wireframes/screenshots/image2.png" alt="Dashboard screen showing summary statistics, V&V progress chart, letter status summary, recent activity, and assigned tasks">
+  <img src="wireframes/screenshots-v2/internal-dashboard.png" alt="Dashboard screen showing summary statistics, V&V progress chart, letter status summary, recent activity, and assigned tasks">
   <figcaption>Figure 1 &mdash; Dashboard: Operational overview with summary cards, progress charts, and task lists</figcaption>
 </figure>
 
@@ -463,7 +467,7 @@
 </p>
 
 <figure>
-  <img src="wireframes/screenshots/image4.png" alt="Properties list with filters, sortable columns, status badges, and bulk action controls">
+  <img src="wireframes/screenshots-v2/internal-properties.png" alt="Properties list with filters, sortable columns, status badges, and bulk action controls">
   <figcaption>Figure 2 &mdash; Properties List: Filterable, sortable data table with inline status indicators and batch actions</figcaption>
 </figure>
 
@@ -519,7 +523,7 @@
 </p>
 
 <figure>
-  <img src="wireframes/screenshots/image5.png" alt="Property registration form with multi-step stepper showing Step 2 (Location) with fields for SG Code, farm name, property size, WMA, province, and quaternary drainage">
+  <img src="wireframes/screenshots-v2/internal-register.png" alt="Property registration form with multi-step stepper showing Step 2 (Location) with fields for SG Code, farm name, property size, WMA, province, and quaternary drainage">
   <figcaption>Figure 3 &mdash; Property Registration: Multi-step form (Step 2 &mdash; Location &amp; Catchment)</figcaption>
 </figure>
 
@@ -570,7 +574,7 @@
 </p>
 
 <figure>
-  <img src="wireframes/screenshots/image1.png" alt="Property details form showing Property Details section with fields for reference number, SG Code, property size, quaternary drainage, dates, WMA, coordinates, and Property Address section with street address, suburb, city, and province">
+  <img src="wireframes/screenshots-v2/internal-detail.png" alt="Property details form showing Property Details section with fields for reference number, SG Code, property size, quaternary drainage, dates, WMA, coordinates, and Property Address section with street address, suburb, city, and province">
   <figcaption>Figure 4 &mdash; Property Details (MVP): Core property data and address capture form</figcaption>
 </figure>
 
@@ -621,7 +625,7 @@
 </p>
 
 <figure>
-  <img src="wireframes/screenshots/image7.png" alt="Workflow overview showing case pipeline distribution across control points as horizontal bars, and individual case detail with control point stepper showing completed, in-progress, and pending steps">
+  <img src="wireframes/screenshots-v2/internal-workflow.png" alt="Workflow overview showing case pipeline distribution across control points as horizontal bars, and individual case detail with control point stepper showing completed, in-progress, and pending steps">
   <figcaption>Figure 5 &mdash; Workflow Overview: Case pipeline distribution and individual case control point progression</figcaption>
 </figure>
 
@@ -673,7 +677,7 @@
 </p>
 
 <figure>
-  <img src="wireframes/screenshots/image6.png" alt="Letter management screen showing summary statistics for letter types, filter bar, and data table with letter details including case number, property, letter type, status, dates, and response tracking">
+  <img src="wireframes/screenshots-v2/internal-letters.png" alt="Letter management screen showing summary statistics for letter types, filter bar, and data table with letter details including case number, property, letter type, status, dates, and response tracking">
   <figcaption>Figure 6 &mdash; Letter Management: Summary statistics, filterable letter list with status tracking</figcaption>
 </figure>
 
@@ -715,7 +719,7 @@
 </p>
 
 <figure>
-  <img src="wireframes/screenshots/image3.png" alt="Letter signing screen showing PDF preview on the left, letter metadata on the right, and electronic signature capture panel with reason for signing and signature pad">
+  <img src="wireframes/screenshots-v2/internal-filemaster.png" alt="Letter signing screen showing PDF preview on the left, letter metadata on the right, and electronic signature capture panel with reason for signing and signature pad">
   <figcaption>Figure 7 &mdash; Letter Signing: Document preview with electronic signature capture</figcaption>
 </figure>
 
@@ -752,9 +756,193 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════════
-     12. TYPOGRAPHY, SPACING & COMPONENTS
+     12. FILE MASTER / V&V CASE
      ════════════════════════════════════════════════════════════════════ -->
-<h1 id="typography" class="page-break">12. Typography, Spacing &amp; Components</h1>
+<h1 id="filemaster" class="page-break">12. Screen: File Master / V&amp;V Case</h1>
+
+<p>
+  The File Master screen is the central case management view for a V&amp;V case. It displays the case details,
+  linked property, workflow state, and associated records. Every V&amp;V case in the system is represented by a
+  FileMaster record, and this screen provides the primary interface for validators and managers to review case
+  data, track workflow progress, and access linked records such as entitlements, field and crop data, dam
+  calculations, and correspondence.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots-v2/internal-filemaster.png" alt="File Master case management screen showing case details, linked property, workflow state, and associated records">
+  <figcaption>Figure 8 &mdash; File Master / V&amp;V Case: Central case management view with workflow state and linked records</figcaption>
+</figure>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     13. USER ADMINISTRATION
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="users" class="page-break">13. Screen: User Administration</h1>
+
+<p>
+  The User Administration screen allows SystemAdmin and NationalManager roles to manage DWS staff accounts, role
+  assignments, and organisational unit scoping. From this screen, administrators can create new user accounts,
+  assign roles (SystemAdmin, NationalManager, RegionalManager, Validator, Capturer, ReadOnly), and configure
+  the organisational unit that determines each user's data access scope.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots-v2/internal-users.png" alt="User administration screen showing staff account list with role assignments and organisational unit scoping">
+  <figcaption>Figure 9 &mdash; User Administration: Staff account management with role and organisational unit assignment</figcaption>
+</figure>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     14. REPORTS
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="reports" class="page-break">14. Screen: Reports</h1>
+
+<p>
+  The Reports screen provides programme-level analytics with filterable views across provinces, WMAs, and time
+  periods. It enables national and regional managers to monitor V&amp;V progress, identify bottlenecks, and
+  generate compliance reports for DWS leadership. Reports can be filtered by organisational unit, date range,
+  validation status, and water use type, and exported to CSV or Excel for further analysis.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots-v2/internal-reports.png" alt="Reports screen showing programme-level analytics with filterable views across provinces, WMAs, and time periods">
+  <figcaption>Figure 10 &mdash; Reports: Programme-level analytics with province, WMA, and time period filters</figcaption>
+</figure>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     15. EXTERNAL WATER-USER PORTAL
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="portal" class="page-break">15. External Water-User Portal</h1>
+
+<p>
+  The external portal provides a separate, public-facing interface for water users, landowners, and legal
+  representatives to interact with the V&amp;V process. It uses the same DWS brand identity but with a lighter
+  visual treatment &mdash; white header bar with the DWS logo, light sidebar navigation, and a clean content
+  area designed for non-technical users. The portal runs under a separate authentication cookie scheme and
+  enforces mandatory multi-factor authentication (MFA) for all external users.
+</p>
+
+<h2>15.1 Portal Login</h2>
+
+<p>
+  The login page presents a centred authentication card with the DWS coat of arms logo prominently displayed.
+  MFA is mandatory &mdash; users are informed during login that TOTP verification will be required after initial
+  sign-in. The design conveys government authority and trustworthiness.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots-v2/portal-login.png" alt="External portal login page with centred authentication card and DWS coat of arms logo">
+  <figcaption>Figure 11 &mdash; Portal Login: Centred authentication card with DWS branding and MFA notice</figcaption>
+</figure>
+
+<h2>15.2 Portal Registration</h2>
+
+<p>
+  Self-registration for external users. Fields include name, surname, ID number, email, phone, and password.
+  Registration requires email verification and subsequent MFA setup before accessing case data. A DWS official
+  must approve the ExternalUserProperty link before the external user can see any case information.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots-v2/portal-register.png" alt="External portal registration form with fields for name, surname, ID number, email, phone, and password">
+  <figcaption>Figure 12 &mdash; Portal Registration: Self-registration form with email verification and MFA setup requirement</figcaption>
+</figure>
+
+<h2>15.3 Portal Dashboard</h2>
+
+<p>
+  The authenticated dashboard shows the water user's linked cases with status indicators, recent notifications,
+  and quick access to correspondence and documents. The layout is simplified compared to the internal dashboard,
+  focusing on the information most relevant to the external user's cases.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots-v2/portal-dashboard.png" alt="External portal dashboard showing linked cases with status indicators, notifications, and quick access links">
+  <figcaption>Figure 13 &mdash; Portal Dashboard: Linked cases with status indicators and recent notifications</figcaption>
+</figure>
+
+<h2>15.4 Case Detail</h2>
+
+<p>
+  Read-only view of the V&amp;V case showing property details, current workflow state, and case history. External
+  users can see where their case stands in the V&amp;V process without the ability to modify any data. The
+  workflow stepper is displayed in a simplified format that communicates progress without exposing internal
+  process terminology.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots-v2/portal-case-detail.png" alt="External portal case detail view showing property details, workflow state, and case history">
+  <figcaption>Figure 14 &mdash; Case Detail: Read-only view of property details, workflow state, and case history</figcaption>
+</figure>
+
+<h2>15.5 Correspondence</h2>
+
+<p>
+  Section 35 letters and official correspondence. Water users can view issued letters, response due dates, and
+  submit written responses. Each letter displays its statutory reference, issue date, and the remaining time to
+  respond. Overdue responses are highlighted to prompt action.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots-v2/portal-correspondence.png" alt="External portal correspondence view showing Section 35 letters with due dates and response submission">
+  <figcaption>Figure 15 &mdash; Correspondence: Section 35 letters with due dates and response submission</figcaption>
+</figure>
+
+<h2>15.6 Comments</h2>
+
+<p>
+  Threaded comment system for communication between the water user and DWS officials on a specific case.
+  Comments are timestamped and display the author's name and role. DWS officials can view comments from the
+  internal portal, and responses from officials are clearly distinguished from user submissions.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots-v2/portal-comments.png" alt="External portal comments view showing threaded communication between water user and DWS officials">
+  <figcaption>Figure 16 &mdash; Comments: Threaded communication between water user and DWS officials</figcaption>
+</figure>
+
+<h2>15.7 Documents</h2>
+
+<p>
+  Document management tab where users upload supporting documents (title deeds, permits, field survey evidence).
+  All uploads are virus-scanned before being made accessible. The interface shows upload date, document type,
+  file size, and scan status for each uploaded document.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots-v2/portal-documents.png" alt="External portal document management showing uploaded documents with type, date, and scan status">
+  <figcaption>Figure 17 &mdash; Documents: Upload and manage supporting documents with virus scan status</figcaption>
+</figure>
+
+<h2>15.8 Notifications</h2>
+
+<p>
+  Notification centre showing case state changes, letter issuances, and response reminders. Notifications are
+  sorted by date with unread items highlighted. Users can mark notifications as read individually or in bulk.
+  Email notifications are sent in parallel for critical events such as letter issuance and approaching due dates.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots-v2/portal-notifications.png" alt="External portal notification centre showing case state changes, letter issuances, and response reminders">
+  <figcaption>Figure 18 &mdash; Notifications: Case state changes, letter issuances, and response reminders</figcaption>
+</figure>
+
+<h2>15.9 Lodge Objection / Appeal</h2>
+
+<p>
+  Formal objection/appeal submission form. Water users can lodge objections against ELU determinations with
+  supporting documents and written motivation. The form captures the grounds for objection, allows document
+  attachment, and records the submission date. DWS officials are notified immediately when an objection is
+  lodged, and the case workflow transitions to reflect the pending objection.
+</p>
+
+<figure>
+  <img src="wireframes/screenshots-v2/portal-objection.png" alt="External portal objection form for lodging formal objections against ELU determinations">
+  <figcaption>Figure 19 &mdash; Lodge Objection / Appeal: Formal objection submission with supporting documents</figcaption>
+</figure>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     16. TYPOGRAPHY, SPACING & COMPONENTS
+     ════════════════════════════════════════════════════════════════════ -->
+<h1 id="typography" class="page-break">16. Typography, Spacing &amp; Components</h1>
 
 <h3>12.1 Typography</h3>
 <p>
@@ -830,9 +1018,9 @@
 </table>
 
 <!-- ════════════════════════════════════════════════════════════════════
-     13. RESPONSIVE BEHAVIOUR
+     17. RESPONSIVE BEHAVIOUR
      ════════════════════════════════════════════════════════════════════ -->
-<h1 id="responsive">13. Responsive Behaviour</h1>
+<h1 id="responsive">17. Responsive Behaviour</h1>
 
 <p>
   While the V&amp;V System is primarily a desktop application used in office environments, the interface is
@@ -862,9 +1050,9 @@
 </p>
 
 <!-- ════════════════════════════════════════════════════════════════════
-     14. ACCESSIBILITY
+     18. ACCESSIBILITY
      ════════════════════════════════════════════════════════════════════ -->
-<h1 id="accessibility">14. Accessibility Considerations</h1>
+<h1 id="accessibility">18. Accessibility Considerations</h1>
 
 <p>
   The V&amp;V System targets <strong>WCAG 2.1 Level AA</strong> compliance across all screens. Key measures include:
@@ -879,9 +1067,9 @@
 </ul>
 
 <!-- ════════════════════════════════════════════════════════════════════
-     15. NEXT STEPS
+     19. NEXT STEPS
      ════════════════════════════════════════════════════════════════════ -->
-<h1 id="next">15. Next Steps</h1>
+<h1 id="next">19. Next Steps</h1>
 
 <p>
   This document represents the MVP visual baseline. The following areas will be developed and documented in
@@ -889,7 +1077,6 @@
 </p>
 
 <ol>
-  <li><strong>External Water-User Portal</strong> &mdash; A separate set of wireframes for the public-facing portal where water users can track their case status, upload supporting documents, respond to Section 35 letters, and lodge objections.</li>
   <li><strong>GIS Map Integration</strong> &mdash; Embedded map views on property details screens showing SG boundaries, catchment overlays, satellite imagery layers, and digitised crop field polygons.</li>
   <li><strong>Calculator Screens</strong> &mdash; SAPWAT modelling input, dam volume calculator (Appendix D methods), and SFRA stream flow reduction calculation interfaces.</li>
   <li><strong>Report Builder</strong> &mdash; Customisable report screens for programme progress, provincial summaries, ELU outcome statistics, and Section 35 compliance tracking.</li>
@@ -905,7 +1092,7 @@
 </div>
 
 <div style="margin-top:4rem; padding-top:1rem; border-top:2px solid #7db8e0; font-size:9pt; color:#8892a0; text-align:center;">
-  DWA V&amp;V System &mdash; Solution Look and Feel v1.0 &mdash; 25 March 2026<br>
+  DWA V&amp;V System &mdash; Solution Look and Feel v1.1 &mdash; 9 April 2026<br>
   Department of Water and Sanitation &mdash; Republic of South Africa
 </div>
 

@@ -148,9 +148,109 @@
     }
 </div>
 
+@{
+    var lineage = ViewBag.Lineage as dwa_ver_val.ViewModels.PropertyLineageViewModel;
+    var status = Model.PropertyStatus ?? "Active";
+}
+
+<!-- Lineage Panel -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="form-section-title">Property Lineage</div>
+    <div class="form-row">
+        <div class="form-group">
+            <div class="form-label">Status</div>
+            <div>
+                @switch (status)
+                {
+                    case "Subdivided":
+                        <span class="badge badge-orange">Subdivided</span>
+                        break;
+                    case "Consolidated":
+                        <span class="badge badge-purple">Consolidated</span>
+                        break;
+                    default:
+                        <span class="badge badge-green">Active</span>
+                        break;
+                }
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="form-label">Predecessor (Parent)</div>
+            <div>
+                @if (lineage?.Parent is not null)
+                {
+                    <a asp-action="Details" asp-route-id="@lineage.Parent.PropertyId">@(lineage.Parent.SGCode ?? lineage.Parent.PropertyId.ToString())</a>
+                }
+                else
+                {
+                    <text>—</text>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <div class="form-label">Successor</div>
+            <div>
+                @if (lineage?.Successor is not null)
+                {
+                    <a asp-action="Details" asp-route-id="@lineage.Successor.PropertyId">@(lineage.Successor.SGCode ?? lineage.Successor.PropertyId.ToString())</a>
+                }
+                else
+                {
+                    <text>—</text>
+                }
+            </div>
+        </div>
+        <div class="form-group">
+            <!-- spacer -->
+        </div>
+    </div>
+
+    @if (lineage?.Children is { Count: > 0 })
+    {
+        <div class="form-row">
+            <div class="form-group" style="flex:1 1 100%;">
+                <div class="form-label">Subdivision Children</div>
+                <ul style="margin: 4px 0 0 18px; padding: 0;">
+                    @foreach (var child in lineage.Children)
+                    {
+                        <li>
+                            <a asp-action="Details" asp-route-id="@child.PropertyId">@(child.SGCode ?? child.PropertyId.ToString())</a>
+                            — @child.PropertySize.ToString("N2") ha
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+
+    @if (lineage?.ConsolidationPredecessors is { Count: > 0 })
+    {
+        <div class="form-row">
+            <div class="form-group" style="flex:1 1 100%;">
+                <div class="form-label">Consolidation Predecessors</div>
+                <ul style="margin: 4px 0 0 18px; padding: 0;">
+                    @foreach (var pre in lineage.ConsolidationPredecessors)
+                    {
+                        <li>
+                            <a asp-action="Details" asp-route-id="@pre.PropertyId">@(pre.SGCode ?? pre.PropertyId.ToString())</a>
+                            — @pre.PropertySize.ToString("N2") ha
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+</div>
+
 <!-- Action Buttons -->
 <div style="display: flex; gap: 8px;">
     <a asp-action="Edit" asp-route-id="@Model.PropertyId" class="btn btn-primary">Edit</a>
     <a asp-action="Delete" asp-route-id="@Model.PropertyId" class="btn btn-danger">Delete</a>
     <a asp-controller="FileMaster" asp-action="Create" asp-route-propertyId="@Model.PropertyId" class="btn btn-outline">+ New Case</a>
+    @if (status == "Active")
+    {
+        <a asp-action="Subdivide" asp-route-id="@Model.PropertyId" class="btn btn-outline">Subdivide</a>
+    }
 </div>

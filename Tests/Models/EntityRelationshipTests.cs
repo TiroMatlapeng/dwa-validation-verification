@@ -56,7 +56,7 @@ public class EntityRelationshipTests
 
         var validator = new ApplicationUser
         {
-            ApplicationUserId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             FirstName = "Jane",
             LastName = "Validator",
             EmployeeNumber = "EMP001",
@@ -64,13 +64,13 @@ public class EntityRelationshipTests
         };
         var capturer = new ApplicationUser
         {
-            ApplicationUserId = Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             FirstName = "John",
             LastName = "Capturer",
             EmployeeNumber = "EMP002",
             OrgUnitId = orgUnit.OrgUnitId
         };
-        context.ApplicationUsers.AddRange(validator, capturer);
+        context.Users.AddRange(validator, capturer);
 
         var property = new Property { PropertyId = Guid.NewGuid(), PropertySize = 100m };
         context.Properties.Add(property);
@@ -87,8 +87,8 @@ public class EntityRelationshipTests
             FarmNumber = 124,
             RegistrationDivision = "LR",
             FarmPortion = "0",
-            ValidatorId = validator.ApplicationUserId,
-            CapturePersonId = capturer.ApplicationUserId,
+            ValidatorId = validator.Id,
+            CapturePersonId = capturer.Id,
             OrgUnitId = orgUnit.OrgUnitId
         };
         context.FileMasters.Add(fileMaster);
@@ -382,7 +382,9 @@ public class EntityRelationshipTests
             Id = Guid.NewGuid(),
             PublicUserId = publicUser.PublicUserId,
             PropertyId = property.PropertyId,
-            Status = "Approved",
+            Status = dwa_ver_val.Models.Enums.PropertyClaimStatus.Approved,
+            EvidenceType = dwa_ver_val.Models.Enums.PropertyClaimEvidenceType.IdMatch,
+            RequestedDate = DateTime.UtcNow,
             ApprovedDate = DateTime.UtcNow
         };
         context.PublicUserProperties.Add(link);
@@ -393,7 +395,7 @@ public class EntityRelationshipTests
             .FirstAsync(pu => pu.PublicUserId == publicUser.PublicUserId);
 
         Assert.Single(user.PublicUserProperties);
-        Assert.Equal("Approved", user.PublicUserProperties.First().Status);
+        Assert.Equal(dwa_ver_val.Models.Enums.PropertyClaimStatus.Approved, user.PublicUserProperties.First().Status);
     }
 
     [Fact]

@@ -1,0 +1,51 @@
+@model dwa_ver_val.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Sign in";
+    Layout = "_LoginLayout";
+}
+
+<div class="dws-card dws-card--login">
+    <h1>Sign in to DWA V&V</h1>
+
+    @if (Model.EntraEnabled)
+    {
+        <form asp-action="ExternalLogin" method="post" class="dws-form">
+            <input type="hidden" name="provider" value="Microsoft" />
+            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+            <button type="submit" class="dws-btn dws-btn-secondary">
+                Sign in with Microsoft
+            </button>
+        </form>
+        <div class="dws-or-divider"><span>or use email and password</span></div>
+    }
+
+    <form asp-action="Login" method="post" class="dws-form">
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div asp-validation-summary="All" class="dws-validation-summary"></div>
+
+        <div class="dws-form-row">
+            <label asp-for="Email" class="dws-label"></label>
+            <input asp-for="Email" class="dws-input" autocomplete="username" autofocus />
+            <span asp-validation-for="Email" class="dws-field-error"></span>
+        </div>
+
+        <div class="dws-form-row">
+            <label asp-for="Password" class="dws-label"></label>
+            <input asp-for="Password" class="dws-input" autocomplete="current-password" />
+            <span asp-validation-for="Password" class="dws-field-error"></span>
+        </div>
+
+        <div class="dws-form-row">
+            <label class="dws-checkbox">
+                <input asp-for="RememberMe" type="checkbox" />
+                @Html.DisplayNameFor(m => m.RememberMe)
+            </label>
+        </div>
+
+        <button type="submit" class="dws-btn dws-btn-primary">Sign in</button>
+    </form>
+
+    <div style="margin-top: var(--dws-space-4); font-size: var(--dws-fs-sm); text-align: center;">
+        <a asp-action="ForgotPassword" style="color: var(--dws-link);">Forgot your password?</a>
+    </div>
+</div>

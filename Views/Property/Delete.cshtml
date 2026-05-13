@@ -2,6 +2,9 @@
 
 @{
     ViewData["Title"] = "Delete Property";
+    bool canDelete = ViewBag.CanDelete == true;
+    int fileMasterCount = ViewBag.BlockingFileMasters ?? 0;
+    int ownershipCount  = ViewBag.BlockingOwnerships  ?? 0;
 }
 
 <a asp-controller="Property" asp-action="Index" class="btn-back">&larr; Back to Properties</a>
@@ -34,13 +37,36 @@
         </div>
     </div>
 
-    <div style="margin-top: 20px; padding: 12px 16px; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; color: #991b1b; font-size: 14px;">
-        <strong>Warning:</strong> This action is permanent and cannot be undone. All data associated with this property will be permanently deleted.
-    </div>
+    @if (!canDelete)
+    {
+        <div style="margin-top: 16px; padding: 12px 16px; background-color: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; color: #92400e; font-size: 14px;">
+            <strong>Cannot delete this property.</strong> The following linked records must be removed first:
+            <ul style="margin: 6px 0 0 16px; padding: 0;">
+                @if (fileMasterCount > 0)
+                {
+                    <li>@fileMasterCount V&amp;V case file(s) — remove or reassign via Case Files</li>
+                }
+                @if (ownershipCount > 0)
+                {
+                    <li>@ownershipCount ownership record(s) — remove via Property Ownership</li>
+                }
+                @if (ViewBag.BlockingImages > 0)
+                {
+                    <li>@ViewBag.BlockingImages satellite image(s) — remove via Satellite Images</li>
+                }
+            </ul>
+        </div>
+    }
+    else
+    {
+        <div style="margin-top: 20px; padding: 12px 16px; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; color: #991b1b; font-size: 14px;">
+            <strong>Warning:</strong> This action is permanent and cannot be undone. All field &amp; crop, forestation, dam calculation, irrigation, and storage records linked to this property will also be deleted.
+        </div>
+    }
 
-    <form asp-action="DeleteConfirmed" asp-route-id="@Model.PropertyId" method="post" style="margin-top: 20px;">
+    <form asp-action="Delete" asp-route-id="@Model.PropertyId" method="post" style="margin-top: 20px;">
         <input type="hidden" asp-for="PropertyId" />
-        <input type="submit" value="Delete Property" class="btn btn-danger" />
+        <input type="submit" value="Delete Property" class="btn btn-danger" @(!canDelete ? "disabled" : "") />
         <a asp-action="Index" class="btn btn-outline" style="margin-left: 8px;">Cancel</a>
     </form>
 </div>

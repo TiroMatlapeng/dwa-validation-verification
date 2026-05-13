@@ -1,0 +1,44 @@
+**/bin
+**/obj
+**/publish
+.git
+.gitignore
+.github
+.vscode
+.vs
+.idea
+.DS_Store
+**/.DS_Store
+
+# Local worktrees never belong in the build context.
+.worktrees
+
+# Test project — not needed in the image. Build stage restores it to satisfy the solution but we exclude its bin/obj above.
+# Keep the test sources so `dotnet restore` at build time sees the ProjectReference resolve.
+# (If you want to exclude tests entirely, add: Tests/)
+
+# Assorted artefacts
+app.zip
+publish
+packages
+artifacts
+
+# Environment / secrets
+appsettings.Local.json
+appsettings.Development.json
+secrets.json
+
+# Docs and large binary assets — not needed at runtime.
+docs
+*.docx
+*.xlsx
+*.pdf
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# VS Code / Rider local state
+*.user
+*.suo
+*.userosscache
+*.sln.docstates

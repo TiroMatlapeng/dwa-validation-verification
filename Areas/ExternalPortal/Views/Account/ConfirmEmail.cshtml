@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Email confirmation";
+    var success = (bool?)ViewData["Success"] ?? false;
+    var error = ViewData["Error"] as string;
+}
+<div class="portal-card">
+    @if (success)
+    {
+        <h1>Email confirmed</h1>
+        <p>Your account is now active. You can <a asp-action="Login">log in</a>.</p>
+    }
+    else
+    {
+        <h1>Could not confirm your email</h1>
+        <p class="errors">@error</p>
+        <p class="muted">If your link expired, please <a asp-action="Register">register again</a>.</p>
+    }
+</div>

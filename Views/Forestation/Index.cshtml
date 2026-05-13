@@ -1,0 +1,68 @@
+@model ICollection<ForestationViewModel>
+
+@{
+    ViewData["Title"] = "Forestation / SFRA Records";
+    var propertyId = ViewBag.PropertyId as Guid? ?? Guid.Empty;
+    var propertyRef = ViewBag.PropertyRef as string ?? "Property";
+}
+
+<a asp-controller="FileMaster" asp-action="Index" class="btn-back">&larr; Back to V&amp;V Cases</a>
+
+<div class="page-title">Forestation / SFRA Records</div>
+<div class="page-subtitle">Property: @propertyRef</div>
+
+<div style="margin-bottom: 16px;">
+    <a asp-action="Create" asp-route-propertyId="@propertyId" class="btn btn-primary">+ Add Forestation Record</a>
+</div>
+
+<div class="card" style="max-width: 1200px;">
+    @if (!Model.Any())
+    {
+        <p style="color: var(--dws-text-muted); padding: 12px 0;">No forestation records captured yet.</p>
+    }
+    else
+    {
+        <div class="data-table-wrap">
+            <table class="dws-table">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Species</th>
+                        <th>Qual. SFRA (ha)</th>
+                        <th>Current SFRA (ha)</th>
+                        <th>Reg. Volume (m³/a)</th>
+                        <th>ELU Volume (m³/a)</th>
+                        <th>Lawful Vol. (m³/a)</th>
+                        <th>Unlawful Vol. (m³/a)</th>
+                        <th>GWCA</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model)
+                    {
+                        <tr>
+                            <td>@(row.PeriodName ?? "--")</td>
+                            <td>@(row.Specie ?? "--")</td>
+                            <td>@(row.QualifyPeriodSFRAHectares?.ToString("N2") ?? "--")</td>
+                            <td>@(row.CurrentPeriodSFRAHectares?.ToString("N2") ?? "--")</td>
+                            <td>@row.RegisteredVolume.ToString("N2")</td>
+                            <td>@row.ELUVolume.ToString("N2")</td>
+                            <td>@row.LawfulVolume.ToString("N2")</td>
+                            <td>@row.UnlawfulVolume.ToString("N2")</td>
+                            <td>@(row.WithinGWCA == true ? "Yes" : row.WithinGWCA == false ? "No" : "--")</td>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@row.ForestationId" class="btn btn-sm btn-primary">Edit</a>
+                                <form asp-action="Delete" asp-route-id="@row.ForestationId" method="post" style="display:inline;"
+                                      onsubmit="return confirm('Delete this forestation record?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

@@ -1,0 +1,32 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Log in";
+}
+<div class="portal-card">
+    <h1>Log in to your account</h1>
+    <p class="muted">Enter your registered email and password.</p>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="errors">
+            @foreach (var entry in ViewData.ModelState.Values)
+            {
+                foreach (var err in entry.Errors)
+                {
+                    <div>@err.ErrorMessage</div>
+                }
+            }
+        </div>
+    }
+
+    <form asp-action="Login" method="post">
+        <input asp-for="ReturnUrl" type="hidden" />
+        <label asp-for="Email"></label><input asp-for="Email" autocomplete="email" />
+        <label asp-for="Password"></label><input asp-for="Password" type="password" autocomplete="current-password" />
+
+        <div class="actions">
+            <a asp-action="Register" class="muted">No account? Register</a>
+            <button type="submit" class="btn-primary">Log in</button>
+        </div>
+    </form>
+</div>

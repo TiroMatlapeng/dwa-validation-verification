@@ -2,6 +2,9 @@
 
 @{
     ViewData["Title"] = "Properties";
+    bool canEdit = !User.IsInRole("ReadOnly");
+    bool canCreate = User.IsInRole("Validator") || User.IsInRole("RegionalManager")
+                  || User.IsInRole("NationalManager") || User.IsInRole("SystemAdmin");
 }
 
 <div class="flex-between mb-16">
@@ -10,32 +13,36 @@
         <div class="page-subtitle">@Model.Count() properties found</div>
     </div>
     <div style="display:flex; gap:8px;">
-        <button class="btn btn-outline">Export CSV</button>
-        <a asp-controller="Property" asp-action="Register" class="btn btn-primary">+ New Property</a>
+        <a asp-action="ExportCsv" asp-route-sgCode="@ViewBag.FilterSgCode" asp-route-wmaId="@ViewBag.FilterWmaId" class="btn btn-outline">Export CSV</a>
+        @if (canCreate)
+        {
+            <a asp-controller="Property" asp-action="Consolidate" class="btn btn-outline">Consolidate properties</a>
+            <a asp-controller="Property" asp-action="Register" class="btn btn-primary">+ New Property</a>
+        }
     </div>
 </div>
 
 <!-- Filter Bar -->
-<div class="filter-bar">
-    <select class="form-select" style="width:auto; min-width:150px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;">
-        <option>All WMAs</option>
+<form method="get" class="filter-bar">
+    <select name="wmaId" class="form-select" style="width:auto; min-width:150px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;">
+        <option value="">All WMAs</option>
+        @foreach (var wma in (IEnumerable<WaterManagementArea>)ViewBag.WaterManagementAreas)
+        {
+            var isSelected = ViewBag.FilterWmaId != null && (Guid)ViewBag.FilterWmaId == wma.WmaId;
+            if (isSelected)
+            {
+                <option value="@wma.WmaId" selected>@wma.WmaName</option>
+            }
+            else
+            {
+                <option value="@wma.WmaId">@wma.WmaName</option>
+            }
+        }
     </select>
-    <select class="form-select" style="width:auto; min-width:150px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;">
-        <option>All Statuses</option>
-        <option>Not Commenced</option>
-        <option>In Process</option>
-        <option>Completed</option>
-    </select>
-    <select class="form-select" style="width:auto; min-width:150px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;">
-        <option>All Water Use</option>
-        <option>Irrigation</option>
-        <option>Storage</option>
-        <option>Forestation</option>
-    </select>
-    <input type="text" class="form-input" style="width:200px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;" placeholder="SG Code or Farm Name..." />
-    <button class="btn btn-primary btn-sm">Filter</button>
-    <button class="btn btn-outline btn-sm">Clear</button>
-</div>
+    <input type="text" name="sgCode" value="@ViewBag.FilterSgCode" class="form-input" style="width:200px; padding:6px 10px; font-size:12px; border:1px solid #d0d5db; border-radius:4px;" placeholder="SG Code or Farm Name..." />
+    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+    <a asp-action="Index" class="btn btn-outline btn-sm">Clear</a>
+</form>
 
 <!-- Data Table -->
 <div class="data-table-wrap">
@@ -48,6 +55,7 @@
                 <th>Quaternary Drainage</th>
                 <th>Property Size</th>
                 <th>V&amp;V Status</th>
+                <th>Lineage</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -62,9 +70,33 @@
                     <td>@item.PropertySize</td>
                     <td><span class="badge badge-grey">Not Commenced</span></td>
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.PropertyId" class="btn btn-sm btn-outline">Edit</a>
+                        @{
+                            var lineageStatus = item.PropertyStatus ?? "Active";
+                        }
+                        @switch (lineageStatus)
+                        {
+                            case "Subdivided":
+                                <span class="badge badge-orange">Subdivided</span>
+                                break;
+                            case "Consolidated":
+                                <span class="badge badge-purple">Consolidated</span>
+                                break;
+                            default:
+                                <span class="badge badge-green">Active</span>
+                                break;
+                        }
+                    </td>
+                    <td>
                         <a asp-action="Details" asp-route-id="@item.PropertyId" class="btn btn-sm btn-outline">Details</a>
-                        <a asp-action="Delete" asp-route-id="@item.PropertyId" class="btn btn-sm btn-danger">Delete</a>
+                        @if (canEdit)
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.PropertyId" class="btn btn-sm btn-outline">Edit</a>
+                            @if (lineageStatus == "Active" && canCreate)
+                            {
+                                <a asp-action="Subdivide" asp-route-id="@item.PropertyId" class="btn btn-sm btn-outline">Subdivide</a>
+                            }
+                            <a asp-action="Delete" asp-route-id="@item.PropertyId" class="btn btn-sm btn-danger">Delete</a>
+                        }
                     </td>
                 </tr>
             }

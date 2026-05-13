@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dwa-vv.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "dwa-vv.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "dwa-vv.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0         # never take pods down before new ones are ready
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        {{- include "dwa-vv.selectorLabels" . | nindent 8 }}
+        # Required label for Azure Workload Identity webhook injection
+        azure.workload.identity/use: "true"
+      annotations:
+        # Force pod restart when config or secret changes.
+        # The deployment SHA is appended by the deploy script via --set podAnnotations.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "dwa-vv.fullname" . }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: dwa-vv
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+
+          # Non-secret env from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: {{ include "dwa-vv.fullname" . }}-env
+
+          # Secrets synced from Key Vault via CSI driver
+          env:
+            - name: ConnectionStrings__Default
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "dwa-vv.fullname" . }}-secrets
+                  key: ConnectionStrings__Default
+            - name: Identity__InitialDemoPassword
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "dwa-vv.fullname" . }}-secrets
+                  key: Identity__InitialDemoPassword
+            - name: Portal__AllowPlaintextIdentityNumber
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "dwa-vv.fullname" . }}-secrets
+                  key: Portal__AllowPlaintextIdentityNumber
+
+          # CSI volume mount is required to trigger the SecretProviderClass reconciliation
+          # (even though we primarily use env vars from the synced K8s Secret).
+          volumeMounts:
+            - name: kv-secrets
+              mountPath: /mnt/secrets
+              readOnly: true
+            {{- if .Values.blobStore.useLocalDisk }}
+            {{- if .Values.blobStore.pvcName }}
+            - name: uploads
+              mountPath: /app/wwwroot/_uploads
+            - name: portal-uploads
+              mountPath: /app/portal-uploads
+            {{- end }}
+            {{- end }}
+
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+      volumes:
+        - name: kv-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ include "dwa-vv.spcName" . }}
+        {{- if .Values.blobStore.useLocalDisk }}
+        {{- if .Values.blobStore.pvcName }}
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: {{ .Values.blobStore.pvcName }}
+        - name: portal-uploads
+          persistentVolumeClaim:
+            claimName: {{ .Values.blobStore.pvcName }}
+        {{- end }}
+        {{- end }}
+
+      # Spread pods across nodes for HA
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              {{- include "dwa-vv.selectorLabels" . | nindent 14 }}

@@ -79,14 +79,15 @@ public class ModelValidationTests
     {
         using var context = TestDbContextFactory.Create();
 
+        var userId = Guid.NewGuid();
         var appUser = new ApplicationUser
         {
-            ApplicationUserId = Guid.NewGuid(),
+            Id = userId,
             FirstName = "Internal",
             LastName = "User",
             EmployeeNumber = "EMP100"
         };
-        context.ApplicationUsers.Add(appUser);
+        context.Users.Add(appUser);
 
         var publicUser = new PublicUser
         {
@@ -103,7 +104,7 @@ public class ModelValidationTests
         var internalNotif = new Notification
         {
             NotificationId = Guid.NewGuid(),
-            ApplicationUserId = appUser.ApplicationUserId,
+            ApplicationUserId = userId,
             NotificationType = "WorkflowStep",
             Subject = "Case REG-001 advanced to CP2",
             CreatedDate = DateTime.UtcNow

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — DWA V&V System</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dws.css" asp-append-version="true" />
+    <style>
+        body {
+            background: linear-gradient(160deg, var(--dws-navy-900) 0%, var(--dws-navy-700) 60%, var(--dws-blue-600) 130%);
+            margin: 0;
+            font-family: var(--dws-font-sans);
+            color: var(--dws-text);
+            min-height: 100vh;
+        }
+        .login-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--dws-space-5) var(--dws-space-4);
+        }
+        .login-shell__brand {
+            color: var(--dws-white);
+            margin-bottom: var(--dws-space-6);
+            text-align: center;
+        }
+        .login-shell__brand h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+        }
+        .login-shell__brand p {
+            margin: 6px 0 0 0;
+            font-size: var(--dws-fs-sm);
+            color: var(--dws-blue-100);
+            letter-spacing: 0.02em;
+        }
+        .login-shell__footer {
+            margin-top: var(--dws-space-5);
+            color: var(--dws-blue-100);
+            font-size: var(--dws-fs-xs);
+            opacity: 0.7;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-shell">
+        <div class="login-shell__brand">
+            <h2>Department of Water &amp; Sanitation</h2>
+            <p>Validation &amp; Verification System</p>
+        </div>
+        @RenderBody()
+        <div class="login-shell__footer">
+            National Water Act 38 of 1998 — Sections 32–35
+        </div>
+    </div>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

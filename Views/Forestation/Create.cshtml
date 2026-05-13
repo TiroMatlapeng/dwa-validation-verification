@@ -1,0 +1,191 @@
+@model ForestationViewModel
+
+@{
+    ViewData["Title"] = "Add Forestation / SFRA Record";
+    var propertyRef = ViewBag.PropertyRef as string ?? "Property";
+}
+
+<a asp-action="Index" asp-route-propertyId="@Model.PropertyId" class="btn-back">&larr; Back to Forestation Records</a>
+
+<div class="page-title">Add Forestation / SFRA Record</div>
+<div class="page-subtitle">Property: @propertyRef</div>
+
+<div class="card" style="max-width: 900px;">
+    <form asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 14px;"></div>
+
+        <input asp-for="PropertyId" type="hidden" />
+
+        <div class="form-section-title">Identification</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="PeriodId" class="form-label">Period</label>
+                <select asp-for="PeriodId" asp-items="@ViewBag.Periods" class="form-control" style="width:100%;">
+                    <option value="">-- Select Period (optional) --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label asp-for="Specie" class="form-label"></label>
+                <input asp-for="Specie" class="form-control" style="width:100%;" placeholder="e.g. Pinus, Eucalyptus" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="WaterResource" class="form-label"></label>
+                <input asp-for="WaterResource" class="form-control" style="width:100%;" />
+            </div>
+            <div class="form-group">
+                <label asp-for="UnitForVolumeCalculation" class="form-label"></label>
+                <input asp-for="UnitForVolumeCalculation" class="form-control" style="width:100%;" placeholder="e.g. m³/a" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Within GWCA</label>
+                <select asp-for="WithinGWCA" class="form-control" style="width:100%;">
+                    <option value="">-- Unknown --</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-section-title" style="margin-top: 16px;">SFRA Extent</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="QualifyPeriodSFRAHectares" class="form-label"></label>
+                <input asp-for="QualifyPeriodSFRAHectares" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+            <div class="form-group">
+                <label asp-for="CurrentPeriodSFRAHectares" class="form-label"></label>
+                <input asp-for="CurrentPeriodSFRAHectares" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="QualifyPeriodVolume" class="form-label"></label>
+                <input asp-for="QualifyPeriodVolume" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+        </div>
+
+        <div class="form-section-title" style="margin-top: 16px;">Registered Values</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="RegisteredHectares" class="form-label"></label>
+                <input asp-for="RegisteredHectares" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+                <span asp-validation-for="RegisteredHectares" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="RegisteredVolume" class="form-label"></label>
+                <input asp-for="RegisteredVolume" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+                <span asp-validation-for="RegisteredVolume" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <div class="form-section-title" style="margin-top: 16px;">Pre-1972 (No Permit Required)</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="Pre1972Hectares" class="form-label"></label>
+                <input asp-for="Pre1972Hectares" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+            <div class="form-group">
+                <label asp-for="Pre1972Volume" class="form-label"></label>
+                <input asp-for="Pre1972Volume" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+        </div>
+
+        <div class="form-section-title" style="margin-top: 16px;">SFRA Permit (Post-1984 Forestry Act)</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="SFRAPermitNumber" class="form-label"></label>
+                <input asp-for="SFRAPermitNumber" class="form-control" style="width:100%;" />
+            </div>
+            <div class="form-group">
+                <label asp-for="SFRAPermitHectares" class="form-label"></label>
+                <input asp-for="SFRAPermitHectares" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+        </div>
+
+        <div class="form-section-title" style="margin-top: 16px;">ELU Determination</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="ELUHectares" class="form-label"></label>
+                <input asp-for="ELUHectares" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+            <div class="form-group">
+                <label asp-for="ELUVolume" class="form-label"></label>
+                <input asp-for="ELUVolume" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="LawfulHectares" class="form-label"></label>
+                <input asp-for="LawfulHectares" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+            <div class="form-group">
+                <label asp-for="LawfulVolume" class="form-label"></label>
+                <input asp-for="LawfulVolume" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="UnlawfulHectares" class="form-label"></label>
+                <input asp-for="UnlawfulHectares" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+            <div class="form-group">
+                <label asp-for="UnlawfulVolume" class="form-label"></label>
+                <input asp-for="UnlawfulVolume" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+        </div>
+
+        <div class="form-section-title" style="margin-top: 16px;">User Feedback</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="UserFeedbackEntitlementType" class="form-label"></label>
+                <input asp-for="UserFeedbackEntitlementType" class="form-control" style="width:100%;" />
+            </div>
+            <div class="form-group">
+                <label asp-for="UserFeedbackEntitlementReference" class="form-label"></label>
+                <input asp-for="UserFeedbackEntitlementReference" class="form-control" style="width:100%;" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="UserFeedbackEntitlementHectares" class="form-label"></label>
+                <input asp-for="UserFeedbackEntitlementHectares" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+                <label asp-for="CommentOnFeedback" class="form-label"></label>
+                <textarea asp-for="CommentOnFeedback" class="form-control" rows="3" style="width:100%;"></textarea>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+                <label asp-for="CommentsOnData" class="form-label"></label>
+                <textarea asp-for="CommentsOnData" class="form-control" rows="3" style="width:100%;"></textarea>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; gap: 8px;">
+            <button type="submit" class="btn btn-primary">Save Record</button>
+            <a asp-action="Index" asp-route-propertyId="@Model.PropertyId" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DWA V&V System — Azure Cloud Infrastructure Sizing</title>
+<style>
+@page { size: A4; margin: 2.5cm; }
+body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; max-width: 210mm; margin: 0 auto; padding: 20px; }
+h1 { font-size: 22pt; color: #003366; border-bottom: 3px solid #003366; padding-bottom: 8px; margin-top: 30px; page-break-before: always; }
+h1:first-of-type { page-break-before: avoid; }
+h2 { font-size: 16pt; color: #003366; margin-top: 24px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+h3 { font-size: 13pt; color: #1a3a5c; margin-top: 18px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px 0; font-size: 10pt; }
+th { background: #003366; color: #fff; padding: 8px 10px; text-align: left; font-weight: 600; }
+td { padding: 7px 10px; border: 1px solid #ddd; vertical-align: top; }
+tr:nth-child(even) { background: #f7f9fb; }
+.cover { text-align: center; padding: 80px 0 60px 0; page-break-after: always; }
+.cover h1 { font-size: 28pt; border: none; page-break-before: avoid; }
+.cover .subtitle { font-size: 14pt; color: #555; margin-top: 10px; }
+.cover .meta { margin-top: 40px; font-size: 11pt; color: #666; }
+.callout { background: #eef3f8; border-left: 4px solid #003366; padding: 12px 16px; margin: 14px 0; font-size: 10.5pt; }
+.callout-warn { background: #fff8e1; border-left-color: #f39c12; }
+.callout-green { background: #e8f5e9; border-left-color: #27ae60; }
+.total-row td { font-weight: 700; background: #e8eef5; }
+ul { margin: 6px 0; padding-left: 22px; }
+li { margin-bottom: 4px; }
+.toc { margin: 20px 0; }
+.toc a { color: #003366; text-decoration: none; }
+.toc li { margin-bottom: 6px; }
+.footer { text-align: center; font-size: 9pt; color: #888; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 10px; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+    <h1 style="font-size:28pt;">DWA V&V System</h1>
+    <div class="subtitle">Azure Cloud Infrastructure Sizing</div>
+    <div class="subtitle" style="font-size:12pt; margin-top:4px;">Initial / Minimum Deployment &mdash; Azure App Service</div>
+    <div class="meta">
+        <p>Department of Water &amp; Sanitation</p>
+        <p>Version 1.0 &mdash; 9 April 2026</p>
+        <p>Classification: Internal</p>
+    </div>
+</div>
+
+<!-- TOC -->
+<h1 style="page-break-before:avoid;">Table of Contents</h1>
+<ol class="toc">
+    <li><a href="#s1">Overview &amp; Approach</a></li>
+    <li><a href="#s2">Sizing Assumptions</a></li>
+    <li><a href="#s3">Recommended Azure Services</a></li>
+    <li><a href="#s4">Monthly Cost Estimate</a></li>
+    <li><a href="#s5">Architecture Diagram</a></li>
+    <li><a href="#s6">Storage Projections</a></li>
+    <li><a href="#s7">Scaling Path</a></li>
+    <li><a href="#s8">Backup &amp; Disaster Recovery</a></li>
+    <li><a href="#s9">Recommendation</a></li>
+</ol>
+
+<!-- 1. OVERVIEW -->
+<h1 id="s1">1. Overview &amp; Approach</h1>
+
+<p>This document specifies the <strong>minimum initial Azure deployment</strong> for the DWA V&amp;V system using Azure App Service (no containerisation). The sizing targets an early-phase rollout (2&ndash;3 WMAs, ~50 concurrent internal users) with a clear scale-up path as more WMAs come online.</p>
+
+<div class="callout">
+    <strong>Region:</strong> South Africa North (Johannesburg) &mdash; the closest Azure region to DWS Head Office in Pretoria (~55 km). All services deployed in a single region to minimise latency and keep data within South African borders.
+</div>
+
+<p><strong>Why Azure App Service?</strong></p>
+<ul>
+    <li>Fully managed PaaS &mdash; no OS patching, no VM administration</li>
+    <li>Built-in support for ASP.NET Core 10.0</li>
+    <li>Deployment slots for zero-downtime releases</li>
+    <li>Auto-scale available on Standard tier and above</li>
+    <li>TLS/SSL included with custom domain support</li>
+</ul>
+
+<!-- 2. ASSUMPTIONS -->
+<h1 id="s2">2. Sizing Assumptions</h1>
+
+<table>
+    <thead><tr><th>Parameter</th><th>Initial Phase</th><th>Notes</th></tr></thead>
+    <tbody>
+        <tr><td>WMAs in scope</td><td>2&ndash;3</td><td>Phased rollout; expand as V&amp;V progresses</td></tr>
+        <tr><td>Property records (active)</td><td>~50,000&ndash;80,000</td><td>Subset of 500K total; remaining loaded progressively</td></tr>
+        <tr><td>Internal users</td><td>50&ndash;100</td><td>Validators, capturers, managers</td></tr>
+        <tr><td>Peak concurrent internal</td><td>30&ndash;50</td><td>Business hours 07:30&ndash;16:30</td></tr>
+        <tr><td>External portal users</td><td>500&ndash;2,000</td><td>Registered water users/landowners</td></tr>
+        <tr><td>Peak concurrent external</td><td>20&ndash;50</td><td>During letter response periods</td></tr>
+        <tr><td>Document uploads (Year 1)</td><td>~100 GB&ndash;500 GB</td><td>30% property completeness</td></tr>
+        <tr><td>Database size (Year 1)</td><td>5&ndash;10 GB</td><td>Relational data + audit logs</td></tr>
+        <tr><td>Availability target</td><td>99.5%</td><td>App Service SLA: 99.95% on Standard</td></tr>
+    </tbody>
+</table>
+
+<!-- 3. SERVICES -->
+<h1 id="s3">3. Recommended Azure Services</h1>
+
+<h2>3.1 Compute &mdash; Azure App Service</h2>
+<table>
+    <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+    <tbody>
+        <tr><td>Plan tier</td><td><strong>Standard S1</strong></td></tr>
+        <tr><td>OS</td><td>Linux</td></tr>
+        <tr><td>vCPUs</td><td>1</td></tr>
+        <tr><td>RAM</td><td>1.75 GB</td></tr>
+        <tr><td>Included storage</td><td>50 GB</td></tr>
+        <tr><td>Instance count</td><td>1 (auto-scale to 2 during peaks)</td></tr>
+        <tr><td>Runtime</td><td>.NET 10.0</td></tr>
+        <tr><td>Deployment slots</td><td>5 available (staging + production)</td></tr>
+    </tbody>
+</table>
+
+<div class="callout">
+    <strong>Why S1 over B1/B2?</strong> Basic tier lacks auto-scale, deployment slots, and custom domain SSL. Standard S1 provides these essentials at a manageable cost. If initial load proves light, B2 (R658/month) is a fallback option for development/staging environments.
+</div>
+
+<h2>3.2 Database &mdash; Azure SQL Database</h2>
+<table>
+    <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+    <tbody>
+        <tr><td>Pricing model</td><td>DTU-based (simpler, predictable)</td></tr>
+        <tr><td>Tier</td><td><strong>Standard S2</strong></td></tr>
+        <tr><td>DTUs</td><td>50</td></tr>
+        <tr><td>Max storage</td><td>250 GB</td></tr>
+        <tr><td>Backup retention</td><td>7 days (included) &mdash; extend to 35 days via LTR</td></tr>
+        <tr><td>Geo-replication</td><td>Not required initially</td></tr>
+    </tbody>
+</table>
+
+<div class="callout">
+    <strong>Why S2 (50 DTU)?</strong> The V&amp;V system has complex queries across 45+ entities with EF Core. S0 (10 DTU) will bottleneck on joins across Property &rarr; FileMaster &rarr; FieldAndCrop &rarr; Validation chains. S2 provides comfortable headroom for SAPWAT batch calculations, audit log writes, and concurrent report queries. S1 (20 DTU) is a viable fallback if budget is tight and batch processing is scheduled off-peak.
+</div>
+
+<h2>3.3 Document Storage &mdash; Azure Blob Storage</h2>
+<table>
+    <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+    <tbody>
+        <tr><td>Account type</td><td>General-purpose v2</td></tr>
+        <tr><td>Access tier</td><td>Hot</td></tr>
+        <tr><td>Redundancy</td><td>LRS (Locally Redundant Storage)</td></tr>
+        <tr><td>Containers</td><td><code>title-deeds</code>, <code>sg-diagrams</code>, <code>mapbooks</code>, <code>letters</code>, <code>uploads</code></td></tr>
+        <tr><td>Virus scanning</td><td>Microsoft Defender for Storage (basic plan)</td></tr>
+        <tr><td>Projected Year 1 usage</td><td>100&ndash;500 GB</td></tr>
+    </tbody>
+</table>
+
+<h2>3.4 Monitoring &mdash; Application Insights</h2>
+<table>
+    <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+    <tbody>
+        <tr><td>Workspace</td><td>Log Analytics workspace (South Africa North)</td></tr>
+        <tr><td>Free allowance</td><td>5 GB/month ingestion</td></tr>
+        <tr><td>Expected ingestion</td><td>2&ndash;4 GB/month (well within free tier initially)</td></tr>
+        <tr><td>Retention</td><td>90 days (default, free)</td></tr>
+    </tbody>
+</table>
+
+<h2>3.5 Other Services</h2>
+<table>
+    <thead><tr><th>Service</th><th>SKU</th><th>Purpose</th></tr></thead>
+    <tbody>
+        <tr><td>Azure Key Vault</td><td>Standard</td><td>Connection strings, certificates, signing keys</td></tr>
+        <tr><td>Azure DNS</td><td>Standard zone</td><td>Custom domain (e.g. vv.dws.gov.za)</td></tr>
+        <tr><td>SendGrid (via Azure)</td><td>Free tier (25K emails/month)</td><td>Section 35 letter notifications, portal alerts</td></tr>
+    </tbody>
+</table>
+
+<!-- 4. COST -->
+<h1 id="s4">4. Monthly Cost Estimate</h1>
+
+<p>All prices: South Africa North region, pay-as-you-go, April 2026. ZAR at R18.50/USD.</p>
+
+<table>
+    <thead><tr><th>Service</th><th>SKU</th><th>USD/month</th><th>ZAR/month</th></tr></thead>
+    <tbody>
+        <tr><td>App Service</td><td>Standard S1 (Linux, 1 instance)</td><td>$101</td><td>R 1,877</td></tr>
+        <tr><td>Azure SQL Database</td><td>Standard S2 (50 DTU)</td><td>$110</td><td>R 2,026</td></tr>
+        <tr><td>Blob Storage</td><td>Hot LRS, ~200 GB + transactions</td><td>$7</td><td>R 130</td></tr>
+        <tr><td>Application Insights</td><td>Free tier (5 GB/month)</td><td>$0</td><td>R 0</td></tr>
+        <tr><td>Key Vault</td><td>Standard (secrets + certificates)</td><td>$1</td><td>R 19</td></tr>
+        <tr><td>Azure DNS</td><td>1 hosted zone</td><td>$1</td><td>R 10</td></tr>
+        <tr><td>SendGrid</td><td>Free tier</td><td>$0</td><td>R 0</td></tr>
+        <tr><td>Defender for Storage</td><td>Basic</td><td>$10</td><td>R 185</td></tr>
+        <tr class="total-row"><td colspan="2"><strong>Total (initial month)</strong></td><td><strong>~$230</strong></td><td><strong>~R 4,247</strong></td></tr>
+    </tbody>
+</table>
+
+<div class="callout-green callout">
+    <strong>Cost context:</strong> The on-premise conservative estimate was R 350,000&ndash;500,000 CAPEX plus R 150,000&ndash;250,000/year OPEX. This Azure deployment costs approximately <strong>R 51,000/year</strong> &mdash; a fraction of on-premise, with no capital expenditure, no hardware procurement lead time, and built-in SLA guarantees.
+</div>
+
+<div class="callout callout-warn">
+    <strong>Note on auto-scale costs:</strong> If auto-scale triggers a second S1 instance during peak periods, the additional instance costs ~R 1,877/month pro-rated for the hours it runs. Typical cost impact: R 200&ndash;500/month extra for occasional peak scaling.
+</div>
+
+<!-- 5. ARCHITECTURE -->
+<h1 id="s5">5. Architecture Diagram</h1>
+
+<pre style="background:#f4f6f8; padding:16px; border-radius:6px; font-size:10pt; line-height:1.5; overflow-x:auto;">
+                            ┌─────────────────────────────┐
+                            │     Azure South Africa North │
+                            │                              │
+  DWS Staff (Browser)       │  ┌────────────────────────┐ │
+  ───────────────────────►  │  │   App Service (S1)     │ │
+                            │  │   ASP.NET Core 10.0    │ │
+  External Portal Users     │  │   ┌──────┐ ┌────────┐ │ │
+  ───────────────────────►  │  │   │Prod  │ │Staging │ │ │
+                            │  │   │ Slot │ │  Slot  │ │ │
+                            │  │   └──┬───┘ └────────┘ │ │
+                            │  └──────┼────────────────┘ │
+                            │         │                   │
+                            │    ┌────┼────────────┐     │
+                            │    │    ▼            │     │
+                            │    │  Azure SQL DB   │     │
+                            │    │  Standard S2    │     │
+                            │    │  (50 DTU)       │     │
+                            │    └─────────────────┘     │
+                            │         │                   │
+                            │    ┌────┼────────────┐     │
+                            │    │    ▼            │     │
+                            │    │  Blob Storage   │     │
+                            │    │  (Documents)    │     │
+                            │    └─────────────────┘     │
+                            │                              │
+                            │    ┌──────────────────┐     │
+                            │    │ Application       │     │
+                            │    │ Insights + Alerts │     │
+                            │    └──────────────────┘     │
+                            │                              │
+                            │    ┌──────────────────┐     │
+                            │    │ Key Vault         │     │
+                            │    └──────────────────┘     │
+                            └─────────────────────────────┘
+</pre>
+
+<!-- 6. STORAGE -->
+<h1 id="s6">6. Storage Projections</h1>
+
+<h2>6.1 Database Growth</h2>
+<table>
+    <thead><tr><th>Period</th><th>Est. DB Size</th><th>Azure SQL Tier</th></tr></thead>
+    <tbody>
+        <tr><td>Year 1 (2&ndash;3 WMAs)</td><td>5&ndash;10 GB</td><td>S2 (250 GB max) &mdash; ample</td></tr>
+        <tr><td>Year 2 (5&ndash;7 WMAs)</td><td>10&ndash;18 GB</td><td>S2 still sufficient</td></tr>
+        <tr><td>Year 3 (all 9 WMAs)</td><td>18&ndash;30 GB</td><td>S2 still sufficient; review DTUs</td></tr>
+    </tbody>
+</table>
+
+<h2>6.2 Blob Storage Growth</h2>
+<table>
+    <thead><tr><th>Period</th><th>Est. Blob Usage</th><th>Monthly Storage Cost</th></tr></thead>
+    <tbody>
+        <tr><td>Year 1</td><td>100&ndash;500 GB</td><td>R 40&ndash;200</td></tr>
+        <tr><td>Year 2</td><td>500 GB&ndash;2 TB</td><td>R 200&ndash;810</td></tr>
+        <tr><td>Year 3</td><td>2&ndash;6 TB</td><td>R 810&ndash;2,430</td></tr>
+    </tbody>
+</table>
+
+<div class="callout">
+    <strong>Cost control tip:</strong> Move documents older than 90 days to Cool tier (R 0.19/GB vs R 0.41/GB) using Blob Lifecycle Management policies. Most V&amp;V file documents are written once and read occasionally &mdash; ideal for tiered storage.
+</div>
+
+<!-- 7. SCALING -->
+<h1 id="s7">7. Scaling Path</h1>
+
+<p>Azure App Service and SQL Database scale without downtime. The recommended upgrade path as load increases:</p>
+
+<table>
+    <thead><tr><th>Trigger</th><th>Action</th><th>Additional Cost</th></tr></thead>
+    <tbody>
+        <tr><td>CPU &gt; 70% sustained or &gt;100 concurrent users</td><td>Scale App Service to <strong>S2</strong> (2 vCPU, 3.5 GB RAM)</td><td>+R 1,864/month</td></tr>
+        <tr><td>Auto-scale regularly hitting 2 instances</td><td>Set minimum instances to 2</td><td>+R 1,877/month</td></tr>
+        <tr><td>DTU &gt; 80% sustained</td><td>Scale SQL to <strong>S3</strong> (100 DTU)</td><td>+R 1,720/month</td></tr>
+        <tr><td>All 9 WMAs live, &gt;200 concurrent users</td><td>Scale App Service to <strong>P1v3</strong> (2 vCPU, 8 GB) + SQL <strong>S4</strong> (200 DTU)</td><td>Review at that point</td></tr>
+        <tr><td>Blob &gt; 5 TB</td><td>Enable lifecycle policies (Hot &rarr; Cool &rarr; Archive)</td><td>Net cost reduction</td></tr>
+    </tbody>
+</table>
+
+<div class="callout-green callout">
+    <strong>Key advantage over on-premise:</strong> Scaling takes minutes, not procurement cycles. You can start minimal and right-size based on actual usage data from Application Insights.
+</div>
+
+<!-- 8. BACKUP & DR -->
+<h1 id="s8">8. Backup &amp; Disaster Recovery</h1>
+
+<table>
+    <thead><tr><th>Component</th><th>Backup Method</th><th>RPO</th><th>RTO</th><th>Cost</th></tr></thead>
+    <tbody>
+        <tr><td>Azure SQL Database</td><td>Automated backups (included) &mdash; full weekly, differential daily, log every 5&ndash;10 min</td><td>5&ndash;10 minutes</td><td>~1 hour (point-in-time restore)</td><td>Included in S2 price</td></tr>
+        <tr><td>Blob Storage</td><td>Soft delete (14 days) + versioning enabled</td><td>0 (versioned)</td><td>Instant (restore previous version)</td><td>Minimal (storage for versions)</td></tr>
+        <tr><td>App Service</td><td>Deployment via CI/CD (code in Git = the backup)</td><td>N/A</td><td>Minutes (redeploy from Git)</td><td>$0</td></tr>
+        <tr><td>Key Vault</td><td>Soft delete + purge protection (90 days)</td><td>0</td><td>Instant</td><td>Included</td></tr>
+    </tbody>
+</table>
+
+<div class="callout">
+    <strong>Long-term retention (PAJA compliance):</strong> Extend SQL backup retention to 10 years using Long-Term Retention (LTR) policies. Cost: ~$0.015/GB/month for LTR storage. For a 30 GB database, this is approximately R 8/month &mdash; negligible.
+</div>
+
+<!-- 9. RECOMMENDATION -->
+<h1 id="s9">9. Recommendation</h1>
+
+<p>We recommend deploying with the <strong>Standard S1 App Service + Standard S2 SQL Database</strong> configuration as specified above. This provides:</p>
+
+<ul>
+    <li><strong>Immediate availability</strong> &mdash; deploy within hours, not weeks</li>
+    <li><strong>Low initial cost</strong> &mdash; ~R 4,250/month (~R 51,000/year) vs R 500,000+ capital outlay for on-premise</li>
+    <li><strong>No hardware administration</strong> &mdash; OS patching, SSL, backups all managed by Azure</li>
+    <li><strong>Data sovereignty</strong> &mdash; South Africa North region keeps all data within SA borders</li>
+    <li><strong>SLA-backed uptime</strong> &mdash; 99.95% for App Service, 99.99% for SQL Database</li>
+    <li><strong>Elastic scaling</strong> &mdash; scale up or out in minutes as more WMAs go live</li>
+    <li><strong>Built-in DR</strong> &mdash; automated SQL backups with 5-minute RPO at no extra cost</li>
+</ul>
+
+<div class="callout callout-warn">
+    <strong>Pre-requisite:</strong> DWS requires an Azure subscription. If using Azure Government or an EA (Enterprise Agreement), pricing may differ from the pay-as-you-go rates quoted above. An EA typically provides 5&ndash;15% discount on listed prices.
+</div>
+
+<div class="callout-green callout">
+    <strong>Next steps:</strong>
+    <ol>
+        <li>Provision Azure subscription (or confirm existing DWS tenant/subscription)</li>
+        <li>Create Resource Group: <code>rg-dwa-vv-prod-sanorth</code></li>
+        <li>Deploy App Service Plan + SQL Database + Blob Storage</li>
+        <li>Configure custom domain + TLS certificate</li>
+        <li>Set up Application Insights and alert rules</li>
+        <li>Establish CI/CD pipeline (Azure DevOps or GitHub Actions)</li>
+    </ol>
+</div>
+
+<div class="footer">
+    DWA V&amp;V System &mdash; Azure Cloud Infrastructure Sizing &mdash; Version 1.0 &mdash; 9 April 2026<br>
+    Department of Water &amp; Sanitation &mdash; Internal Document
+</div>
+
+</body>
+</html>

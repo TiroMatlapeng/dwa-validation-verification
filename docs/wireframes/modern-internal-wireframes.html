@@ -79,8 +79,9 @@ table { border-collapse: collapse; width: 100%; }
 
 /* ── SIDEBAR ── */
 .sidebar { width: var(--sidebar-w); background: var(--bg-sidebar); color: #fff; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; display: flex; flex-direction: column; overflow-y: auto; }
-.sidebar-brand { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 12px; }
-.sidebar-brand .logo-icon { width: 38px; height: 38px; background: rgba(255,255,255,0.12); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.sidebar-brand { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.sidebar-brand .logo-wrap { background: #fff; border-radius: 6px; padding: 8px 10px; display: flex; align-items: center; justify-content: center; }
+.sidebar-brand .logo-wrap img { width: 100%; height: auto; display: block; }
 .sidebar-brand .brand-text { font-size: 14px; font-weight: 700; letter-spacing: 0.3px; }
 .sidebar-brand .brand-text small { display: block; font-size: 10px; font-weight: 400; color: var(--dws-sky); letter-spacing: 0.5px; text-transform: uppercase; }
 .sidebar-section { padding: 20px 20px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.3); font-weight: 600; }
@@ -374,8 +375,9 @@ tbody tr:hover { background: #f8fafc; }
 <div class="wireframe" id="page-dashboard">
   <div class="sidebar">
     <div class="sidebar-brand">
-      <div class="logo-icon">&#x1F4A7;</div>
-      <div class="brand-text">DWS V&amp;V<small>Validation &amp; Verification</small></div>
+      <div class="logo-wrap">
+        <img src="assets/dws-logo.png" alt="Department of Water and Sanitation — Republic of South Africa">
+      </div>
     </div>
     <div class="sidebar-section">Main</div>
     <a class="sidebar-item active"><span class="icon">&#x2302;</span> Dashboard</a>
@@ -542,7 +544,7 @@ tbody tr:hover { background: #f8fafc; }
 <!-- ═══════════════════ PAGE 2: PROPERTIES LIST ═══════════════════ -->
 <div class="wireframe" id="page-properties">
   <div class="sidebar">
-    <div class="sidebar-brand"><div class="logo-icon">&#x1F4A7;</div><div class="brand-text">DWS V&amp;V<small>Validation &amp; Verification</small></div></div>
+    <div class="sidebar-brand"><div class="logo-wrap"><img src="assets/dws-logo.png" alt="Department of Water and Sanitation — Republic of South Africa"></div></div>
     <div class="sidebar-section">Main</div>
     <a class="sidebar-item" onclick="showPage('dashboard')"><span class="icon">&#x2302;</span> Dashboard</a>
     <a class="sidebar-item active"><span class="icon">&#x1F3E0;</span> Properties</a>
@@ -710,7 +712,7 @@ tbody tr:hover { background: #f8fafc; }
 <!-- ═══════════════════ PAGE 3: PROPERTY REGISTRATION ═══════════════════ -->
 <div class="wireframe" id="page-register">
   <div class="sidebar">
-    <div class="sidebar-brand"><div class="logo-icon">&#x1F4A7;</div><div class="brand-text">DWS V&amp;V<small>Validation &amp; Verification</small></div></div>
+    <div class="sidebar-brand"><div class="logo-wrap"><img src="assets/dws-logo.png" alt="Department of Water and Sanitation — Republic of South Africa"></div></div>
     <div class="sidebar-section">Main</div>
     <a class="sidebar-item" onclick="showPage('dashboard')"><span class="icon">&#x2302;</span> Dashboard</a>
     <a class="sidebar-item active" onclick="showPage('properties')"><span class="icon">&#x1F3E0;</span> Properties</a>
@@ -828,7 +830,7 @@ tbody tr:hover { background: #f8fafc; }
 <!-- ═══════════════════ PAGE 4: PROPERTY DETAILS / CASE VIEW ═══════════════════ -->
 <div class="wireframe" id="page-detail">
   <div class="sidebar">
-    <div class="sidebar-brand"><div class="logo-icon">&#x1F4A7;</div><div class="brand-text">DWS V&amp;V<small>Validation &amp; Verification</small></div></div>
+    <div class="sidebar-brand"><div class="logo-wrap"><img src="assets/dws-logo.png" alt="Department of Water and Sanitation — Republic of South Africa"></div></div>
     <div class="sidebar-section">Main</div>
     <a class="sidebar-item" onclick="showPage('dashboard')"><span class="icon">&#x2302;</span> Dashboard</a>
     <a class="sidebar-item active" onclick="showPage('properties')"><span class="icon">&#x1F3E0;</span> Properties</a>
@@ -1033,7 +1035,7 @@ tbody tr:hover { background: #f8fafc; }
 <!-- ═══════════════════ PAGE 5: FILE MASTER / V&V CASE ═══════════════════ -->
 <div class="wireframe" id="page-filemaster">
   <div class="sidebar">
-    <div class="sidebar-brand"><div class="logo-icon">&#x1F4A7;</div><div class="brand-text">DWS V&amp;V<small>Validation &amp; Verification</small></div></div>
+    <div class="sidebar-brand"><div class="logo-wrap"><img src="assets/dws-logo.png" alt="Department of Water and Sanitation — Republic of South Africa"></div></div>
     <div class="sidebar-section">Main</div>
     <a class="sidebar-item" onclick="showPage('dashboard')"><span class="icon">&#x2302;</span> Dashboard</a>
     <a class="sidebar-item" onclick="showPage('properties')"><span class="icon">&#x1F3E0;</span> Properties</a>
@@ -1239,7 +1241,7 @@ tbody tr:hover { background: #f8fafc; }
 <!-- ═══════════════════ PAGE 6: LETTER MANAGEMENT ═══════════════════ -->
 <div class="wireframe" id="page-letters">
   <div class="sidebar">
-    <div class="sidebar-brand"><div class="logo-icon">&#x1F4A7;</div><div class="brand-text">DWS V&amp;V<small>Validation &amp; Verification</small></div></div>
+    <div class="sidebar-brand"><div class="logo-wrap"><img src="assets/dws-logo.png" alt="Department of Water and Sanitation — Republic of South Africa"></div></div>
     <div class="sidebar-section">Main</div>
     <a class="sidebar-item" onclick="showPage('dashboard')"><span class="icon">&#x2302;</span> Dashboard</a>
     <a class="sidebar-item" onclick="showPage('properties')"><span class="icon">&#x1F3E0;</span> Properties</a>
@@ -1399,7 +1401,7 @@ tbody tr:hover { background: #f8fafc; }
 <!-- ═══════════════════ PAGE 7: WORKFLOW PROGRESS ═══════════════════ -->
 <div class="wireframe" id="page-workflow">
   <div class="sidebar">
-    <div class="sidebar-brand"><div class="logo-icon">&#x1F4A7;</div><div class="brand-text">DWS V&amp;V<small>Validation &amp; Verification</small></div></div>
+    <div class="sidebar-brand"><div class="logo-wrap"><img src="assets/dws-logo.png" alt="Department of Water and Sanitation — Republic of South Africa"></div></div>
     <div class="sidebar-section">Main</div>
     <a class="sidebar-item" onclick="showPage('dashboard')"><span class="icon">&#x2302;</span> Dashboard</a>
     <a class="sidebar-item" onclick="showPage('properties')"><span class="icon">&#x1F3E0;</span> Properties</a>
@@ -1563,7 +1565,7 @@ tbody tr:hover { background: #f8fafc; }
 <!-- ═══════════════════ PAGE 8: USER MANAGEMENT ═══════════════════ -->
 <div class="wireframe" id="page-users">
   <div class="sidebar">
-    <div class="sidebar-brand"><div class="logo-icon">&#x1F4A7;</div><div class="brand-text">DWS V&amp;V<small>Validation &amp; Verification</small></div></div>
+    <div class="sidebar-brand"><div class="logo-wrap"><img src="assets/dws-logo.png" alt="Department of Water and Sanitation — Republic of South Africa"></div></div>
     <div class="sidebar-section">Main</div>
     <a class="sidebar-item" onclick="showPage('dashboard')"><span class="icon">&#x2302;</span> Dashboard</a>
     <a class="sidebar-item" onclick="showPage('properties')"><span class="icon">&#x1F3E0;</span> Properties</a>
@@ -1705,7 +1707,7 @@ tbody tr:hover { background: #f8fafc; }
 <!-- ═══════════════════ PAGE 9: REPORTS ═══════════════════ -->
 <div class="wireframe" id="page-reports">
   <div class="sidebar">
-    <div class="sidebar-brand"><div class="logo-icon">&#x1F4A7;</div><div class="brand-text">DWS V&amp;V<small>Validation &amp; Verification</small></div></div>
+    <div class="sidebar-brand"><div class="logo-wrap"><img src="assets/dws-logo.png" alt="Department of Water and Sanitation — Republic of South Africa"></div></div>
     <div class="sidebar-section">Main</div>
     <a class="sidebar-item" onclick="showPage('dashboard')"><span class="icon">&#x2302;</span> Dashboard</a>
     <a class="sidebar-item" onclick="showPage('properties')"><span class="icon">&#x1F3E0;</span> Properties</a>

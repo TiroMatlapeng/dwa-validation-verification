@@ -66,4 +66,18 @@ public class FileMasterRepository : IFileMaster
         await _context.SaveChangesAsync();
         return fileMaster;
     }
+
+    public async Task<FileMaster?> GetWithWorkflowAsync(Guid id)
+    {
+        return await _context.FileMasters
+            .Include(fm => fm.Property)
+            .Include(fm => fm.OrgUnit)
+            .Include(fm => fm.CatchmentArea)
+            .Include(fm => fm.Validator)
+            .Include(fm => fm.CapturePerson)
+            .Include(fm => fm.Entitlement)
+            .Include(fm => fm.LetterIssuances)
+                .ThenInclude(l => l.LetterType)
+            .FirstOrDefaultAsync(fm => fm.FileMasterId == id);
+    }
 }

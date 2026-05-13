@@ -1,0 +1,98 @@
+@model dwa_ver_val.ViewModels.ConsolidateViewModel
+
+@{
+    ViewData["Title"] = "Consolidate Properties";
+}
+
+<a asp-controller="Property" asp-action="Index" class="btn-back">&larr; Back to Properties</a>
+
+<div class="page-title">Consolidate properties</div>
+<div class="page-subtitle">
+    Select two or more <strong>Active</strong> properties in the same Water Management Area to consolidate.
+    The originals will be preserved with status <strong>Consolidated</strong> and a new Active property will be created.
+</div>
+
+@if (TempData["Error"] is string err)
+{
+    <div class="badge badge-red" style="display:block;padding:10px 14px;margin-bottom:14px;">@err</div>
+}
+
+<form asp-action="Consolidate" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="text-danger" style="margin-bottom:14px;"></div>
+
+    <div class="card" style="margin-bottom: 16px;">
+        <div class="form-section-title">Select source properties</div>
+        @if (Model.AvailableProperties.Count == 0)
+        {
+            <p style="color:#6b7280;">No active properties available in your scope.</p>
+        }
+        else
+        {
+            <div class="data-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:40px;">&nbsp;</th>
+                            <th>SG Code</th>
+                            <th>WMA</th>
+                            <th>Property Size (ha)</th>
+                            <th>Reference</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.AvailableProperties)
+                        {
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="Sources" value="@p.PropertyId"
+                                           @(Model.Sources.Contains(p.PropertyId) ? "checked" : "") />
+                                </td>
+                                <td class="sg-code">@p.SGCode</td>
+                                <td>@(p.WaterManagementArea?.WmaName ?? "—")</td>
+                                <td>@p.PropertySize.ToString("N2")</td>
+                                <td>@(p.PropertyReferenceNumber ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="card" style="max-width: 800px;">
+        <div class="form-section-title">New consolidated property</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="SGCode" class="form-label"></label>
+                <input asp-for="SGCode" class="form-control" style="width:100%;" />
+                <span asp-validation-for="SGCode" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PropertyReferenceNumber" class="form-label"></label>
+                <input asp-for="PropertyReferenceNumber" class="form-control" style="width:100%;" />
+                <span asp-validation-for="PropertyReferenceNumber" class="text-danger text-sm"></span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="OverridePropertySize" class="form-label"></label>
+                <input asp-for="OverridePropertySize" type="number" step="0.01" min="0" class="form-control" style="width:100%;"
+                       placeholder="Leave blank to use the sum of selected sources" />
+                <span asp-validation-for="OverridePropertySize" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <!-- spacer -->
+            </div>
+        </div>
+
+        <div style="margin-top:16px;">
+            <input type="submit" value="Consolidate properties" class="btn btn-primary" />
+            <a asp-action="Index" class="btn btn-outline" style="margin-left:8px;">Cancel</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

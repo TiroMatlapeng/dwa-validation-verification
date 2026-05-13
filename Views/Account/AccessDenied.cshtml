@@ -1,0 +1,10 @@
+@{
+    ViewData["Title"] = "Access denied";
+    Layout = User?.Identity?.IsAuthenticated == true ? "_Layout" : "_LoginLayout";
+}
+
+<div class="dws-card">
+    <h1>Access denied</h1>
+    <p>You do not have permission to access this resource. If you believe this is an error, contact your system administrator.</p>
+    <a asp-controller="Home" asp-action="Index" class="dws-btn dws-btn-ghost">Back to dashboard</a>
+</div>

@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Check your email";
+    var demoUrl = ViewData["DemoConfirmUrl"] as string;
+}
+<div class="portal-card">
+    <h1>Check your email</h1>
+    <p>We've sent you a confirmation link. The link expires in 24 hours.</p>
+    <p class="muted">Once you confirm, you'll be able to log in.</p>
+
+    @if (!string.IsNullOrEmpty(demoUrl))
+    {
+        <div class="errors" style="background:#f0f7ff; border-color: var(--dws-blue-600); color: var(--dws-blue-600);">
+            <strong>Demo helper (Stage 2a only):</strong>
+            <p>The real email is logged via <code>LoggingEmailSender</code>. While we wait for a real email provider, click here to confirm:</p>
+            <p><a href="@demoUrl">@demoUrl</a></p>
+        </div>
+    }
+</div>

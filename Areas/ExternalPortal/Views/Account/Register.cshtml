@@ -1,0 +1,52 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Register";
+}
+<div class="portal-card">
+    <h1>Create your account</h1>
+    <p class="muted">Register to view the V&amp;V case status of properties you own.</p>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="errors">
+            <strong>We could not register your account:</strong>
+            <ul>
+                @foreach (var modelStateEntry in ViewData.ModelState.Values)
+                {
+                    foreach (var error in modelStateEntry.Errors)
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                }
+            </ul>
+        </div>
+    }
+
+    <form asp-action="Register" method="post" novalidate>
+        <label asp-for="FirstName"></label><input asp-for="FirstName" autocomplete="given-name" />
+        <label asp-for="LastName"></label><input asp-for="LastName" autocomplete="family-name" />
+        <label asp-for="Email"></label><input asp-for="Email" autocomplete="email" />
+        <label asp-for="IdentityNumber"></label><input asp-for="IdentityNumber" inputmode="numeric" />
+        <label asp-for="PhoneNumber"></label><input asp-for="PhoneNumber" type="tel" autocomplete="tel" />
+        <label asp-for="Password"></label><input asp-for="Password" type="password" autocomplete="new-password" />
+        <label asp-for="ConfirmPassword"></label><input asp-for="ConfirmPassword" type="password" autocomplete="new-password" />
+
+        <div class="inline">
+            <input asp-for="IsHDI" type="checkbox" />
+            <label asp-for="IsHDI" style="margin: 0;"></label>
+        </div>
+        <div class="inline">
+            <input asp-for="HdiConsent" type="checkbox" />
+            <label asp-for="HdiConsent" style="margin: 0;"></label>
+        </div>
+        <div class="inline">
+            <input asp-for="AcceptTerms" type="checkbox" />
+            <label asp-for="AcceptTerms" style="margin: 0;"></label>
+        </div>
+
+        <div class="actions">
+            <a asp-action="Login" class="muted">Already registered? Log in</a>
+            <button type="submit" class="btn-primary">Create account</button>
+        </div>
+    </form>
+</div>
