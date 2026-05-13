@@ -74,17 +74,21 @@ public class FieldAndCropController : Controller
         var waterSource = await _context.WaterSources.FindAsync(vm.WaterSourceId);
         var property = await _context.Properties.FindAsync(vm.PropertyId);
         var period = await _context.Periods.FindAsync(vm.PeriodId);
-
-        if (crop == null || waterSource == null || property == null || period == null)
-        {
-            ModelState.AddModelError("", "One or more required lookup values were not found.");
-            await PopulateDropdownsAsync();
-            return View(vm);
-        }
-
         IrrigationSystem? irrigation = vm.IrrigationSystemId.HasValue
             ? await _context.IrrigationSystems.FindAsync(vm.IrrigationSystemId.Value)
             : null;
+
+        if (crop == null || waterSource == null || property == null || period == null
+            || (vm.IrrigationSystemId.HasValue && irrigation == null))
+        {
+            if (crop == null)          ModelState.AddModelError("CropId",            "The selected Crop was not found. Please select a valid crop.");
+            if (waterSource == null)   ModelState.AddModelError("WaterSourceId",      "The selected Water Source was not found. Please select a valid water source.");
+            if (vm.IrrigationSystemId.HasValue && irrigation == null) ModelState.AddModelError("IrrigationSystemId", "The selected Irrigation System was not found. Please select a valid irrigation system.");
+            if (period == null)        ModelState.AddModelError("PeriodId",           "The selected Period was not found. Please select a valid period.");
+            if (property == null)      ModelState.AddModelError("",                   $"Property with ID {vm.PropertyId} was not found. Return to the case file and try again.");
+            await PopulateDropdownsAsync();
+            return View(vm);
+        }
 
         var entity = new FieldAndCrop
         {
@@ -105,6 +109,7 @@ public class FieldAndCropController : Controller
         };
 
         await _repo.AddFieldAndCrop(entity);
+        TempData["Success"] = "Field & Crop record added successfully.";
         return RedirectToAction(nameof(Index), new { propertyId = vm.PropertyId });
     }
 
@@ -138,10 +143,17 @@ public class FieldAndCropController : Controller
         var crop = await _context.Crops.FindAsync(vm.CropId);
         var waterSource = await _context.WaterSources.FindAsync(vm.WaterSourceId);
         var period = await _context.Periods.FindAsync(vm.PeriodId);
+        IrrigationSystem? irrigation = vm.IrrigationSystemId.HasValue
+            ? await _context.IrrigationSystems.FindAsync(vm.IrrigationSystemId.Value)
+            : null;
 
-        if (crop == null || waterSource == null || period == null)
+        if (crop == null || waterSource == null || period == null
+            || (vm.IrrigationSystemId.HasValue && irrigation == null))
         {
-            ModelState.AddModelError("", "One or more required lookup values were not found.");
+            if (crop == null)          ModelState.AddModelError("CropId",            "The selected Crop was not found. Please select a valid crop.");
+            if (waterSource == null)   ModelState.AddModelError("WaterSourceId",      "The selected Water Source was not found. Please select a valid water source.");
+            if (vm.IrrigationSystemId.HasValue && irrigation == null) ModelState.AddModelError("IrrigationSystemId", "The selected Irrigation System was not found. Please select a valid irrigation system.");
+            if (period == null)        ModelState.AddModelError("PeriodId",           "The selected Period was not found. Please select a valid period.");
             await PopulateDropdownsAsync(existing);
             return View(vm);
         }
@@ -150,9 +162,7 @@ public class FieldAndCropController : Controller
         existing.WaterSource = waterSource;
         existing.Period = period;
         existing.PeriodId = vm.PeriodId;
-        existing.IrrigationSystem = vm.IrrigationSystemId.HasValue
-            ? await _context.IrrigationSystems.FindAsync(vm.IrrigationSystemId.Value)
-            : null;
+        existing.IrrigationSystem = irrigation;
         existing.FieldNumber = vm.FieldNumber;
         existing.FieldArea = vm.FieldArea;
         existing.PlantDate = vm.PlantDate;
@@ -161,19 +171,25 @@ public class FieldAndCropController : Controller
         existing.SAPWATCalculationResult = vm.SAPWATCalculationResult;
 
         await _repo.UpdateFieldAndCrop(existing);
+        TempData["Success"] = "Field & Crop record updated successfully.";
         return RedirectToAction(nameof(Index), new { propertyId = existing.PropertyId });
     }
 
     // POST: FieldAndCrop/Delete/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, Guid propertyId)
     {
         var entity = await _repo.GetByIdAsync(id);
-        if (entity == null) return NotFound();
-        var propertyId = entity.PropertyId;
+        if (entity == null)
+        {
+            TempData["Error"] = "Field & Crop record not found — it may have already been deleted.";
+            return RedirectToAction(nameof(Index), new { propertyId });
+        }
+        var entityPropertyId = entity.PropertyId;
         await _repo.DeleteAsync(id);
-        return RedirectToAction(nameof(Index), new { propertyId });
+        TempData["Success"] = "Field & Crop record deleted.";
+        return RedirectToAction(nameof(Index), new { propertyId = entityPropertyId });
     }
 
     private async Task PopulateDropdownsAsync(FieldAndCrop? selected = null)

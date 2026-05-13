@@ -115,6 +115,7 @@ public class ForestationController : Controller
         };
 
         await _repo.RegisterForestation(entity);
+        TempData["Success"] = "Forestation / SFRA record added successfully.";
         return RedirectToAction(nameof(Index), new { propertyId = vm.PropertyId });
     }
 
@@ -173,19 +174,25 @@ public class ForestationController : Controller
         existing.CommentsOnData = vm.CommentsOnData;
 
         await _repo.UpdateForestation(existing);
+        TempData["Success"] = "Forestation / SFRA record updated successfully.";
         return RedirectToAction(nameof(Index), new { propertyId = existing.PropertyId });
     }
 
     // POST: Forestation/Delete/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, Guid propertyId)
     {
         var entity = await _repo.GetByIdAsync(id);
-        if (entity == null) return NotFound();
-        var propertyId = entity.PropertyId;
+        if (entity == null)
+        {
+            TempData["Error"] = "Forestation record not found — it may have already been deleted.";
+            return RedirectToAction(nameof(Index), new { propertyId });
+        }
+        var entityPropertyId = entity.PropertyId;
         await _repo.DeleteAsync(id);
-        return RedirectToAction(nameof(Index), new { propertyId });
+        TempData["Success"] = "Forestation / SFRA record deleted.";
+        return RedirectToAction(nameof(Index), new { propertyId = entityPropertyId });
     }
 
     private async Task PopulateDropdownsAsync(Guid? selectedPeriodId = null)

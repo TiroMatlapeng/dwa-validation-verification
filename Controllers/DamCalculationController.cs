@@ -79,7 +79,8 @@ public class DamCalculationController : Controller
 
         if (property == null || river == null)
         {
-            ModelState.AddModelError("", "Property or River not found.");
+            if (property == null) ModelState.AddModelError("", $"Property with ID {vm.PropertyId} was not found. Return to the case file and try again.");
+            if (river == null)    ModelState.AddModelError("RiverId", "The selected River was not found. Please select a valid river.");
             await PopulateDropdownsAsync();
             return View(vm);
         }
@@ -100,6 +101,7 @@ public class DamCalculationController : Controller
         };
 
         await _repo.AddCalculationAsync(entity);
+        TempData["Success"] = "Dam Calculation record added successfully.";
         return RedirectToAction(nameof(Index), new { propertyId = vm.PropertyId });
     }
 
@@ -133,7 +135,7 @@ public class DamCalculationController : Controller
         var river = await _context.Rivers.FindAsync(vm.RiverId);
         if (river == null)
         {
-            ModelState.AddModelError("RiverId", "River not found.");
+            ModelState.AddModelError("RiverId", "The selected River was not found. Please select a valid river from the list.");
             await PopulateDropdownsAsync(vm.RiverId);
             return View(vm);
         }
@@ -148,19 +150,25 @@ public class DamCalculationController : Controller
         existing.DamCalculationStatus = vm.DamCalculationStatus;
 
         await _repo.UpdateCalculationAsync(existing);
+        TempData["Success"] = "Dam Calculation record updated successfully.";
         return RedirectToAction(nameof(Index), new { propertyId = existing.PropertyId });
     }
 
     // POST: DamCalculation/Delete/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, Guid propertyId)
     {
         var entity = await _repo.GetByIdAsync(id);
-        if (entity == null) return NotFound();
-        var propertyId = entity.PropertyId;
+        if (entity == null)
+        {
+            TempData["Error"] = "Dam Calculation record not found — it may have already been deleted.";
+            return RedirectToAction(nameof(Index), new { propertyId });
+        }
+        var entityPropertyId = entity.PropertyId;
         await _repo.DeleteAsync(id);
-        return RedirectToAction(nameof(Index), new { propertyId });
+        TempData["Success"] = "Dam Calculation record deleted.";
+        return RedirectToAction(nameof(Index), new { propertyId = entityPropertyId });
     }
 
     private async Task PopulateDropdownsAsync(Guid? selectedRiverId = null)
