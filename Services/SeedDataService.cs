@@ -18,7 +18,34 @@ public class SeedDataService
         await SeedAuthorisationTypesAsync();
         await SeedPeriodsAsync();
         await SeedGwcaProclamationRulesAsync();
+        await SeedCustomerTypesAsync();
         await SeedSampleCasesAsync();
+    }
+
+    // ── CustomerTypes ─────────────────────────────────────────────────────
+
+    private async Task SeedCustomerTypesAsync()
+    {
+        if (await _context.CustomerTypes.AnyAsync())
+            return;
+
+        var types = new[]
+        {
+            "Individual",
+            "Company / Legal Entity",
+            "Government",
+            "Communal / Tribal Authority",
+            "Irrigation Board Member",
+            "Other"
+        };
+
+        _context.CustomerTypes.AddRange(types.Select(name => new CustomerType
+        {
+            Id = Guid.NewGuid(),
+            CustomerTypeName = name
+        }));
+
+        await _context.SaveChangesAsync();
     }
 
     // ── 1. Provinces (9) ──────────────────────────────────────────────
