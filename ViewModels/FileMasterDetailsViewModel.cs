@@ -10,6 +10,7 @@ public class FileMasterDetailsViewModel
     // Workflow gap-fill (PRD CP12/CP13/CP19) — inline guard feedback + PAJA checklist.
     public List<string> BlockingReasons { get; set; } = new();
     public PAJAChecklist? PAJAChecklist { get; set; }
+    public LawfulnessAssessmentResult? LawfulnessAssessmentResult { get; set; }
 
     public WorkflowState? CurrentState => WorkflowInstance?.CurrentWorkflowState;
 

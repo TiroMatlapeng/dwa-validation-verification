@@ -108,6 +108,7 @@ builder.Services.AddScoped<IWorkflowService, WorkflowService>();
 builder.Services.AddScoped<IScopedCaseQuery, ScopedCaseQuery>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<dwa_ver_val.Services.Calculator.ICalculatorService, dwa_ver_val.Services.Calculator.CalculatorService>();
+builder.Services.AddScoped<ILawfulnessAssessmentService, LawfulnessAssessmentService>();
 
 // Workflow transition guards — evaluated in registration order by WorkflowService.MoveToStateAsync.
 builder.Services.AddScoped<dwa_ver_val.Services.Workflow.ITransitionGuard, dwa_ver_val.Services.Workflow.Guards.Cp2SpatialInfoGuard>();

@@ -13,19 +13,22 @@ public class FileMasterController : Controller
     private readonly IWorkflowService _workflow;
     private readonly IScopedCaseQuery _scope;
     private readonly ILetterService _letters;
+    private readonly ILawfulnessAssessmentService _assessment;
 
     public FileMasterController(
         IFileMaster fileMasterRepository,
         ApplicationDBContext context,
         IWorkflowService workflow,
         IScopedCaseQuery scope,
-        ILetterService letters)
+        ILetterService letters,
+        ILawfulnessAssessmentService assessment)
     {
         _fileMasterRepository = fileMasterRepository;
         _context = context;
         _workflow = workflow;
         _scope = scope;
         _letters = letters;
+        _assessment = assessment;
     }
 
     // GET: FileMaster/LetterPreview/{id}?code=S35_L1
@@ -171,6 +174,9 @@ public class FileMasterController : Controller
         var currentUserGuid = currentUserId is not null && Guid.TryParse(currentUserId, out var parsedGuid) ? parsedGuid : (Guid?)null;
         vm.BlockingReasons = await _workflow.GetBlockingReasonsAsync(fileMaster.FileMasterId, currentUserGuid);
         vm.PAJAChecklist = await _context.PAJAChecklists.FirstOrDefaultAsync(p => p.FileMasterId == fileMaster.FileMasterId);
+        vm.LawfulnessAssessmentResult = await _context.LawfulnessAssessmentResults
+            .Include(r => r.Gwca)
+            .FirstOrDefaultAsync(r => r.FileMasterId == fileMaster.FileMasterId);
 
         return View(vm);
     }
@@ -238,6 +244,31 @@ public class FileMasterController : Controller
 
         await _context.SaveChangesAsync();
         TempData["Success"] = "Evidence recorded.";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    // POST: FileMaster/AssessLawfulness/{id}
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
+    public async Task<IActionResult> AssessLawfulness(Guid id)
+    {
+        var fm = await _fileMasterRepository.GetByIdAsync(id);
+        if (fm is null) return NotFound();
+        if (!_scope.IsInScope(fm, User)) return Forbid();
+
+        try
+        {
+            var result = await _assessment.AssessAsync(id);
+            TempData["Success"] =
+                $"ELU assessment complete ({result.LegalFramework} framework). " +
+                $"Lawful irrigation: {result.LawfulIrrigationM3:N0} m³  |  " +
+                $"Lawful storage: {result.LawfulStorageM3:N0} m³";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
         return RedirectToAction(nameof(Details), new { id });
     }
 
