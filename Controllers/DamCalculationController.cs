@@ -1,3 +1,4 @@
+using dwa_ver_val.Services.Calculator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -8,11 +9,13 @@ public class DamCalculationController : Controller
 {
     private readonly IDamCalculation _repo;
     private readonly ApplicationDBContext _context;
+    private readonly ICalculatorService _calculator;
 
-    public DamCalculationController(IDamCalculation repo, ApplicationDBContext context)
+    public DamCalculationController(IDamCalculation repo, ApplicationDBContext context, ICalculatorService calculator)
     {
         _repo = repo;
         _context = context;
+        _calculator = calculator;
     }
 
     // GET: DamCalculation/Index?propertyId=...
@@ -148,6 +151,14 @@ public class DamCalculationController : Controller
         existing.DamNumber = vm.DamNumber;
         existing.DamCapacity = vm.DamCapacity;
         existing.DamCalculationStatus = vm.DamCalculationStatus;
+        existing.CalculationMethod = vm.CalculationMethod;
+        existing.WallLength = vm.WallLength;
+        existing.Fetch = vm.Fetch;
+        existing.RiverDistance = vm.RiverDistance;
+        existing.ContourDifference = vm.ContourDifference;
+        existing.DamArea = vm.DamArea;
+        existing.DamDepth = vm.DamDepth;
+        existing.ShapeFactor = vm.ShapeFactor;
 
         await _repo.UpdateCalculationAsync(existing);
         TempData["Success"] = "Dam Calculation record updated successfully.";
@@ -169,6 +180,24 @@ public class DamCalculationController : Controller
         await _repo.DeleteAsync(id);
         TempData["Success"] = "Dam Calculation record deleted.";
         return RedirectToAction(nameof(Index), new { propertyId = entityPropertyId });
+    }
+
+    // POST: DamCalculation/Calculate/{id}
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
+    public async Task<IActionResult> Calculate(Guid id)
+    {
+        try
+        {
+            var capacity = await _calculator.ComputeDamVolumeAsync(id);
+            TempData["Success"] = $"Dam capacity calculated: {capacity:N0} m³";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Edit), new { id });
     }
 
     private async Task PopulateDropdownsAsync(Guid? selectedRiverId = null)
@@ -194,6 +223,15 @@ public class DamCalculationController : Controller
         DamNumber = d.DamNumber,
         DamCapacity = d.DamCapacity,
         DamCalculationStatus = d.DamCalculationStatus,
-        RiverName = d.River?.RiverName
+        RiverName = d.River?.RiverName,
+        // new input fields:
+        CalculationMethod = d.CalculationMethod,
+        WallLength = d.WallLength,
+        Fetch = d.Fetch,
+        RiverDistance = d.RiverDistance,
+        ContourDifference = d.ContourDifference,
+        DamArea = d.DamArea,
+        DamDepth = d.DamDepth,
+        ShapeFactor = d.ShapeFactor,
     };
 }

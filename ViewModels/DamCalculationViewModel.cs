@@ -34,4 +34,29 @@ public class DamCalculationViewModel
 
     // Populated for Index display
     public string? RiverName { get; set; }
+
+    // Appendix D calculation inputs
+    [Display(Name = "Calculation Method")]
+    public string? CalculationMethod { get; set; }
+
+    [Display(Name = "Wall Length (m)")]
+    public decimal? WallLength { get; set; }
+
+    [Display(Name = "Fetch (m)")]
+    public decimal? Fetch { get; set; }
+
+    [Display(Name = "River Distance R1 (m)")]
+    public decimal? RiverDistance { get; set; }
+
+    [Display(Name = "Contour Difference C1 (m)")]
+    public decimal? ContourDifference { get; set; }
+
+    [Display(Name = "Dam Area (ha)")]
+    public decimal? DamArea { get; set; }
+
+    [Display(Name = "Dam Depth (m)")]
+    public decimal? DamDepth { get; set; }
+
+    [Display(Name = "Shape Factor")]
+    public decimal? ShapeFactor { get; set; }
 }

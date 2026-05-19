@@ -61,9 +61,91 @@
             </div>
         </div>
 
-        <div style="margin-top: 20px; display: flex; gap: 8px;">
+        <div class="form-section-title" style="margin-top: 20px;">Appendix D Volume Calculation</div>
+
+        <div class="form-group">
+            <label class="form-label">Calculation Method</label>
+            <select id="calcMethod" name="CalculationMethod" class="form-control" style="width:100%;" onchange="toggleMethod()">
+                <option value="">-- Select Method --</option>
+                <option value="Method1" selected="@(Model.CalculationMethod == "Method1")">Method 1 — Wall Length</option>
+                <option value="Method2" selected="@(Model.CalculationMethod == "Method2")">Method 2 — Area</option>
+            </select>
+        </div>
+
+        <div id="method1-fields" style="display:none;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Wall Length (m)</label>
+                    <input type="number" step="0.01" name="WallLength" value="@Model.WallLength" class="form-control" style="width:100%;" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fetch (m)</label>
+                    <input type="number" step="0.01" name="Fetch" value="@Model.Fetch" class="form-control" style="width:100%;" />
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">River Distance R1 (m)</label>
+                    <input type="number" step="0.01" name="RiverDistance" value="@Model.RiverDistance" class="form-control" style="width:100%;" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contour Difference C1 (m)</label>
+                    <input type="number" step="0.01" name="ContourDifference" value="@Model.ContourDifference" class="form-control" style="width:100%;" />
+                </div>
+            </div>
+        </div>
+
+        <div id="method2-fields" style="display:none;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Dam Area (ha)</label>
+                    <input type="number" step="0.01" name="DamArea" value="@Model.DamArea" class="form-control" style="width:100%;" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dam Depth (m)</label>
+                    <input type="number" step="0.01" name="DamDepth" value="@Model.DamDepth" class="form-control" style="width:100%;" />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group" id="shape-factor-group" style="display:none;">
+            <label class="form-label">Shape Factor</label>
+            <select name="ShapeFactor" class="form-control" style="width:280px;">
+                <option value="">-- Select Shape --</option>
+                <option value="0.33" selected="@(Model.ShapeFactor == 0.33m)">0.33 — Ravine (triangle)</option>
+                <option value="0.40" selected="@(Model.ShapeFactor == 0.40m)">0.40 — Square with bends</option>
+                <option value="0.50" selected="@(Model.ShapeFactor == 0.50m)">0.50 — Circular</option>
+            </select>
+        </div>
+
+        @if (Model.DamCapacity > 0 && !string.IsNullOrEmpty(Model.CalculationMethod))
+        {
+            <div style="margin: 12px 0; padding: 10px 14px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; font-size: 13px; color: #166534;">
+                <strong>Calculated capacity:</strong> @Model.DamCapacity.ToString("N0") m³ (via @Model.CalculationMethod)
+            </div>
+        }
+
+        <div style="margin-top: 20px; display: flex; gap: 8px; align-items: center;">
             <button type="submit" class="btn btn-primary">Save Changes</button>
             <a asp-action="Index" asp-route-propertyId="@Model.PropertyId" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
+
+    <form asp-action="Calculate" asp-route-id="@Model.DamCalculationId" method="post" style="margin-top: 8px;">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-outline">Calculate Capacity</button>
+        <span style="font-size:12px; color:var(--dws-text-muted); margin-left:8px;">Save method inputs above first, then click Calculate.</span>
+    </form>
 </div>
+
+@section Scripts {
+    <script>
+        function toggleMethod() {
+            var v = document.getElementById('calcMethod').value;
+            document.getElementById('method1-fields').style.display = v === 'Method1' ? '' : 'none';
+            document.getElementById('method2-fields').style.display = v === 'Method2' ? '' : 'none';
+            document.getElementById('shape-factor-group').style.display = v ? '' : 'none';
+        }
+        toggleMethod();
+    </script>
+}
