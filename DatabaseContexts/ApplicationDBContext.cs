@@ -53,6 +53,8 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Period> Periods { get; set; }
     public DbSet<WaterSource> WaterSources { get; set; }
     public DbSet<IrrigationSystem> IrrigationSystems { get; set; }
+    public DbSet<CropWaterRate> CropWaterRates { get; set; }
+    public DbSet<SfraSpeciesRate> SfraSpeciesRates { get; set; }
     public DbSet<River> Rivers { get; set; }
     public DbSet<GovernmentWaterControlArea> GovernmentWaterControlAreas { get; set; }
     public DbSet<GovernmentWaterScheme> GovernmentWaterSchemes { get; set; }
@@ -797,6 +799,23 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasIndex(e => e.IdentityDocumentNumber)
             .HasDatabaseName("IX_PropertyOwners_IdentityDocumentNumber")
             .HasFilter("[IdentityDocumentNumber] IS NOT NULL");
+
+        // ── CropWaterRate ──
+        modelBuilder.Entity<CropWaterRate>().HasKey(e => e.CropWaterRateId);
+        modelBuilder.Entity<CropWaterRate>()
+            .HasOne(e => e.Crop).WithMany()
+            .HasForeignKey(e => e.CropId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<CropWaterRate>()
+            .HasOne(e => e.IrrigationSystem).WithMany()
+            .HasForeignKey(e => e.IrrigationSystemId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<CropWaterRate>()
+            .HasIndex(e => new { e.CropId, e.IrrigationSystemId })
+            .IsUnique();
+
+        // ── SfraSpeciesRate ──
+        modelBuilder.Entity<SfraSpeciesRate>().HasKey(e => e.SfraSpeciesRateId);
+        modelBuilder.Entity<SfraSpeciesRate>()
+            .HasIndex(e => e.SpeciesName).IsUnique();
 
         // ── Global: disable cascade delete for all relationships, except whitelisted FKs.
         //    Source of truth: ApplicationDBContext.NonRestrictForeignKeys (static).

@@ -10,6 +10,34 @@ public class DamCalculation
     public SateliteImage? SateliteImage { get; set; }
     public required DateOnly SateliteSurveyDate { get; set; }
     public string? DamNumber { get; set; }
+
+    // Calculation method selector
+    public string? CalculationMethod { get; set; }  // "Method1" | "Method2"
+
+    // Method 1 (Wall Length) inputs
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? WallLength { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? Fetch { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? RiverDistance { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? ContourDifference { get; set; }
+
+    // Method 2 (Area) inputs
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? DamArea { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? DamDepth { get; set; }
+
+    // Shared
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? ShapeFactor { get; set; }
+
     [Column(TypeName = "decimal(18, 2)")]
     public required decimal DamCapacity { get; set; }
     public required River River{ get; set; }
