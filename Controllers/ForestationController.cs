@@ -2,17 +2,20 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using dwa_ver_val.Services.Calculator;
 
 [Authorize(Policy = DwsPolicies.CanTransitionWorkflow)]
 public class ForestationController : Controller
 {
     private readonly IForestation _repo;
     private readonly ApplicationDBContext _context;
+    private readonly ICalculatorService _calculator;
 
-    public ForestationController(IForestation repo, ApplicationDBContext context)
+    public ForestationController(IForestation repo, ApplicationDBContext context, ICalculatorService calculator)
     {
         _repo = repo;
         _context = context;
+        _calculator = calculator;
     }
 
     // GET: Forestation/Index?propertyId=...
@@ -160,12 +163,6 @@ public class ForestationController : Controller
         existing.Pre1972Volume = vm.Pre1972Volume;
         existing.SFRAPermitNumber = vm.SFRAPermitNumber;
         existing.SFRAPermitHectares = vm.SFRAPermitHectares;
-        existing.ELUHectares = vm.ELUHectares;
-        existing.ELUVolume = vm.ELUVolume;
-        existing.LawfulHectares = vm.LawfulHectares;
-        existing.LawfulVolume = vm.LawfulVolume;
-        existing.UnlawfulHectares = vm.UnlawfulHectares;
-        existing.UnlawfulVolume = vm.UnlawfulVolume;
         existing.UnitForVolumeCalculation = vm.UnitForVolumeCalculation;
         existing.UserFeedbackEntitlementType = vm.UserFeedbackEntitlementType;
         existing.UserFeedbackEntitlementReference = vm.UserFeedbackEntitlementReference;
@@ -176,6 +173,24 @@ public class ForestationController : Controller
         await _repo.UpdateForestation(existing);
         TempData["Success"] = "Forestation / SFRA record updated successfully.";
         return RedirectToAction(nameof(Index), new { propertyId = existing.PropertyId });
+    }
+
+    // POST: Forestation/Calculate/{id}
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
+    public async Task<IActionResult> Calculate(Guid id)
+    {
+        try
+        {
+            var result = await _calculator.ComputeSfraAsync(id);
+            TempData["Success"] = $"SFRA ELU calculated: {result.EluHa:N2} ha authorised, {result.EluVolume:N0} m³ ELU volume";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Edit), new { id });
     }
 
     // POST: Forestation/Delete/{id}
