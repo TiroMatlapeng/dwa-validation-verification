@@ -46,6 +46,21 @@
 
         <div class="form-row">
             <div class="form-group">
+                <label asp-for="IrrigableAreaHa" class="form-label"></label>
+                <input asp-for="IrrigableAreaHa" class="form-control" style="width:100%;" />
+                <span asp-validation-for="IrrigableAreaHa" class="text-danger text-sm"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="WaterControlAreaId" class="form-label">Government Water Control Area</label>
+                <select asp-for="WaterControlAreaId" asp-items="ViewBag.GovernmentWaterControlAreas" class="form-control" style="width:100%;">
+                    <option value="">-- None (General S9B principles apply) --</option>
+                </select>
+                <span asp-validation-for="WaterControlAreaId" class="text-danger text-sm"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
                 <label asp-for="CatchmentAreaId" class="form-label">Catchment Area</label>
                 <select asp-for="CatchmentAreaId" asp-items="ViewBag.CatchmentAreas" class="form-control" style="width:100%;" tabindex="5">
                     <option value="">-- Select Catchment Area --</option>

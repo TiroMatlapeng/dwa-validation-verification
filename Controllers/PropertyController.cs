@@ -144,6 +144,12 @@ public class PropertyController : Controller
             await _context.CatchmentAreas.OrderBy(c => c.CatchmentCode).ToListAsync(),
             "CatchmentAreaId", "CatchmentCode", property.CatchmentAreaId);
 
+        ViewBag.GovernmentWaterControlAreas = new SelectList(
+            await _context.GovernmentWaterControlAreas
+                .OrderBy(g => g.GovernmentWaterControlAreaName)
+                .ToListAsync(),
+            "WaterControlAreaId", "GovernmentWaterControlAreaName", property.WaterControlAreaId);
+
         return View(property);
     }
 
@@ -171,6 +177,12 @@ public class PropertyController : Controller
         ViewBag.CatchmentAreas = new SelectList(
             await _context.CatchmentAreas.OrderBy(c => c.CatchmentCode).ToListAsync(),
             "CatchmentAreaId", "CatchmentCode", property.CatchmentAreaId);
+
+        ViewBag.GovernmentWaterControlAreas = new SelectList(
+            await _context.GovernmentWaterControlAreas
+                .OrderBy(g => g.GovernmentWaterControlAreaName)
+                .ToListAsync(),
+            "WaterControlAreaId", "GovernmentWaterControlAreaName", property.WaterControlAreaId);
 
         return View(property);
     }
