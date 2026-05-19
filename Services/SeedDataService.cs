@@ -20,6 +20,7 @@ public class SeedDataService
         await SeedGwcaProclamationRulesAsync();
         await SeedCustomerTypesAsync();
         await SeedSampleCasesAsync();
+        await SeedCalculatorReferenceDataAsync();
     }
 
     // ── CustomerTypes ─────────────────────────────────────────────────────
@@ -595,5 +596,74 @@ public class SeedDataService
             fm.WorkflowInstanceId = instance.WorkflowInstanceId;
             await _context.SaveChangesAsync();
         }
+    }
+
+    // ── 9. Calculator reference data (SFRA species rates + crop water rates) ─
+
+    private async Task SeedCalculatorReferenceDataAsync()
+    {
+        // SFRA species rates (m³/ha/a) — DWS standard values
+        var sfraRates = new[]
+        {
+            new { Species = "Eucalyptus", Rate = 6500m },
+            new { Species = "Pine",       Rate = 5500m },
+            new { Species = "Wattle",     Rate = 6000m },
+            new { Species = "Gum",        Rate = 6500m },
+        };
+
+        foreach (var s in sfraRates)
+        {
+            if (!await _context.SfraSpeciesRates.AnyAsync(r => r.SpeciesName == s.Species))
+            {
+                _context.SfraSpeciesRates.Add(new SfraSpeciesRate
+                {
+                    SfraSpeciesRateId = Guid.NewGuid(),
+                    SpeciesName = s.Species,
+                    RateM3PerHaPerAnnum = s.Rate,
+                    Notes = "DWS standard rate",
+                });
+            }
+        }
+
+        // CropWaterRate: one default rate per crop (IrrigationSystemId = null = all systems).
+        // Only seed if the table is empty.
+        if (!await _context.CropWaterRates.AnyAsync())
+        {
+            var crops = await _context.Crops.ToListAsync();
+            var defaultRates = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Maize"]       = 550m,
+                ["Wheat"]       = 450m,
+                ["Sugarcane"]   = 1200m,
+                ["Soybean"]     = 500m,
+                ["Sunflower"]   = 480m,
+                ["Groundnut"]   = 520m,
+                ["Cotton"]      = 700m,
+                ["Lucerne"]     = 1400m,
+                ["Pasture"]     = 800m,
+                ["Vegetables"]  = 600m,
+                ["Citrus"]      = 900m,
+                ["Grapes"]      = 700m,
+                ["Stone fruit"] = 750m,
+                ["Other"]       = 600m,
+            };
+
+            foreach (var crop in crops)
+            {
+                if (!defaultRates.TryGetValue(crop.CropName, out var rate))
+                    rate = 600m;
+
+                _context.CropWaterRates.Add(new CropWaterRate
+                {
+                    CropWaterRateId = Guid.NewGuid(),
+                    CropId = crop.CropId,
+                    IrrigationSystemId = null,
+                    RatePerHaPerAnnum = rate,
+                    Source = "SAPWAT 4.0 SA average",
+                });
+            }
+        }
+
+        await _context.SaveChangesAsync();
     }
 }
