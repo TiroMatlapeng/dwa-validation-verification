@@ -2,17 +2,20 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using dwa_ver_val.Services.Calculator;
 
 [Authorize(Policy = DwsPolicies.CanTransitionWorkflow)]
 public class FieldAndCropController : Controller
 {
     private readonly IFieldAndCrop _repo;
     private readonly ApplicationDBContext _context;
+    private readonly ICalculatorService _calculator;
 
-    public FieldAndCropController(IFieldAndCrop repo, ApplicationDBContext context)
+    public FieldAndCropController(IFieldAndCrop repo, ApplicationDBContext context, ICalculatorService calculator)
     {
         _repo = repo;
         _context = context;
+        _calculator = calculator;
     }
 
     // GET: FieldAndCrop/Index?propertyId=...
@@ -168,11 +171,28 @@ public class FieldAndCropController : Controller
         existing.PlantDate = vm.PlantDate;
         existing.RotationFactor = vm.RotationFactor;
         existing.CropArea = vm.CropArea;
-        existing.SAPWATCalculationResult = vm.SAPWATCalculationResult;
 
         await _repo.UpdateFieldAndCrop(existing);
         TempData["Success"] = "Field & Crop record updated successfully.";
         return RedirectToAction(nameof(Index), new { propertyId = existing.PropertyId });
+    }
+
+    // POST: FieldAndCrop/Calculate/{id}
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
+    public async Task<IActionResult> Calculate(Guid id)
+    {
+        try
+        {
+            var result = await _calculator.ComputeSapwatAsync(id);
+            TempData["Success"] = $"SAPWAT result computed: {result:N2} mm/ha/a";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Edit), new { id });
     }
 
     // POST: FieldAndCrop/Delete/{id}

@@ -88,9 +88,19 @@
                 <span asp-validation-for="RotationFactor" class="text-danger text-sm"></span>
             </div>
             <div class="form-group">
-                <label asp-for="SAPWATCalculationResult" class="form-label"></label>
-                <input asp-for="SAPWATCalculationResult" class="form-control" type="number" step="0.01" min="0" style="width:100%;" />
-                <span asp-validation-for="SAPWATCalculationResult" class="text-danger text-sm"></span>
+                <label class="form-label">SAPWAT Result (mm/ha/a)</label>
+                @if (Model.SAPWATCalculationResult > 0)
+                {
+                    <div style="padding: 8px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; color: #166534; font-weight: 600; font-size: 15px;">
+                        @Model.SAPWATCalculationResult.ToString("N2") mm/ha/a
+                    </div>
+                }
+                else
+                {
+                    <div style="padding: 8px 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; color: #6b7280; font-size: 13px;">
+                        Not yet calculated — save record, then click Run SAPWAT below.
+                    </div>
+                }
             </div>
         </div>
 
@@ -99,4 +109,28 @@
             <a asp-action="Index" asp-route-propertyId="@Model.PropertyId" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
+
+    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+        <div class="form-section-title">SAPWAT Crop Water Requirement</div>
+        <p style="font-size: 13px; color: #6b7280; margin-bottom: 10px;">
+            Computes the effective crop water rate using the SAPWAT lookup table (crop &times; irrigation system &times; rotation factor), then calculates volume in m&sup3;.
+            Save the record first to ensure crop and irrigation system selections are persisted before running.
+        </p>
+        @if (TempData["Success"] != null)
+        {
+            <div style="margin-bottom: 10px; padding: 8px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; color: #166534; font-size: 13px;">
+                @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div style="margin-bottom: 10px; padding: 8px 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; color: #991b1b; font-size: 13px;">
+                @TempData["Error"]
+            </div>
+        }
+        <form asp-action="Calculate" asp-route-id="@Model.FieldAndCropId" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-primary">Run SAPWAT</button>
+        </form>
+    </div>
 </div>
