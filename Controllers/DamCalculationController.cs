@@ -4,18 +4,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-[Authorize(Policy = DwsPolicies.CanTransitionWorkflow)]
+[Authorize(Policy = DwsPolicies.CanCapture)]
 public class DamCalculationController : Controller
 {
     private readonly IDamCalculation _repo;
     private readonly ApplicationDBContext _context;
     private readonly ICalculatorService _calculator;
+    private readonly IScopedCaseQuery _scope;
 
-    public DamCalculationController(IDamCalculation repo, ApplicationDBContext context, ICalculatorService calculator)
+    public DamCalculationController(IDamCalculation repo, ApplicationDBContext context, ICalculatorService calculator, IScopedCaseQuery scope)
     {
         _repo = repo;
         _context = context;
         _calculator = calculator;
+        _scope = scope;
     }
 
     // GET: DamCalculation/Index?propertyId=...
@@ -168,6 +170,7 @@ public class DamCalculationController : Controller
     // POST: DamCalculation/Delete/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanTransitionWorkflow)]
     public async Task<IActionResult> Delete(Guid id, Guid propertyId)
     {
         var entity = await _repo.GetByIdAsync(id);
@@ -188,6 +191,13 @@ public class DamCalculationController : Controller
     [Authorize(Policy = DwsPolicies.CanCapture)]
     public async Task<IActionResult> Calculate(Guid id)
     {
+        var entity = await _context.DamCalculations.FindAsync(id);
+        if (entity is null) return NotFound();
+
+        var fileMaster = await _context.FileMasters.FirstOrDefaultAsync(fm => fm.PropertyId == entity.PropertyId);
+        if (fileMaster is null) return NotFound();
+        if (!_scope.IsInScope(fileMaster, User)) return Forbid();
+
         try
         {
             var capacity = await _calculator.ComputeDamVolumeAsync(id);

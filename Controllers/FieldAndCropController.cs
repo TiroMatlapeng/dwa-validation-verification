@@ -4,18 +4,20 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using dwa_ver_val.Services.Calculator;
 
-[Authorize(Policy = DwsPolicies.CanTransitionWorkflow)]
+[Authorize(Policy = DwsPolicies.CanCapture)]
 public class FieldAndCropController : Controller
 {
     private readonly IFieldAndCrop _repo;
     private readonly ApplicationDBContext _context;
     private readonly ICalculatorService _calculator;
+    private readonly IScopedCaseQuery _scope;
 
-    public FieldAndCropController(IFieldAndCrop repo, ApplicationDBContext context, ICalculatorService calculator)
+    public FieldAndCropController(IFieldAndCrop repo, ApplicationDBContext context, ICalculatorService calculator, IScopedCaseQuery scope)
     {
         _repo = repo;
         _context = context;
         _calculator = calculator;
+        _scope = scope;
     }
 
     // GET: FieldAndCrop/Index?propertyId=...
@@ -183,6 +185,14 @@ public class FieldAndCropController : Controller
     [Authorize(Policy = DwsPolicies.CanCapture)]
     public async Task<IActionResult> Calculate(Guid id)
     {
+        var entity = await _context.FieldAndCrops.FindAsync(id);
+        if (entity is null) return NotFound();
+
+        // Scope check — load the associated FileMaster via PropertyId and verify the user can act on it.
+        var fileMaster = await _context.FileMasters.FirstOrDefaultAsync(fm => fm.PropertyId == entity.PropertyId);
+        if (fileMaster is null) return NotFound();
+        if (!_scope.IsInScope(fileMaster, User)) return Forbid();
+
         try
         {
             var result = await _calculator.ComputeSapwatAsync(id);
@@ -198,6 +208,7 @@ public class FieldAndCropController : Controller
     // POST: FieldAndCrop/Delete/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanTransitionWorkflow)]
     public async Task<IActionResult> Delete(Guid id, Guid propertyId)
     {
         var entity = await _repo.GetByIdAsync(id);

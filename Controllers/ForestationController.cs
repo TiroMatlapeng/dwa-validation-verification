@@ -4,18 +4,20 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using dwa_ver_val.Services.Calculator;
 
-[Authorize(Policy = DwsPolicies.CanTransitionWorkflow)]
+[Authorize(Policy = DwsPolicies.CanCapture)]
 public class ForestationController : Controller
 {
     private readonly IForestation _repo;
     private readonly ApplicationDBContext _context;
     private readonly ICalculatorService _calculator;
+    private readonly IScopedCaseQuery _scope;
 
-    public ForestationController(IForestation repo, ApplicationDBContext context, ICalculatorService calculator)
+    public ForestationController(IForestation repo, ApplicationDBContext context, ICalculatorService calculator, IScopedCaseQuery scope)
     {
         _repo = repo;
         _context = context;
         _calculator = calculator;
+        _scope = scope;
     }
 
     // GET: Forestation/Index?propertyId=...
@@ -103,12 +105,13 @@ public class ForestationController : Controller
             Pre1972Volume = vm.Pre1972Volume,
             SFRAPermitNumber = vm.SFRAPermitNumber,
             SFRAPermitHectares = vm.SFRAPermitHectares,
-            ELUHectares = vm.ELUHectares,
-            ELUVolume = vm.ELUVolume,
-            LawfulHectares = vm.LawfulHectares,
-            LawfulVolume = vm.LawfulVolume,
-            UnlawfulHectares = vm.UnlawfulHectares,
-            UnlawfulVolume = vm.UnlawfulVolume,
+            // ELU fields are computed by the calculator (Bug 5) — initialise to 0m, do not map from VM.
+            ELUHectares = 0m,
+            ELUVolume = 0m,
+            LawfulHectares = 0m,
+            LawfulVolume = 0m,
+            UnlawfulHectares = 0m,
+            UnlawfulVolume = 0m,
             UnitForVolumeCalculation = vm.UnitForVolumeCalculation,
             UserFeedbackEntitlementType = vm.UserFeedbackEntitlementType,
             UserFeedbackEntitlementReference = vm.UserFeedbackEntitlementReference,
@@ -181,6 +184,14 @@ public class ForestationController : Controller
     [Authorize(Policy = DwsPolicies.CanCapture)]
     public async Task<IActionResult> Calculate(Guid id)
     {
+        var entity = await _context.Forestations.FindAsync(id);
+        if (entity is null) return NotFound();
+
+        // Scope check — load the associated FileMaster via PropertyId and verify the user can act on it.
+        var fileMaster = await _context.FileMasters.FirstOrDefaultAsync(fm => fm.PropertyId == entity.PropertyId);
+        if (fileMaster is null) return NotFound();
+        if (!_scope.IsInScope(fileMaster, User)) return Forbid();
+
         try
         {
             var result = await _calculator.ComputeSfraAsync(id);
@@ -196,6 +207,7 @@ public class ForestationController : Controller
     // POST: Forestation/Delete/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanTransitionWorkflow)]
     public async Task<IActionResult> Delete(Guid id, Guid propertyId)
     {
         var entity = await _repo.GetByIdAsync(id);
