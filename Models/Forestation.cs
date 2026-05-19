@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 public class Forestation
@@ -33,6 +34,8 @@ public class Forestation
     public decimal UnlawfulHectares { get; set; }
     [Column(TypeName = "decimal(18, 2)")]
     public decimal UnlawfulVolume {get; set; }
+    [Display(Name = "Last Calculated")]
+    public DateTime? LastCalculatedAt { get; set; }
     [Column(TypeName = "decimal(18, 2)")]
     public decimal LawfulHectares { get; set;}
     [Column(TypeName = "decimal(18, 2)")]

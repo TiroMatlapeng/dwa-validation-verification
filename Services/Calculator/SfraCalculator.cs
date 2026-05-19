@@ -1,12 +1,14 @@
 namespace dwa_ver_val.Services.Calculator;
 
-public record SfraResult(
-    decimal EluHa,
-    decimal EluVolume,
-    decimal LawfulHa,
-    decimal LawfulVolume,
-    decimal UnlawfulHa,
-    decimal UnlawfulVolume);
+public record SfraResult
+{
+    public decimal EluHa { get; init; }
+    public decimal EluVolume { get; init; }
+    public decimal LawfulHa { get; init; }
+    public decimal LawfulVolume { get; init; }
+    public decimal UnlawfulHa { get; init; }
+    public decimal UnlawfulVolume { get; init; }
+}
 
 /// <summary>
 /// Pure SFRA (Stream Flow Reduction Activity) ELU calculator.
@@ -21,7 +23,7 @@ public static class SfraCalculator
         decimal qualifyingHa,
         decimal speciesRateM3PerHaPerAnnum)
     {
-        if (qualifyingHa <= 0) return new SfraResult(0, 0, 0, 0, 0, 0);
+        if (qualifyingHa <= 0) return new SfraResult();
 
         var authorisedHa = Math.Min(pre1972Ha + sfraPermitHa, qualifyingHa);
         var unlawfulHa = qualifyingHa - authorisedHa;
@@ -29,12 +31,14 @@ public static class SfraCalculator
         var eluVolume = authorisedHa * speciesRateM3PerHaPerAnnum;
         var unlawfulVolume = unlawfulHa * speciesRateM3PerHaPerAnnum;
 
-        return new SfraResult(
-            EluHa: authorisedHa,
-            EluVolume: eluVolume,
-            LawfulHa: authorisedHa,
-            LawfulVolume: eluVolume,
-            UnlawfulHa: unlawfulHa,
-            UnlawfulVolume: unlawfulVolume);
+        return new SfraResult
+        {
+            EluHa = authorisedHa,
+            EluVolume = eluVolume,
+            LawfulHa = authorisedHa,
+            LawfulVolume = eluVolume,
+            UnlawfulHa = unlawfulHa,
+            UnlawfulVolume = unlawfulVolume
+        };
     }
 }

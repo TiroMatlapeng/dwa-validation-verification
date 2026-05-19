@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 public class DamCalculation
@@ -40,6 +41,8 @@ public class DamCalculation
 
     [Column(TypeName = "decimal(18, 2)")]
     public required decimal DamCapacity { get; set; }
+    [Display(Name = "Last Calculated")]
+    public DateTime? LastCalculatedAt { get; set; }
     public required River River{ get; set; }
     public Guid RiverId { get; set; }
     public DamCalculationStatus DamCalculationStatus { get; set;}

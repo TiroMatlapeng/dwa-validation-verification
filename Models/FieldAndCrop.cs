@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 public class FieldAndCrop
@@ -20,4 +21,6 @@ public class FieldAndCrop
     public decimal CropArea { get; set; }
     [Column(TypeName = "decimal(18, 2)")]
     public decimal SAPWATCalculationResult { get; set; }
+    [Display(Name = "Last Calculated")]
+    public DateTime? LastCalculatedAt { get; set; }
 }

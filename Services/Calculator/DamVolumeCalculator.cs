@@ -21,6 +21,8 @@ public static class DamVolumeCalculator
     {
         if (contourDifference == 0)
             throw new ArgumentException("ContourDifference must be non-zero to compute slope.", nameof(contourDifference));
+        if (riverDistance == 0)
+            throw new ArgumentException("RiverDistance must be non-zero.", nameof(riverDistance));
 
         var slope = riverDistance / contourDifference;
         var depth = fetch / slope;

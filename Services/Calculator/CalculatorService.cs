@@ -18,25 +18,31 @@ public class CalculatorService : ICalculatorService
         var fc = await _db.FieldAndCrops
             .Include(f => f.Crop)
             .Include(f => f.IrrigationSystem)
-            .FirstOrDefaultAsync(f => f.FieldAndCropId == fieldAndCropId)
-            ?? throw new InvalidOperationException($"FieldAndCrop {fieldAndCropId} not found.");
+            .FirstOrDefaultAsync(f => f.FieldAndCropId == fieldAndCropId);
+
+        if (fc is null)
+            throw new InvalidOperationException($"FieldAndCrop {fieldAndCropId} not found.");
+        if (fc.Crop is null)
+            throw new InvalidOperationException("FieldAndCrop has no Crop linked — select a crop before calculating.");
 
         var irrigationSystemId = fc.IrrigationSystem?.IrrigationSystemId;
 
         // Prefer a system-specific rate; fall back to the crop-wide rate (IrrigationSystemId == null).
         var rate = await _db.CropWaterRates
             .Where(r => r.CropId == fc.Crop.CropId &&
-                        (r.IrrigationSystemId == irrigationSystemId || r.IrrigationSystemId == null))
+                        (r.IrrigationSystemId == null ||
+                         r.IrrigationSystemId == irrigationSystemId))
             .OrderByDescending(r => r.IrrigationSystemId != null)
-            .Select(r => r.RatePerHaPerAnnum)
+            .Select(r => (decimal?)r.RatePerHaPerAnnum)
             .FirstOrDefaultAsync();
 
-        if (rate == 0)
+        if (rate is null)
             throw new InvalidOperationException(
-                $"No CropWaterRate found for crop '{fc.Crop.CropName}'. Ensure reference data is seeded.");
+                $"No CropWaterRate found for crop '{fc.Crop.CropName}'. Seed reference data first.");
 
-        var effectiveRate = SapwatCalculator.ComputeRate(rate, fc.RotationFactor);
+        var effectiveRate = SapwatCalculator.ComputeRate(rate.Value, fc.RotationFactor);
         fc.SAPWATCalculationResult = effectiveRate;
+        fc.LastCalculatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return effectiveRate;
     }
@@ -46,23 +52,32 @@ public class CalculatorService : ICalculatorService
         var dam = await _db.DamCalculations.FirstOrDefaultAsync(d => d.DamCalculationId == damCalculationId)
             ?? throw new InvalidOperationException($"DamCalculation {damCalculationId} not found.");
 
-        decimal capacity = dam.CalculationMethod switch
+        decimal capacity;
+        try
         {
-            "Method1" => DamVolumeCalculator.ComputeMethod1(
-                dam.WallLength ?? throw new InvalidOperationException("WallLength required for Method 1."),
-                dam.Fetch ?? throw new InvalidOperationException("Fetch required for Method 1."),
-                dam.RiverDistance ?? throw new InvalidOperationException("RiverDistance required for Method 1."),
-                dam.ContourDifference ?? throw new InvalidOperationException("ContourDifference required for Method 1."),
-                dam.ShapeFactor ?? throw new InvalidOperationException("ShapeFactor required for Method 1.")),
-            "Method2" => DamVolumeCalculator.ComputeMethod2(
-                dam.DamArea ?? throw new InvalidOperationException("DamArea required for Method 2."),
-                dam.DamDepth ?? throw new InvalidOperationException("DamDepth required for Method 2."),
-                dam.ShapeFactor ?? throw new InvalidOperationException("ShapeFactor required for Method 2.")),
-            _ => throw new InvalidOperationException(
-                $"Unknown CalculationMethod '{dam.CalculationMethod}'. Use 'Method1' or 'Method2'.")
-        };
+            capacity = dam.CalculationMethod switch
+            {
+                "Method1" => DamVolumeCalculator.ComputeMethod1(
+                    dam.WallLength ?? throw new InvalidOperationException("WallLength required for Method 1."),
+                    dam.Fetch ?? throw new InvalidOperationException("Fetch required for Method 1."),
+                    dam.RiverDistance ?? throw new InvalidOperationException("RiverDistance required for Method 1."),
+                    dam.ContourDifference ?? throw new InvalidOperationException("ContourDifference required for Method 1."),
+                    dam.ShapeFactor ?? throw new InvalidOperationException("ShapeFactor required for Method 1.")),
+                "Method2" => DamVolumeCalculator.ComputeMethod2(
+                    dam.DamArea ?? throw new InvalidOperationException("DamArea required for Method 2."),
+                    dam.DamDepth ?? throw new InvalidOperationException("DamDepth required for Method 2."),
+                    dam.ShapeFactor ?? throw new InvalidOperationException("ShapeFactor required for Method 2.")),
+                _ => throw new InvalidOperationException(
+                    $"Unknown CalculationMethod '{dam.CalculationMethod}'. Use 'Method1' or 'Method2'.")
+            };
+        }
+        catch (ArgumentException ex)
+        {
+            throw new InvalidOperationException(ex.Message, ex);
+        }
 
         dam.DamCapacity = capacity;
+        dam.LastCalculatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return capacity;
     }
@@ -72,21 +87,25 @@ public class CalculatorService : ICalculatorService
         var f = await _db.Forestations.FirstOrDefaultAsync(x => x.ForestationId == forestationId)
             ?? throw new InvalidOperationException($"Forestation {forestationId} not found.");
 
-        var speciesName = f.Specie ?? "";
+        if (string.IsNullOrWhiteSpace(f.Specie))
+            throw new InvalidOperationException("Forestation record has no species set. Enter a species name before calculating.");
+
+        var speciesName = f.Specie.Trim();
+        // Use ToLower for case-insensitive parity between SQL Server and the in-memory EF provider used in tests.
         var speciesRate = await _db.SfraSpeciesRates
-            .Where(r => r.SpeciesName == speciesName)
-            .Select(r => r.RateM3PerHaPerAnnum)
+            .Where(r => r.SpeciesName.ToLower() == speciesName.ToLower())
+            .Select(r => (decimal?)r.RateM3PerHaPerAnnum)
             .FirstOrDefaultAsync();
 
-        if (speciesRate == 0)
+        if (speciesRate is null)
             throw new InvalidOperationException(
-                $"No SfraSpeciesRate found for species '{speciesName}'. Ensure reference data is seeded.");
+                $"No SfraSpeciesRate found for species '{speciesName}'. Add it to the reference data first.");
 
         var result = SfraCalculator.Compute(
             f.Pre1972Hectares,
             f.SFRAPermitHectares,
             f.QualifyPeriodSFRAHectares ?? 0m,
-            speciesRate);
+            speciesRate.Value);
 
         f.ELUHectares = result.EluHa;
         f.ELUVolume = result.EluVolume;
@@ -94,6 +113,7 @@ public class CalculatorService : ICalculatorService
         f.LawfulVolume = result.LawfulVolume;
         f.UnlawfulHectares = result.UnlawfulHa;
         f.UnlawfulVolume = result.UnlawfulVolume;
+        f.LastCalculatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return result;
     }
