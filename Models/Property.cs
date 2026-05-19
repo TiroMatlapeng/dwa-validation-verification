@@ -57,6 +57,14 @@ public class Property
     public Guid? SuccessorPropertyId { get; set; }
     public Property? SuccessorProperty { get; set; }
 
+    [Display(Name = "Government Water Control Area")]
+    public Guid? WaterControlAreaId { get; set; }
+    public GovernmentWaterControlArea? GovernmentWaterControlArea { get; set; }
+
+    [Display(Name = "Irrigable Area (ha)")]
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? IrrigableAreaHa { get; set; }
+
     public ICollection<PropertyOwnership> PropertyOwnerships { get; set; } = new List<PropertyOwnership>();
     public ICollection<FileMaster> FileMasters { get; set; } = new List<FileMaster>();
     public ICollection<Irrigation> Irrigations { get; set; } = new List<Irrigation>();

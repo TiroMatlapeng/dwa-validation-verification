@@ -23,6 +23,8 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
         (typeof(Storing),        typeof(Property), nameof(Storing.PropertyId),        DeleteBehavior.Cascade),
         // PAJA checklist cascades with its parent case
         (typeof(PAJAChecklist),  typeof(FileMaster), nameof(PAJAChecklist.FileMasterId), DeleteBehavior.Cascade),
+        // ELU lawfulness result cascades with its parent case
+        (typeof(LawfulnessAssessmentResult), typeof(FileMaster), nameof(LawfulnessAssessmentResult.FileMasterId), DeleteBehavior.Cascade),
     };
 
     public ApplicationDBContext(DbContextOptions<ApplicationDBContext> dbContextOption) : base(dbContextOption)
@@ -107,6 +109,9 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
 
     // ── Workflow gap-fill ──
     public DbSet<PAJAChecklist> PAJAChecklists { get; set; }
+
+    // ── Wave 2b: ELU Lawfulness Assessment ──
+    public DbSet<LawfulnessAssessmentResult> LawfulnessAssessmentResults { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -280,6 +285,25 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasOne(p => p.CompletedBy)
             .WithMany()
             .HasForeignKey(p => p.CompletedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // LawfulnessAssessmentResult → FileMaster (1:1 — one ELU result per case)
+        modelBuilder.Entity<LawfulnessAssessmentResult>().HasKey(e => e.LawfulnessAssessmentResultId);
+        modelBuilder.Entity<LawfulnessAssessmentResult>()
+            .HasIndex(e => e.FileMasterId).IsUnique();
+        modelBuilder.Entity<LawfulnessAssessmentResult>()
+            .HasOne(e => e.FileMaster).WithOne()
+            .HasForeignKey<LawfulnessAssessmentResult>(e => e.FileMasterId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<LawfulnessAssessmentResult>()
+            .HasOne(e => e.Gwca).WithMany()
+            .HasForeignKey(e => e.GwcaId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Property → GovernmentWaterControlArea (many properties may fall in one GWCA)
+        modelBuilder.Entity<Property>()
+            .HasOne(p => p.GovernmentWaterControlArea).WithMany()
+            .HasForeignKey(p => p.WaterControlAreaId)
             .OnDelete(DeleteBehavior.SetNull);
 
         // Authorisation → FileMaster

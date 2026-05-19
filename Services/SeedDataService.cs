@@ -18,6 +18,7 @@ public class SeedDataService
         await SeedAuthorisationTypesAsync();
         await SeedPeriodsAsync();
         await SeedGwcaProclamationRulesAsync();
+        await SeedEntitlementTypesAsync();
         await SeedCustomerTypesAsync();
         await SeedSampleCasesAsync();
         await SeedCropsAsync();
@@ -683,6 +684,34 @@ public class SeedDataService
             }
         }
 
+        await _context.SaveChangesAsync();
+    }
+
+    // ── 8. Entitlement Types ─────────────────────────────────────────────
+    private async Task SeedEntitlementTypesAsync()
+    {
+        if (await _context.EntitlementTypes.AnyAsync())
+            return;
+
+        _context.EntitlementTypes.AddRange(
+            new EntitlementType
+            {
+                EntitlementTypeId = Guid.NewGuid(),
+                EntitlementName = "ELU_Irrigation",
+                EntitlementDescription = "Existing Lawful Use — Irrigation (abstraction from water resource)"
+            },
+            new EntitlementType
+            {
+                EntitlementTypeId = Guid.NewGuid(),
+                EntitlementName = "ELU_Storage",
+                EntitlementDescription = "Existing Lawful Use — Storage (dam capacity)"
+            },
+            new EntitlementType
+            {
+                EntitlementTypeId = Guid.NewGuid(),
+                EntitlementName = "ELU_SFRA",
+                EntitlementDescription = "Existing Lawful Use — Stream Flow Reduction Activity (forestation)"
+            });
         await _context.SaveChangesAsync();
     }
 }
