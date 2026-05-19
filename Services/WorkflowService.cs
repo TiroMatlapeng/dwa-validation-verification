@@ -145,18 +145,7 @@ public class WorkflowService : IWorkflowService
         var nextState = await ResolveNextStateAsync(fileMaster, currentState);
         if (nextState is null) return new();
 
-        ApplicationUser? user = userId.HasValue
-            ? await _context.Users.FindAsync(userId.Value)
-            : null;
-
-        IReadOnlyList<string> userRoles = Array.Empty<string>();
-        if (userId.HasValue)
-        {
-            userRoles = await _context.UserRoles
-                .Where(ur => ur.UserId == userId.Value)
-                .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name!)
-                .ToListAsync();
-        }
+        var (user, userRoles) = await LoadUserContextAsync(userId);
 
         var reasons = new List<string>();
         var ctx = new GuardContext(fileMaster, currentState, nextState, user, userRoles);
@@ -180,18 +169,7 @@ public class WorkflowService : IWorkflowService
         // Load acting user + their ASP.NET Identity roles for guards that perform
         // role-based checks (e.g. CpPrePublicReviewGuard requires RegionalManager+).
         // Identity is configured with Guid keys, so UserRoles/Roles join on Guid.
-        ApplicationUser? user = userId.HasValue
-            ? await _context.Users.FindAsync(userId.Value)
-            : null;
-
-        IReadOnlyList<string> userRoles = Array.Empty<string>();
-        if (userId.HasValue)
-        {
-            userRoles = await _context.UserRoles
-                .Where(ur => ur.UserId == userId.Value)
-                .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name!)
-                .ToListAsync();
-        }
+        var (user, userRoles) = await LoadUserContextAsync(userId);
 
         // Evaluate guards in order; first denial blocks the transition.
         var guardCtx = new GuardContext(fileMaster, currentState, target, user, userRoles);
@@ -252,5 +230,19 @@ public class WorkflowService : IWorkflowService
         return await _context.WorkflowInstances
             .FirstOrDefaultAsync(w => w.FileMasterId == fileMasterId)
             ?? throw new InvalidOperationException($"No workflow instance for FileMaster {fileMasterId}.");
+    }
+
+    private async Task<(ApplicationUser? User, IReadOnlyList<string> Roles)> LoadUserContextAsync(Guid? userId)
+    {
+        if (!userId.HasValue)
+            return (null, Array.Empty<string>());
+
+        var user = await _context.Users.FindAsync(userId.Value);
+        var roles = await _context.UserRoles
+            .Where(ur => ur.UserId == userId.Value)
+            .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name!)
+            .ToListAsync();
+
+        return (user, roles);
     }
 }
