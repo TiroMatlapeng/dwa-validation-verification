@@ -20,6 +20,7 @@ public class SeedDataService
         await SeedGwcaProclamationRulesAsync();
         await SeedCustomerTypesAsync();
         await SeedSampleCasesAsync();
+        await SeedCropsAsync();
         await SeedCalculatorReferenceDataAsync();
     }
 
@@ -600,6 +601,23 @@ public class SeedDataService
 
     // ── 9. Calculator reference data (SFRA species rates + crop water rates) ─
 
+    private async Task SeedCropsAsync()
+    {
+        if (await _context.Crops.AnyAsync()) return;
+
+        var cropNames = new[]
+        {
+            "Maize", "Wheat", "Sugarcane", "Soybean", "Sunflower",
+            "Groundnut", "Cotton", "Lucerne", "Pasture", "Vegetables",
+            "Citrus", "Grapes", "Stone fruit", "Other",
+        };
+
+        foreach (var name in cropNames)
+            _context.Crops.Add(new Crop { CropId = Guid.NewGuid(), CropName = name });
+
+        await _context.SaveChangesAsync();
+    }
+
     private async Task SeedCalculatorReferenceDataAsync()
     {
         // SFRA species rates (m³/ha/a) — DWS standard values
@@ -625,7 +643,8 @@ public class SeedDataService
             }
         }
 
-        // CropWaterRate: one default rate per crop (IrrigationSystemId = null = all systems).
+            // CropWaterRate: one default rate per crop (IrrigationSystemId = null = all systems).
+        // NOTE: SeedCropsAsync must run before this block so crops exist to iterate.
         // Only seed if the table is empty.
         if (!await _context.CropWaterRates.AnyAsync())
         {
