@@ -220,6 +220,15 @@ public class FileMasterController : Controller
         if (form.AdditionalInfoReviewed == true) fm.AdditionalInfoReviewedAt ??= DateTime.UtcNow;
         if (form.PrePublicReviewApproved == true)
         {
+            // Only RegionalManager+ may approve the pre-public review (NWA S35(2)(d)).
+            // Action policy remains CanCapture so Capturers can still record other CP evidence.
+            if (!User.IsInRole(DwsRoles.RegionalManager)
+                && !User.IsInRole(DwsRoles.NationalManager)
+                && !User.IsInRole(DwsRoles.SystemAdmin))
+            {
+                TempData["Error"] = "Only a Regional Manager or above may approve the pre-public participation review.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
             fm.PrePublicReviewApprovedAt ??= DateTime.UtcNow;
             if (signedInId != Guid.Empty) fm.PrePublicReviewApprovedById = signedInId;
         }
@@ -436,7 +445,7 @@ public class FileMasterController : Controller
                     ? signedInId
                     : null,
                 AdditionalNotes: null,
-                SignedByUserId: signedInId,
+                SignedByUserId: signedInId == Guid.Empty ? (Guid?)null : signedInId,
                 SignedByDisplayName: displayName,
                 SignedByTitle: role,
                 SignedByOrgUnit: orgUnit));

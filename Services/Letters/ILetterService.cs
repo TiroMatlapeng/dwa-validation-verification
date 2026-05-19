@@ -17,7 +17,7 @@ public record IssueLetterRequest(
     DateOnly? DueDate,
     Guid? ServedByOfficialId,
     string? AdditionalNotes,
-    Guid SignedByUserId,
+    Guid? SignedByUserId,
     string SignedByDisplayName,
     string SignedByTitle,
     string SignedByOrgUnit,
