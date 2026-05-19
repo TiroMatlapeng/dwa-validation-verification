@@ -100,4 +100,239 @@ public class GuardTests
         var sameCp = await sut.CheckAsync(Leaving(Case(), "CP2", "CP2"));
         Assert.True(sameCp.Allowed);
     }
+
+    // ----------------------------------------------------------------------
+    // Cp6FieldCropGuard — leaving CP6 requires a FieldAndCrop with SAPWAT > 0
+    // ----------------------------------------------------------------------
+
+    private static (Property property, Period period, Crop crop, WaterSource ws) SeedFieldCropPrereqs(ApplicationDBContext db)
+    {
+        var property = new Property
+        {
+            PropertyId = Guid.NewGuid(),
+            PropertyReferenceNumber = "P-Cp6",
+            SGCode = "SG-Cp6"
+        };
+        var period = new Period { PeriodId = Guid.NewGuid(), PeriodName = "Qualifying" };
+        var crop = new Crop { CropId = Guid.NewGuid(), CropName = "Maize" };
+        var ws = new WaterSource { WaterSourceId = Guid.NewGuid(), WaterSourceName = "River" };
+        db.Properties.Add(property);
+        db.Periods.Add(period);
+        db.Crops.Add(crop);
+        db.WaterSources.Add(ws);
+        return (property, period, crop, ws);
+    }
+
+    [Fact]
+    public async Task Cp6_DeniesWhenNoSapwatResult()
+    {
+        using var db = NewDb();
+        var (property, period, crop, ws) = SeedFieldCropPrereqs(db);
+
+        var fm = Case(propertyId: property.PropertyId);
+        db.FileMasters.Add(fm);
+
+        db.FieldAndCrops.Add(new FieldAndCrop
+        {
+            FieldAndCropId = Guid.NewGuid(),
+            Property = property,
+            PropertyId = property.PropertyId,
+            Period = period,
+            PeriodId = period.PeriodId,
+            FieldArea = 5m,
+            Crop = crop,
+            WaterSource = ws,
+            CropArea = 4m,
+            RotationFactor = 0.75m,
+            SAPWATCalculationResult = 0m
+        });
+        await db.SaveChangesAsync();
+
+        var sut = new Cp6FieldCropGuard(db);
+        var result = await sut.CheckAsync(Leaving(fm, "CP6", "CP7"));
+        Assert.False(result.Allowed);
+    }
+
+    [Fact]
+    public async Task Cp6_AllowsWhenSapwatResultPresent()
+    {
+        using var db = NewDb();
+        var (property, period, crop, ws) = SeedFieldCropPrereqs(db);
+
+        var fm = Case(propertyId: property.PropertyId);
+        db.FileMasters.Add(fm);
+
+        db.FieldAndCrops.Add(new FieldAndCrop
+        {
+            FieldAndCropId = Guid.NewGuid(),
+            Property = property,
+            PropertyId = property.PropertyId,
+            Period = period,
+            PeriodId = period.PeriodId,
+            FieldArea = 5m,
+            Crop = crop,
+            WaterSource = ws,
+            CropArea = 4m,
+            RotationFactor = 0.75m,
+            SAPWATCalculationResult = 500m
+        });
+        await db.SaveChangesAsync();
+
+        var sut = new Cp6FieldCropGuard(db);
+        var result = await sut.CheckAsync(Leaving(fm, "CP6", "CP7"));
+        Assert.True(result.Allowed);
+    }
+
+    [Fact]
+    public async Task Cp6_PassesWhenNotLeavingCp6()
+    {
+        using var db = NewDb();
+        var fm = Case();
+        // No FieldAndCrop seeded — guard must short-circuit on IsLeaving.
+        var sut = new Cp6FieldCropGuard(db);
+        var result = await sut.CheckAsync(Leaving(fm, "CP5", "CP6"));
+        Assert.True(result.Allowed);
+    }
+
+    // ----------------------------------------------------------------------
+    // Cp7EluGuard — leaving CP7 requires EntitlementId on the FileMaster
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public async Task Cp7_DeniesWhenNoEntitlement()
+    {
+        var sut = new Cp7EluGuard();
+        var fm = Case();
+        fm.EntitlementId = null;
+        var result = await sut.CheckAsync(Leaving(fm, "CP7", "CP8"));
+        Assert.False(result.Allowed);
+    }
+
+    [Fact]
+    public async Task Cp7_AllowsWhenEntitlementLinked()
+    {
+        var sut = new Cp7EluGuard();
+        var fm = Case();
+        fm.EntitlementId = Guid.NewGuid();
+        var result = await sut.CheckAsync(Leaving(fm, "CP7", "CP8"));
+        Assert.True(result.Allowed);
+    }
+
+    [Fact]
+    public async Task Cp7_PassesWhenNotLeavingCp7()
+    {
+        var sut = new Cp7EluGuard();
+        var fm = Case();
+        fm.EntitlementId = null;
+        var result = await sut.CheckAsync(Leaving(fm, "CP6", "CP7"));
+        Assert.True(result.Allowed);
+    }
+
+    // ----------------------------------------------------------------------
+    // CpPrePublicReviewGuard — requires approval timestamp + RegionalManager+
+    // ----------------------------------------------------------------------
+
+    private static GuardContext LeavingWithRoles(FileMaster fm, string fromCp, string toCp, IReadOnlyList<string>? roles) =>
+        new(fm,
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = $"{fromCp}_Step", DisplayOrder = 1, Phase = "Test" },
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = $"{toCp}_Step", DisplayOrder = 2, Phase = "Test" },
+            User: null,
+            UserRoles: roles);
+
+    [Fact]
+    public async Task CpPrePublicReview_DeniesWhenNotApproved()
+    {
+        var sut = new CpPrePublicReviewGuard();
+        var fm = Case();
+        fm.PrePublicReviewApprovedAt = null;
+        var ctx = LeavingWithRoles(fm, "CP_PrePublicReview", "CP_StakeholderWorkshop",
+            new[] { DwsRoles.RegionalManager });
+        var result = await sut.CheckAsync(ctx);
+        Assert.False(result.Allowed);
+    }
+
+    [Fact]
+    public async Task CpPrePublicReview_DeniesWhenUserLacksRole()
+    {
+        var sut = new CpPrePublicReviewGuard();
+        var fm = Case();
+        fm.PrePublicReviewApprovedAt = DateTime.UtcNow;
+        var ctx = LeavingWithRoles(fm, "CP_PrePublicReview", "CP_StakeholderWorkshop",
+            new[] { DwsRoles.Validator });
+        var result = await sut.CheckAsync(ctx);
+        Assert.False(result.Allowed);
+    }
+
+    [Fact]
+    public async Task CpPrePublicReview_AllowsWhenApprovedByRegionalManager()
+    {
+        var sut = new CpPrePublicReviewGuard();
+        var fm = Case();
+        fm.PrePublicReviewApprovedAt = DateTime.UtcNow;
+        var ctx = LeavingWithRoles(fm, "CP_PrePublicReview", "CP_StakeholderWorkshop",
+            new[] { DwsRoles.RegionalManager });
+        var result = await sut.CheckAsync(ctx);
+        Assert.True(result.Allowed);
+    }
+
+    [Fact]
+    public async Task CpPrePublicReview_PassesWhenNotLeavingState()
+    {
+        // Guard only fires when LEAVING CP_PrePublicReview. Entering it should pass.
+        var sut = new CpPrePublicReviewGuard();
+        var fm = Case();
+        fm.PrePublicReviewApprovedAt = null;
+        var ctx = LeavingWithRoles(fm, "CP9", "CP_PrePublicReview", new[] { DwsRoles.Validator });
+        var result = await sut.CheckAsync(ctx);
+        Assert.True(result.Allowed);
+    }
+
+    // ----------------------------------------------------------------------
+    // CpStakeholderWorkshopGuard — requires workshop date + attendance > 0
+    // ----------------------------------------------------------------------
+
+    [Fact]
+    public async Task CpStakeholderWorkshop_DeniesWhenNoDates()
+    {
+        var sut = new CpStakeholderWorkshopGuard();
+        var fm = Case();
+        fm.StakeholderWorkshopDate = null;
+        fm.StakeholderWorkshopAttendance = null;
+        var result = await sut.CheckAsync(Leaving(fm, "CP_StakeholderWorkshop", "CP_PublicParticipation"));
+        Assert.False(result.Allowed);
+    }
+
+    [Fact]
+    public async Task CpStakeholderWorkshop_DeniesWhenAttendanceZero()
+    {
+        var sut = new CpStakeholderWorkshopGuard();
+        var fm = Case();
+        fm.StakeholderWorkshopDate = DateTime.UtcNow;
+        fm.StakeholderWorkshopAttendance = 0;
+        var result = await sut.CheckAsync(Leaving(fm, "CP_StakeholderWorkshop", "CP_PublicParticipation"));
+        Assert.False(result.Allowed);
+    }
+
+    [Fact]
+    public async Task CpStakeholderWorkshop_AllowsWhenDateAndAttendanceSet()
+    {
+        var sut = new CpStakeholderWorkshopGuard();
+        var fm = Case();
+        fm.StakeholderWorkshopDate = DateTime.UtcNow;
+        fm.StakeholderWorkshopAttendance = 5;
+        var result = await sut.CheckAsync(Leaving(fm, "CP_StakeholderWorkshop", "CP_PublicParticipation"));
+        Assert.True(result.Allowed);
+    }
+
+    [Fact]
+    public async Task CpStakeholderWorkshop_PassesWhenNotLeavingState()
+    {
+        // Guard fires only when LEAVING CP_StakeholderWorkshop. Entering it must pass.
+        var sut = new CpStakeholderWorkshopGuard();
+        var fm = Case();
+        fm.StakeholderWorkshopDate = null;
+        fm.StakeholderWorkshopAttendance = null;
+        var result = await sut.CheckAsync(Leaving(fm, "CP_PrePublicReview", "CP_StakeholderWorkshop"));
+        Assert.True(result.Allowed);
+    }
 }
