@@ -1,7 +1,7 @@
 # Project Handoff
 
 ## Current Focus
-Wave 2a CalculatorEngine complete. Next priority: Wave 2b (LawfulnessAssessmentService) — needs a separate design session. Optionally: rollout plan .xlsx update for Wave 2a rows.
+Bug-fix sprint complete. Three-phase review found and fixed 7 bugs + 5 architectural issues. 229 tests pass. Next priority: Wave 2b (LawfulnessAssessmentService) — needs a separate design session.
 
 ## Settled Decisions
 - WorkflowController, Property subdivision/consolidation, FileMasterController CRUD: already built — do not rebuild — decided by: orchestrator discovery, date: 2026-05-12
@@ -22,19 +22,22 @@ Wave 2a CalculatorEngine complete. Next priority: Wave 2b (LawfulnessAssessmentS
 - [x] P0 Wave 1 implemented: FieldAndCrop, Forestation, DamCalculation CRUD (controllers, repos, viewmodels, 9 views, Details.cshtml updated) — agent: orchestrator (inline) — date: 2026-05-12
 - [x] WorkflowEngine gap-fill (9 tasks): 2 new CP states, 4 new guards, PAJA gate on Letter 3, GetBlockingReasonsAsync, blocking reasons UI, per-CP evidence forms, 60-day countdown, PAJAChecklist view — agent: dotnet-master (2 waves) — date: 2026-05-19
 - [x] Wave 2a CalculatorEngine (9 tasks): CropWaterRate + SfraSpeciesRate models + migration, pure static calculators (SAPWAT, dam volume, SFRA), CalculatorService DI orchestrator, seeded reference data, Dam/FieldAndCrop/Forestation UI calculate buttons — agent: dotnet-master (9 tasks, subagent-driven) — date: 2026-05-19
+- [x] Bug-fix sprint (7 bugs + 5 arch issues): 4 parallel agents (calculator, filemaster, controllers, workflow) + DamCalculationController direct patch + Batch 2 test agent — agents: dotnet-master, code-validator, dotnet-architect + 4 fix agents + test-batch2 — date: 2026-05-19. Commits: b5c0cba, f4f0d2e, 6fa8a5f, 08facd9, eaa6de1
 
 ## In-Flight Work
 <!-- nothing currently in flight -->
 
 ## What the Next Orchestrator Must Know
-- Wave 2a CalculatorEngine is COMPLETE. Build: 0 errors. 210/210 tests pass. Migration `Wave2aCalculator` applied.
-- New models: `CropWaterRate` (crop × irrigation system → rate), `SfraSpeciesRate` (species name → m³/ha/a).
+- Bug-fix sprint COMPLETE. Build: 0 errors. 229/229 tests pass. Branch: `demo/azure-deploy`.
+- Auth policy corrected: sub-controllers (FieldAndCrop, Forestation, DamCalculation) use `CanCapture` at class level; `CanTransitionWorkflow` restricted to Delete actions only.
+- IDOR fix: all three Calculate actions now load FileMaster via PropertyId and call `_scope.IsInScope(fileMaster, User)` before computing.
+- `IssueLetterRequest.SignedByUserId` is `Guid?` (nullable) — pass null if no signed-in user Guid available.
+- `SfraResult` is now a property-init record (not positional) — use named properties: `EluHa`, `EluVolume`, `LawfulHa`, `LawfulVolume`, `UnlawfulHa`, `UnlawfulVolume`.
+- `LastCalculatedAt` audit stamp added to `FieldAndCrop`, `DamCalculation`, `Forestation` — migration `CalculatorAuditStamps` (20260519161809) applied.
+- ForestationController.Create POST: ELU fields initialized to 0m (not from user input) — correct.
+- Views/Forestation/Create.cshtml: ELU Determination section removed (computed-only, not editable on create).
 - New static calculators in `Services/Calculator/`: `SapwatCalculator`, `DamVolumeCalculator`, `SfraCalculator`.
-- `SfraResult` positional record: `(EluHa, EluVolume, LawfulHa, LawfulVolume, UnlawfulHa, UnlawfulVolume)` — all decimal.
 - `ICalculatorService` / `CalculatorService` registered in Program.cs. Injected into: DamCalculationController, FieldAndCropController, ForestationController.
-- Seeded 14 crop types (Maize, Wheat, Sugarcane, Soybean, Sunflower, Groundnut, Cotton, Lucerne, Pasture, Vegetables, Citrus, Grapes, Stone fruit, Other) and corresponding CropWaterRates + 4 SfraSpeciesRates.
-- Razor tag helper conflict: use `selected="@(condition)"` form on `<option>` elements — NOT `@(condition ? "selected" : "")`.
-- ForestationController.Create POST still maps ELU fields from vm (left untouched — out of scope). If needed, a follow-up should remove those lines too.
 - Wave 2b (LawfulnessAssessmentService) still deferred — needs a separate design session.
-- docs/DWA_VV_Test_Data.xlsx Wave 2a rows not updated yet (requires Python/openpyxl — low priority).
+- docs/DWA_VV_Test_Data.xlsx Wave 2a rows not updated yet (low priority).
 - Branch: `demo/azure-deploy`
