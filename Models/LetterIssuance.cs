@@ -40,6 +40,7 @@ public class LetterIssuance
     public PublicUser? RecipientPublicUser { get; set; }
     public string? ServingOfficialName { get; set; }
     public DateOnly? PhysicalDeliveryDate { get; set; }
+    public DateOnly? ServiceConfirmedDate { get; set; }  // When proof of service confirmed; 60-day clock starts here
 
     // Plan 4 additions — generated PDF + signature metadata
     public string? BlobPath { get; set; }                 // Path/URL into IBlobStore; null until rendered

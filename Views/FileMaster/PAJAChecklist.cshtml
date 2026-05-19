@@ -1,0 +1,61 @@
+@model PAJAChecklistForm
+
+@{
+    ViewData["Title"] = "PAJA Compliance Checklist";
+    bool isComplete = ViewBag.IsComplete == true;
+    Guid fileMasterId = ViewBag.FileMasterId;
+    string regNumber = ViewBag.RegistrationNumber ?? fileMasterId.ToString();
+}
+
+<a asp-controller="FileMaster" asp-action="Details" asp-route-id="@fileMasterId" class="btn-back">&larr; Back to Case @regNumber</a>
+
+<div class="page-title">PAJA Compliance Checklist</div>
+<div class="page-subtitle">Decision justification document — required before Letter 3 (ELU Certificate) can be issued</div>
+
+@if (isComplete)
+{
+    <div style="margin-bottom:16px; padding:10px 16px; background:#f0fdf4; border:1px solid #86efac; border-radius:6px; color:#166534; font-size:13px;">
+        <strong>&#10003; Checklist complete.</strong> Letter 3 may now be issued.
+    </div>
+}
+else
+{
+    <div style="margin-bottom:16px; padding:10px 16px; background:#fffbeb; border:1px solid #fcd34d; border-radius:6px; color:#92400e; font-size:13px;">
+        All four sections must be completed before Letter 3 can be issued.
+    </div>
+}
+
+<div class="card" style="max-width: 800px;">
+    <form asp-action="PAJAChecklist" asp-route-id="@fileMasterId" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="form-section-title">1. Factual Basis</div>
+        <div class="form-group" style="margin-bottom:16px;">
+            <div class="form-label">Satellite imagery analysis and SAPWAT calculations that supported the ELU determination</div>
+            <textarea asp-for="FactualBasis" class="form-input" rows="5" placeholder="Describe the factual basis for the determination..."></textarea>
+        </div>
+
+        <div class="form-section-title">2. Legal Basis</div>
+        <div class="form-group" style="margin-bottom:16px;">
+            <div class="form-label">Which section of the NWA applies and why (S32, S33, S34, S35 — applicable riparian rights, permits, GWCA rules)</div>
+            <textarea asp-for="LegalBasis" class="form-input" rows="5" placeholder="Identify the legal authority and applicable provisions..."></textarea>
+        </div>
+
+        <div class="form-section-title">3. Consideration of User Input</div>
+        <div class="form-group" style="margin-bottom:16px;">
+            <div class="form-label">Each piece of evidence submitted by the water user — whether accepted or rejected and with reasoning</div>
+            <textarea asp-for="UserInputConsideration" class="form-input" rows="5" placeholder="Document each submission and the weight given to it..."></textarea>
+        </div>
+
+        <div class="form-section-title">4. Final Reasoning</div>
+        <div class="form-group" style="margin-bottom:16px;">
+            <div class="form-label">Plain-language justification for the ELU volume awarded</div>
+            <textarea asp-for="FinalReasoning" class="form-input" rows="5" placeholder="State the final determination in plain language..."></textarea>
+        </div>
+
+        <div style="margin-top:20px;">
+            <button type="submit" class="btn btn-primary">Save Checklist</button>
+            <a asp-controller="FileMaster" asp-action="Details" asp-route-id="@fileMasterId" class="btn btn-outline" style="margin-left:8px;">Cancel</a>
+        </div>
+    </form>
+</div>

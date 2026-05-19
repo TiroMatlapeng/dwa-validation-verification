@@ -9,6 +9,13 @@
 }
 else
 {
+    // csn (current state name) is read by several panels below — define once.
+    var csn = Model.CurrentState?.StateName;
+    var totalSteps = Model.AllStates.Count(s => !s.IsTerminal);
+    var currentStep = Model.CurrentState != null
+        ? Model.AllStates.Count(s => s.DisplayOrder <= Model.CurrentState.DisplayOrder && !s.IsTerminal)
+        : 0;
+
     <div class="card" style="max-width: 900px; margin-top: 16px;">
         <div class="flex-between">
             <div class="form-section-title" style="margin:0;">V&amp;V Workflow</div>
@@ -20,6 +27,59 @@ else
                 </form>
             }
         </div>
+
+        <div style="font-size:12px; color:var(--dws-text-muted); margin-bottom:8px;">
+            Step @currentStep of @totalSteps
+        </div>
+
+        @if (Model.BlockingReasons.Any())
+        {
+            <div style="margin-top:12px; padding:12px 16px; background:#fffbeb; border:1px solid #fcd34d; border-radius:6px; color:#92400e; font-size:13px;">
+                <strong>Cannot advance yet:</strong>
+                <ul style="margin:6px 0 0 16px; padding:0;">
+                    @foreach (var r in Model.BlockingReasons) { <li>@r</li> }
+                </ul>
+            </div>
+        }
+
+        @if (csn is "CP2_SpatialInfo" or "CP3_WARMSEvaluation" or "CP4_AdditionalInfo" or "CP_PrePublicReview" or "CP_StakeholderWorkshop")
+        {
+            <div style="margin-top:12px; padding:12px 16px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; font-size:13px;">
+                <strong>Record Evidence for @csn:</strong>
+                <form asp-action="RecordCpEvidence" asp-route-id="@Model.FileMaster.FileMasterId" method="post" style="margin-top:8px;">
+                    @Html.AntiForgeryToken()
+                    @if (csn == "CP2_SpatialInfo")
+                    {
+                        <input type="hidden" name="SpatialInfoConfirmed" value="true" />
+                        <button type="submit" class="btn btn-outline btn-sm">Confirm spatial information received</button>
+                    }
+                    else if (csn == "CP3_WARMSEvaluation")
+                    {
+                        <input type="hidden" name="WarmsReviewed" value="true" />
+                        <button type="submit" class="btn btn-outline btn-sm">Confirm WARMS evaluation complete</button>
+                    }
+                    else if (csn == "CP4_AdditionalInfo")
+                    {
+                        <input type="hidden" name="AdditionalInfoReviewed" value="true" />
+                        <button type="submit" class="btn btn-outline btn-sm">Confirm additional info reviewed</button>
+                    }
+                    else if (csn == "CP_PrePublicReview")
+                    {
+                        <input type="hidden" name="PrePublicReviewApproved" value="true" />
+                        <button type="submit" class="btn btn-outline btn-sm">Approve pre-public participation review</button>
+                    }
+                    else if (csn == "CP_StakeholderWorkshop")
+                    {
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+                            <input type="date" name="StakeholderWorkshopDate" class="form-input form-input-sm" style="width:160px;" placeholder="Workshop date" />
+                            <input type="text" name="StakeholderWorkshopVenue" class="form-input form-input-sm" style="width:200px;" placeholder="Venue" />
+                            <input type="number" name="StakeholderWorkshopAttendance" class="form-input form-input-sm" style="width:100px;" placeholder="Attendance" min="1" />
+                        </div>
+                        <button type="submit" class="btn btn-outline btn-sm">Record stakeholder workshop</button>
+                    }
+                </form>
+            </div>
+        }
 
         <div class="phase-tracker">
             @foreach (var phase in new[] { "Inception", "Validation", "Verification" })
@@ -49,6 +109,14 @@ else
                 <span class="badge badge-green" style="margin-left:8px;">Closed</span>
             }
         </div>
+
+        @if ((csn == "S35_Letter1Responded" || csn == "S35_Letter2Responded") && Model.PAJAChecklist?.IsComplete != true)
+        {
+            <div style="margin-top:12px; padding:8px 12px; background:#fef2f2; border:1px solid #fecaca; border-radius:4px; font-size:13px; color:#991b1b;">
+                <strong>PAJA checklist required before Letter 3 can be issued.</strong>
+                <a asp-action="PAJAChecklist" asp-route-id="@Model.FileMaster.FileMasterId" style="margin-left:8px;">Complete checklist &rarr;</a>
+            </div>
+        }
 
         <div class="form-section-title" style="margin-top:20px;">History</div>
         <div class="timeline">

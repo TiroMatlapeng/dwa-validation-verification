@@ -13,7 +13,9 @@ public interface ITransitionGuard
 public record GuardContext(
     FileMaster FileMaster,
     WorkflowState CurrentState,
-    WorkflowState TargetState);
+    WorkflowState TargetState,
+    ApplicationUser? User = null,
+    IReadOnlyList<string>? UserRoles = null);
 
 public record GuardResult(bool Allowed, string? Reason)
 {

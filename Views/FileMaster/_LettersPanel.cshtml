@@ -3,6 +3,34 @@
 <div class="card" style="max-width: 900px; margin-top: 16px;">
     <div class="form-section-title">Section 35 / Section 33 Letters</div>
 
+    @{
+        // 60-day objection window. The clock starts on ServiceConfirmedDate when present
+        // (S35(2)(d) in-person service), otherwise falls back to IssuedDate. The colour
+        // graduates from green (>15d) → amber (≤15d) → red (expired) to surface deadline
+        // risk inline on the case dashboard.
+        // LetterType.LetterName holds the short canonical code (e.g. "S35_L1"); see SeedDataService.SeedLetterTypesAsync.
+        var letter1 = Model.Letters.FirstOrDefault(l => l.LetterType?.LetterName == "S35_L1");
+        if (letter1 is not null)
+        {
+            var clockStart = letter1.ServiceConfirmedDate?.ToDateTime(TimeOnly.MinValue)
+                          ?? (letter1.IssuedDate.HasValue ? letter1.IssuedDate.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null);
+            if (clockStart.HasValue)
+            {
+                var deadline = clockStart.Value.AddDays(60);
+                var daysLeft = (deadline.Date - DateTime.UtcNow.Date).Days;
+                var (bgColor, fgColor, msg) = daysLeft switch
+                {
+                    > 15 => ("#f0fdf4", "#166534", $"Objection deadline: {deadline:dd MMM yyyy} ({daysLeft} days remaining)"),
+                    >= 0 => ("#fffbeb", "#92400e", $"Deadline approaching: {deadline:dd MMM yyyy} ({daysLeft} days left)"),
+                    _    => ("#fef2f2", "#991b1b", "Objection period expired — proceed to CP16 evaluation")
+                };
+                <div style="margin-bottom:12px; padding:10px 14px; background:@bgColor; border-radius:6px; color:@fgColor; font-size:13px;">
+                    <strong>60-Day Objection Period:</strong> @msg
+                </div>
+            }
+        }
+    }
+
     <div class="letter-actions">
         @foreach (var action in Model.AvailableLetterActions)
         {

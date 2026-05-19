@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 public class WorkflowService : IWorkflowService
 {
     private const string S33_2_TerminalStateName = "S33_2_DeclarationIssued";
-    private static readonly string[] CpsSkippedOnS33_2 = { "CP5", "CP6", "CP7", "CP8", "CP9" };
+    private static readonly string[] CpsSkippedOnS33_2 = { "CP5", "CP6", "CP7", "CP8", "CP9", "CP_PrePublicReview", "CP_StakeholderWorkshop" };
 
     private readonly ApplicationDBContext _context;
     private readonly IEnumerable<ITransitionGuard> _guards;
@@ -131,6 +131,44 @@ public class WorkflowService : IWorkflowService
         return defaultNext;
     }
 
+    public async Task<List<string>> GetBlockingReasonsAsync(Guid fileMasterId, Guid? userId)
+    {
+        var instance = await GetInstanceForFileAsync(fileMasterId);
+        if (instance is null) return new();
+
+        var fileMaster = await _context.FileMasters.FindAsync(fileMasterId);
+        if (fileMaster is null) return new();
+
+        var currentState = await _context.WorkflowStates.FindAsync(instance.CurrentWorkflowStateId);
+        if (currentState is null || currentState.IsTerminal) return new();
+
+        var nextState = await ResolveNextStateAsync(fileMaster, currentState);
+        if (nextState is null) return new();
+
+        ApplicationUser? user = userId.HasValue
+            ? await _context.Users.FindAsync(userId.Value)
+            : null;
+
+        IReadOnlyList<string> userRoles = Array.Empty<string>();
+        if (userId.HasValue)
+        {
+            userRoles = await _context.UserRoles
+                .Where(ur => ur.UserId == userId.Value)
+                .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name!)
+                .ToListAsync();
+        }
+
+        var reasons = new List<string>();
+        var ctx = new GuardContext(fileMaster, currentState, nextState, user, userRoles);
+        foreach (var guard in _guards)
+        {
+            var result = await guard.CheckAsync(ctx);
+            if (!result.Allowed && result.Reason is not null)
+                reasons.Add(result.Reason);
+        }
+        return reasons;
+    }
+
     private async Task<WorkflowInstance> MoveToStateAsync(
         WorkflowInstance instance,
         FileMaster fileMaster,
@@ -139,8 +177,24 @@ public class WorkflowService : IWorkflowService
         Guid? userId,
         string? notes)
     {
+        // Load acting user + their ASP.NET Identity roles for guards that perform
+        // role-based checks (e.g. CpPrePublicReviewGuard requires RegionalManager+).
+        // Identity is configured with Guid keys, so UserRoles/Roles join on Guid.
+        ApplicationUser? user = userId.HasValue
+            ? await _context.Users.FindAsync(userId.Value)
+            : null;
+
+        IReadOnlyList<string> userRoles = Array.Empty<string>();
+        if (userId.HasValue)
+        {
+            userRoles = await _context.UserRoles
+                .Where(ur => ur.UserId == userId.Value)
+                .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name!)
+                .ToListAsync();
+        }
+
         // Evaluate guards in order; first denial blocks the transition.
-        var guardCtx = new GuardContext(fileMaster, currentState, target);
+        var guardCtx = new GuardContext(fileMaster, currentState, target, user, userRoles);
         foreach (var guard in _guards)
         {
             var result = await guard.CheckAsync(guardCtx);

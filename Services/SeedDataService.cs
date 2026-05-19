@@ -139,59 +139,135 @@ public class SeedDataService
 
     private async Task SeedWorkflowStatesAsync()
     {
-        if (await _context.WorkflowStates.AnyAsync())
-            return;
-
-        var states = new List<WorkflowState>
+        // Seed the full set on a virgin DB. Subsequent calls fall through to the
+        // gap-fill block below, which inserts the two new CP states (PRD CP12/CP13)
+        // into pre-existing seeded databases and renumbers the letter/terminal states.
+        if (!await _context.WorkflowStates.AnyAsync())
         {
-            // Phase: Inception (CP1 sub-steps)
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_WARMSObtained",       Phase = "Inception",      DisplayOrder = 1,  IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_SatelliteImagery",    Phase = "Inception",      DisplayOrder = 2,  IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_DatabaseAudit",       Phase = "Inception",      DisplayOrder = 3,  IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_UnregisteredUsers",   Phase = "Inception",      DisplayOrder = 4,  IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_DatabaseAnalysis",    Phase = "Inception",      DisplayOrder = 5,  IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_InceptionReport",     Phase = "Inception",      DisplayOrder = 6,  IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_PublicParticipation", Phase = "Inception",      DisplayOrder = 7,  IsTerminal = false },
+            var states = new List<WorkflowState>
+            {
+                // Phase: Inception (CP1 sub-steps)
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_WARMSObtained",       Phase = "Inception",      DisplayOrder = 1,  IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_SatelliteImagery",    Phase = "Inception",      DisplayOrder = 2,  IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_DatabaseAudit",       Phase = "Inception",      DisplayOrder = 3,  IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_UnregisteredUsers",   Phase = "Inception",      DisplayOrder = 4,  IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_DatabaseAnalysis",    Phase = "Inception",      DisplayOrder = 5,  IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_InceptionReport",     Phase = "Inception",      DisplayOrder = 6,  IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP1_PublicParticipation", Phase = "Inception",      DisplayOrder = 7,  IsTerminal = false },
 
-            // Phase: Validation — Technical: did use EXIST, what EXTENT (CP2–CP6)
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP2_SpatialInfo",         Phase = "Validation",     DisplayOrder = 8,  IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP3_WARMSEvaluation",     Phase = "Validation",     DisplayOrder = 9,  IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP4_AdditionalInfo",      Phase = "Validation",     DisplayOrder = 10, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP5_GISAnalysis",         Phase = "Validation",     DisplayOrder = 11, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP6_FieldCropSAPWAT",     Phase = "Validation",     DisplayOrder = 12, IsTerminal = false },
+                // Phase: Validation — Technical: did use EXIST, what EXTENT (CP2–CP6)
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP2_SpatialInfo",         Phase = "Validation",     DisplayOrder = 8,  IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP3_WARMSEvaluation",     Phase = "Validation",     DisplayOrder = 9,  IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP4_AdditionalInfo",      Phase = "Validation",     DisplayOrder = 10, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP5_GISAnalysis",         Phase = "Validation",     DisplayOrder = 11, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP6_FieldCropSAPWAT",     Phase = "Validation",     DisplayOrder = 12, IsTerminal = false },
 
-            // Phase: Verification — Legal: was use LAWFUL (CP7–CP9 + letter sub-states)
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP7_ELUCalculated",       Phase = "Verification",   DisplayOrder = 13, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP8_DamVolumes",          Phase = "Verification",   DisplayOrder = 14, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP9_SFRACalculated",      Phase = "Verification",   DisplayOrder = 15, IsTerminal = false },
+                // Phase: Verification — Legal: was use LAWFUL (CP7–CP9 + letter sub-states)
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP7_ELUCalculated",       Phase = "Verification",   DisplayOrder = 13, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP8_DamVolumes",          Phase = "Verification",   DisplayOrder = 14, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP9_SFRACalculated",      Phase = "Verification",   DisplayOrder = 15, IsTerminal = false },
 
-            // Phase: Verification — Section 35 letter sub-states (Track A)
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter1Issued",           Phase = "Verification", DisplayOrder = 16, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter1Responded",        Phase = "Verification", DisplayOrder = 17, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter1ARequired",        Phase = "Verification", DisplayOrder = 18, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter1AIssued",          Phase = "Verification", DisplayOrder = 19, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter1AResponded",       Phase = "Verification", DisplayOrder = 20, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_AdditionalInfoRequired",  Phase = "Verification", DisplayOrder = 21, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter2Issued",           Phase = "Verification", DisplayOrder = 22, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter2Responded",        Phase = "Verification", DisplayOrder = 23, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter2ARequired",        Phase = "Verification", DisplayOrder = 24, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter2AIssued",          Phase = "Verification", DisplayOrder = 25, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter3Issued",           Phase = "Verification", DisplayOrder = 26, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_ELUConfirmed",            Phase = "Verification", DisplayOrder = 27, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_UnlawfulUseFound",        Phase = "Verification", DisplayOrder = 28, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter4AIssued",          Phase = "Verification", DisplayOrder = 29, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter4And5Issued",       Phase = "Verification", DisplayOrder = 30, IsTerminal = false },
+                // Phase: Verification — PRD CP12/CP13 (Pre-Public Review + Stakeholder Workshop)
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP_PrePublicReview",      Phase = "Verification",   DisplayOrder = 16, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP_StakeholderWorkshop",  Phase = "Verification",   DisplayOrder = 17, IsTerminal = false },
 
-            // Phase: Verification — Section 33 declaration sub-states (Tracks B & C)
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S33_2_DeclarationIssued",     Phase = "Verification", DisplayOrder = 31, IsTerminal = false },
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S33_3_DeclarationIssued",     Phase = "Verification", DisplayOrder = 32, IsTerminal = false },
+                // Phase: Verification — Section 35 letter sub-states (Track A)
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter1Issued",           Phase = "Verification", DisplayOrder = 18, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter1Responded",        Phase = "Verification", DisplayOrder = 19, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter1ARequired",        Phase = "Verification", DisplayOrder = 20, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter1AIssued",          Phase = "Verification", DisplayOrder = 21, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter1AResponded",       Phase = "Verification", DisplayOrder = 22, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_AdditionalInfoRequired",  Phase = "Verification", DisplayOrder = 23, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter2Issued",           Phase = "Verification", DisplayOrder = 24, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter2Responded",        Phase = "Verification", DisplayOrder = 25, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter2ARequired",        Phase = "Verification", DisplayOrder = 26, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter2AIssued",          Phase = "Verification", DisplayOrder = 27, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter3Issued",           Phase = "Verification", DisplayOrder = 28, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_ELUConfirmed",            Phase = "Verification", DisplayOrder = 29, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_UnlawfulUseFound",        Phase = "Verification", DisplayOrder = 30, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter4AIssued",          Phase = "Verification", DisplayOrder = 31, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter4And5Issued",       Phase = "Verification", DisplayOrder = 32, IsTerminal = false },
 
-            // Terminal states
-            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "Closed",                     Phase = "Verification", DisplayOrder = 33, IsTerminal = true  },
-        };
+                // Phase: Verification — Section 33 declaration sub-states (Tracks B & C)
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S33_2_DeclarationIssued",     Phase = "Verification", DisplayOrder = 33, IsTerminal = false },
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S33_3_DeclarationIssued",     Phase = "Verification", DisplayOrder = 34, IsTerminal = false },
 
-        _context.WorkflowStates.AddRange(states);
-        await _context.SaveChangesAsync();
+                // Terminal states
+                new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "Closed",                     Phase = "Verification", DisplayOrder = 35, IsTerminal = true  },
+            };
+
+            _context.WorkflowStates.AddRange(states);
+            await _context.SaveChangesAsync();
+            return;
+        }
+
+        // Gap-fill for previously-seeded databases — idempotently add the two new
+        // CP states and reorder the letter/declaration/terminal block to match the
+        // canonical numbering above.
+        var hasPrePublicReview = await _context.WorkflowStates.AnyAsync(s => s.StateName == "CP_PrePublicReview");
+        var hasStakeholderWorkshop = await _context.WorkflowStates.AnyAsync(s => s.StateName == "CP_StakeholderWorkshop");
+
+        if (!hasPrePublicReview)
+        {
+            _context.WorkflowStates.Add(new WorkflowState
+            {
+                WorkflowStateId = Guid.NewGuid(),
+                StateName = "CP_PrePublicReview",
+                Phase = "Verification",
+                DisplayOrder = 16,
+                IsTerminal = false,
+            });
+        }
+        if (!hasStakeholderWorkshop)
+        {
+            _context.WorkflowStates.Add(new WorkflowState
+            {
+                WorkflowStateId = Guid.NewGuid(),
+                StateName = "CP_StakeholderWorkshop",
+                Phase = "Verification",
+                DisplayOrder = 17,
+                IsTerminal = false,
+            });
+        }
+
+        if (!hasPrePublicReview || !hasStakeholderWorkshop)
+        {
+            // Renumber everything from S35_Letter1Issued onward to its canonical
+            // post-gap-fill position. Existing DisplayOrders below 16 (CP1–CP9)
+            // remain untouched.
+            var renumbered = new (string Name, int Order)[]
+            {
+                ("S35_Letter1Issued",           18),
+                ("S35_Letter1Responded",        19),
+                ("S35_Letter1ARequired",        20),
+                ("S35_Letter1AIssued",          21),
+                ("S35_Letter1AResponded",       22),
+                ("S35_AdditionalInfoRequired",  23),
+                ("S35_Letter2Issued",           24),
+                ("S35_Letter2Responded",        25),
+                ("S35_Letter2ARequired",        26),
+                ("S35_Letter2AIssued",          27),
+                ("S35_Letter3Issued",           28),
+                ("S35_ELUConfirmed",            29),
+                ("S35_UnlawfulUseFound",        30),
+                ("S35_Letter4AIssued",          31),
+                ("S35_Letter4And5Issued",       32),
+                ("S33_2_DeclarationIssued",     33),
+                ("S33_3_DeclarationIssued",     34),
+                ("Closed",                      35),
+            };
+
+            foreach (var (name, order) in renumbered)
+            {
+                var state = await _context.WorkflowStates.SingleOrDefaultAsync(s => s.StateName == name);
+                if (state is not null && state.DisplayOrder != order)
+                {
+                    state.DisplayOrder = order;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
     }
 
     // ── 4. Letter Types ──────────────────────────────────────────────

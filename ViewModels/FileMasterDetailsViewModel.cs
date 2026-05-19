@@ -7,10 +7,15 @@ public class FileMasterDetailsViewModel
     public List<LetterIssuance> Letters { get; set; } = new();
     public List<AuditLog> AuditTrail { get; set; } = new();
 
+    // Workflow gap-fill (PRD CP12/CP13/CP19) — inline guard feedback + PAJA checklist.
+    public List<string> BlockingReasons { get; set; } = new();
+    public PAJAChecklist? PAJAChecklist { get; set; }
+
     public WorkflowState? CurrentState => WorkflowInstance?.CurrentWorkflowState;
 
     public bool IsReadyForLetters =>
         CurrentState is { } s && (s.StateName == "CP9_SFRACalculated"
+                                   || s.StateName == "CP_StakeholderWorkshop"
                                    || s.StateName.StartsWith("S35_")
                                    || s.StateName.StartsWith("S33_"));
 
@@ -25,10 +30,12 @@ public class FileMasterDetailsViewModel
         {
             if (CurrentState == null) return new();
 
-            // CP9 forks by AssessmentTrack: standard S35 verification → Letter 1; S33(3)
-            // individual-application → either declaration (a) or (b). S33(2) Kader Asmal
-            // is handled by track-skip in WorkflowService and does not surface here.
-            if (CurrentState.StateName == "CP9_SFRACalculated")
+            // CP_StakeholderWorkshop (and the legacy CP9_SFRACalculated for cases that
+            // pre-date the gap-fill) forks by AssessmentTrack: standard S35 verification
+            // → Letter 1; S33(3) individual-application → either declaration (a) or (b).
+            // S33(2) Kader Asmal is handled by track-skip in WorkflowService and does
+            // not surface here.
+            if (CurrentState.StateName is "CP9_SFRACalculated" or "CP_StakeholderWorkshop")
             {
                 return string.Equals(FileMaster.AssessmentTrack, "S33_3_Declaration", StringComparison.OrdinalIgnoreCase)
                     ? new() { "IssueS33_3a", "IssueS33_3b" }

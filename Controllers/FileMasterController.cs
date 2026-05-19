@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using dwa_ver_val.Services.Letters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -164,6 +165,13 @@ public class FileMasterController : Controller
             .OrderByDescending(a => a.Timestamp)
             .ToListAsync();
 
+        // Workflow gap-fill: surface guard blocking reasons + load PAJA checklist so the
+        // _WorkflowPanel can render the amber blocker list and the PAJA-required nag link.
+        var currentUserId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+        var currentUserGuid = currentUserId is not null && Guid.TryParse(currentUserId, out var parsedGuid) ? parsedGuid : (Guid?)null;
+        vm.BlockingReasons = await _workflow.GetBlockingReasonsAsync(fileMaster.FileMasterId, currentUserGuid);
+        vm.PAJAChecklist = await _context.PAJAChecklists.FirstOrDefaultAsync(p => p.FileMasterId == fileMaster.FileMasterId);
+
         return View(vm);
     }
 
@@ -176,14 +184,125 @@ public class FileMasterController : Controller
         if (fm == null) return NotFound();
         if (!_scope.IsInScope(fm, User)) return Forbid();
 
+        // Pass the actual signed-in user so role-based guards (e.g. CpPrePublicReviewGuard
+        // which requires AtLeastRegionalManager) can evaluate against the acting principal.
+        var userIdStr = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+        Guid? userId = Guid.TryParse(userIdStr, out var uid) ? uid : null;
+
         try
         {
-            await _workflow.AdvanceAsync(id, userId: null, notes: notes);
+            await _workflow.AdvanceAsync(id, userId: userId, notes: notes);
         }
         catch (InvalidOperationException ex)
         {
             TempData["WorkflowError"] = ex.Message;
         }
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    // POST: FileMaster/RecordCpEvidence/{id}
+    // Stamps evidence columns on FileMaster that the per-CP guards check before allowing
+    // advancement. Each form posts only the field(s) relevant to the current control point
+    // (see _WorkflowPanel.cshtml for the per-CP form fragments).
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
+    public async Task<IActionResult> RecordCpEvidence(Guid id, CpEvidenceForm form)
+    {
+        var fm = await _context.FileMasters.FindAsync(id);
+        if (fm is null) return NotFound();
+        if (!_scope.IsInScope(fm, User)) return Forbid();
+
+        var signedInId = Guid.TryParse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier), out var u) ? u : Guid.Empty;
+
+        if (form.SpatialInfoConfirmed == true) fm.SpatialInfoConfirmedAt ??= DateTime.UtcNow;
+        if (form.WarmsReviewed == true) fm.WarmsReviewedAt ??= DateTime.UtcNow;
+        if (form.AdditionalInfoReviewed == true) fm.AdditionalInfoReviewedAt ??= DateTime.UtcNow;
+        if (form.PrePublicReviewApproved == true)
+        {
+            fm.PrePublicReviewApprovedAt ??= DateTime.UtcNow;
+            if (signedInId != Guid.Empty) fm.PrePublicReviewApprovedById = signedInId;
+        }
+        if (form.StakeholderWorkshopDate.HasValue) fm.StakeholderWorkshopDate = form.StakeholderWorkshopDate;
+        if (form.StakeholderWorkshopVenue is not null) fm.StakeholderWorkshopVenue = form.StakeholderWorkshopVenue;
+        if (form.StakeholderWorkshopAttendance.HasValue) fm.StakeholderWorkshopAttendance = form.StakeholderWorkshopAttendance;
+
+        await _context.SaveChangesAsync();
+        TempData["Success"] = "Evidence recorded.";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    // GET: FileMaster/PAJAChecklist/{id}
+    // Loads (or initialises) the PAJA compliance checklist for a case. Letter 3 (S35(4)
+    // ELU certificate) cannot be issued until this checklist is complete (gated in LetterService).
+    // ActionName matches the URL/segment the _WorkflowPanel link uses; method name is
+    // suffixed to avoid the C# rule against a method sharing its containing type's name
+    // (would otherwise clash with the PAJAChecklist model type referenced inside).
+    [HttpGet]
+    [ActionName("PAJAChecklist")]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
+    public async Task<IActionResult> PAJAChecklistGet(Guid id)
+    {
+        var fm = await _context.FileMasters.FindAsync(id);
+        if (fm is null) return NotFound();
+        if (!_scope.IsInScope(fm, User)) return Forbid();
+
+        var checklist = await _context.PAJAChecklists.FirstOrDefaultAsync(p => p.FileMasterId == id);
+        ViewBag.FileMasterId = id;
+        ViewBag.RegistrationNumber = fm.RegistrationNumber;
+        var form = checklist is null ? new PAJAChecklistForm() : new PAJAChecklistForm
+        {
+            FactualBasis = checklist.FactualBasis,
+            LegalBasis = checklist.LegalBasis,
+            UserInputConsideration = checklist.UserInputConsideration,
+            FinalReasoning = checklist.FinalReasoning,
+        };
+        ViewBag.IsComplete = checklist?.IsComplete ?? false;
+        return View("PAJAChecklist", form);
+    }
+
+    // POST: FileMaster/PAJAChecklist/{id}
+    // Upserts the PAJAChecklist row. CompletedAt/CompletedById are stamped the first time
+    // all four narrative sections are populated together with the timestamp (the moment
+    // IsComplete flips true). After that, edits keep the original completion stamp.
+    [HttpPost]
+    [ActionName("PAJAChecklist")]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCreateCase)]
+    public async Task<IActionResult> PAJAChecklistPost(Guid id, PAJAChecklistForm form)
+    {
+        var fm = await _context.FileMasters.FindAsync(id);
+        if (fm is null) return NotFound();
+        if (!_scope.IsInScope(fm, User)) return Forbid();
+
+        var signedInId = Guid.TryParse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier), out var u) ? u : Guid.Empty;
+
+        var existing = await _context.PAJAChecklists.FirstOrDefaultAsync(p => p.FileMasterId == id);
+        if (existing is null)
+        {
+            existing = new PAJAChecklist { PAJAChecklistId = Guid.NewGuid(), FileMasterId = id };
+            _context.PAJAChecklists.Add(existing);
+        }
+
+        existing.FactualBasis = form.FactualBasis;
+        existing.LegalBasis = form.LegalBasis;
+        existing.UserInputConsideration = form.UserInputConsideration;
+        existing.FinalReasoning = form.FinalReasoning;
+
+        // Stamp completion the moment all four sections are present. CompletedAt being set is
+        // itself part of PAJAChecklist.IsComplete, so we set it provisionally before re-checking.
+        var willBeComplete = !string.IsNullOrWhiteSpace(existing.FactualBasis)
+                          && !string.IsNullOrWhiteSpace(existing.LegalBasis)
+                          && !string.IsNullOrWhiteSpace(existing.UserInputConsideration)
+                          && !string.IsNullOrWhiteSpace(existing.FinalReasoning);
+        if (willBeComplete && !existing.CompletedAt.HasValue)
+        {
+            existing.CompletedAt = DateTime.UtcNow;
+            if (signedInId != Guid.Empty) existing.CompletedById = signedInId;
+        }
+
+        await _context.SaveChangesAsync();
+        TempData["Success"] = existing.IsComplete ? "PAJA checklist completed." : "PAJA checklist saved (not yet complete).";
         return RedirectToAction(nameof(Details), new { id });
     }
 

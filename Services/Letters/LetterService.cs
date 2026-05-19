@@ -53,6 +53,18 @@ public class LetterService : ILetterService
             throw new InvalidOperationException("S35 Letter 1 served in person requires a ServedByOfficialId.");
         }
 
+        // PAJA compliance gate — Letter 3 (ELU certificate) cannot be issued
+        // until the four-section PAJA checklist has been completed for the case.
+        if (string.Equals(letterCode, "S35_L3", StringComparison.OrdinalIgnoreCase))
+        {
+            var paja = await _db.PAJAChecklists
+                .FirstOrDefaultAsync(p => p.FileMasterId == fileMasterId);
+            if (paja is null || !paja.IsComplete)
+                throw new InvalidOperationException(
+                    "Letter 3 (ELU Certificate) cannot be issued until the PAJA compliance checklist is " +
+                    "complete. Complete all four sections of the checklist before issuing this letter.");
+        }
+
         var referenceNumber = await NextReferenceNumberAsync(fileMasterId, letterCode);
 
         var ctx = await BuildContextAsync(fileMasterId, letterCode, req.IssueDate, req.DueDate,

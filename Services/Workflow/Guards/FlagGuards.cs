@@ -90,3 +90,78 @@ public class Cp9SfraOrNAGuard : ITransitionGuard
             : GuardResult.Deny("CP9 cannot be left until a Forestation record exists or the case is marked SFRA N/A.");
     }
 }
+
+/// <summary>
+/// Leaving CP6 requires at least one FieldAndCrop record for this property with
+/// a SAPWAT calculation result > 0. This evidences that crop water requirement
+/// modelling has been completed for the case.
+/// </summary>
+public class Cp6FieldCropGuard : ITransitionGuard
+{
+    private readonly ApplicationDBContext _db;
+    public Cp6FieldCropGuard(ApplicationDBContext db) { _db = db; }
+
+    public async Task<GuardResult> CheckAsync(GuardContext ctx)
+    {
+        if (!Cp2SpatialInfoGuard.IsLeaving(ctx, "CP6")) return GuardResult.Ok;
+        var hasResult = await _db.FieldAndCrops
+            .AnyAsync(f => f.PropertyId == ctx.FileMaster.PropertyId && f.SAPWATCalculationResult > 0);
+        return hasResult
+            ? GuardResult.Ok
+            : GuardResult.Deny("CP6 cannot be left until at least one Field & Crop record with a SAPWAT calculation result (> 0) exists for this property.");
+    }
+}
+
+/// <summary>
+/// Leaving CP7 requires the FileMaster to have an Entitlement linked — i.e. the
+/// ELU volume calculation has been recorded against the case.
+/// </summary>
+public class Cp7EluGuard : ITransitionGuard
+{
+    public Task<GuardResult> CheckAsync(GuardContext ctx)
+    {
+        if (!Cp2SpatialInfoGuard.IsLeaving(ctx, "CP7")) return Task.FromResult(GuardResult.Ok);
+        return Task.FromResult(ctx.FileMaster.EntitlementId.HasValue
+            ? GuardResult.Ok
+            : GuardResult.Deny("CP7 cannot be left until an Entitlement (ELU volume) is linked to this case."));
+    }
+}
+
+/// <summary>
+/// Leaving CP_PrePublicReview requires the approval timestamp to be set AND the
+/// acting user must be a Regional Manager or above (sign-off authority).
+/// </summary>
+public class CpPrePublicReviewGuard : ITransitionGuard
+{
+    public Task<GuardResult> CheckAsync(GuardContext ctx)
+    {
+        if (!Cp2SpatialInfoGuard.IsLeaving(ctx, "CP_PrePublicReview")) return Task.FromResult(GuardResult.Ok);
+        if (!ctx.FileMaster.PrePublicReviewApprovedAt.HasValue)
+            return Task.FromResult(GuardResult.Deny(
+                "Pre-public review approval has not been recorded. A Regional Manager or above must approve before the case can proceed."));
+
+        var roles = ctx.UserRoles ?? Array.Empty<string>();
+        if (!roles.Any(r => DwsRoles.AtLeastRegionalManager.Contains(r)))
+            return Task.FromResult(GuardResult.Deny(
+                "Only a Regional Manager or above may approve the pre-public participation review."));
+
+        return Task.FromResult(GuardResult.Ok);
+    }
+}
+
+/// <summary>
+/// Leaving CP_StakeholderWorkshop requires a recorded workshop date and a
+/// positive attendance count (workshop actually held with stakeholders).
+/// </summary>
+public class CpStakeholderWorkshopGuard : ITransitionGuard
+{
+    public Task<GuardResult> CheckAsync(GuardContext ctx)
+    {
+        if (!Cp2SpatialInfoGuard.IsLeaving(ctx, "CP_StakeholderWorkshop")) return Task.FromResult(GuardResult.Ok);
+        if (!ctx.FileMaster.StakeholderWorkshopDate.HasValue)
+            return Task.FromResult(GuardResult.Deny("Stakeholder workshop date has not been recorded."));
+        if (ctx.FileMaster.StakeholderWorkshopAttendance is null or <= 0)
+            return Task.FromResult(GuardResult.Deny("Stakeholder workshop attendance count must be greater than zero."));
+        return Task.FromResult(GuardResult.Ok);
+    }
+}

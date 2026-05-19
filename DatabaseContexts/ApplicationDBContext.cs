@@ -21,6 +21,8 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
         (typeof(DamCalculation), typeof(Property), nameof(DamCalculation.PropertyId), DeleteBehavior.Cascade),
         (typeof(Irrigation),     typeof(Property), nameof(Irrigation.PropertyId),     DeleteBehavior.Cascade),
         (typeof(Storing),        typeof(Property), nameof(Storing.PropertyId),        DeleteBehavior.Cascade),
+        // PAJA checklist cascades with its parent case
+        (typeof(PAJAChecklist),  typeof(FileMaster), nameof(PAJAChecklist.FileMasterId), DeleteBehavior.Cascade),
     };
 
     public ApplicationDBContext(DbContextOptions<ApplicationDBContext> dbContextOption) : base(dbContextOption)
@@ -100,6 +102,9 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<CaseComment> CaseComments { get; set; }
     public DbSet<Objection> Objections { get; set; }
     public DbSet<ObjectionDocument> ObjectionDocuments { get; set; }
+
+    // ── Workflow gap-fill ──
+    public DbSet<PAJAChecklist> PAJAChecklists { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -250,6 +255,29 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasOne(fm => fm.Entitlement)
             .WithMany()
             .HasForeignKey(fm => fm.EntitlementId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // FileMaster → PrePublicReviewApprovedBy (ApplicationUser)
+        modelBuilder.Entity<FileMaster>()
+            .HasOne(fm => fm.PrePublicReviewApprovedBy)
+            .WithMany()
+            .HasForeignKey(fm => fm.PrePublicReviewApprovedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // PAJAChecklist → FileMaster (1:1 — one checklist per case)
+        modelBuilder.Entity<PAJAChecklist>().HasKey(p => p.PAJAChecklistId);
+        modelBuilder.Entity<PAJAChecklist>()
+            .HasIndex(p => p.FileMasterId)
+            .IsUnique();
+        modelBuilder.Entity<PAJAChecklist>()
+            .HasOne(p => p.FileMaster)
+            .WithOne()
+            .HasForeignKey<PAJAChecklist>(p => p.FileMasterId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<PAJAChecklist>()
+            .HasOne(p => p.CompletedBy)
+            .WithMany()
+            .HasForeignKey(p => p.CompletedById)
             .OnDelete(DeleteBehavior.SetNull);
 
         // Authorisation → FileMaster

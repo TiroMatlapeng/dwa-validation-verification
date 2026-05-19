@@ -112,6 +112,23 @@ public class FileMaster
     [Display(Name = "SFRA N/A")]
     public bool SfraMarkedNA { get; set; }
 
+    // Workflow gap-fill (PRD CP12 + CP13) — captured per case at the new control points.
+    [Display(Name = "Pre-Public Review Approved")]
+    public DateTime? PrePublicReviewApprovedAt { get; set; }
+
+    [Display(Name = "Pre-Public Review Approver")]
+    public Guid? PrePublicReviewApprovedById { get; set; }
+    public ApplicationUser? PrePublicReviewApprovedBy { get; set; }
+
+    [Display(Name = "Stakeholder Workshop Date")]
+    public DateTime? StakeholderWorkshopDate { get; set; }
+
+    [Display(Name = "Stakeholder Workshop Venue")]
+    public string? StakeholderWorkshopVenue { get; set; }
+
+    [Display(Name = "Stakeholder Workshop Attendance")]
+    public int? StakeholderWorkshopAttendance { get; set; }
+
     // Navigation collections
     public ICollection<Authorisation> Authorisations { get; set; } = new List<Authorisation>();
     public ICollection<LetterIssuance> LetterIssuances { get; set; } = new List<LetterIssuance>();
