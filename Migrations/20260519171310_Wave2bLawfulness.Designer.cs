@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace dwa_ver_val.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20260519170512_Wave2bLawfulness")]
+    [Migration("20260519171310_Wave2bLawfulness")]
     partial class Wave2bLawfulness
     {
         /// <inheritdoc />
@@ -1098,7 +1098,7 @@ namespace dwa_ver_val.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("AssessedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime2(0)");
 
                     b.Property<Guid>("FileMasterId")
                         .HasColumnType("uniqueidentifier");
@@ -1117,7 +1117,8 @@ namespace dwa_ver_val.Migrations
 
                     b.Property<string>("LegalFramework")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("StorageLimitApplied")
                         .HasColumnType("nvarchar(max)");
@@ -2808,7 +2809,7 @@ namespace dwa_ver_val.Migrations
                     b.HasOne("GovernmentWaterControlArea", "Gwca")
                         .WithMany()
                         .HasForeignKey("GwcaId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("FileMaster");
 
@@ -3131,7 +3132,7 @@ namespace dwa_ver_val.Migrations
                     b.HasOne("GovernmentWaterControlArea", "GovernmentWaterControlArea")
                         .WithMany()
                         .HasForeignKey("WaterControlAreaId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("WaterManagementArea", "WaterManagementArea")
                         .WithMany()

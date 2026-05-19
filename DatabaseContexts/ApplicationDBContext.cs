@@ -25,6 +25,8 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
         (typeof(PAJAChecklist),  typeof(FileMaster), nameof(PAJAChecklist.FileMasterId), DeleteBehavior.Cascade),
         // ELU lawfulness result cascades with its parent case
         (typeof(LawfulnessAssessmentResult), typeof(FileMaster), nameof(LawfulnessAssessmentResult.FileMasterId), DeleteBehavior.Cascade),
+        (typeof(LawfulnessAssessmentResult), typeof(GovernmentWaterControlArea), nameof(LawfulnessAssessmentResult.GwcaId), DeleteBehavior.SetNull),
+        (typeof(Property), typeof(GovernmentWaterControlArea), nameof(Property.WaterControlAreaId), DeleteBehavior.SetNull),
     };
 
     public ApplicationDBContext(DbContextOptions<ApplicationDBContext> dbContextOption) : base(dbContextOption)
@@ -297,14 +299,18 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<LawfulnessAssessmentResult>()
             .HasOne(e => e.Gwca).WithMany()
-            .HasForeignKey(e => e.GwcaId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .HasForeignKey(e => e.GwcaId);
+        modelBuilder.Entity<LawfulnessAssessmentResult>()
+            .Property(e => e.AssessedAt)
+            .HasColumnType("datetime2(0)");
+        modelBuilder.Entity<LawfulnessAssessmentResult>()
+            .Property(e => e.LegalFramework)
+            .HasMaxLength(10);
 
         // Property → GovernmentWaterControlArea (many properties may fall in one GWCA)
         modelBuilder.Entity<Property>()
             .HasOne(p => p.GovernmentWaterControlArea).WithMany()
-            .HasForeignKey(p => p.WaterControlAreaId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .HasForeignKey(p => p.WaterControlAreaId);
 
         // Authorisation → FileMaster
         modelBuilder.Entity<Authorisation>()

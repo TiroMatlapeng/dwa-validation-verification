@@ -29,7 +29,7 @@ namespace dwa_ver_val.Migrations
                 {
                     LawfulnessAssessmentResultId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FileMasterId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    LegalFramework = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LegalFramework = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     GwcaId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     TotalIrrigatedAreaHa = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     TotalIrrigationDemandM3 = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
@@ -40,7 +40,7 @@ namespace dwa_ver_val.Migrations
                     LawfulStorageM3 = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     UnlawfulStorageM3 = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     StorageLimitApplied = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AssessedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    AssessedAt = table.Column<DateTime>(type: "datetime2(0)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -56,7 +56,7 @@ namespace dwa_ver_val.Migrations
                         column: x => x.GwcaId,
                         principalTable: "GovernmentWaterControlAreas",
                         principalColumn: "WaterControlAreaId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateIndex(
@@ -81,7 +81,7 @@ namespace dwa_ver_val.Migrations
                 column: "WaterControlAreaId",
                 principalTable: "GovernmentWaterControlAreas",
                 principalColumn: "WaterControlAreaId",
-                onDelete: ReferentialAction.Restrict);
+                onDelete: ReferentialAction.SetNull);
         }
 
         /// <inheritdoc />

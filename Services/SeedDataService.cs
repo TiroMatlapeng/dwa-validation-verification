@@ -687,7 +687,7 @@ public class SeedDataService
         await _context.SaveChangesAsync();
     }
 
-    // ── 8. Entitlement Types ─────────────────────────────────────────────
+    // ── 10. Entitlement Types ────────────────────────────────────────────
     private async Task SeedEntitlementTypesAsync()
     {
         if (await _context.EntitlementTypes.AnyAsync())
