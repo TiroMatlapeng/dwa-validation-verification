@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using dwa_ver_val.Services.Letters;
+using dwa_ver_val.Services.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -14,7 +15,7 @@ public class FileMasterController : Controller
     private readonly IScopedCaseQuery _scope;
     private readonly ILetterService _letters;
     private readonly ILawfulnessAssessmentService _assessment;
-    private readonly dwa_ver_val.Services.Notifications.INotificationService _notify;
+    private readonly INotificationService _notify;
 
     public FileMasterController(
         IFileMaster fileMasterRepository,
@@ -23,7 +24,7 @@ public class FileMasterController : Controller
         IScopedCaseQuery scope,
         ILetterService letters,
         ILawfulnessAssessmentService assessment,
-        dwa_ver_val.Services.Notifications.INotificationService notify)
+        INotificationService notify)
     {
         _fileMasterRepository = fileMasterRepository;
         _context = context;
@@ -500,22 +501,32 @@ public class FileMasterController : Controller
             TempData["Error"] = ex.Message;
         }
 
-        var property = await _context.FileMasters
-            .Where(f => f.FileMasterId == id)
-            .Select(f => new { f.PropertyId })
-            .FirstOrDefaultAsync();
-        if (property is not null)
+        try
         {
-            var linkedUsers = await _context.PublicUserProperties
-                .Where(p => p.PropertyId == property.PropertyId
-                         && p.Status == dwa_ver_val.Models.Enums.PropertyClaimStatus.Approved)
-                .Select(p => p.PublicUserId)
-                .ToListAsync();
-            foreach (var uid in linkedUsers)
-                await _notify.NotifyPublicUserAsync(uid, id, "Letter",
-                    "A letter has been issued on your V&V case",
-                    $"A letter has been issued on your case. Log in to the portal to view and respond.",
-                    actionUrl: null);
+            var property = await _context.FileMasters
+                .Where(f => f.FileMasterId == id)
+                .Select(f => new { f.PropertyId })
+                .FirstOrDefaultAsync();
+            if (property is not null)
+            {
+                var linkedUsers = await _context.PublicUserProperties
+                    .Where(p => p.PropertyId == property.PropertyId
+                             && p.Status == dwa_ver_val.Models.Enums.PropertyClaimStatus.Approved)
+                    .Select(p => p.PublicUserId)
+                    .ToListAsync();
+                foreach (var uid in linkedUsers)
+                    await _notify.NotifyPublicUserAsync(uid, id, "Letter",
+                        "A letter has been issued on your V&V case",
+                        $"A letter has been issued on your case. Log in to the portal to view and respond.",
+                        actionUrl: null);
+            }
+        }
+        catch (Exception notifyEx)
+        {
+            // Notification failure must not obscure the primary operation — letter was already issued.
+            var logger = HttpContext.RequestServices.GetService<Microsoft.Extensions.Logging.ILogger<FileMasterController>>();
+            logger?.LogError("FileMasterController.IssueLetter: notification failed for FileMaster {Id}. Error: {ErrorType}: {ErrorMessage}",
+                id, notifyEx.GetType().Name, notifyEx.Message);
         }
 
         return RedirectToAction(nameof(Details), new { id });
