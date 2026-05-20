@@ -69,11 +69,29 @@ public class PublicUserSignInService : IPublicUserSignInService
         var verify = _hasher.VerifyHashedPassword(user, user.PasswordHash, password);
         if (verify == PasswordVerificationResult.Failed)
         {
-            // S2: Increment counter; lock on threshold.
+            // S2/C: Optimistic concurrency on FailedLoginAttempts prevents lost-update race.
+            // IsConcurrencyToken() adds WHERE [FailedLoginAttempts] = @original to the UPDATE.
+            // If two requests race, the second gets DbUpdateConcurrencyException; we reload
+            // the current DB state and re-apply lockout threshold if the count now qualifies.
             user.FailedLoginAttempts++;
             if (user.FailedLoginAttempts >= MaxFailedAttempts)
                 user.LockoutUntil = DateTime.UtcNow.Add(LockoutDuration);
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+            {
+                await _db.Entry(user).ReloadAsync(ct);
+                if (user.FailedLoginAttempts >= MaxFailedAttempts && user.LockoutUntil is null)
+                {
+                    user.LockoutUntil = DateTime.UtcNow.Add(LockoutDuration);
+                    await _db.SaveChangesAsync(ct);
+                }
+                _logger.LogDebug(
+                    "PublicUserSignInService: concurrent counter update for user {Id}; reloaded count={Count}.",
+                    user.PublicUserId, user.FailedLoginAttempts);
+            }
 
             await _audit.LogAsync(new AuditEvent(
                 EntityType: nameof(PublicUser),

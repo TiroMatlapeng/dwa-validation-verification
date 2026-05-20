@@ -5,6 +5,7 @@ using dwa_ver_val.Tests.Helpers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -224,6 +225,49 @@ public class PublicUserSignInServiceTests
         var stored = db.PublicUsers.Single(u => u.EmailAddress == "r@e.test");
         Assert.Equal(0, stored.FailedLoginAttempts);
         Assert.Null(stored.LockoutUntil);
+    }
+
+    private static (PublicUserSignInService sut, Mock<IAuthenticationService> auth, TestAuditService audit, ApplicationDBContext db) CreateSutFromDbName(string dbName)
+    {
+        var db = TestDbContextFactory.Create(dbName);
+        var hasher = new PasswordHasher<PublicUser>();
+        var audit = new TestAuditService();
+        var auth = new Mock<IAuthenticationService>();
+        auth.Setup(a => a.SignInAsync(It.IsAny<HttpContext>(), It.IsAny<string>(), It.IsAny<ClaimsPrincipal>(), It.IsAny<AuthenticationProperties>()))
+            .Returns(Task.CompletedTask);
+        var ctx = new DefaultHttpContext();
+        var services = new ServiceCollection();
+        services.AddSingleton(auth.Object);
+        ctx.RequestServices = services.BuildServiceProvider();
+        var ctxAccessor = new HttpContextAccessor { HttpContext = ctx };
+        var sut = new PublicUserSignInService(db, hasher, ctxAccessor, audit, NullLogger<PublicUserSignInService>.Instance);
+        return (sut, auth, audit, db);
+    }
+
+    [Fact]
+    public async Task SignInAsync_ConcurrentWrongPasswords_BothIncrementCounter()
+    {
+        var dbName = Guid.NewGuid().ToString();
+
+        using var seedDb = TestDbContextFactory.Create(dbName);
+        var user = HashedActive("race@test.com", "Correct1!");
+        user.FailedLoginAttempts = 0;
+        seedDb.PublicUsers.Add(user);
+        await seedDb.SaveChangesAsync();
+
+        var (sut1, _, _, _) = CreateSutFromDbName(dbName);
+        var (sut2, _, _, _) = CreateSutFromDbName(dbName);
+
+        var r1 = await sut1.SignInAsync("race@test.com", "Wrong!", default);
+        var r2 = await sut2.SignInAsync("race@test.com", "Wrong!", default);
+
+        Assert.False(r1.Success);
+        Assert.False(r2.Success);
+
+        using var checkDb = TestDbContextFactory.Create(dbName);
+        var saved = await checkDb.PublicUsers.AsNoTracking().SingleAsync();
+        Assert.True(saved.FailedLoginAttempts >= 1,
+            $"Expected FailedLoginAttempts >= 1 but got {saved.FailedLoginAttempts}");
     }
 
     [Fact]

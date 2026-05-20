@@ -181,6 +181,9 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
         modelBuilder.Entity<AuditLog>().HasKey(e => e.AuditLogId);
 
         modelBuilder.Entity<PublicUser>().HasKey(e => e.PublicUserId);
+        modelBuilder.Entity<PublicUser>()
+            .Property(u => u.FailedLoginAttempts)
+            .IsConcurrencyToken();
         modelBuilder.Entity<PublicUserProperty>().HasKey(e => e.Id);
         modelBuilder.Entity<CaseComment>().HasKey(e => e.CommentId);
         modelBuilder.Entity<Objection>().HasKey(o => o.ObjectionId);
