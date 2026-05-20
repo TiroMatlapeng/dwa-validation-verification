@@ -586,11 +586,12 @@ public class SeedDataService
             ("S35_Letter4And5Issued",        "Verification", 32, false),
 
             // Phase: Verification — Section 33 declaration sub-states (Tracks B & C)
-            ("S33_2_DeclarationIssued",      "Verification", 33, false),
-            ("S33_3_DeclarationIssued",      "Verification", 34, false),
+            ("S33_2_ReadyForDeclaration",    "Verification", 33, false),
+            ("S33_2_DeclarationIssued",      "Verification", 34, false),
+            ("S33_3_DeclarationIssued",      "Verification", 35, false),
 
             // Terminal states
-            ("Closed",                       "Verification", 35, true),
+            ("Closed",                       "Verification", 36, true),
         };
 
         // Materialise existing rows once for efficient per-name lookup + drift

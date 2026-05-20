@@ -17,11 +17,11 @@ public class AssessmentTrackTests
     {
         using var db = NewDb();
 
-        // Seed states: CP4 (leaving), CP5 (would-be-next), S33_2_DeclarationIssued.
-        var cp4 = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP4_Additional", DisplayOrder = 4, Phase = "Validation" };
-        var cp5 = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP5_Mapbook", DisplayOrder = 5, Phase = "Validation" };
-        var decl = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S33_2_DeclarationIssued", DisplayOrder = 100, Phase = "Declaration", IsTerminal = true };
-        db.WorkflowStates.AddRange(cp4, cp5, decl);
+        // Seed states: CP4 (current), CP5 (would-be-next, triggers skip), S33_2_ReadyForDeclaration (skip target).
+        var cp4   = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP4_AdditionalInfo",         DisplayOrder = 10, Phase = "Validation",   IsTerminal = false };
+        var cp5   = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP5_GISAnalysis",            DisplayOrder = 11, Phase = "Validation",   IsTerminal = false };
+        var ready = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S33_2_ReadyForDeclaration",  DisplayOrder = 33, Phase = "Verification", IsTerminal = false };
+        db.WorkflowStates.AddRange(cp4, cp5, ready);
 
         var fm = new FileMaster
         {
@@ -55,15 +55,15 @@ public class AssessmentTrackTests
         var svc = new WorkflowService(db, Array.Empty<ITransitionGuard>(), new TestAuditService());
         var result = await svc.AdvanceAsync(fm.FileMasterId, userId: null, notes: "Kader Asmal — skipping validation CPs");
 
-        Assert.Equal(decl.WorkflowStateId, result.CurrentWorkflowStateId);
-        Assert.Equal("Completed", result.Status);
+        Assert.Equal(ready.WorkflowStateId, result.CurrentWorkflowStateId);
+        Assert.Equal("Active", result.Status);  // non-terminal → still Active
     }
 
     [Fact]
     public async Task AdvanceAsync_OnS35Track_FollowsDefaultOrder_DoesNotSkip()
     {
         using var db = NewDb();
-        var cp4 = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP4_Additional", DisplayOrder = 4, Phase = "Validation" };
+        var cp4 = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP4_AdditionalInfo", DisplayOrder = 4, Phase = "Validation" };
         var cp5 = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP5_Mapbook", DisplayOrder = 5, Phase = "Validation" };
         db.WorkflowStates.AddRange(cp4, cp5);
 

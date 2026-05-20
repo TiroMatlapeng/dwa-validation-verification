@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 public class WorkflowService : IWorkflowService
 {
-    private const string S33_2_TerminalStateName = "S33_2_DeclarationIssued";
+    private const string S33_2_SkipTargetStateName = "S33_2_ReadyForDeclaration";
     private static readonly string[] CpsSkippedOnS33_2 = { "CP5", "CP6", "CP7", "CP8", "CP9", "CP_PrePublicReview", "CP_StakeholderWorkshop" };
 
     private readonly ApplicationDBContext _context;
@@ -124,7 +124,7 @@ public class WorkflowService : IWorkflowService
         if (string.Equals(fileMaster.AssessmentTrack, "S33_2_Declaration", StringComparison.OrdinalIgnoreCase)
             && CpsSkippedOnS33_2.Any(cp => defaultNext.StateName.StartsWith(cp, StringComparison.OrdinalIgnoreCase)))
         {
-            var declaration = await _context.WorkflowStates.SingleOrDefaultAsync(s => s.StateName == S33_2_TerminalStateName);
+            var declaration = await _context.WorkflowStates.SingleOrDefaultAsync(s => s.StateName == S33_2_SkipTargetStateName);
             if (declaration is not null) return declaration;
         }
 
