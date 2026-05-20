@@ -47,4 +47,18 @@ public class FileSystemBlobStoreTests : IDisposable
         var read = await sut.ReadAsync(storedPath);
         Assert.Equal(data, read);
     }
+
+    [Fact]
+    public async Task ReadAsync_EmptyPath_ThrowsArgumentException()
+    {
+        var sut = Sut();
+        await Assert.ThrowsAsync<ArgumentException>(() => sut.ReadAsync(""));
+    }
+
+    [Fact]
+    public async Task WriteAsync_EmptyPath_ThrowsArgumentException()
+    {
+        var sut = Sut();
+        await Assert.ThrowsAsync<ArgumentException>(() => sut.WriteAsync("", new byte[] { 1 }));
+    }
 }

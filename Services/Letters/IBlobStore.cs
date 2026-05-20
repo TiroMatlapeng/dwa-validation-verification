@@ -28,8 +28,8 @@ public class FileSystemBlobStore : IBlobStore
     {
         GuardPath(logicalPath, nameof(logicalPath));
         var full = Path.GetFullPath(Path.Combine(_root, logicalPath.Replace('/', Path.DirectorySeparatorChar)));
-        if (!full.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
-            && !full.Equals(_root, StringComparison.OrdinalIgnoreCase))
+        if (!full.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+            && !full.Equals(_root, StringComparison.Ordinal))
             throw new ArgumentException("Path escapes storage root.", nameof(logicalPath));
         Directory.CreateDirectory(Path.GetDirectoryName(full)!);
         await File.WriteAllBytesAsync(full, bytes);
@@ -40,8 +40,8 @@ public class FileSystemBlobStore : IBlobStore
     {
         GuardPath(storagePath, nameof(storagePath));
         var full = Path.GetFullPath(Path.Combine(_root, storagePath.Replace('/', Path.DirectorySeparatorChar)));
-        if (!full.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
-            && !full.Equals(_root, StringComparison.OrdinalIgnoreCase))
+        if (!full.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+            && !full.Equals(_root, StringComparison.Ordinal))
             throw new ArgumentException("Path escapes storage root.", nameof(storagePath));
         return await File.ReadAllBytesAsync(full);
     }
