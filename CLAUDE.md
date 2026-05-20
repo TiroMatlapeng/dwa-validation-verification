@@ -84,6 +84,7 @@ builder.Services.AddScoped<IAddress, AddressRepository>();
 | `GovernmentWaterControlArea` | A proclaimed GWCA with gazette reference, proclamation date, and linked `GwcaProclamationRule` records |
 | `GwcaProclamationRule` | Configurable per-GWCA legal limits (e.g. MAX_HECTARES, MAX_VOLUME_PER_HA) seeded from gazette proclamations |
 | `River` | River name lookup used for water source identification |
+| `IrrigationBoard` | An irrigation board (scheme) used in S33(2) Kader Asmal declarations; holds board name, P-number, email, and address. Linked from `FileMaster.S33_2_IrrigationBoardId`. |
 
 ## Domain Knowledge (from DWS Requirements Document & Legal Principles Presentation)
 
@@ -400,10 +401,15 @@ After CP9 the case enters the **Verification Letter** sub-process. The path depe
 
 **Track B: Section 33(2) Declaration** (Kader Asmal — scheduled areas under irrigation boards):
 ```
-[CP9 Complete or Shortened Track]
-    → S33_2_DeclarationIssued  (confirms ELU for scheduled area)
+[CP4 Complete]
+    → WorkflowService skips CP5–CP9, CP_PrePublicReview, CP_StakeholderWorkshop
+    → S33_2_ReadyForDeclaration  (non-terminal holding state — issue S33(2) letter here)
+        → S33_2_DeclarationIssued  (transition via IssueLetter → TransitionToAsync ONLY)
     → [Closed / Archived]
 ```
+**Important:** `AdvanceAsync` is explicitly blocked from `S33_2_ReadyForDeclaration` and throws `InvalidOperationException`. The transition to `S33_2_DeclarationIssued` must go through `FileMasterController.IssueLetter` (which calls `TransitionToAsync` after creating the `LetterIssuance` record). Before issuance, the controller enforces two guards: (1) `S33_2_RatesPaidConfirmed` must be true, and (2) `FileMaster.EntitlementId` must not be null.
+
+`FileMaster` S33(2) fields: `S33_2_IrrigationBoardId` (FK → `IrrigationBoard`), `S33_2_ScheduledAreaName`, `S33_2_RatesPaidConfirmed`.
 
 **Track C: Section 33(3) Declaration** (individual application):
 ```
@@ -416,11 +422,14 @@ Each letter transition must record: `IssuedDate`, `IssuedByUserId`, `SignedByUse
 
 ### WorkflowEngine Design Notes
 
-- `FileMaster.WorkflowStateId` FK → `WorkflowState` table (seeded with all state names above).
-- Every state transition is written to an immutable `AuditEntry` table (who, what, when, previous state, new state).
-- The engine exposes `CanTransition(user, fileMaster, targetState)` — returns `bool` + reason string.
-- Guards are defined per transition as a list of `ITransitionGuard` implementations (checked in order).
-- Notifications are triggered as domain events on successful transitions.
+- `FileMaster.WorkflowInstanceId` FK → `WorkflowInstance`; current state is on `WorkflowInstance.CurrentWorkflowStateId` → `WorkflowState`.
+- Every state transition is written to an immutable `WorkflowStepRecord` (who, what, when, previous state, new state) and to `AuditLog` via `AuditService`.
+- The engine exposes `GetBlockingReasonsAsync(fileMasterId, userId)` — returns the list of guard denial messages for the UI to surface inline.
+- Guards are `ITransitionGuard` implementations registered in DI; each returns `GuardResult.Ok` or `GuardResult.Deny(reason)`. Guards live in `Services/Workflow/Guards/FlagGuards.cs`.
+- `AdvanceAsync` moves to the next state in display-order. `TransitionToAsync` moves to a named target state (used by `IssueLetter` and other direct-transition flows).
+- `AdvanceAsync` is blocked from `S33_2_ReadyForDeclaration` — see Track B above.
+- `ResolveNextStateAsync` applies the S33(2) skip logic and throws `InvalidOperationException` if the `S33_2_ReadyForDeclaration` seed row is absent.
+- Notifications are triggered after successful transitions.
 
 ## External User Portal (Separate Security Realm)
 
