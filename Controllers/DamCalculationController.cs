@@ -201,7 +201,7 @@ public class DamCalculationController : Controller
         try
         {
             var capacity = await _calculator.ComputeDamVolumeAsync(id);
-            TempData["Success"] = $"Dam capacity calculated: {capacity:N0} m³";
+            TempData["Success"] = $"Dam capacity calculated: {capacity.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)} m³";
         }
         catch (InvalidOperationException ex)
         {

@@ -20,9 +20,9 @@
                 var daysLeft = (deadline.Date - DateTime.UtcNow.Date).Days;
                 var (bgColor, fgColor, msg) = daysLeft switch
                 {
-                    > 15 => ("#f0fdf4", "#166534", $"Objection deadline: {deadline:dd MMM yyyy} ({daysLeft} days remaining)"),
-                    >= 0 => ("#fffbeb", "#92400e", $"Deadline approaching: {deadline:dd MMM yyyy} ({daysLeft} days left)"),
-                    _    => ("#fef2f2", "#991b1b", "Objection period expired — proceed to CP16 evaluation")
+                    > 15 => ("var(--dws-success-bg)", "var(--dws-success)", $"Objection deadline: {deadline:dd MMM yyyy} ({daysLeft} days remaining)"),
+                    >= 0 => ("var(--dws-warning-bg)", "var(--dws-warning)", $"Deadline approaching: {deadline:dd MMM yyyy} ({daysLeft} days left)"),
+                    _    => ("#fef2f2", "var(--dws-danger)", "Objection period expired — proceed to CP16 evaluation")
                 };
                 <div style="margin-bottom:12px; padding:10px 14px; background:@bgColor; border-radius:6px; color:@fgColor; font-size:13px;">
                     <strong>60-Day Objection Period:</strong> @msg

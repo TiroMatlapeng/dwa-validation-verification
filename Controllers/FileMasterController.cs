@@ -262,8 +262,8 @@ public class FileMasterController : Controller
             var result = await _assessment.AssessAsync(id);
             TempData["Success"] =
                 $"ELU assessment complete ({result.LegalFramework} framework). " +
-                $"Lawful irrigation: {result.LawfulIrrigationM3:N0} m³  |  " +
-                $"Lawful storage: {result.LawfulStorageM3:N0} m³";
+                $"Lawful irrigation: {result.LawfulIrrigationM3.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)} m³  |  " +
+                $"Lawful storage: {result.LawfulStorageM3.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)} m³";
         }
         catch (InvalidOperationException ex)
         {

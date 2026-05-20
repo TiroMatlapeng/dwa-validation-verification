@@ -195,7 +195,7 @@ public class ForestationController : Controller
         try
         {
             var result = await _calculator.ComputeSfraAsync(id);
-            TempData["Success"] = $"SFRA ELU calculated: {result.EluHa:N2} ha authorised, {result.EluVolume:N0} m³ ELU volume";
+            TempData["Success"] = $"SFRA ELU calculated: {result.EluHa.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)} ha authorised, {result.EluVolume.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)} m³ ELU volume";
         }
         catch (InvalidOperationException ex)
         {

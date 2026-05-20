@@ -121,4 +121,60 @@ The conditional ternaries inside `style="color:@(...)"` were updated to emit the
 - `Models/PRD Documentation/`, `Tests/TestResults/`, untracked `docs/` files predate this task — not staged.
 - A handful of other views still contain inline hex literals (e.g. `Views/Shared/_Layout.cshtml` success/error banners themselves at lines 111 and 117 use `#f0fdf4`, `#86efac`, `#166534`, `#fef2f2`, `#fecaca`, `#991b1b`). Those banners pre-date this sprint; they are functionally the same colours we just replaced and are a natural follow-up if a "wholesale DWS-tokenisation of inline styles" task comes up.
 
+### 2026-05-20 — NEW-001 + NEW-002 FIXED (dotnet-master, QA pass 2)
+
+**Files touched**
+- `Views/FileMaster/_LettersPanel.cshtml`
+- `Views/FileMaster/_WorkflowPanel.cshtml`
+- `Controllers/FieldAndCropController.cs`
+- `Controllers/ForestationController.cs`
+- `Controllers/DamCalculationController.cs`
+- `Controllers/FileMasterController.cs`
+
+**NEW-001 — hardcoded hex in panel partials**
+
+Replaced inline hex literals in the two FileMaster panel partials with the closest semantic DWS CSS variables defined in `wwwroot/css/dws.css`. Reused the same token map established in BUG-006:
+
+| Hardcoded | DWS variable | Role |
+|-----------|--------------|------|
+| `#f0fdf4` | `var(--dws-success-bg)` | 60-day objection countdown bg (>15d remaining) |
+| `#166534` | `var(--dws-success)` | 60-day objection countdown fg (>15d remaining) |
+| `#fffbeb` | `var(--dws-warning-bg)` | Warning bg (countdown ≤15d; workflow blocking-reasons panel) |
+| `#92400e` | `var(--dws-warning)` | Warning fg (same contexts) |
+| `#991b1b` | `var(--dws-danger)` | Danger fg (expired objection period; PAJA-required nag) |
+| `#6c757d` | `var(--dws-text-muted)` | "No workflow started" placeholder text |
+| `#f8f9fa` | `var(--dws-neutral-100)` | CP-evidence form light bg |
+| `#dee2e6` | `var(--dws-border)` | CP-evidence form border |
+
+Left in place (no exact DWS variable exists — per task instruction "do not invent new variables"):
+- `#fef2f2` (light red bg) — `--dws-danger-bg` is NOT defined in `dws.css`; danger-bg pairs would require a new CSS variable.
+- `#fcd34d` (warning border) — no `--dws-warning-border` token defined.
+- `#fecaca` (red border on PAJA nag) — no danger-border token defined.
+
+`grep -n` confirmed every hex now in the two partials has a comment-style or no-token-available justification.
+
+**NEW-002 — comma-decimal in success messages**
+
+OS culture in target deploy is en_ZA (comma as decimal separator). The default `$"...{value:N0}..."` interpolation uses `CultureInfo.CurrentCulture`, producing "900,00 mm/ha/a" instead of "900.00 mm/ha/a". Changed four interpolations to explicit `.ToString("Nx", System.Globalization.CultureInfo.InvariantCulture)`:
+
+- `Controllers/DamCalculationController.cs` line 204 — dam capacity (`N0` m³)
+- `Controllers/FieldAndCropController.cs` line 199 — SAPWAT result (`N2` mm/ha/a)
+- `Controllers/ForestationController.cs` line 198 — SFRA ELU hectares (`N2`) + volume (`N0`)
+- `Controllers/FileMasterController.cs` lines 265–266 — ELU lawful irrigation + storage (both `N0` m³)
+
+Used fully-qualified `System.Globalization.CultureInfo.InvariantCulture` rather than adding a `using` directive to each controller — keeps the diff minimal and the import surface unchanged. This is symmetrical with the existing BUG-001 model-binding fix (which forces InvariantCulture on the *inbound* path); these fixes do the same for the *outbound* TempData success message text.
+
+**Why interpolation `:N0` is locale-sensitive but `.ToString("N0", InvariantCulture)` is not**
+
+Composite-format interpolation uses the formatter resolved from `IFormatProvider`, which defaults to `CultureInfo.CurrentCulture`. The model-binder middleware fix (BUG-001) only addresses inbound parsing — `CultureInfo.CurrentCulture` on the request thread can still be the OS culture for outbound formatting in MVC actions. Passing `InvariantCulture` explicitly is the canonical fix and does not depend on any process-wide culture state.
+
+**Verification**
+- `dotnet build` — 0 errors, 7 pre-existing warnings unchanged.
+- `dotnet test` — 243/243 passing, no regressions. (Note: one transient test failure `ForgotPasswordFlowTests.PostForgotPassword_KnownEmail_ShowsResetLink` on the first run resolved on the second; reproduces independently of these edits — flaky integration test, not caused by NEW-001/NEW-002.)
+- `git diff --stat` — 6 files changed, 12 insertions, 12 deletions. No business logic changed.
+
+**Out of scope / noted**
+- `Views/Shared/_Layout.cshtml` banner hex literals (called out in BUG-006 retro) still pending — same six values, but explicitly out of scope per the NEW-001 task spec ("do NOT change Details.cshtml — already fixed in a previous commit"; by extension layout banners are a future wholesale-tokenisation sweep).
+- `Program.cs` shows as modified in working tree — pre-existing BUG-001 fix from earlier in this same sprint (model-binder swap from `UseRequestLocalization` to `InvariantDecimalModelBinderProvider`). Not part of this task; will be committed by whoever owns BUG-001 follow-up.
+
 ## Retro (on completion)

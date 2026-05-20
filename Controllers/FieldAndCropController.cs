@@ -196,7 +196,7 @@ public class FieldAndCropController : Controller
         try
         {
             var result = await _calculator.ComputeSapwatAsync(id);
-            TempData["Success"] = $"SAPWAT result computed: {result:N2} mm/ha/a";
+            TempData["Success"] = $"SAPWAT result computed: {result.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)} mm/ha/a";
         }
         catch (InvalidOperationException ex)
         {

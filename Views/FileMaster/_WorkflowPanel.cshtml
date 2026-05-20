@@ -4,7 +4,7 @@
 {
     <div class="card" style="max-width: 900px; margin-top: 16px;">
         <div class="form-section-title">Workflow</div>
-        <div style="color:#6c757d; font-size:13px;">No workflow started for this case.</div>
+        <div style="color:var(--dws-text-muted); font-size:13px;">No workflow started for this case.</div>
     </div>
 }
 else
@@ -34,7 +34,7 @@ else
 
         @if (Model.BlockingReasons.Any())
         {
-            <div style="margin-top:12px; padding:12px 16px; background:#fffbeb; border:1px solid #fcd34d; border-radius:6px; color:#92400e; font-size:13px;">
+            <div style="margin-top:12px; padding:12px 16px; background:var(--dws-warning-bg); border:1px solid #fcd34d; border-radius:6px; color:var(--dws-warning); font-size:13px;">
                 <strong>Cannot advance yet:</strong>
                 <ul style="margin:6px 0 0 16px; padding:0;">
                     @foreach (var r in Model.BlockingReasons) { <li>@r</li> }
@@ -44,7 +44,7 @@ else
 
         @if (csn is "CP2_SpatialInfo" or "CP3_WARMSEvaluation" or "CP4_AdditionalInfo" or "CP_PrePublicReview" or "CP_StakeholderWorkshop")
         {
-            <div style="margin-top:12px; padding:12px 16px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; font-size:13px;">
+            <div style="margin-top:12px; padding:12px 16px; background:var(--dws-neutral-100); border:1px solid var(--dws-border); border-radius:6px; font-size:13px;">
                 <strong>Record Evidence for @csn:</strong>
                 <form asp-action="RecordCpEvidence" asp-route-id="@Model.FileMaster.FileMasterId" method="post" style="margin-top:8px;">
                     @Html.AntiForgeryToken()
@@ -112,7 +112,7 @@ else
 
         @if ((csn == "S35_Letter1Responded" || csn == "S35_Letter2Responded") && Model.PAJAChecklist?.IsComplete != true)
         {
-            <div style="margin-top:12px; padding:8px 12px; background:#fef2f2; border:1px solid #fecaca; border-radius:4px; font-size:13px; color:#991b1b;">
+            <div style="margin-top:12px; padding:8px 12px; background:#fef2f2; border:1px solid #fecaca; border-radius:4px; font-size:13px; color:var(--dws-danger);">
                 <strong>PAJA checklist required before Letter 3 can be issued.</strong>
                 <a asp-action="PAJAChecklist" asp-route-id="@Model.FileMaster.FileMasterId" style="margin-left:8px;">Complete checklist &rarr;</a>
             </div>
