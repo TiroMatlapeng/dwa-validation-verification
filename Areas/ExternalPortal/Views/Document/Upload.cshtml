@@ -1,0 +1,36 @@
+@model dwa_ver_val.Areas.ExternalPortal.ViewModels.DocumentUploadViewModel
+@{
+    ViewData["Title"] = "Upload Document";
+    Layout = "~/Areas/ExternalPortal/Views/Shared/_PortalLayout.cshtml";
+}
+<div class="portal-card">
+    <h1>Upload Supporting Document</h1>
+    <p class="muted">Upload a title deed, permit, or other supporting evidence. Max 10 MB. PDF or image files only.</p>
+
+    <form asp-action="Upload" asp-controller="Document" asp-area="ExternalPortal"
+          method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="FileMasterId" />
+        <div asp-validation-summary="All" class="errors"
+             style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+        <label asp-for="DocumentType">Document Type</label>
+        <select asp-for="DocumentType" style="width:100%;padding:7px 10px;border:1px solid var(--dws-border);border-radius:4px;font-size:var(--dws-fs-sm);margin-top:4px">
+            <option value="TitleDeed">Title Deed</option>
+            <option value="Permit">Permit</option>
+            <option value="SurveyDiagram">SG Diagram</option>
+            <option value="FieldSurvey">Field Survey</option>
+            <option value="Other">Other</option>
+        </select>
+
+        <label asp-for="File" style="margin-top:var(--dws-space-3)">File</label>
+        <input asp-for="File" type="file" accept=".pdf,.jpg,.jpeg,.png"
+               style="margin-top:4px;width:100%;font-size:var(--dws-fs-sm)" />
+        <span asp-validation-for="File" class="errors" style="padding:4px 0;border:none;background:none;font-size:var(--dws-fs-xs)"></span>
+
+        <div class="actions" style="margin-top:var(--dws-space-4)">
+            <button type="submit" class="btn-primary">Upload</button>
+            <a href="@Url.Action("Detail","Case",new{area="ExternalPortal",id=Model.FileMasterId})">Cancel</a>
+        </div>
+    </form>
+</div>
