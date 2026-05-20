@@ -146,7 +146,12 @@ builder.Services.AddSingleton<dwa_ver_val.Services.Letters.IBlobStore>(sp =>
 builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterService, dwa_ver_val.Services.Letters.LetterService>();
 
 // Portal infrastructure abstractions
-builder.Services.AddSingleton<IEmailSender, LoggingEmailSender>();
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+var smtpHost = builder.Configuration["SmtpSettings:Host"];
+if (!string.IsNullOrWhiteSpace(smtpHost))
+    builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+else
+    builder.Services.AddSingleton<IEmailSender, LoggingEmailSender>();
 builder.Services.AddSingleton<IFileStorage>(sp =>
     new LocalDiskFileStorage(
         Path.Combine(builder.Environment.ContentRootPath, "portal-uploads")));
