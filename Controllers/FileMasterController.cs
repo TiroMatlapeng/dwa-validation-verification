@@ -446,16 +446,20 @@ public class FileMasterController : Controller
     };
 
     // letterAction values that are pure response/determination updates — no PDF generated.
-    private static readonly Dictionary<string, string> ResponseActionMap = new()
-    {
-        ["MarkLetter1Responded"]  = "S35_Letter1Responded",
-        ["MarkLetter1AResponded"] = "S35_Letter1Responded",   // 1A response feeds the same downstream paths as Letter 1 response.
-        ["MarkLetter2Responded"]  = "S35_Letter2Responded",
-        ["MarkLetter2AResponded"] = "S35_Letter2Responded",
-        ["MarkELUConfirmed"]      = "S35_ELUConfirmed",
-        ["MarkUnlawfulUseFound"]  = "S35_UnlawfulUseFound",
-        ["CloseCase"]             = "Closed",
-    };
+    // StampsAgreement = true for actions where the water user actively responded/agreed;
+    // false for DWS-side determinations (MarkELUConfirmed, MarkUnlawfulUseFound, CloseCase)
+    // which must never produce a legal record claiming the user agreed with findings.
+    private static readonly Dictionary<string, (string TargetState, bool StampsAgreement)> ResponseActionMap =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["MarkLetter1Responded"]  = ("S35_Letter1Responded", true),
+            ["MarkLetter1AResponded"] = ("S35_Letter1Responded", true),   // 1A response feeds the same downstream paths as Letter 1 response.
+            ["MarkLetter2Responded"]  = ("S35_Letter2Responded", true),
+            ["MarkLetter2AResponded"] = ("S35_Letter2Responded", true),
+            ["MarkELUConfirmed"]      = ("S35_ELUConfirmed",     false),
+            ["MarkUnlawfulUseFound"]  = ("S35_UnlawfulUseFound", false),
+            ["CloseCase"]             = ("Closed",               false),
+        };
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -571,7 +575,7 @@ public class FileMasterController : Controller
     [Authorize(Policy = DwsPolicies.CanIssueLetter)]
     public async Task<IActionResult> MarkLetterResponse(Guid id, string letterAction)
     {
-        if (!ResponseActionMap.TryGetValue(letterAction, out var targetState))
+        if (!ResponseActionMap.TryGetValue(letterAction, out var map))
         {
             TempData["Error"] = $"Unknown response action '{letterAction}'.";
             return RedirectToAction(nameof(Details), new { id });
@@ -590,14 +594,21 @@ public class FileMasterController : Controller
         if (latestPending != null)
         {
             latestPending.ResponseDate = DateOnly.FromDateTime(DateTime.Today);
-            latestPending.ResponseStatus = "Agreed";
-            latestPending.AgreedWithFindings = true;
+            if (map.StampsAgreement)
+            {
+                latestPending.ResponseStatus = "Agreed";
+                latestPending.AgreedWithFindings = true;
+            }
+            else
+            {
+                latestPending.ResponseStatus = "Closed";
+            }
         }
         await _context.SaveChangesAsync();
 
         try
         {
-            await _workflow.TransitionToAsync(id, targetState, userId: null, notes: $"State transitioned to {targetState}");
+            await _workflow.TransitionToAsync(id, map.TargetState, userId: null, notes: $"State transitioned to {map.TargetState}");
         }
         catch (InvalidOperationException ex)
         {
