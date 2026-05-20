@@ -15,19 +15,21 @@ public static class PortalPolicies
 
     public static void Configure(AuthorizationOptions options)
     {
-        // Stage 2a: PortalAuthenticated requires the cookie + EmailConfirmed=true claim.
-        // (Stage 2b will add MfaEnrolled=true and Status=Active.)
+        // Stage 2a: PortalAuthenticated requires the cookie + EmailConfirmed=true + Status=Active.
+        // (Stage 2b will add MfaEnrolled=true.)
         options.AddPolicy(PortalAuthenticated, p => p
             .AddAuthenticationSchemes(PortalCookieOptions.SchemeName)
             .RequireAuthenticatedUser()
-            .RequireClaim(EmailConfirmedClaim, "true"));
+            .RequireClaim(EmailConfirmedClaim, "true")
+            .RequireClaim(StatusClaim, "Active"));
 
         // Used during MFA enrolment in Stage 2b — for 2a it's reachable as soon
         // as the email is confirmed, so the holding-page-on-dashboard works.
         options.AddPolicy(PortalRegistrationComplete, p => p
             .AddAuthenticationSchemes(PortalCookieOptions.SchemeName)
             .RequireAuthenticatedUser()
-            .RequireClaim(EmailConfirmedClaim, "true"));
+            .RequireClaim(EmailConfirmedClaim, "true")
+            .RequireClaim(StatusClaim, "Active"));
 
         // Stage 2b only: short-lived cookie carrying MfaPending=true between
         // password verification and TOTP entry. Defined now so AccountController
