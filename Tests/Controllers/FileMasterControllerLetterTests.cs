@@ -1,3 +1,4 @@
+using System.Reflection;
 using dwa_ver_val.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -165,5 +166,59 @@ public class FileMasterControllerLetterTests
         }
 
         Assert.True(blocked, $"One-time letter {letterCode} should block re-issuance even when previously resolved.");
+    }
+
+    [Fact]
+    public void ResponseActionMap_StampsAgreement_OnlyForWaterUserResponseActions()
+    {
+        // ResponseActionMap is private static in FileMasterController.
+        // StampsAgreement=true means the water user's reply is stamped as AgreedWithFindings=true
+        // in LetterIssuance — a legal record under Section 35 of the National Water Act.
+        // This test ensures no future edit can accidentally stamp agreement on a DWS determination.
+        var field = typeof(FileMasterController).GetField(
+            "ResponseActionMap",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(field);
+
+        var map = field.GetValue(null) as Dictionary<string, (string TargetState, bool StampsAgreement)>;
+        Assert.NotNull(map);
+
+        // Exactly these 4 keys must have StampsAgreement=true (water user confirmed findings).
+        var mustStampAgreement = new[]
+        {
+            "MarkLetter1Responded",
+            "MarkLetter1AResponded",
+            "MarkLetter2Responded",
+            "MarkLetter2AResponded"
+        };
+        foreach (var key in mustStampAgreement)
+        {
+            Assert.True(map.ContainsKey(key), $"ResponseActionMap must contain key '{key}'.");
+            Assert.True(map[key].StampsAgreement,
+                $"'{key}' must have StampsAgreement=true. Changing this creates a false NWA legal record.");
+        }
+
+        // These 3 keys must have StampsAgreement=false (DWS determinations, not user agreement).
+        var mustNotStampAgreement = new[]
+        {
+            "MarkELUConfirmed",
+            "MarkUnlawfulUseFound",
+            "CloseCase"
+        };
+        foreach (var key in mustNotStampAgreement)
+        {
+            Assert.True(map.ContainsKey(key), $"ResponseActionMap must contain key '{key}'.");
+            Assert.False(map[key].StampsAgreement,
+                $"'{key}' must have StampsAgreement=false. Stamping agreement here creates a false NWA legal record.");
+        }
+
+        // Map must have exactly 7 entries — no undocumented additions.
+        Assert.Equal(7, map.Count);
+
+        // Every key in the map must be in one of the two expected sets.
+        var allExpected = mustStampAgreement.Concat(mustNotStampAgreement)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var key in map.Keys)
+            Assert.Contains(key, allExpected);
     }
 }
