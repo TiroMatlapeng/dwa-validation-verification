@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using dwa_ver_val.Areas.ExternalPortal.ViewModels;
+using dwa_ver_val.Helpers;
 using dwa_ver_val.Services.Letters;
 using dwa_ver_val.Services.Portal.Auth;
 using Microsoft.AspNetCore.Authorization;
@@ -70,8 +71,14 @@ public class CaseController : Controller
     public async Task<IActionResult> Detail(Guid id, CancellationToken ct)
     {
         var uid = CurrentUserId();
-        try { await _access.AssertHasAccessToFileMasterAsync(uid, id, ct); }
-        catch { return NotFound(); }
+        try
+        {
+            await _access.AssertHasAccessToFileMasterAsync(uid, id, ct);
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
 
         var fm = await _db.FileMasters
             .Include(f => f.Property)
@@ -119,8 +126,14 @@ public class CaseController : Controller
     public async Task<IActionResult> DownloadLetter(Guid fileMasterId, Guid issuanceId, CancellationToken ct)
     {
         var uid = CurrentUserId();
-        try { await _access.AssertHasAccessToFileMasterAsync(uid, fileMasterId, ct); }
-        catch { return Forbid(); }
+        try
+        {
+            await _access.AssertHasAccessToFileMasterAsync(uid, fileMasterId, ct);
+        }
+        catch (NotFoundException)
+        {
+            return Forbid();
+        }
 
         var issuance = await _db.LetterIssuances
             .FirstOrDefaultAsync(l => l.LetterIssuanceId == issuanceId && l.FileMasterId == fileMasterId, ct);
