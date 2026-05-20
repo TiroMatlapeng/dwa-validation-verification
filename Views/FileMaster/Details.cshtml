@@ -23,10 +23,7 @@
     </div>
 </div>
 
-@if (TempData["WorkflowError"] != null)
-{
-    <div class="alert alert-error">@TempData["WorkflowError"]</div>
-}
+@* Error / success banners are rendered in _Layout.cshtml via TempData["Error"] / TempData["Success"]. *@
 
 @await Html.PartialAsync("_WorkflowPanel", Model)
 
@@ -126,46 +123,46 @@
 
     @if (Model.LawfulnessAssessmentResult is null)
     {
-        <div style="padding:12px 16px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; color:#6c757d; font-size:13px;">
+        <div style="padding:12px 16px; background:var(--dws-neutral-100); border:1px solid var(--dws-border); border-radius:6px; color:var(--dws-text-muted); font-size:13px;">
             ELU assessment has not been run for this case yet. Run it to determine lawful and unlawful water use volumes (CP7).
         </div>
     }
     else
     {
         var r = Model.LawfulnessAssessmentResult;
-        <div style="font-size:12px; color:#6c757d; margin-bottom:8px;">
+        <div style="font-size:12px; color:var(--dws-text-muted); margin-bottom:8px;">
             Legal framework: <strong>@r.LegalFramework</strong>
             @if (r.Gwca is not null) { <span> — @r.Gwca.GovernmentWaterControlAreaName</span> }
             &nbsp;|&nbsp; Assessed: @r.AssessedAt.ToString("dd MMM yyyy HH:mm") UTC
         </div>
         <table style="width:100%; font-size:13px; border-collapse:collapse;">
             <thead>
-                <tr style="background:#f0f4f8; text-align:left;">
+                <tr style="background:var(--dws-neutral-100); text-align:left;">
                     <th style="padding:6px 10px;">Category</th>
                     <th style="padding:6px 10px; text-align:right;">Total</th>
-                    <th style="padding:6px 10px; text-align:right; color:#166534;">Lawful (m³)</th>
-                    <th style="padding:6px 10px; text-align:right; color:#991b1b;">Unlawful (m³)</th>
+                    <th style="padding:6px 10px; text-align:right; color:var(--dws-success);">Lawful (m³)</th>
+                    <th style="padding:6px 10px; text-align:right; color:var(--dws-danger);">Unlawful (m³)</th>
                     <th style="padding:6px 10px;">Limit applied</th>
                 </tr>
             </thead>
             <tbody>
-                <tr style="border-top:1px solid #dee2e6;">
+                <tr style="border-top:1px solid var(--dws-border);">
                     <td style="padding:6px 10px;">Irrigation</td>
                     <td style="padding:6px 10px; text-align:right;">@r.TotalIrrigationDemandM3.ToString("N0")</td>
-                    <td style="padding:6px 10px; text-align:right; color:#166534; font-weight:600;">@r.LawfulIrrigationM3.ToString("N0")</td>
-                    <td style="padding:6px 10px; text-align:right; color:@(r.UnlawfulIrrigationM3 > 0 ? "#991b1b" : "#6c757d"); font-weight:@(r.UnlawfulIrrigationM3 > 0 ? "600" : "400");">@r.UnlawfulIrrigationM3.ToString("N0")</td>
-                    <td style="padding:6px 10px; font-size:11px; color:#6c757d;">@r.IrrigationLimitApplied</td>
+                    <td style="padding:6px 10px; text-align:right; color:var(--dws-success); font-weight:600;">@r.LawfulIrrigationM3.ToString("N0")</td>
+                    <td style="padding:6px 10px; text-align:right; color:@(r.UnlawfulIrrigationM3 > 0 ? "var(--dws-danger)" : "var(--dws-text-muted)"); font-weight:@(r.UnlawfulIrrigationM3 > 0 ? "600" : "400");">@r.UnlawfulIrrigationM3.ToString("N0")</td>
+                    <td style="padding:6px 10px; font-size:11px; color:var(--dws-text-muted);">@r.IrrigationLimitApplied</td>
                 </tr>
-                <tr style="border-top:1px solid #dee2e6;">
+                <tr style="border-top:1px solid var(--dws-border);">
                     <td style="padding:6px 10px;">Storage (dams)</td>
                     <td style="padding:6px 10px; text-align:right;">@r.TotalDamCapacityM3.ToString("N0")</td>
-                    <td style="padding:6px 10px; text-align:right; color:#166534; font-weight:600;">@r.LawfulStorageM3.ToString("N0")</td>
-                    <td style="padding:6px 10px; text-align:right; color:@(r.UnlawfulStorageM3 > 0 ? "#991b1b" : "#6c757d"); font-weight:@(r.UnlawfulStorageM3 > 0 ? "600" : "400");">@r.UnlawfulStorageM3.ToString("N0")</td>
-                    <td style="padding:6px 10px; font-size:11px; color:#6c757d;">@r.StorageLimitApplied</td>
+                    <td style="padding:6px 10px; text-align:right; color:var(--dws-success); font-weight:600;">@r.LawfulStorageM3.ToString("N0")</td>
+                    <td style="padding:6px 10px; text-align:right; color:@(r.UnlawfulStorageM3 > 0 ? "var(--dws-danger)" : "var(--dws-text-muted)"); font-weight:@(r.UnlawfulStorageM3 > 0 ? "600" : "400");">@r.UnlawfulStorageM3.ToString("N0")</td>
+                    <td style="padding:6px 10px; font-size:11px; color:var(--dws-text-muted);">@r.StorageLimitApplied</td>
                 </tr>
             </tbody>
         </table>
-        <div style="font-size:11px; color:#6c757d; margin-top:6px;">
+        <div style="font-size:11px; color:var(--dws-text-muted); margin-top:6px;">
             Irrigated area: @r.TotalIrrigatedAreaHa.ToString("N1") ha
         </div>
     }

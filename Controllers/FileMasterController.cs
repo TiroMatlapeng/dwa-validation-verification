@@ -201,7 +201,7 @@ public class FileMasterController : Controller
         }
         catch (InvalidOperationException ex)
         {
-            TempData["WorkflowError"] = ex.Message;
+            TempData["Error"] = ex.Message;
         }
         return RedirectToAction(nameof(Details), new { id });
     }
@@ -449,7 +449,7 @@ public class FileMasterController : Controller
 
         if (!LetterActionMap.TryGetValue(letterAction, out var map))
         {
-            TempData["WorkflowError"] = $"Unknown letter action '{letterAction}'.";
+            TempData["Error"] = $"Unknown letter action '{letterAction}'.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -483,7 +483,7 @@ public class FileMasterController : Controller
         }
         catch (InvalidOperationException ex)
         {
-            TempData["WorkflowError"] = $"Could not issue letter: {ex.Message}";
+            TempData["Error"] = $"Could not issue letter: {ex.Message}";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -494,7 +494,7 @@ public class FileMasterController : Controller
         }
         catch (InvalidOperationException ex)
         {
-            TempData["WorkflowError"] = ex.Message;
+            TempData["Error"] = ex.Message;
         }
 
         return RedirectToAction(nameof(Details), new { id });
@@ -526,7 +526,7 @@ public class FileMasterController : Controller
     {
         if (!ResponseActionMap.TryGetValue(letterAction, out var targetState))
         {
-            TempData["WorkflowError"] = $"Unknown response action '{letterAction}'.";
+            TempData["Error"] = $"Unknown response action '{letterAction}'.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -554,7 +554,7 @@ public class FileMasterController : Controller
         }
         catch (InvalidOperationException ex)
         {
-            TempData["WorkflowError"] = ex.Message;
+            TempData["Error"] = ex.Message;
         }
 
         return RedirectToAction(nameof(Details), new { id });
