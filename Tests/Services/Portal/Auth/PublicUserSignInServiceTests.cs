@@ -153,6 +153,80 @@ public class PublicUserSignInServiceTests
     }
 
     [Fact]
+    public async Task SignInAsync_LockedOutUser_BlocksWithoutCheckingPassword()
+    {
+        var (sut, auth, audit, _) = CreateSut(db =>
+        {
+            var user = HashedActive("l@e.test", "Goodpassword12!");
+            user.FailedLoginAttempts = 5;
+            user.LockoutUntil = DateTime.UtcNow.AddMinutes(10);
+            db.PublicUsers.Add(user);
+        });
+
+        var result = await sut.SignInAsync("l@e.test", "Goodpassword12!", default);
+
+        Assert.False(result.Success);
+        Assert.Equal("Login failed.", result.Error);
+        auth.Verify(a => a.SignInAsync(
+            It.IsAny<HttpContext>(), It.IsAny<string>(),
+            It.IsAny<ClaimsPrincipal>(), It.IsAny<AuthenticationProperties>()), Times.Never);
+        Assert.Contains(audit.Events, e => e.Action == "PublicUserSignInFailed" && e.Reason == "AccountLocked");
+    }
+
+    [Fact]
+    public async Task SignInAsync_WrongPassword_IncrementsFailedAttempts()
+    {
+        var (sut, _, _, db) = CreateSut(db =>
+        {
+            var user = HashedActive("f@e.test", "Goodpassword12!");
+            user.FailedLoginAttempts = 2;
+            db.PublicUsers.Add(user);
+        });
+
+        await sut.SignInAsync("f@e.test", "wrongpassword!", default);
+
+        var stored = db.PublicUsers.Single(u => u.EmailAddress == "f@e.test");
+        Assert.Equal(3, stored.FailedLoginAttempts);
+        Assert.Null(stored.LockoutUntil);
+    }
+
+    [Fact]
+    public async Task SignInAsync_FifthWrongPassword_SetsLockoutUntil()
+    {
+        var (sut, _, _, db) = CreateSut(db =>
+        {
+            var user = HashedActive("ff@e.test", "Goodpassword12!");
+            user.FailedLoginAttempts = 4;
+            db.PublicUsers.Add(user);
+        });
+
+        await sut.SignInAsync("ff@e.test", "wrongpassword!", default);
+
+        var stored = db.PublicUsers.Single(u => u.EmailAddress == "ff@e.test");
+        Assert.Equal(5, stored.FailedLoginAttempts);
+        Assert.NotNull(stored.LockoutUntil);
+        Assert.True(stored.LockoutUntil > DateTime.UtcNow.AddMinutes(1));
+    }
+
+    [Fact]
+    public async Task SignInAsync_SuccessAfterPreviousFailures_ResetsLockout()
+    {
+        var (sut, _, _, db) = CreateSut(db =>
+        {
+            var user = HashedActive("r@e.test", "Goodpassword12!");
+            user.FailedLoginAttempts = 3;
+            db.PublicUsers.Add(user);
+        });
+
+        var result = await sut.SignInAsync("r@e.test", "Goodpassword12!", default);
+
+        Assert.True(result.Success);
+        var stored = db.PublicUsers.Single(u => u.EmailAddress == "r@e.test");
+        Assert.Equal(0, stored.FailedLoginAttempts);
+        Assert.Null(stored.LockoutUntil);
+    }
+
+    [Fact]
     public async Task SignOutAsync_CallsSignOutWithPortalScheme()
     {
         var auth = new Mock<IAuthenticationService>();

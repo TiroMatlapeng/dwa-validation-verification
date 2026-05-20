@@ -12,6 +12,8 @@ public class PublicUserSignInService : IPublicUserSignInService
 {
     public const string GenericLoginFailed = "Login failed.";
     public const string EmailNotConfirmed = "Please confirm your email before logging in.";
+    public const int MaxFailedAttempts = 5;
+    public static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
 
     private readonly ApplicationDBContext _db;
     private readonly PasswordHasher<PublicUser> _hasher;
@@ -52,9 +54,27 @@ public class PublicUserSignInService : IPublicUserSignInService
             return new SignInResult(false, GenericLoginFailed);
         }
 
+        // S2: Block locked-out accounts before attempting password hashing.
+        if (user.LockoutUntil.HasValue && user.LockoutUntil.Value > DateTime.UtcNow)
+        {
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(PublicUser),
+                EntityId: user.PublicUserId.ToString(),
+                Action: "PublicUserSignInFailed",
+                Reason: "AccountLocked",
+                ToValue: email));
+            return new SignInResult(false, GenericLoginFailed);
+        }
+
         var verify = _hasher.VerifyHashedPassword(user, user.PasswordHash, password);
         if (verify == PasswordVerificationResult.Failed)
         {
+            // S2: Increment counter; lock on threshold.
+            user.FailedLoginAttempts++;
+            if (user.FailedLoginAttempts >= MaxFailedAttempts)
+                user.LockoutUntil = DateTime.UtcNow.Add(LockoutDuration);
+            await _db.SaveChangesAsync(ct);
+
             await _audit.LogAsync(new AuditEvent(
                 EntityType: nameof(PublicUser),
                 EntityId: user.PublicUserId.ToString(),
@@ -87,6 +107,10 @@ public class PublicUserSignInService : IPublicUserSignInService
                 ToValue: email));
             return new SignInResult(false, GenericLoginFailed);
         }
+
+        // S2: Reset lockout counters on successful authentication.
+        user.FailedLoginAttempts = 0;
+        user.LockoutUntil = null;
 
         var identity = new ClaimsIdentity(PortalCookieOptions.SchemeName);
         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.PublicUserId.ToString()));
