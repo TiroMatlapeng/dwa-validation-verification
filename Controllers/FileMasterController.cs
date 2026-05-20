@@ -517,7 +517,8 @@ public class FileMasterController : Controller
         }
         catch (InvalidOperationException ex)
         {
-            TempData["Error"] = ex.Message;
+            TempData["Error"] = $"Letter issued but workflow transition failed: {ex.Message} Please contact your system administrator.";
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         try
