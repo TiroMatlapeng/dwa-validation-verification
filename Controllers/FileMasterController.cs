@@ -476,6 +476,22 @@ public class FileMasterController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        // Idempotency: refuse if a Pending issuance for this letter type already exists on this case.
+        var existingLetterType = await _context.LetterTypes
+            .SingleOrDefaultAsync(t => t.LetterName == map.LetterCode);
+        if (existingLetterType is not null)
+        {
+            var alreadyPending = await _context.LetterIssuances.AnyAsync(
+                l => l.FileMasterId == id
+                  && l.LetterTypeId == existingLetterType.LetterTypeId
+                  && l.ResponseStatus == "Pending");
+            if (alreadyPending)
+            {
+                TempData["Error"] = $"A {map.LetterCode} letter is already pending a response. Resolve the existing letter before issuing a new one.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+        }
+
         // Build the IssueLetterRequest, falling back gracefully when the signed-in user
         // hasn't fully populated their profile (no FirstName/LastName claim).
         var signedInId = Guid.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var u)

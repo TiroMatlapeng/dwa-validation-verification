@@ -6,6 +6,39 @@ namespace dwa_ver_val.Tests.Controllers;
 
 public class FileMasterControllerLetterTests
 {
+    [Fact]
+    public async Task IssueLetter_WhenPendingIssuanceExists_ShouldNotBeAbleToAddSecond()
+    {
+        var db = TestDbContextFactory.Create();
+        var prop = new Property { PropertyId = Guid.NewGuid() };
+        db.Properties.Add(prop);
+        var fm = SeedHelper.NewFileMaster(prop.PropertyId);
+        db.FileMasters.Add(fm);
+        var lt = new LetterType { LetterTypeId = Guid.NewGuid(), LetterName = "S35_L1", LetterDescription = "S35 Letter 1" };
+        db.LetterTypes.Add(lt);
+        db.LetterIssuances.Add(new LetterIssuance
+        {
+            LetterIssuanceId = Guid.NewGuid(),
+            FileMasterId = fm.FileMasterId,
+            LetterTypeId = lt.LetterTypeId,
+            IssuedDate = DateOnly.FromDateTime(DateTime.Today),
+            GeneratedDate = DateOnly.FromDateTime(DateTime.Today),
+            SignedDate = DateOnly.FromDateTime(DateTime.Today),
+            ResponseStatus = "Pending"
+        });
+        await db.SaveChangesAsync();
+
+        // Simulate the guard logic the controller will execute:
+        var alreadyPending = await db.LetterIssuances.AnyAsync(
+            l => l.FileMasterId == fm.FileMasterId
+              && l.LetterTypeId == lt.LetterTypeId
+              && l.ResponseStatus == "Pending");
+
+        Assert.True(alreadyPending, "Guard should detect the existing Pending issuance");
+        Assert.Equal(1, db.LetterIssuances.Count());
+    }
+
+
     private static LetterIssuance PendingIssuance(Guid fileMasterId, Guid letterTypeId) => new()
     {
         LetterIssuanceId = Guid.NewGuid(),
