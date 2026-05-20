@@ -50,3 +50,12 @@ secrets.json
 
 # Git worktrees
 .worktrees/
+
+# Generated runtime uploads (letter PDFs, etc.)
+wwwroot/_uploads/
+
+# Test runner output
+Tests/TestResults/
+
+# PRD reference documents (source of truth kept outside repo)
+PRD Documentation/
