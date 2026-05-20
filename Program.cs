@@ -1,11 +1,9 @@
-using System.Globalization;
 using dwa_ver_val.Services.Infrastructure.Email;
 using dwa_ver_val.Services.Infrastructure.Storage;
 using dwa_ver_val.Services.Portal.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
@@ -19,6 +17,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews(options =>
 {
     options.Conventions.Add(new PortalAuthorizationConvention());
+
+    // BUG-001: Insert before the default SimpleTypeModelBinderProvider so all
+    // decimal / decimal? bindings parse with InvariantCulture, independent of
+    // the host OS culture (e.g. en_ZA, which uses comma as decimal separator).
+    options.ModelBinderProviders.Insert(0, new dwa_ver_val.Infrastructure.InvariantDecimalModelBinderProvider());
 });
 
 // DbContext
@@ -226,19 +229,11 @@ app.UseForwardedHeaders(new Microsoft.AspNetCore.Builder.ForwardedHeadersOptions
 
 app.UseHttpsRedirection();
 
-// BUG-001: Force InvariantCulture so MVC model binding parses decimals with
-// dot separator (e.g. "10.00") regardless of the host OS culture. ASP.NET
-// tag helpers always render decimal values invariant-style; without this
-// middleware, hosts with comma-decimal cultures reject every decimal POST
-// on Edit forms (FieldAndCrop, DamCalculation, Forestation, etc.).
-// Must run BEFORE UseRouting so the culture is set for the whole pipeline.
-var invariantCulture = CultureInfo.InvariantCulture;
-app.UseRequestLocalization(new RequestLocalizationOptions
-{
-    DefaultRequestCulture = new RequestCulture(invariantCulture, invariantCulture),
-    SupportedCultures = new[] { invariantCulture },
-    SupportedUICultures = new[] { invariantCulture }
-});
+// BUG-001: Decimal model binding is handled by InvariantDecimalModelBinderProvider
+// (registered in AddControllersWithViews above). UseRequestLocalization is NOT
+// used because DecimalModelBinder resolves its culture from
+// CultureInfo.CurrentCulture (process culture), not from request-localization
+// middleware — so the middleware was ineffective on en_ZA hosts.
 
 app.UseRouting();
 

@@ -177,4 +177,49 @@ Composite-format interpolation uses the formatter resolved from `IFormatProvider
 - `Views/Shared/_Layout.cshtml` banner hex literals (called out in BUG-006 retro) still pending — same six values, but explicitly out of scope per the NEW-001 task spec ("do NOT change Details.cshtml — already fixed in a previous commit"; by extension layout banners are a future wholesale-tokenisation sweep).
 - `Program.cs` shows as modified in working tree — pre-existing BUG-001 fix from earlier in this same sprint (model-binder swap from `UseRequestLocalization` to `InvariantDecimalModelBinderProvider`). Not part of this task; will be committed by whoever owns BUG-001 follow-up.
 
+### 2026-05-20 — BUG-001 RE-FIXED with custom binder (dotnet-master, follow-up)
+
+**Why the previous fix was insufficient.**
+The first BUG-001 attempt added `UseRequestLocalization(InvariantCulture)` middleware. That changes `Thread.CurrentThread.CurrentCulture` *only when the request localization middleware is in scope*, but ASP.NET Core's `DecimalModelBinder` (specifically `SimpleTypeModelBinder` for `decimal`/`decimal?`) does **not** use the request culture — it uses `CultureInfo.CurrentCulture` resolved at the point the binder is invoked, which on .NET is the process culture set from the host OS. On an en_ZA host that's still `en-ZA`, so "12.50" continues to fail to parse. The two systems (request localization middleware vs model binding) are independent.
+
+This was also confirmed empirically: every Edit form still returned 200-with-`FieldArea is not valid` errors against en_ZA after the middleware fix, despite the build/tests passing.
+
+**Correct fix.**
+Added a custom `InvariantDecimalModelBinderProvider` registered at index 0 of `options.ModelBinderProviders`. The provider returns an `InvariantDecimalModelBinder` for `decimal` and `decimal?` model types. The binder:
+1. Reads the raw value from the value provider (no culture-sensitive parsing).
+2. Treats empty/whitespace as `null` (preserves the existing nullable-decimal contract).
+3. Normalises commas to dots so both `12,50` and `12.50` parse — defensive coverage for any client that might still POST a comma-separated value.
+4. Parses with `decimal.TryParse(..., NumberStyles.Any, CultureInfo.InvariantCulture, ...)`.
+5. On failure, adds a model state error with the original raw value.
+
+Inserted at index 0 so it runs before the default `SimpleTypeModelBinderProvider`. The fallback `SimpleTypeModelBinder` is still constructed and held by the custom binder, but only used when the value provider returns `None` (i.e. the field wasn't posted at all — the framework's normal "skip binding" path).
+
+The `UseRequestLocalization` block was removed (now superfluous and misleading). The `using System.Globalization` and `using Microsoft.AspNetCore.Localization` imports in `Program.cs` were also removed — no other code in `Program.cs` referenced them.
+
+**Files touched.**
+- `Infrastructure/InvariantDecimalModelBinder.cs` (new, 42 lines).
+- `Infrastructure/InvariantDecimalModelBinderProvider.cs` (new, 24 lines).
+- `Program.cs` — registered the provider in `AddControllersWithViews(options => ...)`; removed the ineffective `UseRequestLocalization` block; removed two unused usings.
+
+**Verification.**
+- `dotnet build` — 0 errors, 8 pre-existing warnings unchanged.
+- `dotnet test` — 243/243 passing, no regressions.
+- End-to-end smoke test on en_ZA host (`LANG=en_ZA.UTF-8` confirmed via `locale`):
+  - Started app on http://127.0.0.1:14000 + https://127.0.0.1:17235.
+  - Logged in as `validator-3@dwa.demo` (302 → /).
+  - GET `/FieldAndCrop/Edit/8A1C1F2B-...` — 200; tag helpers rendered `FieldArea="10.00"`, `CropArea="8.00"`, `RotationFactor="1.00"` (dot-decimal, as expected — confirms the bug pre-condition).
+  - POST with `FieldArea=12.50`, `CropArea=9.75`, `RotationFactor=0.95` — **302 → `/FieldAndCrop?propertyId=...`** (success redirect, not view-with-errors).
+  - SQL spot-check confirmed the row now has `FieldArea=12.50`, `CropArea=9.75`, `RotationFactor=.95` — dot-decimal POST values landed correctly in the database on the en_ZA host. Binder fix verified end-to-end.
+
+**Why this approach over alternatives.**
+- `[BindProperty(BinderType = ...)]` on every decimal field: would require touching ~35 fields across 7 view models + every future Edit form — large surface, easy to miss one.
+- Changing every `<input type="number">` to `<input type="text">` in 7 views: also high-touch, and breaks numeric keypads on mobile.
+- A `JsonConverter`-style approach: doesn't apply, this is form-urlencoded MVC, not JSON.
+- Setting `CultureInfo.DefaultThreadCurrentCulture = InvariantCulture` at startup: works but is a global side effect that affects EVERY culture-dependent API in the app (date formatting, currency display, string sort order) — far broader than required.
+- The custom `IModelBinderProvider` is the canonical Microsoft-recommended approach when you need culture-independent parsing for a specific .NET type without disturbing the rest of the request pipeline. Forward-compatible: every future `decimal`/`decimal?` field on every future Edit form is covered automatically.
+
+**Out of scope but noted.**
+- Other decimal-like types (`double`, `float`, `DateTime` with localized date separators) are NOT covered by this binder. If/when QA finds a `double` or `DateTime` field also breaks on en_ZA, the same pattern applies: register a sibling provider before the default `SimpleTypeModelBinderProvider` for that type.
+- Working tree shows pre-existing dirty files from earlier sprint work (`Views/FileMaster/_LettersPanel.cshtml`, `_WorkflowPanel.cshtml`, `Controllers/*Controller.cs`, etc.) — those belong to NEW-001/NEW-002 in this same sprint; not part of this commit.
+
 ## Retro (on completion)
