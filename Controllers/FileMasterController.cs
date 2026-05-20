@@ -532,6 +532,14 @@ public class FileMasterController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        // S33(2) declaration must carry an ELU volume — the declaration letter lists the lawful volume.
+        if (string.Equals(map.LetterCode, "S33_2_Decl", StringComparison.OrdinalIgnoreCase)
+            && caseFm.EntitlementId is null)
+        {
+            TempData["Error"] = "S33(2) declaration cannot be issued until an ELU entitlement (volume) is linked to this case.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         // For S33(2), auto-populate the irrigation board name from the case record.
         if (string.Equals(map.LetterCode, "S33_2_Decl", StringComparison.OrdinalIgnoreCase))
             await _context.Entry(caseFm).Reference(f => f.S33_2_IrrigationBoard).LoadAsync(ct);

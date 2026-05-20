@@ -101,8 +101,10 @@ public class AssessmentTrackTests
     }
 
     [Fact]
-    public async Task AdvanceAsync_OnS33_2Track_FromReadyForDeclaration_AdvancesToDeclarationIssued()
+    public async Task AdvanceAsync_FromS33_2ReadyForDeclaration_ThrowsInvalidOperation()
     {
+        // Direct workflow advance from S33_2_ReadyForDeclaration is blocked — the declaration
+        // letter must be issued via IssueLetter, which calls TransitionToAsync instead.
         using var db = NewDb();
 
         var ready = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S33_2_ReadyForDeclaration", DisplayOrder = 33, Phase = "Verification", IsTerminal = false };
@@ -138,11 +140,58 @@ public class AssessmentTrackTests
         await db.SaveChangesAsync();
 
         var svc = new WorkflowService(db, Array.Empty<ITransitionGuard>(), new TestAuditService());
-        var result = await svc.AdvanceAsync(fm.FileMasterId, userId: null, notes: null);
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => svc.AdvanceAsync(fm.FileMasterId, userId: null, notes: null));
 
-        // S33_2_DeclarationIssued does NOT start with any CpsSkippedOnS33_2 prefix,
-        // so the skip does not fire — it advances normally to the next higher-order state.
-        Assert.Equal(decl.WorkflowStateId, result.CurrentWorkflowStateId);
-        Assert.Equal("Active", result.Status);
+        Assert.Contains("S33_2_ReadyForDeclaration", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task AdvanceAsync_OnS33_2Track_MissingSkipTargetState_ThrowsInvalidOperation()
+    {
+        // If S33_2_ReadyForDeclaration is absent from the DB (seed not run), the service must
+        // throw rather than silently fall through to the default next state.
+        using var db = NewDb();
+
+        var cp4 = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP4_AdditionalInfo", DisplayOrder = 10, Phase = "Validation", IsTerminal = false };
+        var cp5 = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP5_GISAnalysis",    DisplayOrder = 11, Phase = "Validation", IsTerminal = false };
+        // S33_2_ReadyForDeclaration intentionally NOT seeded.
+        db.WorkflowStates.AddRange(cp4, cp5);
+
+        var fm = new FileMaster
+        {
+            FileMasterId = Guid.NewGuid(),
+            PropertyId = Guid.NewGuid(),
+            RegistrationNumber = "N/A",
+            SurveyorGeneralCode = "N/A",
+            PrimaryCatchment = "N/A",
+            QuaternaryCatchment = "N/A",
+            FarmName = "N/A",
+            FarmNumber = 0,
+            RegistrationDivision = "N/A",
+            FarmPortion = "N/A",
+            AssessmentTrack = "S33_2_Declaration",
+            AdditionalInfoReviewedAt = DateTime.UtcNow
+        };
+        db.FileMasters.Add(fm);
+
+        var instance = new WorkflowInstance
+        {
+            WorkflowInstanceId = Guid.NewGuid(),
+            FileMasterId = fm.FileMasterId,
+            CurrentWorkflowStateId = cp4.WorkflowStateId,
+            Status = "Active",
+            CreatedDate = DateTime.UtcNow
+        };
+        db.WorkflowInstances.Add(instance);
+        fm.WorkflowInstanceId = instance.WorkflowInstanceId;
+        await db.SaveChangesAsync();
+
+        var svc = new WorkflowService(db, Array.Empty<ITransitionGuard>(), new TestAuditService());
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => svc.AdvanceAsync(fm.FileMasterId, userId: null, notes: "S33(2) skip should throw"));
+
+        Assert.Contains("S33_2_ReadyForDeclaration", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("SeedWorkflowStatesAsync", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -17,6 +17,7 @@ public class FileMasterControllerLetterTests
     [Fact]
     public async Task IssueLetter_WhenPendingIssuanceExists_ShouldNotBeAbleToAddSecond()
     {
+        // S35_L1 is a one-time letter — re-issuance is blocked even while the first is still Pending.
         var db = TestDbContextFactory.Create();
         var prop = new Property { PropertyId = Guid.NewGuid() };
         db.Properties.Add(prop);
@@ -36,14 +37,21 @@ public class FileMasterControllerLetterTests
         });
         await db.SaveChangesAsync();
 
-        // Simulate the guard logic the controller will execute:
-        var alreadyPending = await db.LetterIssuances.AnyAsync(
-            l => l.FileMasterId == fm.FileMasterId
-              && l.LetterTypeId == lt.LetterTypeId
-              && l.ResponseStatus == "Pending");
+        var repo = new Mock<IFileMaster>();
+        repo.Setup(r => r.GetByIdAsync(fm.FileMasterId)).ReturnsAsync(fm);
+        var scope = new Mock<IScopedCaseQuery>();
+        scope.Setup(s => s.IsInScope(It.IsAny<FileMaster>(), It.IsAny<ClaimsPrincipal>())).Returns(true);
+        var letters = new Mock<ILetterService>();
+        var (sut, tempData) = BuildLetterController(
+            repo.Object, db, scope.Object, letters.Object,
+            new Mock<IWorkflowService>().Object, new Mock<INotificationService>().Object);
 
-        Assert.True(alreadyPending, "Guard should detect the existing Pending issuance");
-        Assert.Equal(1, db.LetterIssuances.Count());
+        var result = await sut.IssueLetter(fm.FileMasterId, "IssueLetter1", "User A", "RegisteredPost", DateTime.Today, default);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Details", redirect.ActionName);
+        Assert.True(tempData.ContainsKey("Error"));
+        letters.Verify(l => l.IssueAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IssueLetterRequest>()), Times.Never);
     }
 
 
@@ -115,16 +123,17 @@ public class FileMasterControllerLetterTests
     }
 
     [Theory]
-    [InlineData("S35_L1")]
-    [InlineData("S35_L3")]
-    [InlineData("S35_L4A")]
-    [InlineData("S35_L4_5")]
-    [InlineData("S33_3a_Decl")]
-    [InlineData("S33_3b_Decl")]
-    [InlineData("S33_2_Decl")]
-    public async Task OneTimeLetter_WhenAlreadyResolved_GuardDetectsExistingIssuance(string letterCode)
+    [InlineData("S35_L1",      "IssueLetter1")]
+    [InlineData("S35_L3",      "IssueLetter3")]
+    [InlineData("S35_L4A",     "IssueLetter4A")]
+    [InlineData("S35_L4_5",    "IssueLetter4_5")]
+    [InlineData("S33_3a_Decl", "IssueS33_3a")]
+    [InlineData("S33_3b_Decl", "IssueS33_3b")]
+    [InlineData("S33_2_Decl",  "IssueS33_2")]
+    public async Task OneTimeLetter_WhenAlreadyResolved_GuardDetectsExistingIssuance(string letterCode, string actionName)
     {
         // One-time letters must be blocked from re-issuance regardless of ResponseStatus.
+        // The controller checks for any prior issuance before the letter-specific guards fire.
         var db = TestDbContextFactory.Create();
         var prop = new Property { PropertyId = Guid.NewGuid() };
         db.Properties.Add(prop);
@@ -137,7 +146,7 @@ public class FileMasterControllerLetterTests
             LetterDescription = $"Test {letterCode}"
         };
         db.LetterTypes.Add(lt);
-        // Resolved issuance — status is no longer "Pending"
+        // Resolved issuance — status is no longer "Pending"; one-time letters still block.
         db.LetterIssuances.Add(new LetterIssuance
         {
             LetterIssuanceId = Guid.NewGuid(),
@@ -150,30 +159,22 @@ public class FileMasterControllerLetterTests
         });
         await db.SaveChangesAsync();
 
-        var oneTimeCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "S35_L1", "S35_L3", "S35_L4A", "S35_L4_5", "S33_3a_Decl", "S33_3b_Decl", "S33_2_Decl"
-        };
+        var repo = new Mock<IFileMaster>();
+        repo.Setup(r => r.GetByIdAsync(fm.FileMasterId)).ReturnsAsync(fm);
+        var scope = new Mock<IScopedCaseQuery>();
+        scope.Setup(s => s.IsInScope(It.IsAny<FileMaster>(), It.IsAny<ClaimsPrincipal>())).Returns(true);
+        var letters = new Mock<ILetterService>();
+        var (sut, tempData) = BuildLetterController(
+            repo.Object, db, scope.Object, letters.Object,
+            new Mock<IWorkflowService>().Object, new Mock<INotificationService>().Object);
 
-        var existing = await db.LetterTypes.SingleOrDefaultAsync(t => t.LetterName == letterCode);
-        Assert.NotNull(existing);
+        var result = await sut.IssueLetter(fm.FileMasterId, actionName, "User A", "RegisteredPost", DateTime.Today, default);
 
-        bool blocked;
-        if (oneTimeCodes.Contains(letterCode))
-        {
-            blocked = await db.LetterIssuances.AnyAsync(
-                l => l.FileMasterId == fm.FileMasterId
-                  && l.LetterTypeId == existing.LetterTypeId);
-        }
-        else
-        {
-            blocked = await db.LetterIssuances.AnyAsync(
-                l => l.FileMasterId == fm.FileMasterId
-                  && l.LetterTypeId == existing.LetterTypeId
-                  && l.ResponseStatus == "Pending");
-        }
-
-        Assert.True(blocked, $"One-time letter {letterCode} should block re-issuance even when previously resolved.");
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Details", redirect.ActionName);
+        Assert.True(tempData.ContainsKey("Error"),
+            $"One-time letter {letterCode} should block re-issuance even when previously resolved.");
+        letters.Verify(l => l.IssueAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IssueLetterRequest>()), Times.Never);
     }
 
     [Fact]
@@ -213,20 +214,56 @@ public class FileMasterControllerLetterTests
     }
 
     [Fact]
+    public async Task IssueLetter_S33_2Decl_BlockedWhenNoEntitlement()
+    {
+        // Guard: S33(2) declaration cannot be issued if no ELU entitlement is linked.
+        var db = TestDbContextFactory.Create();
+        var prop = new Property { PropertyId = Guid.NewGuid() };
+        db.Properties.Add(prop);
+        var fm = SeedHelper.NewFileMaster(prop.PropertyId);
+        fm.AssessmentTrack = "S33_2_Declaration";
+        fm.S33_2_RatesPaidConfirmed = true; // rates guard passes; entitlement guard fires
+        fm.EntitlementId = null;
+        db.FileMasters.Add(fm);
+        await db.SaveChangesAsync();
+
+        var repo = new Mock<IFileMaster>();
+        repo.Setup(r => r.GetByIdAsync(fm.FileMasterId)).ReturnsAsync(fm);
+        var scope = new Mock<IScopedCaseQuery>();
+        scope.Setup(s => s.IsInScope(It.IsAny<FileMaster>(), It.IsAny<ClaimsPrincipal>())).Returns(true);
+        var letters = new Mock<ILetterService>();
+        var (sut, tempData) = BuildLetterController(
+            repo.Object, db, scope.Object, letters.Object,
+            new Mock<IWorkflowService>().Object, new Mock<INotificationService>().Object);
+
+        var result = await sut.IssueLetter(
+            fm.FileMasterId, "IssueS33_2", "Water User A", "RegisteredPost", DateTime.Today, default);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Details", redirect.ActionName);
+        Assert.True(tempData.ContainsKey("Error"));
+        Assert.Contains("entitlement", (string)tempData["Error"]!, StringComparison.OrdinalIgnoreCase);
+        letters.Verify(l => l.IssueAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IssueLetterRequest>()), Times.Never);
+    }
+
+    [Fact]
     public async Task IssueLetter_S33_2Decl_RatesConfirmed_ProceedsPastGuard()
     {
-        // When S33_2_RatesPaidConfirmed is true the rates-paid guard must NOT fire.
+        // When S33_2_RatesPaidConfirmed is true and an Entitlement is linked, both guards must NOT fire.
         // Entity must be tracked by the same db instance used as _context so that
         // Reference().LoadAsync() can resolve the IrrigationBoard navigation.
         var db = TestDbContextFactory.Create();
         var board = new IrrigationBoard { IrrigationBoardId = Guid.NewGuid(), IrrigationBoardName = "Blyde River Board" };
         db.IrrigationBoards.Add(board);
+        var ent = new Entitlement { EntitlementId = Guid.NewGuid(), Name = "S33(2) ELU", Volume = 12000m, EntitlementTypeId = Guid.NewGuid() };
+        db.Entitlements.Add(ent);
         var prop = new Property { PropertyId = Guid.NewGuid() };
         db.Properties.Add(prop);
         var fm = SeedHelper.NewFileMaster(prop.PropertyId);
         fm.AssessmentTrack = "S33_2_Declaration";
         fm.S33_2_IrrigationBoardId = board.IrrigationBoardId;
         fm.S33_2_RatesPaidConfirmed = true;
+        fm.EntitlementId = ent.EntitlementId;
         db.FileMasters.Add(fm);
         await db.SaveChangesAsync();
 

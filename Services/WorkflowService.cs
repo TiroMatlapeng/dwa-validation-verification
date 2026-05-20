@@ -74,6 +74,11 @@ public class WorkflowService : IWorkflowService
         if (currentState.IsTerminal)
             throw new InvalidOperationException($"Case is at terminal state '{currentState.StateName}'.");
 
+        if (string.Equals(currentState.StateName, "S33_2_ReadyForDeclaration", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException(
+                "Direct workflow advance is not permitted from S33_2_ReadyForDeclaration. " +
+                "Issue the S33(2) Kader Asmal Declaration letter via the Letters panel to proceed.");
+
         var nextState = await ResolveNextStateAsync(fileMaster, currentState)
             ?? throw new InvalidOperationException("No further states available.");
 
@@ -124,8 +129,10 @@ public class WorkflowService : IWorkflowService
         if (string.Equals(fileMaster.AssessmentTrack, "S33_2_Declaration", StringComparison.OrdinalIgnoreCase)
             && CpsSkippedOnS33_2.Any(cp => defaultNext.StateName.StartsWith(cp, StringComparison.OrdinalIgnoreCase)))
         {
-            var declaration = await _context.WorkflowStates.SingleOrDefaultAsync(s => s.StateName == S33_2_SkipTargetStateName);
-            if (declaration is not null) return declaration;
+            return await _context.WorkflowStates.SingleOrDefaultAsync(s => s.StateName == S33_2_SkipTargetStateName)
+                ?? throw new InvalidOperationException(
+                    $"S33(2) skip target state '{S33_2_SkipTargetStateName}' was not found in WorkflowStates. " +
+                    "Ensure SeedWorkflowStatesAsync has been run.");
         }
 
         return defaultNext;
