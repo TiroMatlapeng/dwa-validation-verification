@@ -32,12 +32,11 @@ public class ResponseController : Controller
             ?? throw new InvalidOperationException("Not authenticated."));
 
     [HttpGet]
-    public IActionResult Submit(Guid fileMasterId, Guid? issuanceId)
+    public IActionResult Submit(Guid fileMasterId)
     {
         return View(new LetterResponseViewModel
         {
-            FileMasterId = fileMasterId,
-            LetterIssuanceId = issuanceId
+            FileMasterId = fileMasterId
         });
     }
 

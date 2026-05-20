@@ -10,7 +10,6 @@
     <form asp-action="Submit" asp-controller="Response" asp-area="ExternalPortal" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="FileMasterId" />
-        <input type="hidden" asp-for="LetterIssuanceId" />
         <div asp-validation-summary="All" class="errors"
              style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
 

@@ -71,7 +71,8 @@ public class ObjectionController : Controller
             FileMasterId = model.FileMasterId,
             PublicUserId = uid,
             LodgedDate = DateTime.UtcNow,
-            Status = "Lodged"
+            Status = "Lodged",
+            Grounds = model.Grounds
         };
         _db.Objections.Add(objection);
         await _db.SaveChangesAsync(ct);
