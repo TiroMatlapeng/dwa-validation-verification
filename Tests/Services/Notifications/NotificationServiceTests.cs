@@ -62,6 +62,26 @@ public class NotificationServiceTests
     }
 
     [Fact]
+    public async Task NotifyPublicUser_EmailThrowsUnexpectedly_RecordStillSavedWithEmailSentFalse()
+    {
+        var db = TestDbContextFactory.Create();
+        var userId = Guid.NewGuid();
+        db.PublicUsers.Add(MakeUser(userId));
+        await db.SaveChangesAsync();
+
+        var email = new Mock<IEmailSender>();
+        email.Setup(e => e.SendAsync(It.IsAny<EmailMessage>(), It.IsAny<CancellationToken>()))
+             .ThrowsAsync(new InvalidOperationException("Simulated SMTP transport failure"));
+
+        var svc = new NotificationService(db, email.Object, NullLogger<NotificationService>.Instance);
+        await svc.NotifyPublicUserAsync(userId, null, "Letter", "Subject", "Body", null);
+
+        var note = db.Notifications.Single();
+        Assert.Equal(userId, note.PublicUserId);
+        Assert.False(note.EmailSent);
+    }
+
+    [Fact]
     public async Task NotifyPublicUser_UnknownUser_DoesNotThrowAndNoRecord()
     {
         var db = TestDbContextFactory.Create();

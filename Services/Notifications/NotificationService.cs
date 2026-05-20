@@ -42,9 +42,11 @@ public class NotificationService : INotificationService
                 Body = body,
                 ActionUrl = actionUrl,
                 CreatedDate = DateTime.UtcNow,
-                IsRead = false
+                IsRead = false,
+                EmailSent = false
             };
             _db.Notifications.Add(note);
+            await _db.SaveChangesAsync(ct);
 
             bool sent = false;
             try
@@ -58,14 +60,23 @@ public class NotificationService : INotificationService
                     publicUserId, emailEx.GetType().Name, emailEx.Message);
             }
 
-            note.EmailSent = sent;
-            if (sent) note.EmailSentDate = DateTime.UtcNow;
-
-            await _db.SaveChangesAsync(ct);
+            if (sent)
+            {
+                note.EmailSent = true;
+                note.EmailSentDate = DateTime.UtcNow;
+                try { await _db.SaveChangesAsync(ct); }
+                catch (Exception saveEx)
+                {
+                    _logger.LogWarning(
+                        "NotificationService: could not update EmailSent flag for notification {Id}. Error: {ErrorType}: {ErrorMessage}",
+                        note.NotificationId, saveEx.GetType().Name, saveEx.Message);
+                }
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError("NotificationService.NotifyPublicUserAsync failed for user {Id}. Error: {ErrorType}: {ErrorMessage}",
+            _logger.LogError(
+                "NotificationService.NotifyPublicUserAsync failed for user {Id}. Error: {ErrorType}: {ErrorMessage}",
                 publicUserId, ex.GetType().Name, ex.Message);
         }
     }
@@ -96,9 +107,11 @@ public class NotificationService : INotificationService
                 Subject = subject,
                 Body = body,
                 CreatedDate = DateTime.UtcNow,
-                IsRead = false
+                IsRead = false,
+                EmailSent = false
             };
             _db.Notifications.Add(note);
+            await _db.SaveChangesAsync(ct);
 
             bool sent = false;
             if (!string.IsNullOrWhiteSpace(fm.Validator.Email))
@@ -110,7 +123,8 @@ public class NotificationService : INotificationService
                 }
                 catch (Exception emailEx)
                 {
-                    _logger.LogError("NotificationService: email send failed for validator {Id}. Error: {ErrorType}: {ErrorMessage}",
+                    _logger.LogError(
+                        "NotificationService: email send failed for validator {Id}. Error: {ErrorType}: {ErrorMessage}",
                         fm.ValidatorId, emailEx.GetType().Name, emailEx.Message);
                 }
             }
@@ -119,14 +133,23 @@ public class NotificationService : INotificationService
                 _logger.LogWarning("NotificationService: Validator {Id} has no email address; skipping email.", fm.ValidatorId);
             }
 
-            note.EmailSent = sent;
-            if (sent) note.EmailSentDate = DateTime.UtcNow;
-
-            await _db.SaveChangesAsync(ct);
+            if (sent)
+            {
+                note.EmailSent = true;
+                note.EmailSentDate = DateTime.UtcNow;
+                try { await _db.SaveChangesAsync(ct); }
+                catch (Exception saveEx)
+                {
+                    _logger.LogWarning(
+                        "NotificationService: could not update EmailSent flag for notification {Id}. Error: {ErrorType}: {ErrorMessage}",
+                        note.NotificationId, saveEx.GetType().Name, saveEx.Message);
+                }
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError("NotificationService.NotifyDwsValidatorAsync failed for FileMaster {Id}. Error: {ErrorType}: {ErrorMessage}",
+            _logger.LogError(
+                "NotificationService.NotifyDwsValidatorAsync failed for FileMaster {Id}. Error: {ErrorType}: {ErrorMessage}",
                 fileMasterId, ex.GetType().Name, ex.Message);
         }
     }
