@@ -1,9 +1,11 @@
+using System.Globalization;
 using dwa_ver_val.Services.Infrastructure.Email;
 using dwa_ver_val.Services.Infrastructure.Storage;
 using dwa_ver_val.Services.Portal.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
@@ -223,6 +225,21 @@ app.UseForwardedHeaders(new Microsoft.AspNetCore.Builder.ForwardedHeadersOptions
 });
 
 app.UseHttpsRedirection();
+
+// BUG-001: Force InvariantCulture so MVC model binding parses decimals with
+// dot separator (e.g. "10.00") regardless of the host OS culture. ASP.NET
+// tag helpers always render decimal values invariant-style; without this
+// middleware, hosts with comma-decimal cultures reject every decimal POST
+// on Edit forms (FieldAndCrop, DamCalculation, Forestation, etc.).
+// Must run BEFORE UseRouting so the culture is set for the whole pipeline.
+var invariantCulture = CultureInfo.InvariantCulture;
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(invariantCulture, invariantCulture),
+    SupportedCultures = new[] { invariantCulture },
+    SupportedUICultures = new[] { invariantCulture }
+});
+
 app.UseRouting();
 
 app.UseRateLimiter();               // must run between UseRouting and UseAuthentication
