@@ -6,6 +6,7 @@ using dwa_ver_val.Services.Portal.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace dwa_ver_val.Areas.ExternalPortal.Controllers;
 
@@ -17,15 +18,18 @@ public class ObjectionController : Controller
     private readonly ApplicationDBContext _db;
     private readonly IPublicUserPropertyAccessor _access;
     private readonly INotificationService _notify;
+    private readonly ILogger<ObjectionController> _logger;
 
     public ObjectionController(
         ApplicationDBContext db,
         IPublicUserPropertyAccessor access,
-        INotificationService notify)
+        INotificationService notify,
+        ILogger<ObjectionController> logger)
     {
         _db = db;
         _access = access;
         _notify = notify;
+        _logger = logger;
     }
 
     private Guid CurrentUserId() =>
@@ -79,7 +83,9 @@ public class ObjectionController : Controller
             _db.Objections.Add(objection);
             await _db.SaveChangesAsync(ct);
         }
-        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+            when (ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlex
+                  && (sqlex.Number == 2601 || sqlex.Number == 2627))
         {
             ModelState.AddModelError(string.Empty, "You already have an open objection on this case.");
             return View(model);

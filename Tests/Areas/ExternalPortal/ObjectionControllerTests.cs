@@ -7,6 +7,7 @@ using dwa_ver_val.Services.Portal.Auth;
 using dwa_ver_val.Tests.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -19,7 +20,8 @@ public class ObjectionControllerTests
         var db = TestDbContextFactory.Create();
         var accessor = new PublicUserPropertyAccessor(db);
         var notify = new Mock<INotificationService>();
-        var controller = new ObjectionController(db, accessor, notify.Object);
+        var logger = new Mock<ILogger<ObjectionController>>();
+        var controller = new ObjectionController(db, accessor, notify.Object, logger.Object);
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext
@@ -97,5 +99,34 @@ public class ObjectionControllerTests
 
         Assert.IsType<ViewResult>(result);
         Assert.False(controller.ModelState.IsValid);
+    }
+
+    [Fact]
+    public async Task Lodge_Post_AfterResolution_CanLodgeSecondObjection()
+    {
+        // Verifies that a RESOLVED objection does not block a new one.
+        var userId = Guid.NewGuid();
+        var (db, controller) = Build(userId);
+        var fm = await SeedApprovedCase(db, userId);
+
+        // First objection — already resolved.
+        db.Objections.Add(new Objection
+        {
+            ObjectionId = Guid.NewGuid(), FileMasterId = fm.FileMasterId,
+            PublicUserId = userId, Status = "Resolved", LodgedDate = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        // Second objection — should succeed because no "Lodged" objection exists.
+        var result = await controller.Lodge(
+            new ObjectionViewModel
+            {
+                FileMasterId = fm.FileMasterId,
+                Grounds = "Second objection after first was resolved."
+            }, default);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Detail", redirect.ActionName);
+        Assert.Equal(2, db.Objections.Count());
     }
 }
