@@ -445,6 +445,19 @@ public class FileMasterController : Controller
         ["IssueS33_3b"]    = ("S33_3b_Decl", "S33_3_DeclarationIssued"),
     };
 
+    // These letter codes are issued exactly once per case in the S35/S33 statutory process.
+    // Re-issuance after ANY prior issuance (regardless of ResponseStatus) is blocked.
+    private static readonly HashSet<string> OneTimeLetterCodes =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "S35_L1",      // S35(1) notice — served once; re-issue would restart the statutory clock
+            "S35_L3",      // S35(4) ELU certificate — issued once on confirmation
+            "S35_L4A",     // S53(1) notice of intent — one per unlawful-use finding
+            "S35_L4_5",    // S53(1) directive to stop — one per unlawful-use finding
+            "S33_3a_Decl", // S33(3)(a) declaration — ELU declared on individual application
+            "S33_3b_Decl", // S33(3)(b) declaration — ELU declared on individual application
+        };
+
     // letterAction values that are pure response/determination updates — no PDF generated.
     // StampsAgreement = true for actions where the water user actively responded/agreed;
     // false for DWS-side determinations (MarkELUConfirmed, MarkUnlawfulUseFound, CloseCase)
@@ -476,18 +489,33 @@ public class FileMasterController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // Idempotency: refuse if a Pending issuance for this letter type already exists on this case.
+        // Idempotency: block re-issuance based on letter type.
+        // One-time letters: block if ANY prior issuance exists regardless of ResponseStatus.
+        // Repeatable letters (L1A, L2, L2A): block only while a Pending issuance exists.
         var existingLetterType = await _context.LetterTypes
             .SingleOrDefaultAsync(t => t.LetterName == map.LetterCode);
         if (existingLetterType is not null)
         {
-            var alreadyPending = await _context.LetterIssuances.AnyAsync(
-                l => l.FileMasterId == id
-                  && l.LetterTypeId == existingLetterType.LetterTypeId
-                  && l.ResponseStatus == "Pending");
-            if (alreadyPending)
+            bool alreadyIssued;
+            if (OneTimeLetterCodes.Contains(map.LetterCode))
             {
-                TempData["Error"] = $"A {map.LetterCode} letter is already pending a response. Resolve the existing letter before issuing a new one.";
+                alreadyIssued = await _context.LetterIssuances.AnyAsync(
+                    l => l.FileMasterId == id
+                      && l.LetterTypeId == existingLetterType.LetterTypeId);
+            }
+            else
+            {
+                alreadyIssued = await _context.LetterIssuances.AnyAsync(
+                    l => l.FileMasterId == id
+                      && l.LetterTypeId == existingLetterType.LetterTypeId
+                      && l.ResponseStatus == "Pending");
+            }
+
+            if (alreadyIssued)
+            {
+                TempData["Error"] = OneTimeLetterCodes.Contains(map.LetterCode)
+                    ? $"A {map.LetterCode} letter has already been issued on this case and cannot be re-issued."
+                    : $"A {map.LetterCode} letter is already pending a response. Resolve the existing letter before issuing a new one.";
                 return RedirectToAction(nameof(Details), new { id });
             }
         }
