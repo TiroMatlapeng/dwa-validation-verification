@@ -34,16 +34,28 @@ public class LocalDiskFileStorage : IFileStorage
 
         using var sha = SHA256.Create();
         long size = 0;
-        await using (var fs = File.Create(absolutePath))
-        await using (var crypto = new CryptoStream(fs, sha, CryptoStreamMode.Write))
+        try
         {
-            var buffer = new byte[81920];
-            int read;
-            while ((read = await content.ReadAsync(buffer, ct)) > 0)
+            await using (var fs = File.Create(absolutePath))
+            await using (var crypto = new CryptoStream(fs, sha, CryptoStreamMode.Write))
             {
-                await crypto.WriteAsync(buffer.AsMemory(0, read), ct);
-                size += read;
+                var buffer = new byte[81920];
+                int read;
+                while ((read = await content.ReadAsync(buffer, ct)) > 0)
+                {
+                    await crypto.WriteAsync(buffer.AsMemory(0, read), ct);
+                    size += read;
+                }
             }
+        }
+        catch
+        {
+            if (File.Exists(absolutePath))
+            {
+                try { File.Delete(absolutePath); }
+                catch { /* best effort */ }
+            }
+            throw;
         }
 
         var hashHex = Convert.ToHexString(sha.Hash!).ToLowerInvariant();
