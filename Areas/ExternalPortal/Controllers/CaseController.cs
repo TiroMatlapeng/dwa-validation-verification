@@ -139,7 +139,22 @@ public class CaseController : Controller
             .FirstOrDefaultAsync(l => l.LetterIssuanceId == issuanceId && l.FileMasterId == fileMasterId, ct);
         if (issuance is null || string.IsNullOrEmpty(issuance.BlobPath)) return NotFound();
 
-        var bytes = await _blobs.ReadAsync(issuance.BlobPath);
+        byte[] bytes;
+        try
+        {
+            bytes = await _blobs.ReadAsync(issuance.BlobPath);
+        }
+        catch (FileNotFoundException)
+        {
+            return NotFound("The letter PDF could not be found. Please contact DWS.");
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return NotFound("The letter PDF could not be found. Please contact DWS.");
+        }
+        if (bytes.Length == 0)
+            return NotFound("The letter PDF content is empty. Please contact DWS.");
+
         var datePart = issuance.IssuedDate?.ToString("yyyyMMdd") ?? "undated";
         return File(bytes, "application/pdf",
             $"letter-{datePart}-{issuanceId.ToString()[..8]}.pdf");

@@ -582,7 +582,22 @@ public class FileMasterController : Controller
         if (issuance is null || string.IsNullOrEmpty(issuance.BlobPath)) return NotFound();
 
         var blobs = HttpContext.RequestServices.GetRequiredService<dwa_ver_val.Services.Letters.IBlobStore>();
-        var bytes = await blobs.ReadAsync(issuance.BlobPath);
+        byte[] bytes;
+        try
+        {
+            bytes = await blobs.ReadAsync(issuance.BlobPath);
+        }
+        catch (FileNotFoundException)
+        {
+            return NotFound("Letter PDF not found on server. Please contact the system administrator.");
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return NotFound("Letter PDF not found on server. Please contact the system administrator.");
+        }
+        if (bytes.Length == 0)
+            return NotFound("Letter PDF content is empty.");
+
         var fileName = $"{issuance.LetterType?.LetterName ?? "letter"}-{issuance.IssuedDate:yyyyMMdd}.pdf";
         return File(bytes, "application/pdf", fileName);
     }
