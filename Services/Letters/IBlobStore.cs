@@ -17,23 +17,42 @@ public interface IBlobStore
 public class FileSystemBlobStore : IBlobStore
 {
     private readonly string _root;
+
     public FileSystemBlobStore(string root)
     {
-        _root = root ?? throw new ArgumentNullException(nameof(root));
+        _root = Path.GetFullPath(root ?? throw new ArgumentNullException(nameof(root)));
         Directory.CreateDirectory(_root);
     }
 
     public async Task<string> WriteAsync(string logicalPath, byte[] bytes)
     {
-        var full = Path.Combine(_root, logicalPath);
+        GuardPath(logicalPath, nameof(logicalPath));
+        var full = Path.GetFullPath(Path.Combine(_root, logicalPath.Replace('/', Path.DirectorySeparatorChar)));
+        if (!full.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+            && !full.Equals(_root, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Path escapes storage root.", nameof(logicalPath));
         Directory.CreateDirectory(Path.GetDirectoryName(full)!);
         await File.WriteAllBytesAsync(full, bytes);
         return logicalPath;  // stored path is the logical path; resolver composes root at read time
     }
 
-    public Task<byte[]> ReadAsync(string storagePath)
+    public async Task<byte[]> ReadAsync(string storagePath)
     {
-        var full = Path.Combine(_root, storagePath);
-        return File.ReadAllBytesAsync(full);
+        GuardPath(storagePath, nameof(storagePath));
+        var full = Path.GetFullPath(Path.Combine(_root, storagePath.Replace('/', Path.DirectorySeparatorChar)));
+        if (!full.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+            && !full.Equals(_root, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Path escapes storage root.", nameof(storagePath));
+        return await File.ReadAllBytesAsync(full);
+    }
+
+    private static void GuardPath(string path, string paramName)
+    {
+        if (string.IsNullOrEmpty(path))
+            throw new ArgumentException("Path must not be empty.", paramName);
+        if (path.Contains(".."))
+            throw new ArgumentException("Path must not contain '..'.", paramName);
+        if (Path.IsPathRooted(path))
+            throw new ArgumentException("Path must be relative.", paramName);
     }
 }
