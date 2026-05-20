@@ -75,6 +75,19 @@ public class PublicUserSignInService : IPublicUserSignInService
             return new SignInResult(false, EmailNotConfirmed);
         }
 
+        // S1: Refuse Suspended and Deactivated accounts.
+        // Placed after password verify so attackers cannot discover account status without the password.
+        if (user.Status != "Active")
+        {
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(PublicUser),
+                EntityId: user.PublicUserId.ToString(),
+                Action: "PublicUserSignInFailed",
+                Reason: "AccountSuspended",
+                ToValue: email));
+            return new SignInResult(false, GenericLoginFailed);
+        }
+
         var identity = new ClaimsIdentity(PortalCookieOptions.SchemeName);
         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.PublicUserId.ToString()));
         identity.AddClaim(new Claim(ClaimTypes.Name, user.EmailAddress));

@@ -103,6 +103,56 @@ public class PublicUserSignInServiceTests
     }
 
     [Fact]
+    public async Task SignInAsync_SuspendedUser_ReturnsGenericError_DoesNotIssueCookie()
+    {
+        var (sut, auth, audit, _) = CreateSut(db =>
+        {
+            var user = PublicUserBuilder.Suspended("s@e.test");
+            user.PasswordHash = new PasswordHasher<PublicUser>().HashPassword(user, "Goodpassword12!");
+            db.PublicUsers.Add(user);
+        });
+
+        var result = await sut.SignInAsync("s@e.test", "Goodpassword12!", default);
+
+        Assert.False(result.Success);
+        Assert.Equal("Login failed.", result.Error);
+        auth.Verify(a => a.SignInAsync(
+            It.IsAny<HttpContext>(), It.IsAny<string>(),
+            It.IsAny<ClaimsPrincipal>(), It.IsAny<AuthenticationProperties>()), Times.Never);
+        Assert.Contains(audit.Events, e => e.Action == "PublicUserSignInFailed" && e.Reason == "AccountSuspended");
+    }
+
+    [Fact]
+    public async Task SignInAsync_DeactivatedUser_ReturnsGenericError_DoesNotIssueCookie()
+    {
+        var hasher = new PasswordHasher<PublicUser>();
+        var (sut, auth, audit, _) = CreateSut(db =>
+        {
+            var user = new PublicUser
+            {
+                EmailAddress = "d@e.test",
+                PasswordHash = "",
+                FirstName = "D",
+                LastName = "U",
+                Status = "Deactivated",
+                EmailConfirmed = true,
+                RegistrationDate = DateTime.UtcNow
+            };
+            user.PasswordHash = hasher.HashPassword(user, "Goodpassword12!");
+            db.PublicUsers.Add(user);
+        });
+
+        var result = await sut.SignInAsync("d@e.test", "Goodpassword12!", default);
+
+        Assert.False(result.Success);
+        Assert.Equal("Login failed.", result.Error);
+        auth.Verify(a => a.SignInAsync(
+            It.IsAny<HttpContext>(), It.IsAny<string>(),
+            It.IsAny<ClaimsPrincipal>(), It.IsAny<AuthenticationProperties>()), Times.Never);
+        Assert.Contains(audit.Events, e => e.Action == "PublicUserSignInFailed" && e.Reason == "AccountSuspended");
+    }
+
+    [Fact]
     public async Task SignOutAsync_CallsSignOutWithPortalScheme()
     {
         var auth = new Mock<IAuthenticationService>();
