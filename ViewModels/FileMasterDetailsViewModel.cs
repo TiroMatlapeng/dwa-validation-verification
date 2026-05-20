@@ -34,8 +34,7 @@ public class FileMasterDetailsViewModel
             // CP_StakeholderWorkshop (and the legacy CP9_SFRACalculated for cases that
             // pre-date the gap-fill) forks by AssessmentTrack: standard S35 verification
             // → Letter 1; S33(3) individual-application → either declaration (a) or (b).
-            // S33(2) Kader Asmal is handled by track-skip in WorkflowService and does
-            // not surface here.
+            // S33(2) Kader Asmal surfaces at S33_2_ReadyForDeclaration → IssueS33_2 (see switch below).
             if (CurrentState.StateName is "CP9_SFRACalculated" or "CP_StakeholderWorkshop")
             {
                 return string.Equals(FileMaster.AssessmentTrack, "S33_3_Declaration", StringComparison.OrdinalIgnoreCase)

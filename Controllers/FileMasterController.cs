@@ -480,7 +480,7 @@ public class FileMasterController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = DwsPolicies.CanIssueLetter)]
-    public async Task<IActionResult> IssueLetter(Guid id, string letterAction, string recipient, string deliveryMethod, DateTime issuedDate)
+    public async Task<IActionResult> IssueLetter(Guid id, string letterAction, string recipient, string deliveryMethod, DateTime issuedDate, CancellationToken ct)
     {
         var caseFm = await _fileMasterRepository.GetByIdAsync(id);
         if (caseFm == null) return NotFound();
@@ -534,7 +534,7 @@ public class FileMasterController : Controller
 
         // For S33(2), auto-populate the irrigation board name from the case record.
         if (string.Equals(map.LetterCode, "S33_2_Decl", StringComparison.OrdinalIgnoreCase))
-            await _context.Entry(caseFm).Reference(f => f.S33_2_IrrigationBoard).LoadAsync(CancellationToken.None);
+            await _context.Entry(caseFm).Reference(f => f.S33_2_IrrigationBoard).LoadAsync(ct);
 
         // Build the IssueLetterRequest, falling back gracefully when the signed-in user
         // hasn't fully populated their profile (no FirstName/LastName claim).

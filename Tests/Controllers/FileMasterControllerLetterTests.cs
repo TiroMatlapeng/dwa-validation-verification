@@ -1,6 +1,13 @@
 using System.Reflection;
+using System.Security.Claims;
+using dwa_ver_val.Services.Letters;
+using dwa_ver_val.Services.Notifications;
 using dwa_ver_val.Tests.Helpers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using Xunit;
 
 namespace dwa_ver_val.Tests.Controllers;
@@ -173,34 +180,44 @@ public class FileMasterControllerLetterTests
     public async Task IssueLetter_S33_2Decl_BlockedWhenRatesNotConfirmed()
     {
         // Guard: S33(2) declaration cannot be issued if S33_2_RatesPaidConfirmed is false.
-        // The controller checks caseFm.S33_2_RatesPaidConfirmed before calling _letters.IssueAsync.
         var db = TestDbContextFactory.Create();
-        var board = new IrrigationBoard { IrrigationBoardId = Guid.NewGuid(), IrrigationBoardName = "Test Board" };
-        db.IrrigationBoards.Add(board);
         var prop = new Property { PropertyId = Guid.NewGuid() };
         db.Properties.Add(prop);
         var fm = SeedHelper.NewFileMaster(prop.PropertyId);
         fm.AssessmentTrack = "S33_2_Declaration";
-        fm.S33_2_IrrigationBoardId = board.IrrigationBoardId;
         fm.S33_2_RatesPaidConfirmed = false;
         db.FileMasters.Add(fm);
         await db.SaveChangesAsync();
 
-        // Simulate the guard the controller evaluates for the S33_2_Decl letter code.
-        var caseFm = await db.FileMasters.FindAsync(fm.FileMasterId);
-        Assert.NotNull(caseFm);
+        var repo = new Mock<IFileMaster>();
+        repo.Setup(r => r.GetByIdAsync(fm.FileMasterId)).ReturnsAsync(fm);
 
-        var shouldBlock = !caseFm.S33_2_RatesPaidConfirmed;
+        var scope = new Mock<IScopedCaseQuery>();
+        scope.Setup(s => s.IsInScope(It.IsAny<FileMaster>(), It.IsAny<ClaimsPrincipal>())).Returns(true);
 
-        Assert.True(shouldBlock, "Guard must fire when S33_2_RatesPaidConfirmed is false — declaration cannot be issued.");
-        // No LetterIssuance should have been written.
+        var letters = new Mock<ILetterService>();
+        var (sut, tempData) = BuildLetterController(
+            repo.Object, db, scope.Object, letters.Object,
+            new Mock<IWorkflowService>().Object, new Mock<INotificationService>().Object);
+
+        var result = await sut.IssueLetter(
+            fm.FileMasterId, "IssueS33_2", "Water User A", "RegisteredPost", DateTime.Today, default);
+
+        // Guard fired: redirect back, error set, no letter issued.
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Details", redirect.ActionName);
+        Assert.True(tempData.ContainsKey("Error"));
+        Assert.Contains("rates paid", (string)tempData["Error"]!, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(db.LetterIssuances.ToList());
+        letters.Verify(l => l.IssueAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IssueLetterRequest>()), Times.Never);
     }
 
     [Fact]
-    public async Task IssueLetter_S33_2Decl_RatesConfirmed_GuardDoesNotBlock()
+    public async Task IssueLetter_S33_2Decl_RatesConfirmed_ProceedsPastGuard()
     {
         // When S33_2_RatesPaidConfirmed is true the rates-paid guard must NOT fire.
+        // Entity must be tracked by the same db instance used as _context so that
+        // Reference().LoadAsync() can resolve the IrrigationBoard navigation.
         var db = TestDbContextFactory.Create();
         var board = new IrrigationBoard { IrrigationBoardId = Guid.NewGuid(), IrrigationBoardName = "Blyde River Board" };
         db.IrrigationBoards.Add(board);
@@ -211,35 +228,44 @@ public class FileMasterControllerLetterTests
         fm.S33_2_IrrigationBoardId = board.IrrigationBoardId;
         fm.S33_2_RatesPaidConfirmed = true;
         db.FileMasters.Add(fm);
-        // Seed the LetterType so LetterService can look it up.
-        db.LetterTypes.Add(new LetterType
-        {
-            LetterTypeId = Guid.NewGuid(),
-            LetterName = "S33_2_Decl",
-            LetterDescription = "Kader Asmal Declaration",
-            NWASection = "S33(2)"
-        });
-        // Seed the target workflow state.
-        db.WorkflowStates.Add(new WorkflowState
-        {
-            WorkflowStateId = Guid.NewGuid(),
-            StateName = "S33_2_DeclarationIssued",
-            DisplayOrder = 34,
-            Phase = "Verification",
-            IsTerminal = false
-        });
         await db.SaveChangesAsync();
 
-        var caseFm = await db.FileMasters.FindAsync(fm.FileMasterId);
-        Assert.NotNull(caseFm);
+        // FindAsync returns the already-tracked entity — LoadAsync will work.
+        var trackedFm = await db.FileMasters.FindAsync(fm.FileMasterId);
 
-        // Guard must NOT fire — rates are confirmed.
-        var shouldBlock = !caseFm.S33_2_RatesPaidConfirmed;
-        Assert.False(shouldBlock, "Rates-paid guard must not block when S33_2_RatesPaidConfirmed is true.");
+        var repo = new Mock<IFileMaster>();
+        repo.Setup(r => r.GetByIdAsync(fm.FileMasterId)).ReturnsAsync(trackedFm);
 
-        // The LetterType row must be present so LetterService.IssueAsync does not throw.
-        var lt = await db.LetterTypes.SingleOrDefaultAsync(t => t.LetterName == "S33_2_Decl");
-        Assert.NotNull(lt);
+        var scope = new Mock<IScopedCaseQuery>();
+        scope.Setup(s => s.IsInScope(It.IsAny<FileMaster>(), It.IsAny<ClaimsPrincipal>())).Returns(true);
+
+        var letters = new Mock<ILetterService>();
+        letters.Setup(l => l.IssueAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IssueLetterRequest>()))
+               .ReturnsAsync(new LetterIssuance
+               {
+                   LetterIssuanceId = Guid.NewGuid(),
+                   FileMasterId = fm.FileMasterId,
+                   LetterTypeId = Guid.NewGuid(),
+                   IssuedDate = DateOnly.FromDateTime(DateTime.Today),
+                   GeneratedDate = DateOnly.FromDateTime(DateTime.Today),
+                   SignedDate = DateOnly.FromDateTime(DateTime.Today),
+                   ResponseStatus = "Pending"
+               });
+
+        var workflow = new Mock<IWorkflowService>();
+        workflow.Setup(w => w.TransitionToAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string?>()))
+                .ReturnsAsync(new WorkflowInstance { WorkflowInstanceId = Guid.NewGuid(), FileMasterId = fm.FileMasterId, Status = "Active" });
+
+        var (sut, tempData) = BuildLetterController(
+            repo.Object, db, scope.Object, letters.Object, workflow.Object, new Mock<INotificationService>().Object);
+
+        var result = await sut.IssueLetter(
+            fm.FileMasterId, "IssueS33_2", "Water User A", "RegisteredPost", DateTime.Today, default);
+
+        // Rates-paid guard did not fire — IssueAsync was called.
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.False(tempData.ContainsKey("Error"), "Rates-paid guard must not block when S33_2_RatesPaidConfirmed is true.");
+        letters.Verify(l => l.IssueAsync(fm.FileMasterId, "S33_2_Decl", It.IsAny<IssueLetterRequest>()), Times.Once);
     }
 
     [Fact]
@@ -294,5 +320,28 @@ public class FileMasterControllerLetterTests
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var key in map.Keys)
             Assert.Contains(key, allExpected);
+    }
+
+    private static (FileMasterController controller, TempDataDictionary tempData) BuildLetterController(
+        IFileMaster repo,
+        ApplicationDBContext db,
+        IScopedCaseQuery scope,
+        ILetterService letters,
+        IWorkflowService workflow,
+        INotificationService notify)
+    {
+        var tempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
+        var httpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity())
+        };
+        var controller = new FileMasterController(
+            repo, db, workflow, scope, letters,
+            new Mock<ILawfulnessAssessmentService>().Object, notify)
+        {
+            ControllerContext = new ControllerContext { HttpContext = httpContext },
+            TempData = tempData
+        };
+        return (controller, tempData);
     }
 }
