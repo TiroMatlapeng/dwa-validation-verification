@@ -1,7 +1,7 @@
 # Project Handoff
 
 ## Current Focus
-Wave 2b complete. LawfulnessAssessmentService implemented and wired. 243 tests pass. Next priority: Wave 3 (NotificationService / SignatureService) or demo prep — TBD with user.
+Bug-fix sprint 2 complete. System QA-signed off as READY FOR DEMO. 243 tests pass. Next priority: Wave 3 (NotificationService / SignatureService) or client demo — TBD with user.
 
 ## Settled Decisions
 - WorkflowController, Property subdivision/consolidation, FileMasterController CRUD: already built — do not rebuild — decided by: orchestrator discovery, date: 2026-05-12
@@ -31,11 +31,19 @@ Wave 2b complete. LawfulnessAssessmentService implemented and wired. 243 tests p
 - [x] Wave 2a CalculatorEngine (9 tasks): CropWaterRate + SfraSpeciesRate models + migration, pure static calculators (SAPWAT, dam volume, SFRA), CalculatorService DI orchestrator, seeded reference data, Dam/FieldAndCrop/Forestation UI calculate buttons — agent: dotnet-master (9 tasks, subagent-driven) — date: 2026-05-19
 - [x] Bug-fix sprint (7 bugs + 5 arch issues): 4 parallel agents (calculator, filemaster, controllers, workflow) + DamCalculationController direct patch + Batch 2 test agent — agents: dotnet-master, code-validator, dotnet-architect + 4 fix agents + test-batch2 — date: 2026-05-19. Commits: b5c0cba, f4f0d2e, 6fa8a5f, 08facd9, eaa6de1
 - [x] Wave 2b LawfulnessAssessmentService (5 tasks): data model + migration, pure LawfulnessCalculator (GWCA + general S9B), LawfulnessAssessmentService DI orchestrator, FileMasterController AssessLawfulness action, UI ELU Assessment panel + Property GWCA/IrrigableArea fields — agent: dotnet-master (5 tasks, subagent-driven) — date: 2026-05-19. Commits: b6a41d5, cbd8d2f, 06a6cb5, ac71900, babbd8c, b5555ba
+- [x] Bug-fix sprint 2 (8 QA issues): decimal model binding (InvariantDecimalModelBinderProvider), TempData error display, GWCA/WaterSource/IrrigationSystem seeding, duplicate seed dedup, DWS CSS tokens in panels, InvariantCulture in success messages — agent: dotnet-master (parallel waves) — date: 2026-05-20. Commits: 710fe98, de62387, 23b1237, 8d253f9. QA verdict: READY FOR DEMO.
 
 ## In-Flight Work
 <!-- nothing currently in flight -->
 
 ## What the Next Orchestrator Must Know
+- Bug-fix sprint 2 COMPLETE. QA-signed off: READY FOR DEMO. Build: 0 errors. 243/243 tests pass. Branch: `demo/azure-deploy`.
+- **`UseRequestLocalization` does NOT fix decimal model binding on en_ZA hosts** — `DecimalModelBinder` uses `CultureInfo.CurrentCulture` (process), not request middleware. Fix is `InvariantDecimalModelBinderProvider` at `Infrastructure/InvariantDecimalModelBinder.cs` + `Infrastructure/InvariantDecimalModelBinderProvider.cs`, registered via `AddControllersWithViews(options => options.ModelBinderProviders.Insert(0, new InvariantDecimalModelBinderProvider()))`.
+- Seeding idempotency: `DeduplicateExistingSeedRowsAsync()` runs first in `SeedAsync()`. Per-item `HashSet<>` membership checks replace bulk `AnyAsync()` for all affected tables. 7 seeders still use bulk check (CustomerTypes, Provinces, WaterManagementAreas, AuthorisationTypes, Periods, EntitlementTypes, FileMasters) — low risk, deferred.
+- Blyde River GWCA is seeded (1 record). `SeedGovernmentWaterControlAreasAsync()` must run BEFORE `SeedGwcaProclamationRulesAsync()`.
+- 9 WaterSources and 7 IrrigationSystems are seeded. FieldAndCrop Create is fully functional.
+- TempData key: all error messages use `TempData["Error"]` — the shared Layout banner reads only `["Error"]` and `["Success"]`. `["WorkflowError"]` is retired.
+- Residual cosmetic items (non-blocking): read-only SAPWAT/SFRA result divs in Edit views use `.ToString("N2")` without InvariantCulture; 3 hex colors remain in panel partials where no DWS token exists.
 - Wave 2b COMPLETE. Build: 0 errors. 243/243 tests pass. Branch: `demo/azure-deploy`.
 - `LawfulnessAssessmentService` registered in Program.cs. Injected into `FileMasterController` as 6th constructor arg (`ILawfulnessAssessmentService _assessment`).
 - `AssessLawfulness` POST action on FileMasterController runs the ELU assessment, sets `FileMaster.EntitlementId`, satisfies `Cp7EluGuard`.
