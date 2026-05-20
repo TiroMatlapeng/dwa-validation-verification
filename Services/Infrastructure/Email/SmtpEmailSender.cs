@@ -35,18 +35,18 @@ public class SmtpEmailSender : IEmailSender
             using var client = new SmtpClient();
             await client.ConnectAsync(
                 _settings.Host, _settings.Port,
-                _settings.UseSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None,
+                _settings.UseSsl ? SecureSocketOptions.Auto : SecureSocketOptions.None,
                 ct);
             if (!string.IsNullOrEmpty(_settings.Username))
-                await client.AuthenticateAsync(_settings.Username, _settings.Password, ct);
+                await client.AuthenticateAsync(_settings.Username, _settings.Password ?? string.Empty, ct);
             await client.SendAsync(mime, ct);
             await client.DisconnectAsync(true, ct);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "SmtpEmailSender: failed to send to {To}. Subject: {Subject}",
-                message.To, message.Subject);
+            _logger.LogError("SmtpEmailSender: failed to send to {To}. Subject: {Subject}. Error: {ErrorType}: {ErrorMessage}",
+                message.To, message.Subject, ex.GetType().Name, ex.Message);
             return false;
         }
     }
