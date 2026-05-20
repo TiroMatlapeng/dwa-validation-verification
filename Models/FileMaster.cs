@@ -93,6 +93,13 @@ public class FileMaster
     [Display(Name = "Assessment Track")]
     public string? AssessmentTrack { get; set; } // "S35_Verification", "S33_2_Declaration", "S33_3_Declaration"
 
+    // S33(2) Kader Asmal Declaration fields — only populated on S33_2_Declaration track.
+    // CLAUDE.md: "System must track irrigation board membership and rates-paid-up-to date."
+    public Guid? S33_2_IrrigationBoardId { get; set; }
+    public IrrigationBoard? S33_2_IrrigationBoard { get; set; }
+    public bool S33_2_RatesPaidConfirmed { get; set; }
+    public string? S33_2_ScheduledAreaName { get; set; }
+
     // Workflow
     public Guid? WorkflowInstanceId { get; set; }
 

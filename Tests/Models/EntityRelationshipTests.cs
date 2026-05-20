@@ -665,6 +665,54 @@ public class EntityRelationshipTests
     }
 
     [Fact]
+    public async Task FileMaster_S33_2_Fields_RoundTrip()
+    {
+        using var db = TestDbContextFactory.Create();
+
+        var board = new IrrigationBoard
+        {
+            IrrigationBoardId = Guid.NewGuid(),
+            IrrigationBoardName = "Blyde River Irrigation Board"
+        };
+        var property = new Property
+        {
+            PropertyId = Guid.NewGuid(),
+            PropertySize = 100m
+        };
+        db.IrrigationBoards.Add(board);
+        db.Properties.Add(property);
+
+        var fm = new FileMaster
+        {
+            FileMasterId = Guid.NewGuid(),
+            PropertyId = property.PropertyId,
+            RegistrationNumber = "S33-TEST-001",
+            SurveyorGeneralCode = "T0AB00000000AB",
+            PrimaryCatchment = "A",
+            QuaternaryCatchment = "A21A",
+            FarmName = "Testfarm",
+            FarmNumber = 99,
+            FarmPortion = "0",
+            RegistrationDivision = "AB",
+            AssessmentTrack = "S33_2_Declaration",
+            S33_2_IrrigationBoardId = board.IrrigationBoardId,
+            S33_2_RatesPaidConfirmed = true,
+            S33_2_ScheduledAreaName = "Scheme A"
+        };
+        db.FileMasters.Add(fm);
+        await db.SaveChangesAsync();
+
+        var retrieved = await db.FileMasters
+            .Include(f => f.S33_2_IrrigationBoard)
+            .SingleAsync(f => f.FileMasterId == fm.FileMasterId);
+
+        Assert.Equal(board.IrrigationBoardId, retrieved.S33_2_IrrigationBoardId);
+        Assert.True(retrieved.S33_2_RatesPaidConfirmed);
+        Assert.Equal("Scheme A", retrieved.S33_2_ScheduledAreaName);
+        Assert.Equal("Blyde River Irrigation Board", retrieved.S33_2_IrrigationBoard!.IrrigationBoardName);
+    }
+
+    [Fact]
     public async Task LetterIssuance_S33_2_With_IrrigationBoard()
     {
         using var context = TestDbContextFactory.Create();

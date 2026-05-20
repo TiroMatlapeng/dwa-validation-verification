@@ -27,6 +27,7 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
         (typeof(LawfulnessAssessmentResult), typeof(FileMaster), nameof(LawfulnessAssessmentResult.FileMasterId), DeleteBehavior.Cascade),
         (typeof(LawfulnessAssessmentResult), typeof(GovernmentWaterControlArea), nameof(LawfulnessAssessmentResult.GwcaId), DeleteBehavior.SetNull),
         (typeof(Property), typeof(GovernmentWaterControlArea), nameof(Property.WaterControlAreaId), DeleteBehavior.SetNull),
+        (typeof(FileMaster), typeof(IrrigationBoard), nameof(FileMaster.S33_2_IrrigationBoardId), DeleteBehavior.SetNull),
     };
 
     public ApplicationDBContext(DbContextOptions<ApplicationDBContext> dbContextOption) : base(dbContextOption)
@@ -725,6 +726,21 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .WithMany()
             .HasForeignKey(li => li.IrrigationBoardId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // FileMaster → IrrigationBoard (S33(2) scheduled area membership)
+        modelBuilder.Entity<FileMaster>()
+            .HasOne(fm => fm.S33_2_IrrigationBoard)
+            .WithMany()
+            .HasForeignKey(fm => fm.S33_2_IrrigationBoardId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<FileMaster>()
+            .Property(fm => fm.S33_2_RatesPaidConfirmed)
+            .HasDefaultValue(false);
+
+        modelBuilder.Entity<FileMaster>()
+            .Property(fm => fm.S33_2_ScheduledAreaName)
+            .HasMaxLength(200);
 
         // ── PublicUserRecoveryCode ──
         modelBuilder.Entity<PublicUserRecoveryCode>().HasKey(e => e.Id);
