@@ -70,6 +70,9 @@ public class ObjectionControllerTests
         Assert.Equal(fm.FileMasterId, objection.FileMasterId);
         Assert.Equal(userId, objection.PublicUserId);
         Assert.Equal("Lodged", objection.Status);
+        Assert.Equal(
+            "The ELU determination underestimates our historical use by a significant amount.",
+            objection.Grounds);
     }
 
     [Fact]

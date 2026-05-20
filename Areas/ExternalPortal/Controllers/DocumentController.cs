@@ -14,6 +14,9 @@ namespace dwa_ver_val.Areas.ExternalPortal.Controllers;
 [Authorize(Policy = PortalPolicies.PortalAuthenticated)]
 public class DocumentController : Controller
 {
+    private static readonly HashSet<string> _allowedExtensions =
+        new(StringComparer.OrdinalIgnoreCase) { ".pdf", ".jpg", ".jpeg", ".png" };
+
     private readonly ApplicationDBContext _db;
     private readonly IPublicUserPropertyAccessor _access;
     private readonly IFileStorage _storage;
@@ -61,6 +64,13 @@ public class DocumentController : Controller
         if (model.File is null || model.File.Length <= 0)
         {
             ModelState.AddModelError(nameof(model.File), "Please select a file.");
+            return View(model);
+        }
+
+        var ext = Path.GetExtension(model.File.FileName);
+        if (!_allowedExtensions.Contains(ext))
+        {
+            ModelState.AddModelError(nameof(model.File), "Only PDF, JPG, and PNG files are accepted.");
             return View(model);
         }
 
