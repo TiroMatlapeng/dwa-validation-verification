@@ -443,6 +443,8 @@ public class FileMasterController : Controller
         // Section 33(3) declaration track (S33(2) Kader Asmal is auto-issued via track-skip in WorkflowService)
         ["IssueS33_3a"]    = ("S33_3a_Decl", "S33_3_DeclarationIssued"),
         ["IssueS33_3b"]    = ("S33_3b_Decl", "S33_3_DeclarationIssued"),
+        // Section 33(2) Kader Asmal Declaration
+        ["IssueS33_2"]     = ("S33_2_Decl",  "S33_2_DeclarationIssued"),
     };
 
     // These letter codes are issued exactly once per case in the S35/S33 statutory process.
@@ -456,6 +458,7 @@ public class FileMasterController : Controller
             "S35_L4_5",    // S53(1) directive to stop — one per unlawful-use finding
             "S33_3a_Decl", // S33(3)(a) declaration — ELU declared on individual application
             "S33_3b_Decl", // S33(3)(b) declaration — ELU declared on individual application
+            "S33_2_Decl",  // S33(2) Kader Asmal Declaration — issued exactly once per case
         };
 
     // letterAction values that are pure response/determination updates — no PDF generated.
@@ -520,6 +523,19 @@ public class FileMasterController : Controller
             }
         }
 
+        // S33(2) declaration requires rates-paid confirmation on the case record.
+        if (string.Equals(map.LetterCode, "S33_2_Decl", StringComparison.OrdinalIgnoreCase)
+            && !caseFm.S33_2_RatesPaidConfirmed)
+        {
+            TempData["Error"] = "S33(2) declaration cannot be issued until irrigation board rates paid up to " +
+                                "30 September 1998 are confirmed on the case record.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // For S33(2), auto-populate the irrigation board name from the case record.
+        if (string.Equals(map.LetterCode, "S33_2_Decl", StringComparison.OrdinalIgnoreCase))
+            await _context.Entry(caseFm).Reference(f => f.S33_2_IrrigationBoard).LoadAsync(CancellationToken.None);
+
         // Build the IssueLetterRequest, falling back gracefully when the signed-in user
         // hasn't fully populated their profile (no FirstName/LastName claim).
         var signedInId = Guid.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var u)
@@ -546,7 +562,13 @@ public class FileMasterController : Controller
                 SignedByUserId: signedInId == Guid.Empty ? (Guid?)null : signedInId,
                 SignedByDisplayName: displayName,
                 SignedByTitle: role,
-                SignedByOrgUnit: orgUnit));
+                SignedByOrgUnit: orgUnit,
+                IrrigationBoardName: string.Equals(map.LetterCode, "S33_2_Decl", StringComparison.OrdinalIgnoreCase)
+                    ? caseFm.S33_2_IrrigationBoard?.IrrigationBoardName
+                    : null,
+                LawfulVolumeM3: string.Equals(map.LetterCode, "S33_2_Decl", StringComparison.OrdinalIgnoreCase)
+                    ? caseFm.Entitlement?.Volume
+                    : null));
         }
         catch (InvalidOperationException ex)
         {

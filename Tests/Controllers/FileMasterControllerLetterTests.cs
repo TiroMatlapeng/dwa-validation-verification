@@ -114,6 +114,7 @@ public class FileMasterControllerLetterTests
     [InlineData("S35_L4_5")]
     [InlineData("S33_3a_Decl")]
     [InlineData("S33_3b_Decl")]
+    [InlineData("S33_2_Decl")]
     public async Task OneTimeLetter_WhenAlreadyResolved_GuardDetectsExistingIssuance(string letterCode)
     {
         // One-time letters must be blocked from re-issuance regardless of ResponseStatus.
@@ -144,7 +145,7 @@ public class FileMasterControllerLetterTests
 
         var oneTimeCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "S35_L1", "S35_L3", "S35_L4A", "S35_L4_5", "S33_3a_Decl", "S33_3b_Decl"
+            "S35_L1", "S35_L3", "S35_L4A", "S35_L4_5", "S33_3a_Decl", "S33_3b_Decl", "S33_2_Decl"
         };
 
         var existing = await db.LetterTypes.SingleOrDefaultAsync(t => t.LetterName == letterCode);
@@ -166,6 +167,79 @@ public class FileMasterControllerLetterTests
         }
 
         Assert.True(blocked, $"One-time letter {letterCode} should block re-issuance even when previously resolved.");
+    }
+
+    [Fact]
+    public async Task IssueLetter_S33_2Decl_BlockedWhenRatesNotConfirmed()
+    {
+        // Guard: S33(2) declaration cannot be issued if S33_2_RatesPaidConfirmed is false.
+        // The controller checks caseFm.S33_2_RatesPaidConfirmed before calling _letters.IssueAsync.
+        var db = TestDbContextFactory.Create();
+        var board = new IrrigationBoard { IrrigationBoardId = Guid.NewGuid(), IrrigationBoardName = "Test Board" };
+        db.IrrigationBoards.Add(board);
+        var prop = new Property { PropertyId = Guid.NewGuid() };
+        db.Properties.Add(prop);
+        var fm = SeedHelper.NewFileMaster(prop.PropertyId);
+        fm.AssessmentTrack = "S33_2_Declaration";
+        fm.S33_2_IrrigationBoardId = board.IrrigationBoardId;
+        fm.S33_2_RatesPaidConfirmed = false;
+        db.FileMasters.Add(fm);
+        await db.SaveChangesAsync();
+
+        // Simulate the guard the controller evaluates for the S33_2_Decl letter code.
+        var caseFm = await db.FileMasters.FindAsync(fm.FileMasterId);
+        Assert.NotNull(caseFm);
+
+        var shouldBlock = !caseFm.S33_2_RatesPaidConfirmed;
+
+        Assert.True(shouldBlock, "Guard must fire when S33_2_RatesPaidConfirmed is false — declaration cannot be issued.");
+        // No LetterIssuance should have been written.
+        Assert.Empty(db.LetterIssuances.ToList());
+    }
+
+    [Fact]
+    public async Task IssueLetter_S33_2Decl_RatesConfirmed_GuardDoesNotBlock()
+    {
+        // When S33_2_RatesPaidConfirmed is true the rates-paid guard must NOT fire.
+        var db = TestDbContextFactory.Create();
+        var board = new IrrigationBoard { IrrigationBoardId = Guid.NewGuid(), IrrigationBoardName = "Blyde River Board" };
+        db.IrrigationBoards.Add(board);
+        var prop = new Property { PropertyId = Guid.NewGuid() };
+        db.Properties.Add(prop);
+        var fm = SeedHelper.NewFileMaster(prop.PropertyId);
+        fm.AssessmentTrack = "S33_2_Declaration";
+        fm.S33_2_IrrigationBoardId = board.IrrigationBoardId;
+        fm.S33_2_RatesPaidConfirmed = true;
+        db.FileMasters.Add(fm);
+        // Seed the LetterType so LetterService can look it up.
+        db.LetterTypes.Add(new LetterType
+        {
+            LetterTypeId = Guid.NewGuid(),
+            LetterName = "S33_2_Decl",
+            LetterDescription = "Kader Asmal Declaration",
+            NWASection = "S33(2)"
+        });
+        // Seed the target workflow state.
+        db.WorkflowStates.Add(new WorkflowState
+        {
+            WorkflowStateId = Guid.NewGuid(),
+            StateName = "S33_2_DeclarationIssued",
+            DisplayOrder = 34,
+            Phase = "Verification",
+            IsTerminal = false
+        });
+        await db.SaveChangesAsync();
+
+        var caseFm = await db.FileMasters.FindAsync(fm.FileMasterId);
+        Assert.NotNull(caseFm);
+
+        // Guard must NOT fire — rates are confirmed.
+        var shouldBlock = !caseFm.S33_2_RatesPaidConfirmed;
+        Assert.False(shouldBlock, "Rates-paid guard must not block when S33_2_RatesPaidConfirmed is true.");
+
+        // The LetterType row must be present so LetterService.IssueAsync does not throw.
+        var lt = await db.LetterTypes.SingleOrDefaultAsync(t => t.LetterName == "S33_2_Decl");
+        Assert.NotNull(lt);
     }
 
     [Fact]

@@ -56,6 +56,7 @@ public class FileMasterDetailsViewModel
                 "S35_UnlawfulUseFound"     => new() { "IssueLetter4A" },
                 "S35_Letter4AIssued"       => new() { "IssueLetter4_5" },
                 "S35_Letter4And5Issued"    => new() { "CloseCase" },
+                "S33_2_ReadyForDeclaration" => new() { "IssueS33_2" },
                 "S33_2_DeclarationIssued"  => new() { "CloseCase" },
                 "S33_3_DeclarationIssued"  => new() { "CloseCase" },
                 _                          => new()
