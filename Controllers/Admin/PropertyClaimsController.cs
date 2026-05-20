@@ -34,8 +34,8 @@ public class PropertyClaimsController : Controller
     [HttpPost("{id:guid}"), ValidateAntiForgeryToken]
     public async Task<IActionResult> Approve(Guid id, CancellationToken ct)
     {
-        var claim = await _db.PublicUserProperties.FindAsync(new object[] { id }, ct)
-            ?? throw new InvalidOperationException($"Claim {id} not found.");
+        var claim = await _db.PublicUserProperties.FindAsync(new object[] { id }, ct);
+        if (claim is null) { TempData["Error"] = "Claim not found."; return RedirectToAction(nameof(Index)); }
 
         claim.Status = PropertyClaimStatus.Approved;
         claim.ApprovedDate = DateTime.UtcNow;
@@ -54,8 +54,11 @@ public class PropertyClaimsController : Controller
     [HttpPost("{id:guid}"), ValidateAntiForgeryToken]
     public async Task<IActionResult> Reject(Guid id, string? reason, CancellationToken ct)
     {
-        var claim = await _db.PublicUserProperties.FindAsync(new object[] { id }, ct)
-            ?? throw new InvalidOperationException($"Claim {id} not found.");
+        var claim = await _db.PublicUserProperties.FindAsync(new object[] { id }, ct);
+        if (claim is null) { TempData["Error"] = "Claim not found."; return RedirectToAction(nameof(Index)); }
+
+        if (reason is not null && reason.Length > 500)
+            reason = reason[..500];
 
         claim.Status = PropertyClaimStatus.Rejected;
         claim.RejectionReason = reason;

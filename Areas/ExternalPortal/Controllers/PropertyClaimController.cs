@@ -31,9 +31,9 @@ public class PropertyClaimController : Controller
     {
         if (!ModelState.IsValid) return View(vm);
 
-        var publicUserId = Guid.Parse(
-            User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new InvalidOperationException("Portal user not authenticated."));
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdStr is null) return Challenge();
+        var publicUserId = Guid.Parse(userIdStr);
 
         var property = await _db.Properties
             .AsNoTracking()
