@@ -713,6 +713,12 @@ public class FileMasterController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        if (replyText.Length > 4000)
+        {
+            TempData["Error"] = "Reply text cannot exceed 4 000 characters.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         _context.CaseComments.Add(new CaseComment
         {
@@ -729,7 +735,8 @@ public class FileMasterController : Controller
         if (parentCommentId.HasValue)
         {
             var parent = await _context.CaseComments.FindAsync(new object[] { parentCommentId.Value }, ct);
-            if (parent?.PublicUserId.HasValue == true)
+            // Guard: only notify if the parent comment belongs to THIS case.
+            if (parent is not null && parent.FileMasterId == id && parent.PublicUserId.HasValue)
                 await _notify.NotifyPublicUserAsync(parent.PublicUserId!.Value, id, "Reply",
                     "DWS has responded to your comment",
                     replyText.Length > 200 ? replyText[..200] + "..." : replyText,
