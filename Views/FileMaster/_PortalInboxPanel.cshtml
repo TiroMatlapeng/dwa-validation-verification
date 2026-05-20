@@ -1,0 +1,114 @@
+@model FileMaster
+@{
+    var fmId = Model.FileMasterId;
+    var comments = ViewBag.PortalComments as IList<CaseComment> ?? new List<CaseComment>();
+    var documents = ViewBag.PortalDocuments as IList<Document> ?? new List<Document>();
+    var objections = ViewBag.PortalObjections as IList<Objection> ?? new List<Objection>();
+    var unreadCount = comments.Count(c => c.AuthorType == "PublicUser" && c.ReadByDWSDate is null);
+}
+
+<div class="panel" id="portal-inbox">
+    <div class="panel__header">
+        Portal Inbox
+        @if (unreadCount > 0)
+        {
+            <span class="badge badge--amber" style="margin-left:8px">@unreadCount unread</span>
+        }
+    </div>
+    <div class="panel__body">
+
+        @* ── Comments / Responses ── *@
+        <h4 style="margin:0 0 var(--dws-space-2) 0;font-size:14px">Comments &amp; Responses</h4>
+        @if (!comments.Any())
+        {
+            <p class="text-muted" style="font-size:var(--dws-fs-sm)">No comments yet.</p>
+        }
+        else
+        {
+            @foreach (var c in comments.Where(c => c.ParentCommentId is null).OrderBy(c => c.SubmittedDate))
+            {
+                <div style="border-left:3px solid @(c.AuthorType == "PublicUser" ? "var(--dws-teal-600)" : "var(--dws-primary)");padding:6px 10px;margin-bottom:6px;background:var(--dws-surface)">
+                    <div style="font-size:var(--dws-fs-xs);color:var(--dws-text-muted)">
+                        @(c.AuthorType == "PublicUser" ? "Water User" : "DWS Official")
+                        — @c.SubmittedDate.ToString("dd MMM yyyy HH:mm")
+                        @if (c.AuthorType == "PublicUser" && c.ReadByDWSDate is null)
+                        {
+                            <span style="color:var(--dws-amber-700);font-weight:600"> ● Unread</span>
+                        }
+                    </div>
+                    <p style="margin:4px 0 6px 0;font-size:var(--dws-fs-sm)">@c.CommentText</p>
+
+                    @if (c.AuthorType == "PublicUser" && c.ReadByDWSDate is null)
+                    {
+                        <form method="post" asp-action="MarkCommentRead" asp-route-id="@fmId" asp-route-commentId="@c.CommentId" style="display:inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" style="font-size:11px;padding:2px 8px">Mark Read</button>
+                        </form>
+                    }
+
+                    @foreach (var reply in comments.Where(r => r.ParentCommentId == c.CommentId).OrderBy(r => r.SubmittedDate))
+                    {
+                        <div style="margin-left:16px;padding:4px 8px;border-left:2px solid var(--dws-border);font-size:var(--dws-fs-sm)">
+                            <span style="font-size:var(--dws-fs-xs);color:var(--dws-text-muted)">DWS — @reply.SubmittedDate.ToString("dd MMM yyyy HH:mm")</span>
+                            <p style="margin:2px 0">@reply.CommentText</p>
+                        </div>
+                    }
+
+                    <details style="margin-top:6px">
+                        <summary style="font-size:var(--dws-fs-xs);cursor:pointer;color:var(--dws-primary)">Reply</summary>
+                        <form method="post" asp-action="PortalReply" asp-route-id="@fmId" style="margin-top:4px">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="parentCommentId" value="@c.CommentId" />
+                            <textarea name="replyText" rows="3" placeholder="Your reply..."
+                                      style="width:100%;padding:5px 8px;border:1px solid var(--dws-border);border-radius:4px;font-size:var(--dws-fs-sm);box-sizing:border-box"></textarea>
+                            <button type="submit" class="btn btn-sm btn-primary" style="margin-top:4px">Send Reply</button>
+                        </form>
+                    </details>
+                </div>
+            }
+        }
+
+        @* ── Documents ── *@
+        <h4 style="margin:var(--dws-space-4) 0 var(--dws-space-2) 0;font-size:14px">Uploaded Documents</h4>
+        @if (!documents.Any())
+        {
+            <p class="text-muted" style="font-size:var(--dws-fs-sm)">No documents uploaded by water users.</p>
+        }
+        else
+        {
+            <ul style="list-style:none;padding:0;margin:0">
+                @foreach (var d in documents.OrderByDescending(d => d.UploadDate))
+                {
+                    <li style="padding:4px 0;border-bottom:1px solid var(--dws-border);font-size:var(--dws-fs-sm)">
+                        <strong>@d.FileName</strong>
+                        — @d.DocumentType
+                        <span class="text-muted" style="font-size:var(--dws-fs-xs)"> @d.UploadDate.ToString("dd MMM yyyy")</span>
+                        <span class="badge @(d.VirusScanStatus == "Clean" ? "badge--green" : d.VirusScanStatus == "Infected" ? "badge--red" : "badge--amber")"
+                              style="margin-left:6px;font-size:10px">@(d.VirusScanStatus ?? "Pending")</span>
+                    </li>
+                }
+            </ul>
+        }
+
+        @* ── Objections ── *@
+        <h4 style="margin:var(--dws-space-4) 0 var(--dws-space-2) 0;font-size:14px">Objections / Appeals</h4>
+        @if (!objections.Any())
+        {
+            <p class="text-muted" style="font-size:var(--dws-fs-sm)">No objections lodged.</p>
+        }
+        else
+        {
+            @foreach (var o in objections.OrderByDescending(o => o.LodgedDate))
+            {
+                <div style="padding:6px 0;border-bottom:1px solid var(--dws-border);font-size:var(--dws-fs-sm)">
+                    Lodged @o.LodgedDate.ToString("dd MMM yyyy")
+                    — Status: <strong>@o.Status</strong>
+                    @if (!string.IsNullOrEmpty(o.ResolutionNotes))
+                    {
+                        <p style="margin:4px 0;color:var(--dws-text-muted)">@o.ResolutionNotes</p>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>

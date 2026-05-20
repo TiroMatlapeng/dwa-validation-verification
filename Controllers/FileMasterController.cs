@@ -182,6 +182,21 @@ public class FileMasterController : Controller
             .Include(r => r.Gwca)
             .FirstOrDefaultAsync(r => r.FileMasterId == fileMaster.FileMasterId);
 
+        ViewBag.PortalComments = await _context.CaseComments
+            .Where(c => c.FileMasterId == id)
+            .OrderBy(c => c.SubmittedDate)
+            .ToListAsync();
+
+        ViewBag.PortalDocuments = await _context.Documents
+            .Where(d => d.FileMasterId == id && d.UploadedByPublicUserId != null)
+            .OrderByDescending(d => d.UploadDate)
+            .ToListAsync();
+
+        ViewBag.PortalObjections = await _context.Objections
+            .Where(o => o.FileMasterId == id)
+            .OrderByDescending(o => o.LodgedDate)
+            .ToListAsync();
+
         return View(vm);
     }
 
@@ -621,5 +636,56 @@ public class FileMasterController : Controller
                 new { Value = "S33_3_Declaration", Text = "S33(3) Declaration" }
             },
             "Value", "Text", fileMaster?.AssessmentTrack);
+    }
+
+    // ── Portal Inbox ──
+
+    [HttpPost, ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
+    public async Task<IActionResult> MarkCommentRead(Guid id, Guid commentId, CancellationToken ct)
+    {
+        var comment = await _context.CaseComments.FindAsync(new object[] { commentId }, ct);
+        if (comment is null || comment.FileMasterId != id) return NotFound();
+        comment.ReadByDWSDate = DateTime.UtcNow;
+        await _context.SaveChangesAsync(ct);
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
+    public async Task<IActionResult> PortalReply(Guid id, Guid? parentCommentId,
+        string replyText, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(replyText))
+        {
+            TempData["Error"] = "Reply text cannot be empty.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        _context.CaseComments.Add(new CaseComment
+        {
+            CommentId = Guid.NewGuid(),
+            FileMasterId = id,
+            ApplicationUserId = userId is not null ? Guid.Parse(userId) : null,
+            AuthorType = "DWSOfficial",
+            ParentCommentId = parentCommentId,
+            CommentText = replyText,
+            SubmittedDate = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync(ct);
+
+        if (parentCommentId.HasValue)
+        {
+            var parent = await _context.CaseComments.FindAsync(new object[] { parentCommentId.Value }, ct);
+            if (parent?.PublicUserId.HasValue == true)
+                await _notify.NotifyPublicUserAsync(parent.PublicUserId!.Value, id, "Reply",
+                    "DWS has responded to your comment",
+                    replyText.Length > 200 ? replyText[..200] + "..." : replyText,
+                    actionUrl: null, ct);
+        }
+
+        TempData["Success"] = "Reply posted.";
+        return RedirectToAction(nameof(Details), new { id });
     }
 }

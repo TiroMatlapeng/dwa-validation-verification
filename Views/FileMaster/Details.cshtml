@@ -31,6 +31,7 @@
 {
     @await Html.PartialAsync("_LettersPanel", Model)
 }
+@await Html.PartialAsync("_PortalInboxPanel", Model.FileMaster)
 
 <div class="card" style="max-width: 900px; margin-top: 20px;">
     <div class="form-section-title">Case Information</div>
