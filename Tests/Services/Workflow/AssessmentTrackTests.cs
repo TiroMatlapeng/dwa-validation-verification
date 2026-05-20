@@ -13,7 +13,7 @@ public class AssessmentTrackTests
             .Options);
 
     [Fact]
-    public async Task AdvanceAsync_OnS33_2Track_SkipsCp5_LandsOnDeclarationIssued()
+    public async Task AdvanceAsync_OnS33_2Track_SkipsCp5_LandsOnReadyForDeclaration()
     {
         using var db = NewDb();
 
@@ -98,5 +98,51 @@ public class AssessmentTrackTests
         var result = await svc.AdvanceAsync(fm.FileMasterId, userId: null, notes: null);
 
         Assert.Equal(cp5.WorkflowStateId, result.CurrentWorkflowStateId);
+    }
+
+    [Fact]
+    public async Task AdvanceAsync_OnS33_2Track_FromReadyForDeclaration_AdvancesToDeclarationIssued()
+    {
+        using var db = NewDb();
+
+        var ready = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S33_2_ReadyForDeclaration", DisplayOrder = 33, Phase = "Verification", IsTerminal = false };
+        var decl  = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S33_2_DeclarationIssued",  DisplayOrder = 34, Phase = "Verification", IsTerminal = false };
+        db.WorkflowStates.AddRange(ready, decl);
+
+        var fm = new FileMaster
+        {
+            FileMasterId = Guid.NewGuid(),
+            PropertyId = Guid.NewGuid(),
+            RegistrationNumber = "N/A",
+            SurveyorGeneralCode = "N/A",
+            PrimaryCatchment = "N/A",
+            QuaternaryCatchment = "N/A",
+            FarmName = "N/A",
+            FarmNumber = 0,
+            RegistrationDivision = "N/A",
+            FarmPortion = "N/A",
+            AssessmentTrack = "S33_2_Declaration"
+        };
+        db.FileMasters.Add(fm);
+
+        var instance = new WorkflowInstance
+        {
+            WorkflowInstanceId = Guid.NewGuid(),
+            FileMasterId = fm.FileMasterId,
+            CurrentWorkflowStateId = ready.WorkflowStateId,
+            Status = "Active",
+            CreatedDate = DateTime.UtcNow
+        };
+        db.WorkflowInstances.Add(instance);
+        fm.WorkflowInstanceId = instance.WorkflowInstanceId;
+        await db.SaveChangesAsync();
+
+        var svc = new WorkflowService(db, Array.Empty<ITransitionGuard>(), new TestAuditService());
+        var result = await svc.AdvanceAsync(fm.FileMasterId, userId: null, notes: null);
+
+        // S33_2_DeclarationIssued does NOT start with any CpsSkippedOnS33_2 prefix,
+        // so the skip does not fire — it advances normally to the next higher-order state.
+        Assert.Equal(decl.WorkflowStateId, result.CurrentWorkflowStateId);
+        Assert.Equal("Active", result.Status);
     }
 }

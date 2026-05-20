@@ -111,7 +111,7 @@ public class WorkflowService : IWorkflowService
     /// <summary>
     /// Resolves the next workflow state, honouring AssessmentTrack:
     /// on S33_2 track, transitions that would land in CP5–CP9 are redirected to
-    /// the S33_2 terminal declaration state.
+    /// the S33_2_ReadyForDeclaration holding state (non-terminal).
     /// </summary>
     private async Task<WorkflowState?> ResolveNextStateAsync(FileMaster fileMaster, WorkflowState currentState)
     {
