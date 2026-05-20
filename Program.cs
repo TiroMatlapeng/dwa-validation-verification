@@ -155,6 +155,8 @@ else
 builder.Services.AddSingleton<IFileStorage>(sp =>
     new LocalDiskFileStorage(
         Path.Combine(builder.Environment.ContentRootPath, "portal-uploads")));
+builder.Services.AddScoped<dwa_ver_val.Services.Notifications.INotificationService,
+    dwa_ver_val.Services.Notifications.NotificationService>();
 builder.Services.AddScoped<IPublicUserPropertyAccessor, PublicUserPropertyAccessor>();
 builder.Services.AddScoped<IPublicUserRegistrationService, PublicUserRegistrationService>();
 builder.Services.AddScoped<IPublicUserSignInService, PublicUserSignInService>();
