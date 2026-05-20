@@ -14,6 +14,7 @@ public class FileMasterController : Controller
     private readonly IScopedCaseQuery _scope;
     private readonly ILetterService _letters;
     private readonly ILawfulnessAssessmentService _assessment;
+    private readonly dwa_ver_val.Services.Notifications.INotificationService _notify;
 
     public FileMasterController(
         IFileMaster fileMasterRepository,
@@ -21,7 +22,8 @@ public class FileMasterController : Controller
         IWorkflowService workflow,
         IScopedCaseQuery scope,
         ILetterService letters,
-        ILawfulnessAssessmentService assessment)
+        ILawfulnessAssessmentService assessment,
+        dwa_ver_val.Services.Notifications.INotificationService notify)
     {
         _fileMasterRepository = fileMasterRepository;
         _context = context;
@@ -29,6 +31,7 @@ public class FileMasterController : Controller
         _scope = scope;
         _letters = letters;
         _assessment = assessment;
+        _notify = notify;
     }
 
     // GET: FileMaster/LetterPreview/{id}?code=S35_L1
@@ -495,6 +498,24 @@ public class FileMasterController : Controller
         catch (InvalidOperationException ex)
         {
             TempData["Error"] = ex.Message;
+        }
+
+        var property = await _context.FileMasters
+            .Where(f => f.FileMasterId == id)
+            .Select(f => new { f.PropertyId })
+            .FirstOrDefaultAsync();
+        if (property is not null)
+        {
+            var linkedUsers = await _context.PublicUserProperties
+                .Where(p => p.PropertyId == property.PropertyId
+                         && p.Status == dwa_ver_val.Models.Enums.PropertyClaimStatus.Approved)
+                .Select(p => p.PublicUserId)
+                .ToListAsync();
+            foreach (var uid in linkedUsers)
+                await _notify.NotifyPublicUserAsync(uid, id, "Letter",
+                    "A letter has been issued on your V&V case",
+                    $"A letter has been issued on your case. Log in to the portal to view and respond.",
+                    actionUrl: null);
         }
 
         return RedirectToAction(nameof(Details), new { id });
