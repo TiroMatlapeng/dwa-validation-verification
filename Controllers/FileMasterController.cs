@@ -719,6 +719,14 @@ public class FileMasterController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        // Validate parent comment belongs to this case before persisting.
+        if (parentCommentId.HasValue)
+        {
+            var parentCheck = await _context.CaseComments.FindAsync(new object[] { parentCommentId.Value }, ct);
+            if (parentCheck is null || parentCheck.FileMasterId != id)
+                parentCommentId = null;
+        }
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         _context.CaseComments.Add(new CaseComment
         {
