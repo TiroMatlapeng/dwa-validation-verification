@@ -74,8 +74,16 @@ public class ObjectionController : Controller
             Status = "Lodged",
             Grounds = model.Grounds
         };
-        _db.Objections.Add(objection);
-        await _db.SaveChangesAsync(ct);
+        try
+        {
+            _db.Objections.Add(objection);
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            ModelState.AddModelError(string.Empty, "You already have an open objection on this case.");
+            return View(model);
+        }
 
         var snippet = model.Grounds.Length > 200
             ? model.Grounds[..200] + "..."

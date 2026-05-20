@@ -184,6 +184,11 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
         modelBuilder.Entity<PublicUserProperty>().HasKey(e => e.Id);
         modelBuilder.Entity<CaseComment>().HasKey(e => e.CommentId);
         modelBuilder.Entity<Objection>().HasKey(o => o.ObjectionId);
+        modelBuilder.Entity<Objection>()
+            .HasIndex(o => new { o.FileMasterId, o.PublicUserId })
+            .HasFilter("[Status] = 'Lodged'")
+            .IsUnique()
+            .HasDatabaseName("IX_Objections_FileMaster_PublicUser_Lodged");
         modelBuilder.Entity<ObjectionDocument>().HasKey(od => od.Id);
 
         // ── Relationships ──
