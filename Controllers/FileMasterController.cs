@@ -747,12 +747,21 @@ public class FileMasterController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // Validate parent comment belongs to this case before persisting.
+        // Validate parent comment before persisting.
         if (parentCommentId.HasValue)
         {
             var parentCheck = await _context.CaseComments.FindAsync(new object[] { parentCommentId.Value }, ct);
-            if (parentCheck is null || parentCheck.FileMasterId != id)
+            if (parentCheck is null)
+            {
+                // Parent deleted — de-thread gracefully (post as root comment).
                 parentCommentId = null;
+            }
+            else if (parentCheck.FileMasterId != id)
+            {
+                // Parent exists but belongs to a different case — reject.
+                TempData["Error"] = "The comment you are replying to does not belong to this case.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
