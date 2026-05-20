@@ -110,4 +110,61 @@ public class PortalRegistrationFlowTests : IClassFixture<PortalIntegrationTestFi
         var body = await loginResp.Content.ReadAsStringAsync();
         Assert.Contains("Login failed", body);
     }
+
+    [Fact]
+    public async Task SuspendedUser_ExistingSession_IsRejectedOnNextRequest()
+    {
+        var client = _fixture.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            HandleCookies = true
+        });
+
+        var email = $"suspend-{Guid.NewGuid():N}@example.test";
+
+        // 1. Register
+        var regResp = await IntegrationTestHelpers.RegisterPublicUser(client, email);
+        Assert.Equal(HttpStatusCode.Redirect, regResp.StatusCode);
+
+        // 2. Follow redirect to RegisterConfirmation and extract the confirm URL
+        var confirmPage = await client.GetAsync(regResp.Headers.Location!);
+        var confirmBody = await confirmPage.Content.ReadAsStringAsync();
+        var marker = "/ExternalPortal/Account/ConfirmEmail?token=";
+        var idx = confirmBody.IndexOf(marker, StringComparison.Ordinal);
+        Assert.True(idx >= 0, "Confirm URL not found in RegisterConfirmation page.");
+        var endIdx = confirmBody.IndexOf('"', idx);
+        var confirmUrl = confirmBody[idx..endIdx];
+
+        // 3. Confirm email
+        await client.GetAsync(confirmUrl);
+
+        // 4. Log in
+        var loginToken = await IntegrationTestHelpers.GetAntiForgeryToken(client, "/ExternalPortal/Account/Login");
+        var loginResp = await client.PostAsync("/ExternalPortal/Account/Login", new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("Email", email),
+            new KeyValuePair<string, string>("Password", "Validuserpassword12!"),
+            new KeyValuePair<string, string>("__RequestVerificationToken", loginToken)
+        }));
+        Assert.Equal(HttpStatusCode.Redirect, loginResp.StatusCode);
+
+        // 5. Verify dashboard is accessible
+        var dashResp = await client.GetAsync(loginResp.Headers.Location);
+        Assert.Equal(HttpStatusCode.OK, dashResp.StatusCode);
+
+        // 6. Suspend the user via direct DB access
+        using (var scope = _fixture.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+            var user = await db.PublicUsers.FirstAsync(u => u.EmailAddress == email);
+            user.Status = "Suspended";
+            await db.SaveChangesAsync();
+        }
+
+        // 7. Access a protected portal page — existing session must now be rejected
+        var afterSuspend = await client.GetAsync("/ExternalPortal/Dashboard/Index");
+        Assert.Equal(HttpStatusCode.Redirect, afterSuspend.StatusCode);
+        Assert.Contains("/ExternalPortal/Account/Login",
+            afterSuspend.Headers.Location?.OriginalString ?? "");
+    }
 }
