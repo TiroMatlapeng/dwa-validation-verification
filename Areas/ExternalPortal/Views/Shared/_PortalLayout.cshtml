@@ -47,6 +47,30 @@
             width: 100%;
             max-width: 480px;
         }
+        .portal-card--wide {
+            max-width: 860px;
+        }
+        .portal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--dws-fs-sm);
+        }
+        .portal-table th, .portal-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--dws-border);
+            text-align: left;
+        }
+        .portal-nav {
+            width: 100%;
+            max-width: 860px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--dws-space-3);
+            font-size: var(--dws-fs-sm);
+        }
+        .portal-nav a { color: var(--dws-blue-100); text-decoration: none; margin-left: var(--dws-space-3); }
+        .portal-nav a:hover { text-decoration: underline; }
         .portal-card h1 {
             margin: 0 0 var(--dws-space-3) 0;
             font-size: 20px;
@@ -121,6 +145,21 @@
             <h2>DWA V&amp;V Public Portal</h2>
             <p>Verification of Existing Lawful Water Use</p>
         </div>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="portal-nav">
+                <span style="color:var(--dws-blue-100);font-size:var(--dws-fs-xs)">@User.Identity.Name</span>
+                <div>
+                    <a href="@Url.Action("Index","Dashboard",new{area="ExternalPortal"})">Dashboard</a>
+                    <a href="@Url.Action("Index","Case",new{area="ExternalPortal"})">My Cases</a>
+                    <a href="@Url.Action("Submit","PropertyClaim",new{area="ExternalPortal"})">Claim Property</a>
+                    <form asp-action="Logout" asp-controller="Account" asp-area="ExternalPortal" method="post" style="display:inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" style="background:none;border:none;color:var(--dws-blue-100);cursor:pointer;font-size:var(--dws-fs-sm)">Logout</button>
+                    </form>
+                </div>
+            </div>
+        }
         @RenderBody()
         <div class="portal-shell__footer">
             National Water Act 38 of 1998 — Sections 32–35

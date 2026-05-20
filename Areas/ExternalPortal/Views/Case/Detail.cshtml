@@ -1,0 +1,80 @@
+@model dwa_ver_val.Areas.ExternalPortal.ViewModels.CaseDetailViewModel
+@{
+    ViewData["Title"] = Model.FileMaster.FarmName ?? "Case Detail";
+    Layout = "~/Areas/ExternalPortal/Views/Shared/_PortalLayout.cshtml";
+    var fmId = Model.FileMaster.FileMasterId;
+}
+<div class="portal-card portal-card--wide">
+    <h1>@(Model.FileMaster.FarmName ?? "Case")</h1>
+    <p class="muted">SGCode: @(Model.FileMaster.Property?.SGCode ?? "—")</p>
+
+    <h2 style="margin-top:var(--dws-space-5);font-size:16px">Letters Issued</h2>
+    @if (!Model.Letters.Any())
+    {
+        <p class="muted">No letters issued yet.</p>
+    }
+    else
+    {
+        <ul style="list-style:none;padding:0">
+            @foreach (var l in Model.Letters)
+            {
+                <li style="padding:6px 0;border-bottom:1px solid var(--dws-border)">
+                    <strong>@l.LetterType?.LetterName</strong>
+                    &nbsp; issued @(l.IssuedDate?.ToString("dd MMM yyyy") ?? "—")
+                    &nbsp;
+                    <a href="@Url.Action("DownloadLetter","Case",new{area="ExternalPortal",fileMasterId=fmId,issuanceId=l.LetterIssuanceId})">Download PDF</a>
+                    &nbsp;
+                    <a href="@Url.Action("Submit","Response",new{area="ExternalPortal",fileMasterId=fmId,issuanceId=l.LetterIssuanceId})">Respond</a>
+                </li>
+            }
+        </ul>
+    }
+
+    <h2 style="margin-top:var(--dws-space-5);font-size:16px">Supporting Documents</h2>
+    <a href="@Url.Action("Upload","Document",new{area="ExternalPortal",fileMasterId=fmId})" class="btn-primary" style="font-size:var(--dws-fs-sm);padding:5px 12px">Upload Document</a>
+    @if (Model.Documents.Any())
+    {
+        <ul style="list-style:none;padding:0;margin-top:var(--dws-space-3)">
+            @foreach (var d in Model.Documents)
+            {
+                <li style="padding:4px 0">@d.FileName &nbsp; <span class="muted" style="font-size:var(--dws-fs-xs)">@d.UploadDate.ToString("dd MMM yyyy") — @d.DocumentType</span></li>
+            }
+        </ul>
+    }
+
+    <h2 style="margin-top:var(--dws-space-5);font-size:16px">Responses &amp; Comments</h2>
+    @if (Model.Comments.Any())
+    {
+        @foreach (var c in Model.Comments)
+        {
+            <div style="background:var(--dws-surface-alt,#f8f9fa);padding:8px 12px;border-radius:4px;margin-bottom:6px">
+                <p style="margin:0">@c.CommentText</p>
+                <span class="muted" style="font-size:var(--dws-fs-xs)">Submitted @c.SubmittedDate.ToString("dd MMM yyyy HH:mm")</span>
+            </div>
+        }
+    }
+
+    <h2 style="margin-top:var(--dws-space-5);font-size:16px">Objections / Appeals</h2>
+    @if (!Model.Objections.Any())
+    {
+        <p class="muted">No objections lodged.</p>
+        <a href="@Url.Action("Lodge","Objection",new{area="ExternalPortal",fileMasterId=fmId})">Lodge an Objection / Appeal</a>
+    }
+    else
+    {
+        @foreach (var o in Model.Objections)
+        {
+            <div style="padding:6px 0;border-bottom:1px solid var(--dws-border)">
+                Lodged @o.LodgedDate.ToString("dd MMM yyyy") — Status: <strong>@o.Status</strong>
+                @if (!string.IsNullOrEmpty(o.ResolutionNotes))
+                {
+                    <p style="margin:4px 0;font-size:var(--dws-fs-sm)">@o.ResolutionNotes</p>
+                }
+            </div>
+        }
+    }
+
+    <div style="margin-top:var(--dws-space-5)">
+        <a href="@Url.Action("Index","Case",new{area="ExternalPortal"})">← Back to My Cases</a>
+    </div>
+</div>

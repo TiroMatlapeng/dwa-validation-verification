@@ -1,0 +1,36 @@
+@model IEnumerable<dwa_ver_val.Areas.ExternalPortal.ViewModels.CaseSummaryViewModel>
+@{
+    ViewData["Title"] = "My Cases";
+    Layout = "~/Areas/ExternalPortal/Views/Shared/_PortalLayout.cshtml";
+}
+<div class="portal-card portal-card--wide">
+    <h1>My Cases</h1>
+    @if (!Model.Any())
+    {
+        <p class="muted">No approved cases yet. <a href="@Url.Action("Submit","PropertyClaim",new{area="ExternalPortal"})">Claim a property</a> to get started.</p>
+    }
+    else
+    {
+        <table class="portal-table">
+            <thead>
+                <tr><th>Farm Name</th><th>Property Ref</th><th>SGCode</th><th>Workflow State</th><th>Unread</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td>@c.FarmName</td>
+                        <td>@c.PropertyReference</td>
+                        <td>@c.SGCode</td>
+                        <td>@(c.WorkflowState ?? "Not started")</td>
+                        <td>@(c.UnreadNotifications > 0 ? c.UnreadNotifications.ToString() : "")</td>
+                        <td><a href="@Url.Action("Detail","Case",new{area="ExternalPortal",id=c.FileMasterId})" class="btn-primary" style="font-size:var(--dws-fs-sm);padding:4px 10px">View</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    <div style="margin-top:var(--dws-space-4)">
+        <a href="@Url.Action("Submit","PropertyClaim",new{area="ExternalPortal"})">+ Claim another property</a>
+    </div>
+</div>
