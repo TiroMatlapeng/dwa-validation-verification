@@ -644,6 +644,10 @@ public class FileMasterController : Controller
     [Authorize(Policy = DwsPolicies.CanCapture)]
     public async Task<IActionResult> MarkCommentRead(Guid id, Guid commentId, CancellationToken ct)
     {
+        var fm = await _fileMasterRepository.GetByIdAsync(id);
+        if (fm is null) return NotFound();
+        if (!_scope.IsInScope(fm, User)) return Forbid();
+
         var comment = await _context.CaseComments.FindAsync(new object[] { commentId }, ct);
         if (comment is null || comment.FileMasterId != id) return NotFound();
         comment.ReadByDWSDate = DateTime.UtcNow;
@@ -656,6 +660,10 @@ public class FileMasterController : Controller
     public async Task<IActionResult> PortalReply(Guid id, Guid? parentCommentId,
         string replyText, CancellationToken ct)
     {
+        var fm = await _fileMasterRepository.GetByIdAsync(id);
+        if (fm is null) return NotFound();
+        if (!_scope.IsInScope(fm, User)) return Forbid();
+
         if (string.IsNullOrWhiteSpace(replyText))
         {
             TempData["Error"] = "Reply text cannot be empty.";
@@ -667,7 +675,7 @@ public class FileMasterController : Controller
         {
             CommentId = Guid.NewGuid(),
             FileMasterId = id,
-            ApplicationUserId = userId is not null ? Guid.Parse(userId) : null,
+            ApplicationUserId = Guid.TryParse(userId, out var callerGuid) ? callerGuid : null,
             AuthorType = "DWSOfficial",
             ParentCommentId = parentCommentId,
             CommentText = replyText,

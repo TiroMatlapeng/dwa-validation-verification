@@ -12,7 +12,7 @@
         Portal Inbox
         @if (unreadCount > 0)
         {
-            <span class="badge badge--amber" style="margin-left:8px">@unreadCount unread</span>
+            <span class="badge badge-gold" style="margin-left:8px">@unreadCount unread</span>
         }
     </div>
     <div class="panel__body">
@@ -83,7 +83,7 @@
                         <strong>@d.FileName</strong>
                         — @d.DocumentType
                         <span class="text-muted" style="font-size:var(--dws-fs-xs)"> @d.UploadDate.ToString("dd MMM yyyy")</span>
-                        <span class="badge @(d.VirusScanStatus == "Clean" ? "badge--green" : d.VirusScanStatus == "Infected" ? "badge--red" : "badge--amber")"
+                        <span class="badge @(d.VirusScanStatus == "Clean" ? "badge-green" : d.VirusScanStatus == "Infected" ? "badge-red" : "badge-gold")"
                               style="margin-left:6px;font-size:10px">@(d.VirusScanStatus ?? "Pending")</span>
                     </li>
                 }
@@ -103,6 +103,10 @@
                 <div style="padding:6px 0;border-bottom:1px solid var(--dws-border);font-size:var(--dws-fs-sm)">
                     Lodged @o.LodgedDate.ToString("dd MMM yyyy")
                     — Status: <strong>@o.Status</strong>
+                    @if (!string.IsNullOrEmpty(o.Grounds))
+                    {
+                        <p style="margin:4px 0;font-size:var(--dws-fs-sm)">@o.Grounds</p>
+                    }
                     @if (!string.IsNullOrEmpty(o.ResolutionNotes))
                     {
                         <p style="margin:4px 0;color:var(--dws-text-muted)">@o.ResolutionNotes</p>
