@@ -1,0 +1,55 @@
+@model IEnumerable<PublicUserProperty>
+@{
+    ViewData["Title"] = "Pending Property Claims";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h2>Pending Property Claims</h2>
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger">@err</div>
+}
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No pending claims.</p>
+}
+else
+{
+    <table class="table table-sm table-hover">
+        <thead>
+            <tr>
+                <th>User</th><th>Email</th><th>Property</th><th>SGCode</th>
+                <th>Requested</th><th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td>@c.PublicUser?.FirstName @c.PublicUser?.LastName</td>
+                    <td>@c.PublicUser?.EmailAddress</td>
+                    <td>@c.Property?.PropertyReferenceNumber</td>
+                    <td>@c.Property?.SGCode</td>
+                    <td>@c.RequestedDate.ToString("dd MMM yyyy")</td>
+                    <td>
+                        <form method="post" asp-action="Approve" asp-controller="PropertyClaims"
+                              asp-route-id="@c.Id" style="display:inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form method="post" asp-action="Reject" asp-controller="PropertyClaims"
+                              asp-route-id="@c.Id" style="display:inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="reason" value="Evidence not sufficient." />
+                            <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

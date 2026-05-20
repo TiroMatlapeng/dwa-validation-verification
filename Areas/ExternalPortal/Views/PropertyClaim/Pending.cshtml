@@ -1,0 +1,11 @@
+@{
+    ViewData["Title"] = "Claim Submitted";
+    Layout = "~/Areas/ExternalPortal/Views/Shared/_PortalLayout.cshtml";
+}
+<div class="portal-card">
+    <h1>Claim Submitted</h1>
+    <p>Your property claim has been submitted and is awaiting review by a DWS official. You will receive an email when it is approved.</p>
+    <div class="actions">
+        <a href="@Url.Action("Index", "Dashboard", new { area = "ExternalPortal" })" class="btn-primary">Back to Dashboard</a>
+    </div>
+</div>

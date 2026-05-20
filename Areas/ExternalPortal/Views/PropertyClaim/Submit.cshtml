@@ -1,0 +1,21 @@
+@model dwa_ver_val.Areas.ExternalPortal.ViewModels.PropertyClaimViewModel
+@{
+    ViewData["Title"] = "Claim a Property";
+    Layout = "~/Areas/ExternalPortal/Views/Shared/_PortalLayout.cshtml";
+}
+<div class="portal-card">
+    <h1>Claim a Property</h1>
+    <p class="muted">Enter your property's SGCode (e.g. T1234) or reference number to link it to your account. A DWS official will approve your claim before you can view case data.</p>
+
+    <form asp-action="Submit" asp-controller="PropertyClaim" asp-area="ExternalPortal" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="errors" style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+        <label asp-for="PropertyCode"></label>
+        <input asp-for="PropertyCode" type="text" placeholder="e.g. T1234 or REF-001" autocomplete="off" />
+        <span asp-validation-for="PropertyCode" class="errors" style="padding:4px 0;border:none;background:none;font-size:var(--dws-fs-xs)"></span>
+        <div class="actions">
+            <button type="submit" class="btn-primary">Submit Claim</button>
+            <a href="@Url.Action("Index", "Dashboard", new { area = "ExternalPortal" })">Cancel</a>
+        </div>
+    </form>
+</div>
