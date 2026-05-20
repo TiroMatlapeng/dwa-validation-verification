@@ -729,6 +729,12 @@ public class FileMasterController : Controller
                 new { Value = "S33_3_Declaration", Text = "S33(3) Declaration" }
             },
             "Value", "Text", fileMaster?.AssessmentTrack);
+
+        ViewBag.IrrigationBoards = new SelectList(
+            await _context.IrrigationBoards.OrderBy(b => b.IrrigationBoardName).ToListAsync(),
+            nameof(IrrigationBoard.IrrigationBoardId),
+            nameof(IrrigationBoard.IrrigationBoardName),
+            fileMaster?.S33_2_IrrigationBoardId);
     }
 
     // ── Portal Inbox ──

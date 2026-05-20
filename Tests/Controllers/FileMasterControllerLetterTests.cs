@@ -322,6 +322,70 @@ public class FileMasterControllerLetterTests
             Assert.Contains(key, allExpected);
     }
 
+    [Fact]
+    public async Task Edit_Post_SavesS33_2Fields()
+    {
+        // The Edit POST passes the entire model-bound FileMaster to UpdateAsync.
+        // This test verifies S33_2_* fields are included in the update call.
+        var db = TestDbContextFactory.Create();
+        var board = new IrrigationBoard { IrrigationBoardId = Guid.NewGuid(), IrrigationBoardName = "Board A" };
+        db.IrrigationBoards.Add(board);
+        var prop = new Property { PropertyId = Guid.NewGuid() };
+        db.Properties.Add(prop);
+        var fm = SeedHelper.NewFileMaster(prop.PropertyId);
+        fm.AssessmentTrack = "S33_2_Declaration";
+        db.FileMasters.Add(fm);
+        await db.SaveChangesAsync();
+
+        FileMaster? capturedUpdate = null;
+
+        var repo = new Mock<IFileMaster>();
+        // GetByIdAsync used for scope check — return a fresh (untracked by db) instance to avoid EF identity conflict.
+        repo.Setup(r => r.GetByIdAsync(fm.FileMasterId))
+            .ReturnsAsync(new FileMaster
+            {
+                FileMasterId = fm.FileMasterId,
+                PropertyId = prop.PropertyId,
+                RegistrationNumber = fm.RegistrationNumber,
+                SurveyorGeneralCode = fm.SurveyorGeneralCode,
+                PrimaryCatchment = fm.PrimaryCatchment,
+                QuaternaryCatchment = fm.QuaternaryCatchment,
+                FarmName = fm.FarmName,
+                FarmNumber = fm.FarmNumber,
+                FarmPortion = fm.FarmPortion,
+                RegistrationDivision = fm.RegistrationDivision,
+                FileCreatedDate = fm.FileCreatedDate
+            });
+        repo.Setup(r => r.UpdateAsync(It.IsAny<FileMaster>()))
+            .Callback<FileMaster>(f => capturedUpdate = f)
+            .ReturnsAsync((FileMaster f) => f);
+
+        var scope = new Mock<IScopedCaseQuery>();
+        scope.Setup(s => s.IsInScope(It.IsAny<FileMaster>(), It.IsAny<ClaimsPrincipal>())).Returns(true);
+
+        var (sut, _) = BuildLetterController(
+            repo.Object, db, scope.Object,
+            new Mock<ILetterService>().Object,
+            new Mock<IWorkflowService>().Object,
+            new Mock<INotificationService>().Object);
+
+        // The POST-bound model includes S33_2 fields — as if the form was filled out.
+        var postFm = SeedHelper.NewFileMaster(prop.PropertyId);
+        postFm.FileMasterId = fm.FileMasterId;
+        postFm.AssessmentTrack = "S33_2_Declaration";
+        postFm.S33_2_IrrigationBoardId = board.IrrigationBoardId;
+        postFm.S33_2_RatesPaidConfirmed = true;
+        postFm.S33_2_ScheduledAreaName = "Upper Blyde Scheme";
+
+        var result = await sut.Edit(fm.FileMasterId, postFm);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.NotNull(capturedUpdate);
+        Assert.Equal(board.IrrigationBoardId, capturedUpdate!.S33_2_IrrigationBoardId);
+        Assert.True(capturedUpdate.S33_2_RatesPaidConfirmed);
+        Assert.Equal("Upper Blyde Scheme", capturedUpdate.S33_2_ScheduledAreaName);
+    }
+
     private static (FileMasterController controller, TempDataDictionary tempData) BuildLetterController(
         IFileMaster repo,
         ApplicationDBContext db,

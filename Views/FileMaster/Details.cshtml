@@ -59,6 +59,25 @@
     </div>
 </div>
 
+@if (fm.AssessmentTrack == "S33_2_Declaration")
+{
+    <div class="card" style="max-width: 900px; margin-top: 12px; border-left: 4px solid var(--dws-primary);">
+        <div class="form-section-title">S33(2) Kader Asmal Declaration Data</div>
+        <div class="form-row">
+            <div class="form-group">
+                <div class="kv"><div class="form-label">Irrigation Board</div><div>@(fm.S33_2_IrrigationBoard?.IrrigationBoardName ?? "--")</div></div>
+                <div class="kv"><div class="form-label">Scheduled Area</div><div>@(fm.S33_2_ScheduledAreaName ?? "--")</div></div>
+                <div class="kv">
+                    <div class="form-label">Rates paid to 30 Sep 1998</div>
+                    <div style="color:@(fm.S33_2_RatesPaidConfirmed ? "var(--dws-success)" : "var(--dws-danger)"); font-weight:600;">
+                        @(fm.S33_2_RatesPaidConfirmed ? "Confirmed" : "Not yet confirmed")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <div class="card" style="max-width: 900px; margin-top: 20px;">
     <div class="form-section-title">Data Capture</div>
     <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;">

@@ -60,6 +60,31 @@
             </div>
         </div>
 
+        @if (Model?.AssessmentTrack == "S33_2_Declaration")
+        {
+            <div class="form-section-title" style="margin-top: 20px;">S33(2) Kader Asmal Declaration</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="S33_2_ScheduledAreaName" class="form-label">Scheduled Area Name</label>
+                    <input asp-for="S33_2_ScheduledAreaName" class="form-control" style="width:100%;" placeholder="e.g. Upper Blyde Irrigation Scheme" />
+                </div>
+                <div class="form-group">
+                    <label asp-for="S33_2_IrrigationBoardId" class="form-label">Irrigation Board</label>
+                    <select asp-for="S33_2_IrrigationBoardId" asp-items="@(ViewBag.IrrigationBoards as SelectList)" class="form-control" style="width:100%;">
+                        <option value="">-- Select irrigation board --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+                    <input asp-for="S33_2_RatesPaidConfirmed" type="checkbox" class="form-check-input" id="S33_2_RatesPaid" />
+                    <label for="S33_2_RatesPaid" class="form-label" style="margin:0;">
+                        Prescribed rates were paid up to <strong>30 September 1998</strong>
+                    </label>
+                </div>
+            </div>
+        }
+
         <!-- Farm Details -->
         <div class="form-section-title" style="margin-top: 20px;">Farm Details</div>
 

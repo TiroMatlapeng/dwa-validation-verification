@@ -76,6 +76,7 @@ public class FileMasterRepository : IFileMaster
             .Include(fm => fm.Validator)
             .Include(fm => fm.CapturePerson)
             .Include(fm => fm.Entitlement)
+            .Include(fm => fm.S33_2_IrrigationBoard)
             .Include(fm => fm.LetterIssuances)
                 .ThenInclude(l => l.LetterType)
             .FirstOrDefaultAsync(fm => fm.FileMasterId == id);
