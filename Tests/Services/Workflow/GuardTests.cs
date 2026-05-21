@@ -637,3 +637,110 @@ public class Cp11FileCompilationGuardTests
         Assert.True(result.Allowed);
     }
 }
+
+// -----------------------------------------------------------------------
+// Cp19PajaChecklistGuard
+// -----------------------------------------------------------------------
+public class Cp19PajaChecklistGuardTests
+{
+    private static ApplicationDBContext NewDb() =>
+        new ApplicationDBContext(new DbContextOptionsBuilder<ApplicationDBContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options);
+
+    private static FileMaster MinimalCase() => new FileMaster
+    {
+        FileMasterId         = Guid.NewGuid(),
+        PropertyId           = Guid.NewGuid(),
+        RegistrationNumber   = "WARMS-PAJA",
+        SurveyorGeneralCode  = "SG-PAJA",
+        PrimaryCatchment     = "A21",
+        QuaternaryCatchment  = "A21A",
+        FarmName             = "PAJAFarm",
+        FarmNumber           = 1,
+        RegistrationDivision = "TD",
+        FarmPortion          = "0"
+    };
+
+    private static GuardContext TargetingLetter3(FileMaster fm) =>
+        new(fm,
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_ELUConfirmed",   DisplayOrder = 30, Phase = "Verification" },
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter3Issued",  DisplayOrder = 29, Phase = "Verification" });
+
+    private static GuardContext NotTargetingLetter3(FileMaster fm) =>
+        new(fm,
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP_PrePublicReview",    DisplayOrder = 17, Phase = "Verification" },
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP_StakeholderWorkshop", DisplayOrder = 18, Phase = "Verification" });
+
+    [Fact]
+    public async Task Cp19_DeniesWhenNoChecklistExists()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        db.FileMasters.Add(fm);
+        await db.SaveChangesAsync();
+
+        var sut = new Cp19PajaChecklistGuard(db);
+        var result = await sut.CheckAsync(TargetingLetter3(fm));
+        Assert.False(result.Allowed);
+        Assert.Contains("PAJA checklist", result.Reason);
+    }
+
+    [Fact]
+    public async Task Cp19_DeniesWhenChecklistExistsButIncomplete()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        db.FileMasters.Add(fm);
+        db.PAJAChecklists.Add(new PAJAChecklist
+        {
+            PAJAChecklistId       = Guid.NewGuid(),
+            FileMasterId          = fm.FileMasterId,
+            FactualBasis          = "Present",
+            LegalBasis            = "Present",
+            UserInputConsideration = "Present",
+            FinalReasoning        = null,   // missing — IsComplete == false
+            CompletedAt           = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var sut = new Cp19PajaChecklistGuard(db);
+        var result = await sut.CheckAsync(TargetingLetter3(fm));
+        Assert.False(result.Allowed);
+        Assert.Contains("incomplete", result.Reason);
+    }
+
+    [Fact]
+    public async Task Cp19_AllowsWhenChecklistComplete()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        db.FileMasters.Add(fm);
+        db.PAJAChecklists.Add(new PAJAChecklist
+        {
+            PAJAChecklistId        = Guid.NewGuid(),
+            FileMasterId           = fm.FileMasterId,
+            FactualBasis           = "The water use existed during the qualifying period.",
+            LegalBasis             = "Authorised by riparian right under the old Water Act.",
+            UserInputConsideration = "User confirmed use in writing.",
+            FinalReasoning         = "Use is lawful — ELU confirmed.",
+            CompletedAt            = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var sut = new Cp19PajaChecklistGuard(db);
+        var result = await sut.CheckAsync(TargetingLetter3(fm));
+        Assert.True(result.Allowed);
+    }
+
+    [Fact]
+    public async Task Cp19_PassesWhenNotTargetingLetter3()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        // No PAJAChecklist — guard must short-circuit.
+        var sut = new Cp19PajaChecklistGuard(db);
+        var result = await sut.CheckAsync(NotTargetingLetter3(fm));
+        Assert.True(result.Allowed);
+    }
+}

@@ -227,3 +227,29 @@ public class Cp11FileCompilationGuard : ITransitionGuard
         return GuardResult.Ok;
     }
 }
+
+/// <summary>
+/// Targeting S35_Letter3Issued (ELU certificate) requires the PAJA four-field
+/// checklist to be completed and marked complete.
+/// </summary>
+public class Cp19PajaChecklistGuard : ITransitionGuard
+{
+    private readonly ApplicationDBContext _db;
+    public Cp19PajaChecklistGuard(ApplicationDBContext db) { _db = db; }
+
+    public async Task<GuardResult> CheckAsync(GuardContext ctx)
+    {
+        if (ctx.TargetState.StateName != "S35_Letter3Issued") return GuardResult.Ok;
+
+        var checklist = await _db.PAJAChecklists
+            .FirstOrDefaultAsync(c => c.FileMasterId == ctx.FileMaster.FileMasterId);
+
+        if (checklist is null)
+            return GuardResult.Deny("PAJA checklist must be completed before Letter 3 (ELU certificate) can be issued.");
+
+        if (!checklist.IsComplete)
+            return GuardResult.Deny("PAJA checklist is incomplete — all four sections must be filled and the checklist must be marked complete before Letter 3 can be issued.");
+
+        return GuardResult.Ok;
+    }
+}
