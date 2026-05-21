@@ -28,6 +28,8 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
       serviceAccountName: {{ include "dwa-vv.fullname" . }}
+      imagePullSecrets:
+        - name: acr-pull-secret
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

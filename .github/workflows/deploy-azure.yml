@@ -61,6 +61,15 @@ jobs:
           echo "${{ secrets.KUBECONFIG_DEV }}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
 
+      - name: Create / refresh ACR pull secret
+        run: |
+          kubectl create secret docker-registry acr-pull-secret \
+            --docker-server=${{ env.ACR_LOGIN_SERVER }} \
+            --docker-username=${{ secrets.ACR_USERNAME }} \
+            --docker-password=${{ secrets.ACR_PASSWORD }} \
+            --namespace ${{ env.HELM_NAMESPACE }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Helm upgrade / install
         run: |
           helm upgrade --install ${{ env.HELM_RELEASE }} deploy/helm/dwa-vv \
