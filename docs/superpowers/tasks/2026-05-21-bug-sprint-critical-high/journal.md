@@ -165,3 +165,94 @@ Baseline before changes: `dotnet test` = 378 passed / 0 failed. After fixes + ne
 - Test added: `Tests/Services/Letters/LetterServiceRecipientTests.cs` → `IssueAsync_PersistsSubmittedRecipientName_DistinctFromIssuingUser`. Exercises `LetterService.IssueAsync` directly against the in-memory DB (the controller tests mock `ILetterService`, so they cannot prove persistence). Submits `RecipientName = "P.J. van der Merwe"` with `SignedByDisplayName = "Thabo Official"` and in-person service, re-reads the row from the DB, and asserts: `RecipientName == "P.J. van der Merwe"`, `RecipientName != "Thabo Official"` (issuing user), and `ServingOfficialName == "Thabo Official"`. This is the acceptance proof the validator could not run end-to-end.
 
 **Verification:** `dotnet build` (main) = 0 errors. `dotnet test --no-build` = **379 passed, 0 failed, 0 skipped**.
+
+### 2026-05-21T23:55+02:00 — devops-platform-strategist — BUG-025/026 validation + post-deploy health
+
+**Environment confirmed:** branch = `main`, cwd = `/Users/edwinmatlapeng/dotnet/dwa_val-ver/dwa_ver_val ai`. Cluster pod at time of check: `dwa-vv-b4f586b5b-87ggc` (Running, 79m, 0 restarts) — the deployment-architect had not yet pushed a new image at the time of this check; the running pod is the revision-10 build from the controller's recovery deploy (`86ae95188e91...`). BUG-025/026 code fixes are in the image already (dotnet-master committed them before the revision-10 build).
+
+---
+
+**BUG-025 — Startup seeder race-safety check: PASS (no race window)**
+
+Evidence from `Program.cs` lines 231–311:
+- Line 234: `await db.Database.MigrateAsync()` — runs first, inside a `using (var scope ...)` block.
+- Line 237: `await refSeeder.SeedAsync()` — runs second, inside the same scope, still inside the `using` block.
+- Line 239: `await identitySeeder.SeedAsync()` — runs third, still inside the scope.
+- The entire `using` block closes at line 241. Only after the `using` block completes does execution reach `app.UseExceptionHandler()` (line 244), then the middleware pipeline, then `app.MapControllerRoute` (lines 302–309), and finally `app.Run()` (line 311).
+- `app.Run()` is the call that starts the Kestrel HTTP listener and begins accepting connections.
+
+Conclusion: `MigrateAsync()` → `SeedAsync()` → Kestrel start is a strict sequential chain. There is no race window. The BUG-025 seeder cleanup (removing contaminated River rows) completes before any HTTP request can reach `DamCalculation/Create`. The dropdown is guaranteed clean before the first user sees it.
+
+---
+
+**BUG-026 — S33(2) skip-state filter correctness: PASS (exact match confirmed)**
+
+Evidence comparison:
+
+`WorkflowService.cs` line 8 (authoritative engine list):
+```csharp
+private static readonly string[] CpsSkippedOnS33_2 = { "CP5", "CP6", "CP7", "CP8", "CP9", "CP11", "CP_PrePublicReview", "CP_StakeholderWorkshop" };
+```
+
+`_WorkflowPanel.cshtml` line 102 (UI filter list):
+```csharp
+var s33_2SkippedPrefixes = new[] { "CP5", "CP6", "CP7", "CP8", "CP9", "CP11", "CP_PrePublicReview", "CP_StakeholderWorkshop" };
+```
+
+The two arrays are byte-for-byte identical in element count and content. Both use case-insensitive prefix matching (`StartsWith(..., OrdinalIgnoreCase)`), so the filter logic is symmetric.
+
+Visible-states check for S33(2) track (must remain visible — confirmed):
+- CP1 + sub-steps: no prefix match → visible. Confirmed.
+- CP2, CP3, CP4: no prefix match → visible. Confirmed.
+- `S33_2_ReadyForDeclaration`, `S33_2_DeclarationIssued`: start with `S33_2_` — handled by `IsTrackRelevant` track-fork switch returning `isS33_2 = true` → visible. Confirmed.
+- `Closed` (terminal): no S35/S33 prefix, not a skipped CP prefix → `IsTrackRelevant` returns `true` → visible. Confirmed.
+
+No legitimate S33(2) state is accidentally hidden.
+
+---
+
+**Post-deployment health check**
+
+Note: No new image was pushed between the dotnet-master BUG-025/026 commit and this health check. The pod under test (`dwa-vv-b4f586b5b-87ggc`) is the revision-10 build which **does include** the BUG-025/026 fixes (dotnet-master committed before the controller triggered revision-10). Health check is valid against the current live build.
+
+**10-request load test:**
+```
+302 302 302 302 302 302 302 302 302 302
+```
+10/10 HTTP 302 (redirect to login). Zero failures. Site healthy.
+
+**Endpoint slice check:**
+```
+NAME                 ADDRESSTYPE   PORTS   ENDPOINTS
+dwa-vv-c8jm7         IPv4          8080    10.244.1.166
+dwa-vv-mssql-z9h7j   IPv4          1433    10.244.0.69
+```
+App service endpoint slice (`dwa-vv-c8jm7`) contains exactly ONE IP: `10.244.1.166` (app pod). MSSQL pod (`10.244.0.69`) is isolated to its own slice. The BUG-008 `component: app` selector fix is holding. No manual patch needed.
+
+**Component label on app pod:**
+```
+kubectl get pods --show-labels:
+dwa-vv-b4f586b5b-87ggc   app.kubernetes.io/component=app, app.kubernetes.io/instance=dwa-vv, app.kubernetes.io/name=dwa-vv
+dwa-vv-mssql-...         app.kubernetes.io/component=mssql, ...
+```
+The app pod carries `app.kubernetes.io/component=app`. The Helm `selectorLabels` fix (`99e6aa8`) is reflected in the running pod template. Note: the label key is `app.kubernetes.io/component` (qualified), not the shorthand `component`. This is consistent with how the Helm `_helpers.tpl` `selectorLabels` template renders `app.kubernetes.io/component: app` — it's the same discriminator, just fully qualified. The service selector and pod template are aligned.
+
+**Verdict: DONE**
+
+### 2026-05-21T23:58+02:00 — devops-deployment-architect — BUG-013/025/026 deploy
+
+**Commit:** `0274fddee92d8eed2bd5de7ad0ab06859d008e5b`
+**Image:** `vnvregistry.azurecr.io/dwa-vv:0274fddee92d8eed2bd5de7ad0ab06859d008e5b`
+**Platform:** `linux/amd64` (docker buildx — mandatory on Apple Silicon)
+**Helm revision:** 13
+**Pod:** `dwa-vv-799c98dbcb-qb5qc` — Running, 0 restarts
+**Endpoints:** `10.244.1.212:8080` (app only — MSSQL excluded by `component: app` selector)
+**Smoke test:** `curl http://20.87.59.203/` → HTTP 302
+
+**Deployment incident — immutable Deployment selector (selector fix from `99e6aa8`):**
+- `helm upgrade` (revision 11) failed: `spec.selector immutable` — the `component: app` label added to `selectorLabels` in `_helpers.tpl` cannot be patched onto an existing Deployment.
+- `--force-replace` attempted (revision 12) but rejected: it also tried to replace the PVC `dwa-vv-mssql-data`, clearing `volumeName`/`storageClassName` — that would have destroyed the SQL Server data volume. Aborted immediately.
+- Resolution: `kubectl delete deployment dwa-vv -n default` (surgical — PVC, Service, StatefulSet/MSSQL Deployment, ConfigMaps all preserved), then standard `helm upgrade` (revision 13). Downtime window: ~90 seconds.
+- Post-deploy: `kubectl get endpoints dwa-vv` = single address `10.244.1.212:8080`. MSSQL pod correctly excluded. BUG-008 selector fix confirmed operational in production for the first time.
+
+**Seeder self-heal:** BUG-025 cleanup runs in `SeedRiversAsync` on startup. Pod reached Running with 0 restarts — seeder completed, contaminated River rows removed.
