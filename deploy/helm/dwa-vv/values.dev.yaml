@@ -1,10 +1,15 @@
-# Dev / demo cluster overrides.  Apply on top of values.yaml:
-#   helm upgrade --install dwa-vv deploy/helm/dwa-vv -f deploy/helm/dwa-vv/values.dev.yaml
+# Dev / demo cluster overrides (VnV-Project / PBT-DEV Subscription, southafricanorth).
 #
-# Stage 2a testing path: NO domain, NO TLS, NO ingress.
-# Service is exposed as a LoadBalancer so the AKS cluster gets a public IP.
-# Browse to http://<external-ip>/ExternalPortal/Account/Register to test.
-# Replace this config with values.prod.yaml + ingress when a real domain lands.
+# Deploy command (from repo root, after setting env vars):
+#   helm upgrade --install dwa-vv deploy/helm/dwa-vv \
+#     -f deploy/helm/dwa-vv/values.dev.yaml \
+#     --set image.tag=$IMAGE_TAG \
+#     --set secrets.connectionString="$CONN_STR" \
+#     --set secrets.demoPwd="$DEMO_PWD" \
+#     --set mssql.saPassword="$MSSQL_SA_PASSWORD"
+#
+# NO domain, NO TLS, NO ingress — raw LoadBalancer IP for now.
+# Browse to http://<external-ip> once deployed.
 
 replicaCount: 1
 
@@ -22,30 +27,40 @@ resources:
     cpu: 500m
     memory: 512Mi
 
-# IP-only testing — skip ingress, expose pod via LoadBalancer.
-# AKS provisions an Azure public IP; kubectl get svc dwa-vv prints the EXTERNAL-IP.
+# IP-only — AKS provisions a public IP; kubectl get svc dwa-vv shows EXTERNAL-IP.
 service:
   type: LoadBalancer
   port: 80
   targetPort: 8080
 
 ingress:
-  enabled: false        # No domain yet — using raw LoadBalancer IP.
+  enabled: false
   host: ""
   tls:
     enabled: false
 
-# Override these per-environment. provision.sh prints the values to export.
+# Dev uses a plain K8s Secret instead of Key Vault — no CSI driver needed.
+secrets:
+  useKeyVault: false
+  # Real values injected by GitHub Actions via --set; placeholders committed here.
+  connectionString: ""
+  demoPwd: ""
+  popiaAck: "true"
+
+# Workload identity not needed in dev (no Key Vault).
 workloadIdentity:
   clientId: ""
   tenantId: ""
 
 keyVault:
-  name: kv-dwa-vv-aks    # matches AZ_KV default in deploy/aks/provision.sh
+  name: ""
 
-# Stage 2a uses LocalDiskFileStorage (no Blob yet).
-# replicaCount: 1 above ensures DataProtection keys + uploads stay coherent
-# until Stage 2b wires Azure Blob.
+# SQL Server runs as a pod in the cluster.
+mssql:
+  enabled: true
+  saPassword: ""        # injected by GitHub Actions via --set
+
+# Single replica + local disk = safe for dev (no split-brain on uploads).
 blobStore:
   useLocalDisk: true
   pvcName: ""

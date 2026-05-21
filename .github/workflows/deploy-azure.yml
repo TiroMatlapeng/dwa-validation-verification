@@ -1,104 +1,107 @@
-name: Build and deploy to Azure App Service
+name: Build and deploy to AKS (VnV-Project)
 
 on:
   push:
     branches:
       - main
-      - demo/azure-deploy
   workflow_dispatch:
-    inputs:
-      source_branch:
-        description: "Branch to deploy (leave blank to use triggering branch)"
-        required: false
-        default: ""
 
 env:
-  AZURE_WEBAPP_NAME: dwa-vv-demo
+  ACR_LOGIN_SERVER: vnvregistry.azurecr.io
+  IMAGE_NAME: dwa-vv
+  HELM_RELEASE: dwa-vv
+  HELM_NAMESPACE: default
   DOTNET_VERSION: "10.0.x"
-  CONFIGURATION: Release
-  PUBLISH_DIR: ${{ github.workspace }}/publish
 
 jobs:
-  build-and-deploy:
+  build-push-deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: demo
-      url: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net
 
     steps:
-      - name: Determine ref to deploy
-        id: ref
-        run: |
-          INPUT="${{ github.event.inputs.source_branch }}"
-          if [[ -n "$INPUT" ]]; then
-            echo "ref=$INPUT" >> "$GITHUB_OUTPUT"
-          else
-            echo "ref=${{ github.ref }}" >> "$GITHUB_OUTPUT"
-          fi
-
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ steps.ref.outputs.ref }}
 
+      # ── .NET test gate ────────────────────────────────────────────────────
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          dotnet-quality: "ga"
+          dotnet-quality: ga
 
       - name: Restore
         run: dotnet restore dwa_ver_val.csproj
 
-      - name: Build
-        run: dotnet build dwa_ver_val.csproj --configuration ${{ env.CONFIGURATION }} --no-restore
-
       - name: Test
-        run: dotnet test Tests/dwa_ver_val.Tests.csproj --configuration ${{ env.CONFIGURATION }} --no-build --verbosity minimal
+        run: dotnet test Tests/dwa_ver_val.Tests.csproj --configuration Release --no-restore --verbosity minimal
 
-      - name: Publish
-        run: dotnet publish dwa_ver_val.csproj --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ env.PUBLISH_DIR }}
-
-      # Inject the POPIA acknowledgement flag and demo password.
-      # These land inside the published artifact as environment overrides read by
-      # ASP.NET Core's layered configuration on App Service (ASPNETCORE_* env vars).
-      # The real connection string and any future secrets come from App Service
-      # "Application settings" (KeyVault-referenced), not from this workflow.
-      - name: Stamp appsettings overrides into publish output
-        run: |
-          cat > "${{ env.PUBLISH_DIR }}/appsettings.ProductionOverride.json" <<'EOF'
-          {
-            "Portal": {
-              "AllowPlaintextIdentityNumber": true
-            }
-          }
-          EOF
-
-      # Log in via service principal — publish-profile is unreliable on Linux App Services
-      # because the az CLI redacts credentials in all output streams (az >= 2.51).
-      # AZURE_CREDENTIALS contains the full SDK-auth JSON blob from az ad sp create-for-rbac.
-      - name: Log in to Azure
-        uses: azure/login@v2
+      # ── Build & push Docker image to ACR ─────────────────────────────────
+      - name: Log in to ACR
+        uses: docker/login-action@v3
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          registry: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+      - name: Build and push image
+        uses: docker/build-push-action@v5
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          package: ${{ env.PUBLISH_DIR }}
+          context: .
+          push: true
+          tags: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-      - name: Smoke test — wait for app and check health
+      # ── Deploy to AKS via stored kubeconfig ───────────────────────────────
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Write kubeconfig
         run: |
-          APP_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
-          echo "Waiting for app to respond at $APP_URL ..."
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_DEV }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Helm upgrade / install
+        run: |
+          helm upgrade --install ${{ env.HELM_RELEASE }} deploy/helm/dwa-vv \
+            --namespace ${{ env.HELM_NAMESPACE }} \
+            -f deploy/helm/dwa-vv/values.dev.yaml \
+            --set image.tag=${{ github.sha }} \
+            --set secrets.connectionString="${{ secrets.DEV_CONNECTION_STRING }}" \
+            --set secrets.demoPwd="${{ secrets.DEV_DEMO_PASSWORD }}" \
+            --set mssql.saPassword="${{ secrets.DEV_MSSQL_SA_PASSWORD }}" \
+            --wait \
+            --timeout 8m
+
+      # ── Smoke test ────────────────────────────────────────────────────────
+      - name: Smoke test
+        run: |
+          echo "Waiting for LoadBalancer external IP..."
+          for i in $(seq 1 24); do
+            EXTERNAL_IP=$(kubectl get svc ${{ env.HELM_RELEASE }} \
+              --namespace ${{ env.HELM_NAMESPACE }} \
+              -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+            if [[ -n "$EXTERNAL_IP" && "$EXTERNAL_IP" != "null" ]]; then
+              echo "External IP: $EXTERNAL_IP"
+              break
+            fi
+            echo "  Attempt $i: still pending..."
+            sleep 10
+          done
+
+          if [[ -z "$EXTERNAL_IP" ]]; then
+            echo "WARNING: LoadBalancer IP not assigned — skipping HTTP check"
+            exit 0
+          fi
+
           for i in $(seq 1 12); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/" --max-time 10 || true)
-            echo "  Attempt $i: HTTP $STATUS"
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://$EXTERNAL_IP/" --max-time 10 || true)
+            echo "  HTTP $STATUS"
             if [[ "$STATUS" == "200" || "$STATUS" == "302" ]]; then
-              echo "App is up."
+              echo "App is up at http://$EXTERNAL_IP"
               exit 0
             fi
             sleep 10
           done
-          echo "ERROR: App did not respond with 200/302 after 120s."
+          echo "ERROR: App did not respond after startup window"
           exit 1

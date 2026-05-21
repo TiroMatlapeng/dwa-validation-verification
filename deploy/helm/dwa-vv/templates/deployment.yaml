@@ -19,8 +19,9 @@ spec:
     metadata:
       labels:
         {{- include "dwa-vv.selectorLabels" . | nindent 8 }}
-        # Required label for Azure Workload Identity webhook injection
+        {{- if .Values.secrets.useKeyVault }}
         azure.workload.identity/use: "true"
+        {{- end }}
       annotations:
         # Force pod restart when config or secret changes.
         # The deployment SHA is appended by the deploy script via --set podAnnotations.
@@ -63,12 +64,12 @@ spec:
                   name: {{ include "dwa-vv.fullname" . }}-secrets
                   key: Portal__AllowPlaintextIdentityNumber
 
-          # CSI volume mount is required to trigger the SecretProviderClass reconciliation
-          # (even though we primarily use env vars from the synced K8s Secret).
           volumeMounts:
+            {{- if .Values.secrets.useKeyVault }}
             - name: kv-secrets
               mountPath: /mnt/secrets
               readOnly: true
+            {{- end }}
             {{- if .Values.blobStore.useLocalDisk }}
             {{- if .Values.blobStore.pvcName }}
             - name: uploads
@@ -98,12 +99,14 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
 
       volumes:
+        {{- if .Values.secrets.useKeyVault }}
         - name: kv-secrets
           csi:
             driver: secrets-store.csi.k8s.io
             readOnly: true
             volumeAttributes:
               secretProviderClass: {{ include "dwa-vv.spcName" . }}
+        {{- end }}
         {{- if .Values.blobStore.useLocalDisk }}
         {{- if .Values.blobStore.pvcName }}
         - name: uploads

@@ -12,9 +12,20 @@ replicaCount: 2
 
 image:
   # ACR login server — set during deploy: <acr-name>.azurecr.io/dwa-vv
-  repository: dwaregistry.azurecr.io/dwa-vv
+  repository: vnvregistry.azurecr.io/dwa-vv
   tag: latest
   pullPolicy: IfNotPresent
+
+# ── Secret source ─────────────────────────────────────────────────────────────
+# useKeyVault: true  → secrets pulled from Azure Key Vault via CSI driver (prod)
+# useKeyVault: false → secrets stored in a plain K8s Secret created by this chart (dev)
+secrets:
+  useKeyVault: true
+  # Used only when useKeyVault: false — values written directly into the K8s Secret.
+  # In CI, pass via --set secrets.connectionString=... (never commit real values here).
+  connectionString: ""
+  demoPwd: ""
+  popiaAck: "true"
 
 # Azure Workload Identity — bind the K8s service account to a managed identity
 # that has Key Vault Secrets User on the KV.  Set in environment-specific values.
@@ -29,6 +40,20 @@ keyVault:
     connectionString: ConnectionStrings--Default         # maps to ConnectionStrings:Default
     demoPwd:          Identity--InitialDemoPassword
     popiaAck:         Portal--AllowPlaintextIdentityNumber
+
+# ── In-cluster SQL Server (dev only) ─────────────────────────────────────────
+mssql:
+  enabled: false
+  image: mcr.microsoft.com/mssql/server:2022-latest
+  saPassword: ""        # Set via --set mssql.saPassword=... in CI; never commit here
+  storageSize: 10Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
 
 service:
   type: ClusterIP

@@ -1,0 +1,15 @@
+{{- if .Values.mssql.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "dwa-vv.fullname" . }}-mssql-data
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "dwa-vv.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.mssql.storageSize }}
+{{- end }}

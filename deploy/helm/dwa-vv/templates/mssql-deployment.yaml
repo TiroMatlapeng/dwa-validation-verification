@@ -1,0 +1,84 @@
+{{- if .Values.mssql.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dwa-vv.fullname" . }}-mssql
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "dwa-vv.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mssql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "dwa-vv.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: mssql
+  strategy:
+    type: Recreate   # single replica with PVC — Recreate avoids mount conflicts
+  template:
+    metadata:
+      labels:
+        {{- include "dwa-vv.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: mssql
+    spec:
+      securityContext:
+        fsGroup: 10001    # mssql group inside the container image
+      containers:
+        - name: mssql
+          image: {{ .Values.mssql.image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mssql
+              containerPort: 1433
+              protocol: TCP
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_PID
+              value: Developer
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "dwa-vv.fullname" . }}-mssql
+                  key: sa-password
+          volumeMounts:
+            - name: mssql-data
+              mountPath: /var/opt/mssql
+          resources:
+            {{- toYaml .Values.mssql.resources | nindent 12 }}
+          livenessProbe:
+            tcpSocket:
+              port: 1433
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 5
+          readinessProbe:
+            tcpSocket:
+              port: 1433
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+      volumes:
+        - name: mssql-data
+          persistentVolumeClaim:
+            claimName: {{ include "dwa-vv.fullname" . }}-mssql-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "dwa-vv.fullname" . }}-mssql
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "dwa-vv.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mssql
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "dwa-vv.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: mssql
+  ports:
+    - name: mssql
+      port: 1433
+      targetPort: 1433
+      protocol: TCP
+{{- end }}
