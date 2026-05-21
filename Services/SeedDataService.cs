@@ -564,34 +564,37 @@ public class SeedDataService
             ("CP8_DamVolumes",           "Verification", 14, false),
             ("CP9_SFRACalculated",       "Verification", 15, false),
 
+            // Phase: Verification — PRD CP11 File Compilation
+            ("CP11_FileCompiled",        "Verification", 16, false),
+
             // Phase: Verification — PRD CP12/CP13 (Pre-Public Review + Stakeholder Workshop)
-            ("CP_PrePublicReview",       "Verification", 16, false),
-            ("CP_StakeholderWorkshop",   "Verification", 17, false),
+            ("CP_PrePublicReview",       "Verification", 17, false),
+            ("CP_StakeholderWorkshop",   "Verification", 18, false),
 
             // Phase: Verification — Section 35 letter sub-states (Track A)
-            ("S35_Letter1Issued",            "Verification", 18, false),
-            ("S35_Letter1Responded",         "Verification", 19, false),
-            ("S35_Letter1ARequired",         "Verification", 20, false),
-            ("S35_Letter1AIssued",           "Verification", 21, false),
-            ("S35_Letter1AResponded",        "Verification", 22, false),
-            ("S35_AdditionalInfoRequired",   "Verification", 23, false),
-            ("S35_Letter2Issued",            "Verification", 24, false),
-            ("S35_Letter2Responded",         "Verification", 25, false),
-            ("S35_Letter2ARequired",         "Verification", 26, false),
-            ("S35_Letter2AIssued",           "Verification", 27, false),
-            ("S35_Letter3Issued",            "Verification", 28, false),
-            ("S35_ELUConfirmed",             "Verification", 29, false),
-            ("S35_UnlawfulUseFound",         "Verification", 30, false),
-            ("S35_Letter4AIssued",           "Verification", 31, false),
-            ("S35_Letter4And5Issued",        "Verification", 32, false),
+            ("S35_Letter1Issued",            "Verification", 19, false),
+            ("S35_Letter1Responded",         "Verification", 20, false),
+            ("S35_Letter1ARequired",         "Verification", 21, false),
+            ("S35_Letter1AIssued",           "Verification", 22, false),
+            ("S35_Letter1AResponded",        "Verification", 23, false),
+            ("S35_AdditionalInfoRequired",   "Verification", 24, false),
+            ("S35_Letter2Issued",            "Verification", 25, false),
+            ("S35_Letter2Responded",         "Verification", 26, false),
+            ("S35_Letter2ARequired",         "Verification", 27, false),
+            ("S35_Letter2AIssued",           "Verification", 28, false),
+            ("S35_Letter3Issued",            "Verification", 29, false),
+            ("S35_ELUConfirmed",             "Verification", 30, false),
+            ("S35_UnlawfulUseFound",         "Verification", 31, false),
+            ("S35_Letter4AIssued",           "Verification", 32, false),
+            ("S35_Letter4And5Issued",        "Verification", 33, false),
 
             // Phase: Verification — Section 33 declaration sub-states (Tracks B & C)
-            ("S33_2_ReadyForDeclaration",    "Verification", 33, false),
-            ("S33_2_DeclarationIssued",      "Verification", 34, false),
-            ("S33_3_DeclarationIssued",      "Verification", 35, false),
+            ("S33_2_ReadyForDeclaration",    "Verification", 34, false),
+            ("S33_2_DeclarationIssued",      "Verification", 35, false),
+            ("S33_3_DeclarationIssued",      "Verification", 36, false),
 
             // Terminal states
-            ("Closed",                       "Verification", 36, true),
+            ("Closed",                       "Verification", 37, true),
         };
 
         // Materialise existing rows once for efficient per-name lookup + drift

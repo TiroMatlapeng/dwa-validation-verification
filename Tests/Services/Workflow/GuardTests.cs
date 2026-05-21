@@ -336,3 +336,44 @@ public class GuardTests
         Assert.True(result.Allowed);
     }
 }
+
+// -----------------------------------------------------------------------
+// CP11 state seed verification
+// -----------------------------------------------------------------------
+public class Cp11SeedTests
+{
+    private static ApplicationDBContext NewDb() =>
+        new ApplicationDBContext(new DbContextOptionsBuilder<ApplicationDBContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options);
+
+    [Fact]
+    public async Task SeedWorkflowStates_InsertsCP11FileCompiledAt16()
+    {
+        using var db = NewDb();
+        var svc = new SeedDataService(db);
+        await svc.SeedAsync();
+
+        var state = await db.WorkflowStates
+            .SingleOrDefaultAsync(s => s.StateName == "CP11_FileCompiled");
+
+        Assert.NotNull(state);
+        Assert.Equal(16, state!.DisplayOrder);
+        Assert.Equal("Verification", state.Phase);
+        Assert.False(state.IsTerminal);
+    }
+
+    [Fact]
+    public async Task SeedWorkflowStates_PrePublicReviewIsAt17AfterCP11Inserted()
+    {
+        using var db = NewDb();
+        var svc = new SeedDataService(db);
+        await svc.SeedAsync();
+
+        var state = await db.WorkflowStates
+            .SingleOrDefaultAsync(s => s.StateName == "CP_PrePublicReview");
+
+        Assert.NotNull(state);
+        Assert.Equal(17, state!.DisplayOrder);
+    }
+}

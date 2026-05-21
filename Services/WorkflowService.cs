@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 public class WorkflowService : IWorkflowService
 {
     private const string S33_2_SkipTargetStateName = "S33_2_ReadyForDeclaration";
-    private static readonly string[] CpsSkippedOnS33_2 = { "CP5", "CP6", "CP7", "CP8", "CP9", "CP_PrePublicReview", "CP_StakeholderWorkshop" };
+    private static readonly string[] CpsSkippedOnS33_2 = { "CP5", "CP6", "CP7", "CP8", "CP9", "CP11", "CP_PrePublicReview", "CP_StakeholderWorkshop" };
 
     private readonly ApplicationDBContext _context;
     private readonly IEnumerable<ITransitionGuard> _guards;
