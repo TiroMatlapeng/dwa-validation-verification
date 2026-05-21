@@ -39,6 +39,7 @@ Selector labels
 {{- define "dwa-vv.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "dwa-vv.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: app
 {{- end }}
 
 {{/*
