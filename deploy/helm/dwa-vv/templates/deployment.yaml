@@ -34,6 +34,29 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
+      # Wait for SQL Server to accept TCP connections before starting the app.
+      # Without this, the app crashes on startup when Data Protection keys are
+      # persisted to the DB and SQL Server is still initialising (e.g. after a
+      # node restart that brings both pods up simultaneously).
+      {{- if .Values.mssql.enabled }}
+      initContainers:
+        - name: wait-for-mssql
+          image: busybox:1.37
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for SQL Server at {{ include "dwa-vv.fullname" . }}-mssql:1433..."
+              until nc -z {{ include "dwa-vv.fullname" . }}-mssql 1433; do
+                echo "  SQL not ready — retrying in 5s"
+                sleep 5
+              done
+              echo "SQL Server is accepting connections."
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+      {{- end }}
       containers:
         - name: dwa-vv
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

@@ -50,6 +50,14 @@ mssql:
     limits:
       cpu: 1000m
       memory: 2Gi
+  # Daily backup to Azure Blob Storage.
+  # Storage connection string stored in K8s secret dwa-vv-backup-storage (key: connectionString).
+  # Created by CI before helm runs — see deploy-azure.yml.
+  # Recovery procedure: docs/runbooks/sql-restore.md
+  backup:
+    enabled: false                   # set true in dev/prod values to activate
+    schedule: "0 2 * * *"           # 02:00 UTC daily (04:00 SAST)
+    containerName: mssql-backups
 
 service:
   type: ClusterIP
@@ -67,6 +75,10 @@ ingress:
   tls:
     enabled: true
     secretName: dwa-vv-tls
+  # cert-manager ClusterIssuer configuration.
+  # The email address is used by Let's Encrypt for certificate expiry notifications.
+  # Set per environment — do NOT leave as the placeholder in prod.
+  certManagerEmail: admin@example.com
 
 resources:
   requests:

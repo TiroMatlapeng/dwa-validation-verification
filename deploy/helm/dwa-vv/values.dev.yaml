@@ -8,8 +8,18 @@
 #     --set secrets.demoPwd="$DEMO_PWD" \
 #     --set mssql.saPassword="$MSSQL_SA_PASSWORD"
 #
-# NO domain, NO TLS, NO ingress — raw LoadBalancer IP for now.
+# ── Current state: raw LoadBalancer IP, no TLS ───────────────────────────────
 # Browse to http://<external-ip> once deployed.
+#
+# ── TLS migration path (when nginx-ingress + cert-manager are deployed) ──────
+# 1. Set service.type: ClusterIP  (ingress controller gets the public IP instead)
+# 2. Set ingress.enabled: true
+# 3. Set ingress.host: <ingress-controller-ip>.nip.io  (or real domain)
+# 4. Set ingress.tls.enabled: true
+# 5. Set ingress.annotations: { cert-manager.io/cluster-issuer: letsencrypt-prod }
+# 6. Set DEV_INGRESS_HOST GitHub Actions variable to the ingress FQDN
+# 7. Ensure nginx-ingress controller service exposes port 80 (required for HTTP-01 ACME challenge)
+# NOTE: Do NOT set service.type: ClusterIP while ingress.enabled=false — the app will be unreachable.
 
 replicaCount: 1
 
@@ -35,9 +45,10 @@ service:
 
 ingress:
   enabled: false
-  host: ""
+  host: ""          # when enabling TLS: set to <nginx-ingress-ip>.nip.io or real domain
   tls:
     enabled: false
+  certManagerEmail: matlapengmatlapeng@gmail.com
 
 # Dev uses a plain K8s Secret instead of Key Vault — no CSI driver needed.
 secrets:
@@ -59,6 +70,14 @@ keyVault:
 mssql:
   enabled: true
   saPassword: ""        # injected by GitHub Actions via --set
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"          # 02:00 UTC daily (04:00 SAST)
+    containerName: mssql-backups
+    # Storage connection string injected by CI via the "Create backup storage secret" step.
+    # The full Azure Storage connection string is stored in K8s secret
+    # dwa-vv-backup-storage (key: connectionString).
+    # Add DEV_BACKUP_STORAGE_CONN_STR to GitHub Actions Secrets to activate backups.
 
 # Single replica + local disk = safe for dev (no split-brain on uploads).
 blobStore:

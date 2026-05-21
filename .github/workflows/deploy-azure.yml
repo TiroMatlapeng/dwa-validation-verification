@@ -70,8 +70,10 @@ jobs:
             --namespace ${{ env.HELM_NAMESPACE }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      # Create app secrets via kubectl to avoid Helm --set comma-splitting issues
-      # (SQL Server connection strings contain commas; Helm --set treats them as list separators)
+      # Secrets are created BEFORE Helm runs so the Deployment spec can
+      # reference them immediately.  Using kubectl here (not Helm --set) because
+      # SQL Server connection strings contain commas that Helm --set treats as
+      # list separators, mangling the value.
       - name: Create / refresh app secrets
         run: |
           kubectl create secret generic dwa-vv-secrets \
@@ -85,6 +87,29 @@ jobs:
             --from-literal="sa-password=${{ secrets.DEV_MSSQL_SA_PASSWORD }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
+      # Backup storage secret.
+      # Required by the mssql-backup-cronjob.yaml template (backup.enabled=true in values.dev.yaml).
+      # DEV_BACKUP_STORAGE_CONN_STR is the full Azure Storage connection string
+      # (from az storage account show-connection-string or Azure Portal → storage account → Access keys).
+      # If not set, the CronJob pod will fail to start but the app deployment is unaffected.
+      # Recovery procedure: docs/runbooks/sql-restore.md
+      - name: Create / refresh backup storage secret
+        env:
+          DEV_BACKUP_STORAGE_CONN_STR: ${{ secrets.DEV_BACKUP_STORAGE_CONN_STR }}
+        run: |
+          if [[ -n "${DEV_BACKUP_STORAGE_CONN_STR}" ]]; then
+            kubectl create secret generic dwa-vv-backup-storage \
+              --namespace ${{ env.HELM_NAMESPACE }} \
+              --from-literal="connectionString=${DEV_BACKUP_STORAGE_CONN_STR}" \
+              --dry-run=client -o yaml | kubectl apply -f -
+            echo "Backup storage secret created/refreshed."
+          else
+            echo "WARNING: DEV_BACKUP_STORAGE_CONN_STR not set in GitHub Secrets — backup CronJob will fail until this secret is added."
+            echo "To set it: get the storage account connection string from Azure Portal → Storage Account → Access keys → Connection string"
+            echo "Add it as DEV_BACKUP_STORAGE_CONN_STR in GitHub Actions Secrets."
+            echo "App deployment continues without backup."
+          fi
+
       - name: Helm upgrade / install
         run: |
           helm upgrade --install ${{ env.HELM_RELEASE }} deploy/helm/dwa-vv \
@@ -94,9 +119,70 @@ jobs:
             --wait \
             --timeout 8m
 
-      # ── Smoke test ────────────────────────────────────────────────────────
-      - name: Smoke test
+      # Verify the new pods are actually running the new image.
+      # helm --wait with maxUnavailable=0 can exit 0 while the new pod is stuck in
+      # CreateContainerConfigError (e.g. missing secret) because the old pod keeps
+      # serving traffic. kubectl rollout status catches this: it waits until the
+      # new ReplicaSet's desired replicas are fully Ready, which requires the new
+      # pod to pass readiness — not just the old one.
+      - name: Verify rollout
         run: |
+          kubectl rollout status deployment/${{ env.HELM_RELEASE }} \
+            --namespace ${{ env.HELM_NAMESPACE }} \
+            --timeout 5m
+
+      # Protect the SQL Server PV from accidental deletion.
+      # AKS default StorageClass sets reclaimPolicy=Delete.  After first provision
+      # we patch it to Retain so the Azure Disk survives a helm uninstall.
+      # This is idempotent — safe to run on every deploy.
+      - name: Set SQL PV reclaim policy to Retain
+        run: |
+          PV_NAME=$(kubectl get pvc dwa-vv-mssql-data \
+            --namespace ${{ env.HELM_NAMESPACE }} \
+            -o jsonpath='{.spec.volumeName}' 2>/dev/null || true)
+          if [[ -n "$PV_NAME" ]]; then
+            kubectl patch pv "$PV_NAME" \
+              -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}' 2>&1 || true
+            echo "PV $PV_NAME reclaim policy set to Retain"
+          else
+            echo "PVC not yet bound — skipping PV patch (will apply on next deploy)"
+          fi
+
+      # ── Smoke test ────────────────────────────────────────────────────────
+      # Supports two deployment modes:
+      #   Mode A (current): service.type=LoadBalancer — probe http://<external-ip>/
+      #   Mode B (post-TLS): ingress enabled, service.type=ClusterIP — probe
+      #     https://<ingress-ip>.nip.io/ or https://<custom-domain>/
+      #
+      # When ingress is deployed, DEV_INGRESS_HOST should be set as a GitHub
+      # Actions env var to the FQDN (e.g. "4.253.91.136.nip.io"). The smoke
+      # test will prefer HTTPS via the ingress host over the raw LoadBalancer IP.
+      # Once TLS is live, update DEV_INGRESS_HOST and remove the LoadBalancer service.
+      - name: Smoke test
+        env:
+          DEV_INGRESS_HOST: ${{ vars.DEV_INGRESS_HOST }}   # set in repo Variables (not Secrets) — not sensitive
+        run: |
+          # ── Mode B: ingress with FQDN ────────────────────────────────────────
+          if [[ -n "${DEV_INGRESS_HOST}" ]]; then
+            PROBE_URL="https://${DEV_INGRESS_HOST}/"
+            echo "Ingress host configured: probing ${PROBE_URL}"
+            for i in $(seq 1 18); do
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${PROBE_URL}" \
+                --max-time 10 --connect-timeout 5 \
+                -H "Host: ${DEV_INGRESS_HOST}" || true)
+              echo "  Attempt $i — HTTP ${STATUS}"
+              if [[ "$STATUS" == "200" || "$STATUS" == "302" || "$STATUS" == "301" ]]; then
+                echo "App is up at ${PROBE_URL}"
+                exit 0
+              fi
+              sleep 10
+            done
+            echo "ERROR: App did not respond at ${PROBE_URL} after startup window"
+            exit 1
+          fi
+
+          # ── Mode A: raw LoadBalancer IP (no ingress) ─────────────────────────
+          echo "No DEV_INGRESS_HOST set — using LoadBalancer IP probe (HTTP)."
           echo "Waiting for LoadBalancer external IP..."
           for i in $(seq 1 24); do
             EXTERNAL_IP=$(kubectl get svc ${{ env.HELM_RELEASE }} \

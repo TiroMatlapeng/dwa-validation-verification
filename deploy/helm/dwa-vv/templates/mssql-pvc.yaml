@@ -6,10 +6,34 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "dwa-vv.labels" . | nindent 4 }}
+  annotations:
+    # Retain the PV even if this PVC is deleted (e.g. accidental helm uninstall).
+    # The underlying Azure Disk has Reclaim Policy "Delete" by default — this
+    # annotation does NOT change the PV reclaim policy but serves as a human
+    # reminder.  To truly protect the data, patch the PV directly after first
+    # provisioning: kubectl patch pv <pv-name> -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'
+    helm.sh/resource-policy: keep
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: {{ .Values.mssql.storageSize }}
+---
+# PodDisruptionBudget for the in-cluster SQL Server.
+# Prevents the node drain process (e.g. AKS node pool upgrade) from evicting
+# the SQL pod while it still holds exclusive access to the PVC.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "dwa-vv.fullname" . }}-mssql
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "dwa-vv.labels" . | nindent 4 }}
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "dwa-vv.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: mssql
 {{- end }}

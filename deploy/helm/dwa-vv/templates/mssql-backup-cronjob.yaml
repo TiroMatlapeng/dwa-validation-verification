@@ -1,0 +1,116 @@
+{{- if and .Values.mssql.enabled .Values.mssql.backup.enabled }}
+# SQL Server automated backup CronJob.
+#
+# Two-container design (shared emptyDir):
+#   1. "backup"  — mcr.microsoft.com/mssql-tools runs sqlcmd BACKUP DATABASE to /backup/
+#   2. "upload"  — mcr.microsoft.com/azure-cli uploads the .bak file to Azure Blob Storage
+#      then deletes it from the shared volume.
+#
+# The main containers run sequentially because the upload container depends on the
+# backup file produced by the backup container.  We model this as two init containers
+# plus a trivial "done" main container so Kubernetes runs them in order.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "dwa-vv.fullname" . }}-mssql-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "dwa-vv.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mssql-backup
+spec:
+  schedule: {{ .Values.mssql.backup.schedule | quote }}
+  # Never run two backup jobs at the same time — wait for the previous one.
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # Retry once on failure (transient SQL or network error).
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            {{- include "dwa-vv.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: mssql-backup
+        spec:
+          restartPolicy: OnFailure
+          volumes:
+            # Shared scratch space between the backup and upload containers.
+            - name: backup-scratch
+              emptyDir: {}
+          initContainers:
+            # Step 1: Run BACKUP DATABASE via sqlcmd and write the .bak file to
+            # /backup (the shared scratch volume).
+            - name: backup
+              image: mcr.microsoft.com/mssql-tools:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: SA_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "dwa-vv.fullname" . }}-mssql
+                      key: sa-password
+              volumeMounts:
+                - name: backup-scratch
+                  mountPath: /backup
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -euo pipefail
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  BACKUP_FILE="/backup/dwa_val_ver_${TIMESTAMP}.bak"
+                  echo "Starting BACKUP DATABASE to ${BACKUP_FILE}..."
+                  /opt/mssql-tools/bin/sqlcmd \
+                    -S {{ include "dwa-vv.fullname" . }}-mssql,1433 \
+                    -U sa -P "${SA_PASSWORD}" \
+                    -Q "BACKUP DATABASE [dwa_val_ver] TO DISK='${BACKUP_FILE}' WITH COMPRESSION, STATS=10"
+                  echo "BACKUP_FILE=${BACKUP_FILE}" > /backup/last_backup.env
+                  echo "Backup complete: ${BACKUP_FILE}"
+
+            # Step 2: Upload the .bak file to Azure Blob Storage then delete it
+            # from the scratch volume to avoid accumulating disk usage.
+            - name: upload
+              image: mcr.microsoft.com/azure-cli:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: AZURE_STORAGE_CONNECTION_STRING
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "dwa-vv.fullname" . }}-backup-storage
+                      key: connectionString
+              volumeMounts:
+                - name: backup-scratch
+                  mountPath: /backup
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -euo pipefail
+                  source /backup/last_backup.env
+                  BLOB_NAME=$(basename "${BACKUP_FILE}")
+                  echo "Uploading ${BACKUP_FILE} to container mssql-backups as ${BLOB_NAME}..."
+                  az storage blob upload \
+                    --container-name mssql-backups \
+                    --name "${BLOB_NAME}" \
+                    --file "${BACKUP_FILE}" \
+                    --connection-string "${AZURE_STORAGE_CONNECTION_STRING}" \
+                    --overwrite
+                  echo "Upload complete: ${BLOB_NAME}"
+                  rm -f "${BACKUP_FILE}" /backup/last_backup.env
+
+          containers:
+            # Trivial "done" container — Kubernetes requires at least one main container.
+            # The real work is done in the init containers above.
+            - name: done
+              image: busybox:1.37
+              imagePullPolicy: IfNotPresent
+              command: ["sh", "-c", "echo 'Backup and upload complete.'"]
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  cpu: 50m
+                  memory: 32Mi
+{{- end }}

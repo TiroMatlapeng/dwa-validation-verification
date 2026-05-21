@@ -1,0 +1,23 @@
+{{- if .Values.ingress.enabled }}
+# ClusterIssuer for Let's Encrypt TLS certificates via cert-manager.
+# HTTP-01 challenge requires port 80 to be publicly accessible from Let's Encrypt servers.
+# The nginx-ingress controller must expose port 80 on its LoadBalancer service.
+# Set ingress.certManagerEmail in values to a real address — Let's Encrypt will send
+# certificate expiry notifications there.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  labels:
+    {{- include "dwa-vv.labels" . | nindent 4 }}
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: {{ .Values.ingress.certManagerEmail | required "ingress.certManagerEmail is required when ingress.enabled=true" | quote }}
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: {{ .Values.ingress.className | quote }}
+{{- end }}
