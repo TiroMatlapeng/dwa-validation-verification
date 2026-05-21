@@ -92,13 +92,30 @@ else
             // Verification-phase states by AssessmentTrack; the CP1–CP11 + review/workshop
             // states (which precede the track fork) are always shown.
             var track = Model.FileMaster.AssessmentTrack ?? "S35_Verification";
+
+            // BUG-026: the S33(2) declaration track skips CP5–CP9, CP11, the
+            // pre-public review and the stakeholder workshop — the case jumps from
+            // CP4 straight to S33_2_ReadyForDeclaration. These prefixes mirror
+            // WorkflowService.CpsSkippedOnS33_2 exactly, so the phase tracker hides
+            // the same states the engine refuses to transition into. (S33(3)/Track C
+            // runs the full CP1–CP9 pipeline and skips no CPs, so it is unaffected.)
+            var s33_2SkippedPrefixes = new[] { "CP5", "CP6", "CP7", "CP8", "CP9", "CP11", "CP_PrePublicReview", "CP_StakeholderWorkshop" };
+
             bool IsTrackRelevant(string stateName)
             {
                 var isS35 = stateName.StartsWith("S35_", StringComparison.OrdinalIgnoreCase);
                 var isS33_2 = stateName.StartsWith("S33_2_", StringComparison.OrdinalIgnoreCase);
                 var isS33_3 = stateName.StartsWith("S33_3_", StringComparison.OrdinalIgnoreCase);
 
-                // Pre-fork states (CP*, review, workshop, Closed) are common to all tracks.
+                // On the S33(2) track, hide the control points the engine skips so
+                // validators are not misled into thinking those steps still apply.
+                if (string.Equals(track, "S33_2_Declaration", StringComparison.OrdinalIgnoreCase)
+                    && s33_2SkippedPrefixes.Any(p => stateName.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return false;
+                }
+
+                // Pre-fork states (remaining CP*, Closed) are common to all tracks.
                 if (!isS35 && !isS33_2 && !isS33_3) return true;
 
                 return track switch

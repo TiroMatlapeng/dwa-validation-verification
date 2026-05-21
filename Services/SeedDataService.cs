@@ -405,6 +405,28 @@ public class SeedDataService
             "Hex (Cape)", "Krom", "Groot",
         };
 
+        // BUG-025: A previous code path / manual insert polluted the Rivers table
+        // with DamCalculationStatus enum values (e.g. "COMPLETED", "IN PROGRESS",
+        // "CANCELLED"), so the DamCalculation/Create river dropdown shows status
+        // values among the legitimate rivers. The current code never inserts these,
+        // but the live DB does not self-heal. Remove any River row whose name matches
+        // a DamCalculationStatus value (both the raw "IN_PROGRESS" enum form and the
+        // "IN PROGRESS" display form the status dropdown renders). We only delete
+        // rows not referenced by an existing DamCalculation to avoid FK violations.
+        var statusNames = Enum.GetValues<DamCalculationStatus>()
+            .SelectMany(s => new[] { s.ToString(), s.ToString().Replace("_", " ") })
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var contaminated = await _context.Rivers
+            .Where(r => !_context.DamCalculations.Any(d => d.RiverId == r.RiverId))
+            .ToListAsync();
+        var toRemove = contaminated.Where(r => statusNames.Contains(r.RiverName)).ToList();
+        if (toRemove.Count > 0)
+        {
+            _context.Rivers.RemoveRange(toRemove);
+            await _context.SaveChangesAsync();
+        }
+
         var existingNames = await _context.Rivers
             .Select(r => r.RiverName)
             .ToListAsync();
