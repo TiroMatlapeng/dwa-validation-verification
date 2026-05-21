@@ -150,17 +150,68 @@ public class MfaController : Controller
         return RedirectToAction("Index", "Dashboard", new { area = "ExternalPortal" });
     }
 
-    // ── Verify (login flow) — stub for Task 8 ──
+    // ── Verify (login flow) ──
 
     [HttpGet]
-    public IActionResult Verify(string? returnUrl = null)
-        => View(new MfaVerifyViewModel { ReturnUrl = returnUrl });
+    public async Task<IActionResult> Verify(string? returnUrl = null, CancellationToken ct = default)
+    {
+        var user = await _db.PublicUsers.FindAsync(new object[] { UserId }, ct);
+        if (user is null) return NotFound();
+        return View(new MfaVerifyViewModel { MfaMethod = user.MfaMethod ?? "", ReturnUrl = returnUrl });
+    }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public Task<IActionResult> Verify(MfaVerifyViewModel vm, CancellationToken ct)
-        => Task.FromResult<IActionResult>(View(vm));
+    public async Task<IActionResult> Verify(MfaVerifyViewModel vm, CancellationToken ct)
+    {
+        if (!ModelState.IsValid) return View(vm);
+
+        var user = await _db.PublicUsers.FindAsync(new object[] { UserId }, ct);
+        if (user is null) return NotFound();
+
+        bool valid = user.MfaMethod == "SMS"
+            ? await _smsOtp.ValidateAsync(UserId, vm.Code, ct)
+            : ValidateTotp(user, vm.Code);
+
+        if (!valid)
+        {
+            ModelState.AddModelError("", "Invalid or expired code. Please try again.");
+            vm.MfaMethod = user.MfaMethod ?? "";
+            return View(vm);
+        }
+
+        await _db.SaveChangesAsync(ct);
+        await _signIn.IssueFullSessionAsync(UserId, ct);
+
+        if (vm.TrustDevice)
+        {
+            var rawToken = await _deviceTrust.TrustAsync(UserId, Request.Headers.UserAgent.ToString(), ct);
+            Response.Cookies.Append("dwa_dtrust", rawToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddDays(7)
+            });
+        }
+
+        if (!string.IsNullOrEmpty(vm.ReturnUrl) && Url.IsLocalUrl(vm.ReturnUrl))
+            return Redirect(vm.ReturnUrl);
+
+        return RedirectToAction("Index", "Dashboard", new { area = "ExternalPortal" });
+    }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public Task<IActionResult> SendSmsCode(string? returnUrl, CancellationToken ct)
-        => Task.FromResult<IActionResult>(RedirectToAction(nameof(Verify), new { returnUrl }));
+    public async Task<IActionResult> SendSmsCode(string? returnUrl, CancellationToken ct)
+    {
+        await _smsOtp.SendAsync(UserId, ct);
+        return RedirectToAction(nameof(Verify), new { returnUrl });
+    }
+
+    private bool ValidateTotp(PublicUser user, string code)
+    {
+        var result = _totp.Validate(user.MfaSecret!, code, user.LastUsedOtpTimestamp);
+        if (!result.Valid) return false;
+        user.LastUsedOtpTimestamp = result.NewTimestamp;
+        return true;
+    }
 }
