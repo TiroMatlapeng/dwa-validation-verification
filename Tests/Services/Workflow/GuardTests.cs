@@ -377,3 +377,213 @@ public class Cp11SeedTests
         Assert.Equal(17, state!.DisplayOrder);
     }
 }
+
+// -----------------------------------------------------------------------
+// Cp11FileCompilationGuard
+// -----------------------------------------------------------------------
+public class Cp11FileCompilationGuardTests
+{
+    private static ApplicationDBContext NewDb() =>
+        new ApplicationDBContext(new DbContextOptionsBuilder<ApplicationDBContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options);
+
+    // Builds the minimal FileMaster + Property required to compile a full file.
+    // Returns (db, fm, propertyId) with all 9 items seeded.
+    private static async Task<(ApplicationDBContext db, FileMaster fm, Guid propId)> FullyCompiledCase()
+    {
+        var db = NewDb();
+        var propId = Guid.NewGuid();
+        var property = new Property { PropertyId = propId, PropertyReferenceNumber = "P-CP11", SGCode = "SG-001" };
+        db.Properties.Add(property);
+
+        var authType = new AuthorisationType { AuthorisationTypeId = Guid.NewGuid(), AuthorisationTypeName = "Permit" };
+        db.AuthorisationTypes.Add(authType);
+
+        var period = new Period { PeriodId = Guid.NewGuid(), PeriodName = "Qualifying" };
+        var crop   = new Crop { CropId = Guid.NewGuid(), CropName = "Maize" };
+        var ws     = new WaterSource { WaterSourceId = Guid.NewGuid(), WaterSourceName = "River" };
+        db.Periods.Add(period); db.Crops.Add(crop); db.WaterSources.Add(ws);
+
+        var fm = new FileMaster
+        {
+            FileMasterId       = Guid.NewGuid(),
+            PropertyId         = propId,
+            RegistrationNumber = "WARMS-001",
+            SurveyorGeneralCode = "SG-001",
+            PrimaryCatchment   = "A21",
+            QuaternaryCatchment = "A21A",
+            FarmName           = "Testfarm",
+            FarmNumber         = 1,
+            RegistrationDivision = "TD",
+            FarmPortion        = "0",
+            WarmsReviewedAt    = DateTime.UtcNow,
+            EntitlementId      = Guid.NewGuid(),
+            DamMarkedNA        = true,
+            SfraMarkedNA       = true
+        };
+        db.FileMasters.Add(fm);
+
+        db.Authorisations.Add(new Authorisation
+        {
+            AuthorisationId = Guid.NewGuid(),
+            FileMasterId = fm.FileMasterId,
+            AuthorisationTypeId = authType.AuthorisationTypeId
+        });
+
+        db.FieldAndCrops.Add(new FieldAndCrop
+        {
+            FieldAndCropId = Guid.NewGuid(),
+            PropertyId = propId, Property = property,
+            PeriodId = period.PeriodId, Period = period,
+            Crop = crop,
+            WaterSource = ws,
+            FieldArea = 10m, CropArea = 8m, RotationFactor = 0.8m,
+            SAPWATCalculationResult = 600m
+        });
+
+        db.Mapbooks.Add(new Mapbook { MapbookId = Guid.NewGuid(), FileMasterId = fm.FileMasterId, MapbookTitle = "Q-Map", MapType = "Qualifying" });
+        db.Mapbooks.Add(new Mapbook { MapbookId = Guid.NewGuid(), FileMasterId = fm.FileMasterId, MapbookTitle = "C-Map", MapType = "Current" });
+
+        await db.SaveChangesAsync();
+        return (db, fm, propId);
+    }
+
+    private static GuardContext LeavingCp11(FileMaster fm) =>
+        new(fm,
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP11_FileCompiled", DisplayOrder = 16, Phase = "Verification" },
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP_PrePublicReview", DisplayOrder = 17, Phase = "Verification" });
+
+    private static GuardContext NotLeavingCp11(FileMaster fm) =>
+        new(fm,
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP9_SFRACalculated", DisplayOrder = 15, Phase = "Verification" },
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP11_FileCompiled", DisplayOrder = 16, Phase = "Verification" });
+
+    [Fact]
+    public async Task Cp11_AllowsWhenAllNineItemsPresent()
+    {
+        var (db, fm, _) = await FullyCompiledCase();
+        var sut = new Cp11FileCompilationGuard(db);
+        var result = await sut.CheckAsync(LeavingCp11(fm));
+        Assert.True(result.Allowed);
+    }
+
+    [Fact]
+    public async Task Cp11_PassesWhenNotLeavingCp11()
+    {
+        var (db, fm, _) = await FullyCompiledCase();
+        var sut = new Cp11FileCompilationGuard(db);
+        var result = await sut.CheckAsync(NotLeavingCp11(fm));
+        Assert.True(result.Allowed);
+    }
+
+    [Fact]
+    public async Task Cp11_DeniesWhenWarmsReviewMissing()
+    {
+        var (db, fm, _) = await FullyCompiledCase();
+        fm.WarmsReviewedAt = null;
+        var sut = new Cp11FileCompilationGuard(db);
+        var result = await sut.CheckAsync(LeavingCp11(fm));
+        Assert.False(result.Allowed);
+        Assert.Contains("WARMS review", result.Reason);
+    }
+
+    [Fact]
+    public async Task Cp11_DeniesWhenSGCodeMissing()
+    {
+        var (db, fm, propId) = await FullyCompiledCase();
+        var prop = await db.Properties.FindAsync(propId);
+        prop!.SGCode = null;
+        await db.SaveChangesAsync();
+        var sut = new Cp11FileCompilationGuard(db);
+        var result = await sut.CheckAsync(LeavingCp11(fm));
+        Assert.False(result.Allowed);
+        Assert.Contains("SG code", result.Reason);
+    }
+
+    [Fact]
+    public async Task Cp11_DeniesWhenNoAuthorisationRecord()
+    {
+        var (db, fm, _) = await FullyCompiledCase();
+        db.Authorisations.RemoveRange(db.Authorisations.Where(a => a.FileMasterId == fm.FileMasterId));
+        await db.SaveChangesAsync();
+        var sut = new Cp11FileCompilationGuard(db);
+        var result = await sut.CheckAsync(LeavingCp11(fm));
+        Assert.False(result.Allowed);
+        Assert.Contains("authorisation", result.Reason);
+    }
+
+    [Fact]
+    public async Task Cp11_DeniesWhenNoSapwatResult()
+    {
+        var (db, fm, propId) = await FullyCompiledCase();
+        var fc = db.FieldAndCrops.First(f => f.PropertyId == propId);
+        fc.SAPWATCalculationResult = 0m;
+        await db.SaveChangesAsync();
+        var sut = new Cp11FileCompilationGuard(db);
+        var result = await sut.CheckAsync(LeavingCp11(fm));
+        Assert.False(result.Allowed);
+        Assert.Contains("SAPWAT", result.Reason);
+    }
+
+    [Fact]
+    public async Task Cp11_DeniesWhenNoQualifyingMapbook()
+    {
+        var (db, fm, _) = await FullyCompiledCase();
+        var qm = db.Mapbooks.First(m => m.FileMasterId == fm.FileMasterId && m.MapType == "Qualifying");
+        db.Mapbooks.Remove(qm);
+        await db.SaveChangesAsync();
+        var sut = new Cp11FileCompilationGuard(db);
+        var result = await sut.CheckAsync(LeavingCp11(fm));
+        Assert.False(result.Allowed);
+        Assert.Contains("Qualifying", result.Reason);
+    }
+
+    [Fact]
+    public async Task Cp11_DeniesWhenEntitlementMissing()
+    {
+        var (db, fm, _) = await FullyCompiledCase();
+        fm.EntitlementId = null;
+        var sut = new Cp11FileCompilationGuard(db);
+        var result = await sut.CheckAsync(LeavingCp11(fm));
+        Assert.False(result.Allowed);
+        Assert.Contains("Entitlement", result.Reason);
+    }
+
+    [Fact]
+    public async Task Cp11_DeniesWhenNoCurrentMapbook()
+    {
+        var (db, fm, _) = await FullyCompiledCase();
+        var cm = db.Mapbooks.First(m => m.FileMasterId == fm.FileMasterId && m.MapType == "Current");
+        db.Mapbooks.Remove(cm);
+        await db.SaveChangesAsync();
+        var sut = new Cp11FileCompilationGuard(db);
+        var result = await sut.CheckAsync(LeavingCp11(fm));
+        Assert.False(result.Allowed);
+        Assert.Contains("Current", result.Reason);
+    }
+
+    [Fact]
+    public async Task Cp11_DeniesWhenNoDamAndNotMarkedNA()
+    {
+        var (db, fm, _) = await FullyCompiledCase();
+        fm.DamMarkedNA = false;
+        // No DamCalculation seeded
+        var sut = new Cp11FileCompilationGuard(db);
+        var result = await sut.CheckAsync(LeavingCp11(fm));
+        Assert.False(result.Allowed);
+        Assert.Contains("Dam", result.Reason);
+    }
+
+    [Fact]
+    public async Task Cp11_DeniesWhenNoSfraAndNotMarkedNA()
+    {
+        var (db, fm, _) = await FullyCompiledCase();
+        fm.SfraMarkedNA = false;
+        // No Forestation seeded
+        var sut = new Cp11FileCompilationGuard(db);
+        var result = await sut.CheckAsync(LeavingCp11(fm));
+        Assert.False(result.Allowed);
+        Assert.Contains("SFRA", result.Reason);
+    }
+}

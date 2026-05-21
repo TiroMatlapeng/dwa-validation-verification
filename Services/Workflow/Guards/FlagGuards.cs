@@ -165,3 +165,62 @@ public class CpStakeholderWorkshopGuard : ITransitionGuard
         return Task.FromResult(GuardResult.Ok);
     }
 }
+
+/// <summary>
+/// Leaving CP11 requires all 9 Appendix A evidence items to be present in the case file.
+/// </summary>
+public class Cp11FileCompilationGuard : ITransitionGuard
+{
+    private readonly ApplicationDBContext _db;
+    public Cp11FileCompilationGuard(ApplicationDBContext db) { _db = db; }
+
+    public async Task<GuardResult> CheckAsync(GuardContext ctx)
+    {
+        if (!Cp2SpatialInfoGuard.IsLeaving(ctx, "CP11")) return GuardResult.Ok;
+
+        if (!ctx.FileMaster.WarmsReviewedAt.HasValue)
+            return GuardResult.Deny("WARMS review must be recorded before file can be compiled.");
+
+        var property = await _db.Properties.FindAsync(ctx.FileMaster.PropertyId);
+        if (property is null || string.IsNullOrWhiteSpace(property.SGCode))
+            return GuardResult.Deny("Property SG code must be confirmed before file can be compiled.");
+
+        var hasAuth = await _db.Authorisations.AnyAsync(a => a.FileMasterId == ctx.FileMaster.FileMasterId);
+        if (!hasAuth)
+            return GuardResult.Deny("At least one authorisation record must be captured before file can be compiled.");
+
+        var hasSapwat = await _db.FieldAndCrops
+            .AnyAsync(f => f.PropertyId == ctx.FileMaster.PropertyId && f.SAPWATCalculationResult > 0);
+        if (!hasSapwat)
+            return GuardResult.Deny("At least one field with a SAPWAT result must be captured before file can be compiled.");
+
+        var hasQualifyingMap = await _db.Mapbooks
+            .AnyAsync(m => m.FileMasterId == ctx.FileMaster.FileMasterId && m.MapType == "Qualifying");
+        if (!hasQualifyingMap)
+            return GuardResult.Deny("Qualifying period mapbook must be present before file can be compiled.");
+
+        if (!ctx.FileMaster.EntitlementId.HasValue)
+            return GuardResult.Deny("Entitlement must be linked before file can be compiled.");
+
+        var hasCurrentMap = await _db.Mapbooks
+            .AnyAsync(m => m.FileMasterId == ctx.FileMaster.FileMasterId && m.MapType == "Current");
+        if (!hasCurrentMap)
+            return GuardResult.Deny("Current period mapbook must be present before file can be compiled.");
+
+        if (!ctx.FileMaster.DamMarkedNA)
+        {
+            var hasDam = await _db.DamCalculations.AnyAsync(d => d.PropertyId == ctx.FileMaster.PropertyId);
+            if (!hasDam)
+                return GuardResult.Deny("Dam volume calculation must be recorded or marked N/A before file can be compiled.");
+        }
+
+        if (!ctx.FileMaster.SfraMarkedNA)
+        {
+            var hasSfra = await _db.Forestations.AnyAsync(f => f.PropertyId == ctx.FileMaster.PropertyId);
+            if (!hasSfra)
+                return GuardResult.Deny("SFRA/Forestation record must be recorded or marked N/A before file can be compiled.");
+        }
+
+        return GuardResult.Ok;
+    }
+}
