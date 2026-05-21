@@ -73,3 +73,31 @@ Baseline before changes: `dotnet test` = 368 passed / 0 failed. After all fixes 
 - **Note for validator:** verify on live by registering → confirming email → SelectMethod → EnrolTotp → Dashboard. Behind HTTPS the cookie is still marked Secure. Also note `Tests/Integration/IntegrationTestBase.cs` only relaxed the *Identity.Application* cookie to SameAsRequest for tests — the portal cookie now derives SameAsRequest from its own config, so portal integration tests over plain-HTTP test client will carry the cookie correctly.
 
 **Verification:** `dotnet build` (main) = 0 errors. `dotnet test` = **378 passed, 0 failed, 0 skipped**.
+
+### 2026-05-21T22:00+02:00 — devops-platform-strategist — Helm probe fix + cookie validation
+
+**BUG-008 — Helm probe timeoutSeconds raised (liveness 1s→5s, readiness 1s→3s).**
+
+Files changed (Helm only — no C# touched):
+- `deploy/helm/dwa-vv/values.yaml` — added `timeoutSeconds: 5` under `probes.liveness`, `timeoutSeconds: 3` under `probes.readiness`.
+- `deploy/helm/dwa-vv/templates/deployment.yaml` — added `timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}` to `livenessProbe` block and `timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}` to `readinessProbe` block (lines 107–121).
+- `deploy/helm/dwa-vv/values.dev.yaml` — no change needed; `values.dev.yaml` does not override `probes`, so it inherits the new defaults from `values.yaml`.
+
+Root cause: Kubernetes defaults `timeoutSeconds` to 1s when the field is absent. Under even modest load the root-path health check on an ASP.NET Core pod (which triggers middleware + DB Data Protection key lookup on first hit) can exceed 1s, causing the probe to record a failure. With `failureThreshold: 5` and `period: 30s` this means ~150s of consecutive slow responses trips a restart — consistent with the "intermittent restarts under load" symptom. Raising to 5s (liveness) / 3s (readiness) gives the app breathing room while remaining well below the `periodSeconds` to avoid probe overlap.
+
+Next deployment step: `helm upgrade dwa-vv deploy/helm/dwa-vv -f deploy/helm/dwa-vv/values.dev.yaml --set image.tag=<sha>`. Rolling update will pick up the new probe config on the replacement pod.
+
+---
+
+**BUG-023 — Cookie SecurePolicy validation: SameAsRequest is correct for this AKS setup.**
+
+Finding: SOUND. The `SameAsRequest` change is the correct policy.
+
+Evidence chain:
+1. `Program.cs` lines 261–265: `UseForwardedHeaders` is configured with `XForwardedFor | XForwardedProto`. This middleware runs BEFORE `UseAuthentication` (line 296) in the pipeline.
+2. nginx-ingress terminates TLS and sets `X-Forwarded-Proto: https` on requests forwarded to the pod over plain HTTP. ASP.NET Core's `ForwardedHeaders` middleware rewrites `Request.Scheme` to `https` and sets `Request.IsHttps = true` based on that header.
+3. `CookieSecurePolicy.SameAsRequest` evaluates `context.Request.IsHttps` at cookie-write time. Because `ForwardedHeaders` middleware has already run, `Request.IsHttps` is `true` for all production requests that originated over HTTPS at the ingress. The portal auth cookie will be marked `Secure` in production — correctly.
+4. On the dev cluster (LoadBalancer, no ingress, no TLS), `X-Forwarded-Proto` is not present. `Request.IsHttps = false`. `SameAsRequest` produces a non-Secure cookie. This is acceptable for a dev/demo environment on an internal cluster — same behaviour as the existing `Identity.Application` cookie (see `Program.cs` line 69 comment which explicitly documents this reasoning).
+5. This mirrors the internal cookie fix already in place and documented in the AKS deployment memory.
+
+No code change required. BUG-023 fix committed by dotnet-master is confirmed correct for the current and future (HTTPS-fronted) AKS topology.
