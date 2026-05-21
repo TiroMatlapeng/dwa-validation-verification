@@ -209,7 +209,8 @@ public class MfaController : Controller
 
     private bool ValidateTotp(PublicUser user, string code)
     {
-        var result = _totp.Validate(user.MfaSecret!, code, user.LastUsedOtpTimestamp);
+        if (string.IsNullOrEmpty(user.MfaSecret)) return false;
+        var result = _totp.Validate(user.MfaSecret, code, user.LastUsedOtpTimestamp);
         if (!result.Valid) return false;
         user.LastUsedOtpTimestamp = result.NewTimestamp;
         return true;

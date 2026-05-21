@@ -802,6 +802,9 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
         modelBuilder.Entity<PublicUser>()
             .Property(e => e.MfaSecret).HasMaxLength(256);
         modelBuilder.Entity<PublicUser>()
+            .Property(e => e.MfaMethod)
+            .HasMaxLength(10);
+        modelBuilder.Entity<PublicUser>()
             .Property(e => e.MfaEnrolledDate).HasColumnType("datetime2(0)");
         modelBuilder.Entity<PublicUser>()
             .Property(e => e.LastLoginDate).HasColumnType("datetime2(0)");

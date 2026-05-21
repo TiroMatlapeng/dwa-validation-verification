@@ -25,6 +25,15 @@ public class PortalAuthorizationConvention : IControllerModelConvention
         if (areaAttribute?.RouteValue != ExternalPortalAreaName)
             return;
 
+        // Controllers that declare PortalMfaPending manage their own partial-session auth.
+        // Do NOT add the full EmailConfirmed filter to them — it would block partial sessions.
+        var hasMfaPendingPolicy = controller.Attributes
+            .OfType<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>()
+            .Any(a => a.Policy == PortalPolicies.PortalMfaPending);
+
+        if (hasMfaPendingPolicy)
+            return;
+
         var policy = new AuthorizationPolicyBuilder(PortalCookieOptions.SchemeName)
             .RequireAuthenticatedUser()
             .RequireClaim(PortalPolicies.EmailConfirmedClaim, "true")

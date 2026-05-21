@@ -17,6 +17,10 @@ public class PortalAuthorizationConventionTests
 
     private sealed class FakeNonPortalController : Controller { public IActionResult X() => Ok(); }
 
+    [Area("ExternalPortal")]
+    [Authorize(Policy = PortalPolicies.PortalMfaPending)]
+    private sealed class FakeMfaController : Controller { public IActionResult X() => Ok(); }
+
     private static ControllerModel BuildControllerModel(Type controllerType)
     {
         var typeInfo = controllerType.GetTypeInfo();
@@ -49,6 +53,17 @@ public class PortalAuthorizationConventionTests
     {
         var convention = new PortalAuthorizationConvention();
         var model = BuildControllerModel(typeof(FakeNonPortalController));
+
+        convention.Apply(model);
+
+        Assert.Empty(model.Filters.OfType<AuthorizeFilter>());
+    }
+
+    [Fact]
+    public void Apply_DoesNothing_WhenControllerDeclaresMfaPendingPolicy()
+    {
+        var convention = new PortalAuthorizationConvention();
+        var model = BuildControllerModel(typeof(FakeMfaController));
 
         convention.Apply(model);
 
