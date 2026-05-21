@@ -256,3 +256,45 @@ The app pod carries `app.kubernetes.io/component=app`. The Helm `selectorLabels`
 - Post-deploy: `kubectl get endpoints dwa-vv` = single address `10.244.1.212:8080`. MSSQL pod correctly excluded. BUG-008 selector fix confirmed operational in production for the first time.
 
 **Seeder self-heal:** BUG-025 cleanup runs in `SeedRiversAsync` on startup. Pod reached Running with 0 restarts — seeder completed, contaminated River rows removed.
+
+### 2026-05-22T00:10+02:00 — Validator (final) — BUG-013/025/026
+
+| Fix | Status |
+|-----|--------|
+| BUG-025 River dropdown clean | PASS — 42 rivers, zero enum contamination confirmed |
+| BUG-026 S33(2) phase tracker | PASS — 13 correct pills, 8 skipped CPs hidden, S35 regression clean |
+| BUG-013 Recipient persisted | PARTIAL — code chain verified correct; runtime test blocked (only letterable case already had Letter 1 issued; CanIssueLetterAsync correctly blocks re-issuance) |
+
+### 2026-05-22T00:15+02:00 — Controller — Session close
+
+**Sprint summary — bugs fixed this session:**
+
+| Bug | Description | Status |
+|-----|-------------|--------|
+| BUG-008 | MSSQL pod in app service selector → 50% traffic to SQL Server | Closed |
+| BUG-008 | Liveness probe timeout 1s → 5s | Closed |
+| BUG-012 | Stale advance-guard banners in letter phase | Closed |
+| BUG-013 | Letter RecipientName ignored | Code closed; runtime verify pending |
+| BUG-014 | Orphaned LetterIssuance on incomplete case | Closed |
+| BUG-015 | S33 state pills on S35-track cases | Closed |
+| BUG-018 | River dropdown empty (CP8 blocked) | Closed |
+| BUG-023 | External portal auth bounce (SecurePolicy=Always on HTTP pod) | Closed |
+| BUG-025 | River dropdown contaminated with DamCalculationStatus values | Closed |
+| BUG-026 | S33(2) phase tracker showed skipped CPs | Closed |
+
+**Test baseline on main:** 379 passing, 0 failing.
+**Live deployment:** Helm revision 13, image `0274fdd`, pod `dwa-vv-799c98dbcb-qb5qc`, 0 restarts.
+
+**Remaining open items (not in scope this session):**
+- BUG-013 runtime verification — issue a fresh letter on a case at CP9 or S33_2_ReadyForDeclaration and confirm Recipient column shows typed name (fastest: advance a new S33(2) case to CP4)
+- BUG-009 — Dashboard hardcoded KPIs and activity feed
+- BUG-016 — Province field free-text (should be seeded dropdown)
+- BUG-017 — Owner/Register raw C# property name labels
+- BUG-019 — DamCalculation Appendix D Method 1/2 calculator inputs not built
+- BUG-020 — FileMaster Index missing Assessment Track column
+- BUG-021 — WaterSource/IrrigationSystem seed count regression
+- BUG-022 — CP sequence gap (CP9 → CP11, no CP10)
+- MISSING-001 — HDI indicator absent from staff ApplicationUser profile
+- BUG-023 TOTP — external portal post-MFA dashboard requires manual authenticator app verification
+
+**Infrastructure lesson (saved to memory):** Always `docker buildx build --platform linux/amd64` on Apple Silicon for AKS. Helm Deployment selector changes require `kubectl delete deployment` first (immutable field); never use `--force-replace` when PVCs are present.
