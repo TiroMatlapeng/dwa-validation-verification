@@ -29,6 +29,13 @@ RUN apt-get update \
 
 COPY --from=build /app/publish .
 
+# Create writable upload directories and hand ownership to the non-root runtime user (1000).
+# The Helm deployment runs as runAsUser/fsGroup 1000; without this, FileSystemBlobStore's
+# Directory.CreateDirectory fails with UnauthorizedAccessException and every request 500s.
+# /app/wwwroot/_uploads = letter PDFs; /app/portal-uploads = Helm blobStore.useLocalDisk mount.
+RUN mkdir -p /app/wwwroot/_uploads /app/portal-uploads \
+    && chown -R 1000:1000 /app/wwwroot/_uploads /app/portal-uploads
+
 # Railway (and similar PaaS) inject PORT at runtime. Kestrel must bind to 0.0.0.0:$PORT.
 # Default to 8080 when PORT isn't set (local docker run).
 ENV ASPNETCORE_ENVIRONMENT=Production \
@@ -37,5 +44,8 @@ ENV ASPNETCORE_ENVIRONMENT=Production \
 
 # Documenting the default port; actual binding comes from ASPNETCORE_URLS + PORT.
 EXPOSE 8080
+
+# Run as non-root (matches Helm securityContext runAsUser/fsGroup 1000).
+USER 1000
 
 ENTRYPOINT ["dotnet", "dwa_ver_val.dll"]

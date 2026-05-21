@@ -21,7 +21,17 @@ public class FileSystemBlobStore : IBlobStore
     public FileSystemBlobStore(string root)
     {
         _root = Path.GetFullPath(root ?? throw new ArgumentNullException(nameof(root)));
-        Directory.CreateDirectory(_root);
+        try
+        {
+            Directory.CreateDirectory(_root);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new InvalidOperationException(
+                $"FileSystemBlobStore cannot create upload directory '{_root}'. " +
+                $"Ensure the container user has write access to this path. " +
+                $"In Kubernetes, set securityContext.fsGroup or mount a writable PVC.", ex);
+        }
     }
 
     public async Task<string> WriteAsync(string logicalPath, byte[] bytes)
