@@ -130,7 +130,8 @@ public class AccountController : Controller
         }
 
         await _signIn.IssuePartialSessionAsync(userId, ct);
-        return RedirectToAction("Verify", "Mfa", new { area = "ExternalPortal", returnUrl = vm.ReturnUrl });
+        var safeReturnUrl = (!string.IsNullOrEmpty(vm.ReturnUrl) && Url.IsLocalUrl(vm.ReturnUrl)) ? vm.ReturnUrl : null;
+        return RedirectToAction("Verify", "Mfa", new { area = "ExternalPortal", returnUrl = safeReturnUrl });
     }
 
     [HttpPost, ValidateAntiForgeryToken]

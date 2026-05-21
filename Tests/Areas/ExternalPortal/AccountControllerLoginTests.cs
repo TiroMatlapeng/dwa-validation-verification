@@ -48,7 +48,7 @@ public class AccountControllerLoginTests
     }
 
     [Fact]
-    public async Task Login_Post_MfaEnrolled_DeviceNotTrusted_IssuesPartialSession_RedirectsToVerify()
+    public async Task Login_Post_MfaEnrolled_NoCookie_IssuesPartialSession_RedirectsToVerify()
     {
         var userId = Guid.NewGuid();
         var signIn = new Mock<IPublicUserSignInService>();
@@ -57,8 +57,6 @@ public class AccountControllerLoginTests
         signIn.Setup(s => s.IssuePartialSessionAsync(userId, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         var deviceTrust = new Mock<IDeviceTrustService>();
-        deviceTrust.Setup(d => d.IsTrustedAsync(userId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                   .ReturnsAsync(false);
 
         var controller = BuildController(signIn.Object, deviceTrust.Object);
         var result = await controller.Login(new LoginViewModel { Email = "u@e.test", Password = "Goodpassword12!" }, default);
@@ -67,6 +65,42 @@ public class AccountControllerLoginTests
         Assert.Equal("Verify", redirect.ActionName);
         Assert.Equal("Mfa", redirect.ControllerName);
         signIn.Verify(s => s.IssuePartialSessionAsync(userId, It.IsAny<CancellationToken>()), Times.Once);
+        // No cookie → IsTrustedAsync must NOT have been called
+        deviceTrust.Verify(d => d.IsTrustedAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Login_Post_MfaEnrolled_CookiePresentButUntrusted_IssuesPartialSession_RedirectsToVerify()
+    {
+        var userId = Guid.NewGuid();
+        var signIn = new Mock<IPublicUserSignInService>();
+        signIn.Setup(s => s.SignInAsync("u@e.test", "Goodpassword12!", It.IsAny<CancellationToken>()))
+              .ReturnsAsync(new SignInResult(true, null, userId, MfaEnabled: true));
+        signIn.Setup(s => s.IssuePartialSessionAsync(userId, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+        var deviceTrust = new Mock<IDeviceTrustService>();
+        deviceTrust.Setup(d => d.IsTrustedAsync(userId, "stale-token", It.IsAny<CancellationToken>()))
+                   .ReturnsAsync(false);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers["Cookie"] = "dwa_dtrust=stale-token";
+
+        var controller = new AccountController(
+            new Mock<IPublicUserRegistrationService>().Object,
+            signIn.Object,
+            deviceTrust.Object,
+            NullLogger<AccountController>.Instance)
+        {
+            ControllerContext = new ControllerContext { HttpContext = httpContext }
+        };
+
+        var result = await controller.Login(new LoginViewModel { Email = "u@e.test", Password = "Goodpassword12!" }, default);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Verify", redirect.ActionName);
+        Assert.Equal("Mfa", redirect.ControllerName);
+        signIn.Verify(s => s.IssuePartialSessionAsync(userId, It.IsAny<CancellationToken>()), Times.Once);
+        deviceTrust.Verify(d => d.IsTrustedAsync(userId, "stale-token", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
