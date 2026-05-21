@@ -1,6 +1,8 @@
 using dwa_ver_val.Areas.ExternalPortal.Controllers;
 using dwa_ver_val.Areas.ExternalPortal.ViewModels;
 using dwa_ver_val.Services.Portal.Auth;
+using dwa_ver_val.Services.Portal.Mfa;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -10,15 +12,31 @@ namespace dwa_ver_val.Tests.Areas.ExternalPortal;
 
 public class AccountControllerRegistrationTests
 {
+    private static AccountController BuildController(
+        IPublicUserRegistrationService registration,
+        IPublicUserSignInService? signIn = null,
+        IDeviceTrustService? deviceTrust = null)
+    {
+        var controller = new AccountController(
+            registration,
+            signIn ?? Mock.Of<IPublicUserSignInService>(),
+            deviceTrust ?? Mock.Of<IDeviceTrustService>(),
+            NullLogger<AccountController>.Instance);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        return controller;
+    }
+
     [Fact]
     public async Task Register_Post_HappyPath_RedirectsToRegisterConfirmation()
     {
         var reg = new Mock<IPublicUserRegistrationService>();
         reg.Setup(r => r.RegisterAsync(It.IsAny<RegistrationRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RegistrationResult(true, Array.Empty<string>(), "tok", Guid.NewGuid()));
-        var sign = new Mock<IPublicUserSignInService>();
 
-        var controller = new AccountController(reg.Object, sign.Object, NullLogger<AccountController>.Instance);
+        var controller = BuildController(reg.Object);
 
         var result = await controller.Register(new RegisterViewModel
         {
@@ -41,7 +59,8 @@ public class AccountControllerRegistrationTests
         var reg = new Mock<IPublicUserRegistrationService>();
         reg.Setup(r => r.RegisterAsync(It.IsAny<RegistrationRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RegistrationResult(false, new[] { "Service-level error." }));
-        var controller = new AccountController(reg.Object, new Mock<IPublicUserSignInService>().Object, NullLogger<AccountController>.Instance);
+
+        var controller = BuildController(reg.Object);
 
         var result = await controller.Register(new RegisterViewModel
         {
@@ -59,14 +78,38 @@ public class AccountControllerRegistrationTests
     }
 
     [Fact]
-    public async Task ConfirmEmail_Get_ValidToken_ShowsSuccessView()
+    public async Task ConfirmEmail_Get_ValidToken_WithPublicUserId_IssuesPartialSession_RedirectsToSelectMethod()
     {
+        // Post-confirmation the controller issues a partial session and redirects to MFA enrolment.
+        var userId = Guid.NewGuid();
         var reg = new Mock<IPublicUserRegistrationService>();
         reg.Setup(r => r.ConfirmEmailAsync("good", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new EmailConfirmationResult(true, Array.Empty<string>(), Guid.NewGuid()));
-        var controller = new AccountController(reg.Object, new Mock<IPublicUserSignInService>().Object, NullLogger<AccountController>.Instance);
+            .ReturnsAsync(new EmailConfirmationResult(true, Array.Empty<string>(), userId));
+
+        var signIn = new Mock<IPublicUserSignInService>();
+        signIn.Setup(s => s.IssuePartialSessionAsync(userId, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+        var controller = BuildController(reg.Object, signIn.Object);
 
         var result = await controller.ConfirmEmail("good", default);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("SelectMethod", redirect.ActionName);
+        Assert.Equal("Mfa", redirect.ControllerName);
+        signIn.Verify(s => s.IssuePartialSessionAsync(userId, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ConfirmEmail_Get_ValidToken_NoPublicUserId_ShowsSuccessView()
+    {
+        // Edge case: confirmation succeeds but no PublicUserId returned — fall back to showing success view.
+        var reg = new Mock<IPublicUserRegistrationService>();
+        reg.Setup(r => r.ConfirmEmailAsync("good-no-id", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EmailConfirmationResult(true, Array.Empty<string>(), PublicUserId: null));
+
+        var controller = BuildController(reg.Object);
+
+        var result = await controller.ConfirmEmail("good-no-id", default);
 
         var view = Assert.IsType<ViewResult>(result);
         Assert.Equal(true, view.ViewData["Success"]);
@@ -78,7 +121,8 @@ public class AccountControllerRegistrationTests
         var reg = new Mock<IPublicUserRegistrationService>();
         reg.Setup(r => r.ConfirmEmailAsync("bad", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new EmailConfirmationResult(false, new[] { "Invalid token." }));
-        var controller = new AccountController(reg.Object, new Mock<IPublicUserSignInService>().Object, NullLogger<AccountController>.Instance);
+
+        var controller = BuildController(reg.Object);
 
         var result = await controller.ConfirmEmail("bad", default);
 

@@ -160,6 +160,7 @@ builder.Services.AddScoped<dwa_ver_val.Services.Notifications.INotificationServi
 builder.Services.AddScoped<IPublicUserPropertyAccessor, PublicUserPropertyAccessor>();
 builder.Services.AddScoped<IPublicUserRegistrationService, PublicUserRegistrationService>();
 builder.Services.AddScoped<IPublicUserSignInService, PublicUserSignInService>();
+builder.Services.AddScoped<dwa_ver_val.Services.Portal.Mfa.IDeviceTrustService, dwa_ver_val.Services.Portal.Mfa.DeviceTrustService>();
 builder.Services.AddSingleton<PasswordHasher<PublicUser>>();
 builder.Services.AddHttpContextAccessor();
 

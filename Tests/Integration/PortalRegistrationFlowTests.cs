@@ -16,8 +16,11 @@ public class PortalRegistrationFlowTests : IClassFixture<PortalIntegrationTestFi
     }
 
     [Fact]
-    public async Task Register_Confirm_Login_Dashboard_HappyPath()
+    public async Task Register_Confirm_RedirectsToMfaSelectMethod()
     {
+        // Replaces the old Register_Confirm_Login_Dashboard_HappyPath test.
+        // Post-MFA: confirm email issues a partial session and redirects to MFA enrolment,
+        // not directly to dashboard.
         var client = _fixture.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false,
@@ -43,11 +46,10 @@ public class PortalRegistrationFlowTests : IClassFixture<PortalIntegrationTestFi
         var endIdx = confirmationBody.IndexOf('"', idx);
         var confirmUrl = confirmationBody.Substring(idx, endIdx - idx);
 
-        // 4. GET confirm
+        // 4. GET confirm — now redirects to MFA SelectMethod (partial session issued)
         var confirmResp = await client.GetAsync(confirmUrl);
-        Assert.Equal(HttpStatusCode.OK, confirmResp.StatusCode);
-        var confirmBody = await confirmResp.Content.ReadAsStringAsync();
-        Assert.Contains("Email confirmed", confirmBody);
+        Assert.Equal(HttpStatusCode.Redirect, confirmResp.StatusCode);
+        Assert.Contains("/ExternalPortal/Mfa/SelectMethod", confirmResp.Headers.Location?.OriginalString ?? "");
 
         // 5. The PublicUser row is now Active + EmailConfirmed.
         using (var scope = _fixture.Services.CreateScope())
@@ -57,8 +59,31 @@ public class PortalRegistrationFlowTests : IClassFixture<PortalIntegrationTestFi
             Assert.True(user.EmailConfirmed);
             Assert.Equal("Active", user.Status);
         }
+    }
 
-        // 6. POST login
+    [Fact]
+    public async Task Login_NoMfaEnrolled_RedirectsToMfaSelectMethod()
+    {
+        // A user who has confirmed email but not yet enrolled MFA lands on SelectMethod.
+        var client = _fixture.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            HandleCookies = true
+        });
+
+        var email = $"login-mfa-{Guid.NewGuid():N}@example.test";
+
+        // Register and confirm
+        var regResp = await IntegrationTestHelpers.RegisterPublicUser(client, email);
+        var confirmPage = await client.GetAsync(regResp.Headers.Location!);
+        var confirmBody = await confirmPage.Content.ReadAsStringAsync();
+        var marker = "/ExternalPortal/Account/ConfirmEmail?token=";
+        var idx = confirmBody.IndexOf(marker, StringComparison.Ordinal);
+        var endIdx = confirmBody.IndexOf('"', idx);
+        var confirmUrl = confirmBody[idx..endIdx];
+        await client.GetAsync(confirmUrl);   // consume partial session from confirm redirect
+
+        // Log in — MFA not enrolled, so redirected to SelectMethod (not Dashboard)
         var loginToken = await IntegrationTestHelpers.GetAntiForgeryToken(client, "/ExternalPortal/Account/Login");
         var loginResp = await client.PostAsync("/ExternalPortal/Account/Login", new FormUrlEncodedContent(new[]
         {
@@ -67,13 +92,7 @@ public class PortalRegistrationFlowTests : IClassFixture<PortalIntegrationTestFi
             new KeyValuePair<string, string>("__RequestVerificationToken", loginToken)
         }));
         Assert.Equal(HttpStatusCode.Redirect, loginResp.StatusCode);
-        Assert.Contains("/ExternalPortal/Dashboard/Index", loginResp.Headers.Location?.OriginalString ?? "");
-
-        // 7. GET dashboard — protected by PortalAuthorizationConvention; should succeed thanks to the cookie.
-        var dashResp = await client.GetAsync(loginResp.Headers.Location);
-        Assert.Equal(HttpStatusCode.OK, dashResp.StatusCode);
-        var dashBody = await dashResp.Content.ReadAsStringAsync();
-        Assert.Contains(email, dashBody);
+        Assert.Contains("/ExternalPortal/Mfa/SelectMethod", loginResp.Headers.Location?.OriginalString ?? "");
     }
 
     [Fact]
@@ -112,8 +131,12 @@ public class PortalRegistrationFlowTests : IClassFixture<PortalIntegrationTestFi
     }
 
     [Fact]
-    public async Task SuspendedUser_ExistingSession_IsRejectedOnNextRequest()
+    public async Task SuspendedUser_AfterLogin_IsRejectedOnNextRequest()
     {
+        // Replaces SuspendedUser_ExistingSession_IsRejectedOnNextRequest.
+        // Post-MFA: login redirects to Mfa/SelectMethod. We follow to SelectMethod and then
+        // attempt to access the dashboard directly. A suspended-user check still happens on
+        // each cookie validation via PortalCookieEvents, so the suspended user must be rejected.
         var client = _fixture.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false,
@@ -135,10 +158,11 @@ public class PortalRegistrationFlowTests : IClassFixture<PortalIntegrationTestFi
         var endIdx = confirmBody.IndexOf('"', idx);
         var confirmUrl = confirmBody[idx..endIdx];
 
-        // 3. Confirm email
-        await client.GetAsync(confirmUrl);
+        // 3. Confirm email — partial session is issued, redirects to MFA SelectMethod
+        var confirmResp = await client.GetAsync(confirmUrl);
+        Assert.Equal(HttpStatusCode.Redirect, confirmResp.StatusCode);
 
-        // 4. Log in
+        // 4. Log in — no MFA enrolled, so partial session issued, redirects to SelectMethod
         var loginToken = await IntegrationTestHelpers.GetAntiForgeryToken(client, "/ExternalPortal/Account/Login");
         var loginResp = await client.PostAsync("/ExternalPortal/Account/Login", new FormUrlEncodedContent(new[]
         {
@@ -147,12 +171,10 @@ public class PortalRegistrationFlowTests : IClassFixture<PortalIntegrationTestFi
             new KeyValuePair<string, string>("__RequestVerificationToken", loginToken)
         }));
         Assert.Equal(HttpStatusCode.Redirect, loginResp.StatusCode);
+        // Partial session: redirected to MFA, not dashboard
+        Assert.Contains("/ExternalPortal/Mfa/SelectMethod", loginResp.Headers.Location?.OriginalString ?? "");
 
-        // 5. Verify dashboard is accessible
-        var dashResp = await client.GetAsync(loginResp.Headers.Location);
-        Assert.Equal(HttpStatusCode.OK, dashResp.StatusCode);
-
-        // 6. Suspend the user via direct DB access
+        // 5. Suspend the user via direct DB access
         using (var scope = _fixture.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
@@ -161,7 +183,7 @@ public class PortalRegistrationFlowTests : IClassFixture<PortalIntegrationTestFi
             await db.SaveChangesAsync();
         }
 
-        // 7. Access a protected portal page — existing session must now be rejected
+        // 6. Access a protected portal page — session must be rejected because user is suspended
         var afterSuspend = await client.GetAsync("/ExternalPortal/Dashboard/Index");
         Assert.Equal(HttpStatusCode.Redirect, afterSuspend.StatusCode);
         Assert.Contains("/ExternalPortal/Account/Login",

@@ -1,5 +1,6 @@
 using dwa_ver_val.Areas.ExternalPortal.ViewModels;
 using dwa_ver_val.Services.Portal.Auth;
+using dwa_ver_val.Services.Portal.Mfa;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,15 +12,18 @@ public class AccountController : Controller
 {
     private readonly IPublicUserRegistrationService _registration;
     private readonly IPublicUserSignInService _signIn;
+    private readonly IDeviceTrustService _deviceTrust;
     private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         IPublicUserRegistrationService registration,
         IPublicUserSignInService signIn,
+        IDeviceTrustService deviceTrust,
         ILogger<AccountController> logger)
     {
         _registration = registration;
         _signIn = signIn;
+        _deviceTrust = deviceTrust;
         _logger = logger;
     }
 
@@ -48,9 +52,6 @@ public class AccountController : Controller
             return View(vm);
         }
 
-        // Real implementation will substitute the link in the email body. For Stage 2a the
-        // token is logged via LoggingEmailSender — we surface it here too so the demo can
-        // copy/paste during testing. Stage 2b will move the link substitution into the service.
         var url = Url?.Action(nameof(ConfirmEmail), "Account", new { area = "ExternalPortal", token = result.ConfirmationToken });
         if (!string.IsNullOrEmpty(url)) TempData["DemoConfirmUrl"] = url;
         return RedirectToAction(nameof(RegisterConfirmation));
@@ -74,8 +75,21 @@ public class AccountController : Controller
         }
 
         var result = await _registration.ConfirmEmailAsync(token, ct);
-        ViewData["Success"] = result.Success;
-        ViewData["Error"] = result.Success ? null : (result.Errors.FirstOrDefault() ?? "The confirmation link is invalid.");
+        if (!result.Success)
+        {
+            ViewData["Success"] = false;
+            ViewData["Error"] = result.Errors.FirstOrDefault() ?? "The confirmation link is invalid.";
+            return View();
+        }
+
+        // Email confirmed — start MFA enrolment.
+        if (result.PublicUserId.HasValue)
+        {
+            await _signIn.IssuePartialSessionAsync(result.PublicUserId.Value, ct);
+            return RedirectToAction("SelectMethod", "Mfa", new { area = "ExternalPortal" });
+        }
+
+        ViewData["Success"] = true;
         return View();
     }
 
@@ -94,10 +108,29 @@ public class AccountController : Controller
             return View(vm);
         }
 
-        if (!string.IsNullOrEmpty(vm.ReturnUrl) && Url.IsLocalUrl(vm.ReturnUrl))
-            return Redirect(vm.ReturnUrl);
+        var userId = result.PublicUserId!.Value;
 
-        return RedirectToAction("Index", "Dashboard", new { area = "ExternalPortal" });
+        if (!result.MfaEnabled)
+        {
+            await _signIn.IssuePartialSessionAsync(userId, ct);
+            return RedirectToAction("SelectMethod", "Mfa", new { area = "ExternalPortal" });
+        }
+
+        // Check device trust cookie
+        var dtrustCookie = Request.Cookies["dwa_dtrust"];
+        bool trusted = dtrustCookie is not null
+            && await _deviceTrust.IsTrustedAsync(userId, dtrustCookie, ct);
+
+        if (trusted)
+        {
+            await _signIn.IssueFullSessionAsync(userId, ct);
+            if (!string.IsNullOrEmpty(vm.ReturnUrl) && Url.IsLocalUrl(vm.ReturnUrl))
+                return Redirect(vm.ReturnUrl);
+            return RedirectToAction("Index", "Dashboard", new { area = "ExternalPortal" });
+        }
+
+        await _signIn.IssuePartialSessionAsync(userId, ct);
+        return RedirectToAction("Verify", "Mfa", new { area = "ExternalPortal", returnUrl = vm.ReturnUrl });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
