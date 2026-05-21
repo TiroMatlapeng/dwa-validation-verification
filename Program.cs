@@ -3,6 +3,7 @@ using dwa_ver_val.Services.Infrastructure.Storage;
 using dwa_ver_val.Services.Portal.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,14 @@ builder.Services.AddControllersWithViews(options =>
 builder.Services.AddDbContext<ApplicationDBContext>(
     options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
+// Data Protection — persist keys to SQL Server so antiforgery and auth cookies
+// stay valid across pod restarts on AKS (otherwise each new pod regenerates
+// ephemeral keys and existing browser sessions get HTTP 400 on form submit).
+// SetApplicationName must remain stable across all pods/deployments.
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<ApplicationDBContext>()
+    .SetApplicationName("dwa-ver-val");
+
 // Identity (cookie auth; no Identity UI scaffolding)
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
@@ -52,7 +61,12 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
     options.SlidingExpiration = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    // SameAsRequest: cookie is marked Secure only when the request itself is
+    // HTTPS. The AKS pod terminates TLS at the ingress and speaks plain HTTP,
+    // so Always would set Secure and the browser would refuse to return the
+    // auth cookie over HTTP — causing an immediate logout/redirect loop after
+    // a successful login. With HTTPS in front, this still marks cookies Secure.
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
 // Build the auth scheme list incrementally:
@@ -244,7 +258,16 @@ app.UseForwardedHeaders(new Microsoft.AspNetCore.Builder.ForwardedHeadersOptions
                        | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
 });
 
-app.UseHttpsRedirection();
+// Only redirect to HTTPS when the app actually has an HTTPS listener configured.
+// On AKS the pod runs as Production but speaks plain HTTP (TLS terminates at the
+// ingress), with no ASPNETCORE_URLS https binding — so UseHttpsRedirection would
+// only emit the "Failed to determine the https port for redirect" warning and can
+// interfere with requests. Guard on the configured URLs rather than environment.
+var aspnetcoreUrls = builder.Configuration["ASPNETCORE_URLS"];
+if (!string.IsNullOrEmpty(aspnetcoreUrls) && aspnetcoreUrls.Contains("https", StringComparison.OrdinalIgnoreCase))
+{
+    app.UseHttpsRedirection();
+}
 
 // BUG-001: Decimal model binding is handled by InvariantDecimalModelBinderProvider
 // (registered in AddControllersWithViews above). UseRequestLocalization is NOT

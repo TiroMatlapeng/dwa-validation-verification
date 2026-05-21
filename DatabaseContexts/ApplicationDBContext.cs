@@ -1,8 +1,9 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>, IDataProtectionKeyContext
 {
     /// <summary>
     /// FKs that must retain a non-Restrict delete behaviour, identified by
@@ -103,6 +104,11 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
 
     // ── Audit ──
     public DbSet<AuditLog> AuditLogs { get; set; }
+
+    // ── Data Protection keys (persisted to DB so antiforgery/auth cookies survive
+    //    pod restarts on AKS). Required by IDataProtectionKeyContext; the package
+    //    configures the key/table mapping automatically — no HasKey() needed. ──
+    public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 
     // ── Public portal ──
     public DbSet<PublicUser> PublicUsers { get; set; }
