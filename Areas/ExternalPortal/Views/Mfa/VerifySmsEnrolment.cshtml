@@ -1,0 +1,16 @@
+@model dwa_ver_val.Areas.ExternalPortal.ViewModels.MfaVerifySmsEnrolmentViewModel
+@{ ViewData["Title"] = "Enter Verification Code"; }
+
+<h2>Enter the Code</h2>
+<p>Enter the 6-digit code sent to your phone.</p>
+
+<form asp-action="VerifySmsEnrolment" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div>
+        <label asp-for="Code">Code</label>
+        <input asp-for="Code" autocomplete="one-time-code" inputmode="numeric" maxlength="6" />
+        <span asp-validation-for="Code" class="text-danger"></span>
+    </div>
+    <button type="submit">Verify</button>
+</form>

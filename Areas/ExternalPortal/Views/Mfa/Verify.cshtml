@@ -1,0 +1,37 @@
+@model dwa_ver_val.Areas.ExternalPortal.ViewModels.MfaVerifyViewModel
+@{ ViewData["Title"] = "Two-Factor Verification"; }
+
+<h2>Two-Factor Verification</h2>
+
+@if (Model.MfaMethod == "SMS")
+{
+    <p>Enter the 6-digit code sent to your registered phone number.</p>
+    <form asp-action="SendSmsCode" method="post" style="display:inline">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+        <button type="submit">Send Code</button>
+    </form>
+}
+else
+{
+    <p>Enter the 6-digit code from your authenticator app.</p>
+}
+
+<form asp-action="Verify" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <input type="hidden" asp-for="MfaMethod" />
+    <input type="hidden" asp-for="ReturnUrl" />
+    <div>
+        <label asp-for="Code">Verification Code</label>
+        <input asp-for="Code" autocomplete="one-time-code" inputmode="numeric" maxlength="6" />
+        <span asp-validation-for="Code" class="text-danger"></span>
+    </div>
+    <div>
+        <label>
+            <input asp-for="TrustDevice" type="checkbox" />
+            Trust this device for 7 days
+        </label>
+    </div>
+    <button type="submit">Verify</button>
+</form>

@@ -1,0 +1,15 @@
+@model dwa_ver_val.Areas.ExternalPortal.ViewModels.MfaEnrolSmsViewModel
+@{ ViewData["Title"] = "Set Up SMS Verification"; }
+
+<h2>SMS Verification</h2>
+<p>We will send a verification code to your phone number.</p>
+
+<form asp-action="EnrolSms" method="post">
+    @Html.AntiForgeryToken()
+    <div>
+        <label asp-for="PhoneNumber">Mobile Number</label>
+        <input asp-for="PhoneNumber" type="tel" />
+        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+    </div>
+    <button type="submit">Send Code</button>
+</form>

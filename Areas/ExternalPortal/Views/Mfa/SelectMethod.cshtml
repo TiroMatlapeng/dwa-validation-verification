@@ -1,0 +1,23 @@
+@model dwa_ver_val.Areas.ExternalPortal.ViewModels.MfaSelectMethodViewModel
+@{ ViewData["Title"] = "Set Up Two-Factor Authentication"; }
+
+<h2>Secure Your Account</h2>
+<p>Choose your preferred method for two-factor authentication.</p>
+
+<form asp-action="SelectMethod" method="post">
+    @Html.AntiForgeryToken()
+    <div>
+        <label>
+            <input type="radio" asp-for="MfaMethod" value="TOTP" />
+            Authenticator App (Google Authenticator, Authy, etc.)
+        </label>
+    </div>
+    <div>
+        <label>
+            <input type="radio" asp-for="MfaMethod" value="SMS" />
+            SMS to your registered phone number
+        </label>
+    </div>
+    <span asp-validation-for="MfaMethod" class="text-danger"></span>
+    <button type="submit">Continue</button>
+</form>

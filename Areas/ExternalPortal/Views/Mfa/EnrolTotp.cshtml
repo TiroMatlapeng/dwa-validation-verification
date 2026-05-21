@@ -1,0 +1,17 @@
+@model dwa_ver_val.Areas.ExternalPortal.ViewModels.MfaEnrolTotpViewModel
+@{ ViewData["Title"] = "Set Up Authenticator App"; }
+
+<h2>Scan QR Code</h2>
+<p>Scan this QR code with your authenticator app, then enter the 6-digit code below.</p>
+
+<img src="data:image/png;base64,@Model.QrCodeBase64" alt="TOTP QR Code" width="200" height="200" />
+
+<form asp-action="EnrolTotp" method="post">
+    @Html.AntiForgeryToken()
+    <div>
+        <label asp-for="Code">Verification Code</label>
+        <input asp-for="Code" autocomplete="one-time-code" inputmode="numeric" maxlength="6" />
+        <span asp-validation-for="Code" class="text-danger"></span>
+    </div>
+    <button type="submit">Verify and Enable</button>
+</form>
