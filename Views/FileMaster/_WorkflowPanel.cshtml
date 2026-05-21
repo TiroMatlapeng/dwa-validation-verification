@@ -32,7 +32,11 @@ else
             Step @currentStep of @totalSteps
         </div>
 
-        @if (Model.BlockingReasons.Any())
+        @* BUG-012: only surface advance-blocking reasons when "Advance to Next CP" is the
+           operative action. In the letter/declaration phase (IsReadyForLetters) the next
+           step is issuing a letter, so advance-guard messages would be stale and confusing. *@
+        @if (Model.BlockingReasons.Any() && !Model.IsReadyForLetters
+             && Model.CurrentState != null && !Model.CurrentState.IsTerminal)
         {
             <div style="margin-top:12px; padding:12px 16px; background:var(--dws-warning-bg); border:1px solid #fcd34d; border-radius:6px; color:var(--dws-warning); font-size:13px;">
                 <strong>Cannot advance yet:</strong>
@@ -81,10 +85,37 @@ else
             </div>
         }
 
+        @{
+            // BUG-015: the phase tracker must only show the letter/declaration states that
+            // belong to THIS case's assessment track. S33(2)/(3) declaration pills are
+            // irrelevant on an S35 verification case (and vice versa). Filter the
+            // Verification-phase states by AssessmentTrack; the CP1–CP11 + review/workshop
+            // states (which precede the track fork) are always shown.
+            var track = Model.FileMaster.AssessmentTrack ?? "S35_Verification";
+            bool IsTrackRelevant(string stateName)
+            {
+                var isS35 = stateName.StartsWith("S35_", StringComparison.OrdinalIgnoreCase);
+                var isS33_2 = stateName.StartsWith("S33_2_", StringComparison.OrdinalIgnoreCase);
+                var isS33_3 = stateName.StartsWith("S33_3_", StringComparison.OrdinalIgnoreCase);
+
+                // Pre-fork states (CP*, review, workshop, Closed) are common to all tracks.
+                if (!isS35 && !isS33_2 && !isS33_3) return true;
+
+                return track switch
+                {
+                    "S33_2_Declaration" => isS33_2,
+                    "S33_3_Declaration" => isS33_3,
+                    _                   => isS35, // S35_Verification (default)
+                };
+            }
+        }
         <div class="phase-tracker">
             @foreach (var phase in new[] { "Inception", "Validation", "Verification" })
             {
-                var statesInPhase = Model.AllStates.Where(s => s.Phase == phase).OrderBy(s => s.DisplayOrder).ToList();
+                var statesInPhase = Model.AllStates
+                    .Where(s => s.Phase == phase && IsTrackRelevant(s.StateName))
+                    .OrderBy(s => s.DisplayOrder)
+                    .ToList();
                 var currentInPhase = Model.CurrentState != null && Model.CurrentState.Phase == phase;
                 <div class="phase-segment @(currentInPhase ? "phase-active" : "")">
                     <div class="phase-label">Phase @(Array.IndexOf(new[] { "Inception", "Validation", "Verification" }, phase) + 1): @phase</div>

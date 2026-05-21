@@ -38,6 +38,10 @@ public class LetterIssuance
     public Guid? PortalAcknowledgedByPublicUserId { get; set; }
     public Guid? RecipientPublicUserId { get; set; }
     public PublicUser? RecipientPublicUser { get; set; }
+    // BUG-013: the named recipient the letter is addressed/served to (NWA S35(2)(d)).
+    // Persisted from the issuance form's "recipient" field — distinct from
+    // ServingOfficialName (the DWS official who effected in-person service).
+    public string? RecipientName { get; set; }
     public string? ServingOfficialName { get; set; }
     public DateOnly? PhysicalDeliveryDate { get; set; }
     public DateOnly? ServiceConfirmedDate { get; set; }  // When proof of service confirmed; 60-day clock starts here

@@ -90,6 +90,9 @@ public class LetterService : ILetterService
             SignedDate = req.IssueDate,
             SignedById = req.SignedByUserId,
             ServedByOfficialId = req.ServedByOfficialId,
+            // BUG-013: persist the named recipient the letter is addressed to,
+            // distinct from the serving official's name below.
+            RecipientName = req.RecipientName,
             ServingOfficialName = req.ServedByOfficialId.HasValue ? req.SignedByDisplayName : null,
             BlobPath = blobPath,
             SignatureHash = hash,

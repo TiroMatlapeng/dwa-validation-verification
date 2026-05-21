@@ -44,7 +44,7 @@ public class FileMasterControllerLetterTests
         var letters = new Mock<ILetterService>();
         var (sut, tempData) = BuildLetterController(
             repo.Object, db, scope.Object, letters.Object,
-            new Mock<IWorkflowService>().Object, new Mock<INotificationService>().Object);
+            OkWorkflowMock().Object, new Mock<INotificationService>().Object);
 
         var result = await sut.IssueLetter(fm.FileMasterId, "IssueLetter1", "User A", "RegisteredPost", DateTime.Today, default);
 
@@ -166,7 +166,7 @@ public class FileMasterControllerLetterTests
         var letters = new Mock<ILetterService>();
         var (sut, tempData) = BuildLetterController(
             repo.Object, db, scope.Object, letters.Object,
-            new Mock<IWorkflowService>().Object, new Mock<INotificationService>().Object);
+            OkWorkflowMock().Object, new Mock<INotificationService>().Object);
 
         var result = await sut.IssueLetter(fm.FileMasterId, actionName, "User A", "RegisteredPost", DateTime.Today, default);
 
@@ -199,7 +199,7 @@ public class FileMasterControllerLetterTests
         var letters = new Mock<ILetterService>();
         var (sut, tempData) = BuildLetterController(
             repo.Object, db, scope.Object, letters.Object,
-            new Mock<IWorkflowService>().Object, new Mock<INotificationService>().Object);
+            OkWorkflowMock().Object, new Mock<INotificationService>().Object);
 
         var result = await sut.IssueLetter(
             fm.FileMasterId, "IssueS33_2", "Water User A", "RegisteredPost", DateTime.Today, default);
@@ -234,7 +234,7 @@ public class FileMasterControllerLetterTests
         var letters = new Mock<ILetterService>();
         var (sut, tempData) = BuildLetterController(
             repo.Object, db, scope.Object, letters.Object,
-            new Mock<IWorkflowService>().Object, new Mock<INotificationService>().Object);
+            OkWorkflowMock().Object, new Mock<INotificationService>().Object);
 
         var result = await sut.IssueLetter(
             fm.FileMasterId, "IssueS33_2", "Water User A", "RegisteredPost", DateTime.Today, default);
@@ -290,6 +290,10 @@ public class FileMasterControllerLetterTests
                });
 
         var workflow = new Mock<IWorkflowService>();
+        // BUG-014: let the pre-issuance prerequisite-state check pass so this test exercises
+        // the happy path (issuance + transition) rather than the new prerequisite guard.
+        workflow.Setup(w => w.CanIssueLetterAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+                .ReturnsAsync(LetterIssuanceCheck.Ok);
         workflow.Setup(w => w.TransitionToAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string?>()))
                 .ReturnsAsync(new WorkflowInstance { WorkflowInstanceId = Guid.NewGuid(), FileMasterId = fm.FileMasterId, Status = "Active" });
 
@@ -355,7 +359,7 @@ public class FileMasterControllerLetterTests
         var letters = new Mock<ILetterService>();
         var (sut, tempData) = BuildLetterController(
             repo.Object, db, scope.Object, letters.Object,
-            new Mock<IWorkflowService>().Object, new Mock<INotificationService>().Object);
+            OkWorkflowMock().Object, new Mock<INotificationService>().Object);
 
         var result = await sut.IssueLetter(
             fm.FileMasterId, "IssueS33_2", "Water User A", "RegisteredPost", DateTime.Today, default);
@@ -404,6 +408,10 @@ public class FileMasterControllerLetterTests
                });
 
         var workflow = new Mock<IWorkflowService>();
+        // BUG-014: let the pre-issuance prerequisite-state check pass so this test exercises
+        // the happy path (issuance + transition) rather than the new prerequisite guard.
+        workflow.Setup(w => w.CanIssueLetterAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+                .ReturnsAsync(LetterIssuanceCheck.Ok);
         workflow.Setup(w => w.TransitionToAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string?>()))
                 .ReturnsAsync(new WorkflowInstance { WorkflowInstanceId = Guid.NewGuid(), FileMasterId = fm.FileMasterId, Status = "Active" });
 
@@ -537,6 +545,18 @@ public class FileMasterControllerLetterTests
         Assert.Equal(board.IrrigationBoardId, capturedUpdate!.S33_2_IrrigationBoardId);
         Assert.True(capturedUpdate.S33_2_RatesPaidConfirmed);
         Assert.Equal("Upper Blyde Scheme", capturedUpdate.S33_2_ScheduledAreaName);
+    }
+
+    // BUG-014: the controller now calls IWorkflowService.CanIssueLetterAsync before any DB
+    // write. Tests that don't specifically exercise the prerequisite-state guard should let it
+    // pass, so they keep testing the downstream behaviour (idempotency, S33(2) guards, issuance).
+    // This builds an IWorkflowService mock whose CanIssueLetterAsync returns Ok for any code.
+    private static Mock<IWorkflowService> OkWorkflowMock()
+    {
+        var workflow = new Mock<IWorkflowService>();
+        workflow.Setup(w => w.CanIssueLetterAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+                .ReturnsAsync(LetterIssuanceCheck.Ok);
+        return workflow;
     }
 
     private static (FileMasterController controller, TempDataDictionary tempData) BuildLetterController(

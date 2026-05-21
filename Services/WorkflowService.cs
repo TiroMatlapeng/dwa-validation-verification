@@ -138,6 +138,16 @@ public class WorkflowService : IWorkflowService
         return defaultNext;
     }
 
+    // States from which the operative next action is issuing a letter / declaration
+    // (handled by FileMasterController.IssueLetter via TransitionToAsync), NOT the
+    // sequential AdvanceAsync path. GetBlockingReasonsAsync surfaces *advance* guard
+    // denials; once a case is in (or about to enter) the letter phase, those advance
+    // reasons are irrelevant and only confuse the operator — so we suppress them.
+    private static bool IsLetterPhaseState(WorkflowState state) =>
+        state.StateName is "CP9_SFRACalculated" or "CP_StakeholderWorkshop"
+        || state.StateName.StartsWith("S35_", StringComparison.OrdinalIgnoreCase)
+        || state.StateName.StartsWith("S33_", StringComparison.OrdinalIgnoreCase);
+
     public async Task<List<string>> GetBlockingReasonsAsync(Guid fileMasterId, Guid? userId)
     {
         var instance = await GetInstanceForFileAsync(fileMasterId);
@@ -149,11 +159,21 @@ public class WorkflowService : IWorkflowService
         var currentState = await _context.WorkflowStates.FindAsync(instance.CurrentWorkflowStateId);
         if (currentState is null || currentState.IsTerminal) return new();
 
+        // BUG-012: in the letter/declaration phase the next action is "issue a letter",
+        // not "advance to the next CP". Returning advance-guard denials here produced
+        // stale, irrelevant banners (e.g. a CP-leaving guard message on a case that has
+        // long since reached CP9 / the letter sub-states). Suppress them.
+        if (IsLetterPhaseState(currentState)) return new();
+
         var nextState = await ResolveNextStateAsync(fileMaster, currentState);
         if (nextState is null) return new();
 
         var (user, userRoles) = await LoadUserContextAsync(userId);
 
+        // Only run guards relevant to THIS transition. Each guard self-scopes via
+        // IsLeaving(currentState) / TargetState checks, so iterating all registered
+        // guards yields at most the guard(s) governing the current→next move; guards
+        // for already-passed control points return GuardResult.Ok and add nothing.
         var reasons = new List<string>();
         var ctx = new GuardContext(fileMaster, currentState, nextState, user, userRoles);
         foreach (var guard in _guards)
@@ -163,6 +183,51 @@ public class WorkflowService : IWorkflowService
                 reasons.Add(result.Reason);
         }
         return reasons;
+    }
+
+    // BUG-014: prerequisite current-state(s) each letter may be issued from. Keyed on the
+    // canonical letter code (LetterActionMap.LetterCode in FileMasterController). The values
+    // mirror FileMasterDetailsViewModel.AvailableLetterActions — the only states from which
+    // each issue action is surfaced in the UI. Issuing from any other state would create a
+    // LetterIssuance row that the subsequent TransitionToAsync could not legitimately follow.
+    private static readonly Dictionary<string, string[]> LetterPrerequisiteStates =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            // S35 verification track
+            ["S35_L1"]   = new[] { "CP9_SFRACalculated", "CP_StakeholderWorkshop" },
+            ["S35_L1A"]  = new[] { "S35_Letter1Issued" },
+            ["S35_L2"]   = new[] { "S35_Letter1Responded" },
+            ["S35_L2A"]  = new[] { "S35_Letter2Issued" },
+            ["S35_L3"]   = new[] { "S35_Letter1Responded", "S35_Letter2Responded" },
+            ["S35_L4A"]  = new[] { "S35_UnlawfulUseFound" },
+            ["S35_L4_5"] = new[] { "S35_Letter4AIssued" },
+            // S33(3) individual-application declarations
+            ["S33_3a_Decl"] = new[] { "CP9_SFRACalculated", "CP_StakeholderWorkshop" },
+            ["S33_3b_Decl"] = new[] { "CP9_SFRACalculated", "CP_StakeholderWorkshop" },
+            // S33(2) Kader Asmal declaration — only from the holding state
+            ["S33_2_Decl"]  = new[] { "S33_2_ReadyForDeclaration" },
+        };
+
+    public async Task<LetterIssuanceCheck> CanIssueLetterAsync(Guid fileMasterId, string letterCode)
+    {
+        if (!LetterPrerequisiteStates.TryGetValue(letterCode, out var allowedStates))
+            return LetterIssuanceCheck.Deny($"Unknown letter code '{letterCode}'.");
+
+        var instance = await GetInstanceForFileAsync(fileMasterId);
+        if (instance is null)
+            return LetterIssuanceCheck.Deny("This case has no workflow instance, so no letter can be issued.");
+
+        var currentState = await _context.WorkflowStates.FindAsync(instance.CurrentWorkflowStateId);
+        if (currentState is null)
+            return LetterIssuanceCheck.Deny("The current workflow state could not be resolved.");
+
+        if (allowedStates.Contains(currentState.StateName, StringComparer.OrdinalIgnoreCase))
+            return LetterIssuanceCheck.Ok;
+
+        var expected = string.Join(" or ", allowedStates);
+        return LetterIssuanceCheck.Deny(
+            $"This letter cannot be issued from the current workflow state '{currentState.StateName}'. " +
+            $"The case must first reach {expected}. Complete the prerequisite control points before issuing this letter.");
     }
 
     private async Task<WorkflowInstance> MoveToStateAsync(

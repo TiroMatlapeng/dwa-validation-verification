@@ -492,6 +492,18 @@ public class FileMasterController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        // BUG-014: verify the case is in the correct prerequisite workflow state for THIS
+        // letter BEFORE creating any LetterIssuance row. Previously the letter was written
+        // first and the workflow transition attempted second — if the transition was rejected
+        // (wrong current state / guard), the case was left with an orphaned letter record and
+        // an unchanged workflow state. Fail fast here with no DB write.
+        var prereq = await _workflow.CanIssueLetterAsync(id, map.LetterCode);
+        if (!prereq.Allowed)
+        {
+            TempData["Error"] = prereq.Reason;
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         // Idempotency: block re-issuance based on letter type.
         // One-time letters: block if ANY prior issuance exists regardless of ResponseStatus.
         // Repeatable letters (L1A, L2, L2A): block only while a Pending issuance exists.

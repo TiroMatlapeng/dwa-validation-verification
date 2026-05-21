@@ -376,6 +376,37 @@ public class Cp11SeedTests
         Assert.NotNull(state);
         Assert.Equal(17, state!.DisplayOrder);
     }
+
+    // BUG-018: River lookup feeds the DamCalculation/Create RiverId dropdown. Without seed
+    // rows the dropdown is empty and CP8 cannot be completed.
+    [Fact]
+    public async Task SeedAsync_SeedsRivers_ForDamCalculationDropdown()
+    {
+        using var db = NewDb();
+        var svc = new SeedDataService(db);
+        await svc.SeedAsync();
+
+        var rivers = await db.Rivers.ToListAsync();
+        Assert.NotEmpty(rivers);
+        Assert.Contains(rivers, r => r.RiverName == "Limpopo");
+        Assert.Contains(rivers, r => r.RiverName == "Vaal");
+        Assert.Contains(rivers, r => r.RiverName == "Blyde");
+    }
+
+    // Seeding must be idempotent — running twice must not duplicate river rows.
+    [Fact]
+    public async Task SeedAsync_RiverSeed_IsIdempotent()
+    {
+        using var db = NewDb();
+        var svc = new SeedDataService(db);
+        await svc.SeedAsync();
+        var firstCount = await db.Rivers.CountAsync();
+
+        await svc.SeedAsync();
+        var secondCount = await db.Rivers.CountAsync();
+
+        Assert.Equal(firstCount, secondCount);
+    }
 }
 
 // -----------------------------------------------------------------------

@@ -101,7 +101,9 @@
                             <td>@(l.LetterType?.NWASection ?? "--")</td>
                             <td>@(l.IssuedDate?.ToString("dd MMM yyyy") ?? "--")</td>
                             <td>@(l.IssueMethod ?? "--")</td>
-                            <td>@(l.ServingOfficialName ?? "--")</td>
+                            @* BUG-013: show the addressed recipient. Legacy rows that pre-date
+                               the RecipientName column fall back to the serving official name. *@
+                            <td>@(l.RecipientName ?? l.ServingOfficialName ?? "--")</td>
                             <td>@(l.ResponseStatus ?? "Pending")</td>
                             <td>
                                 @if (!string.IsNullOrEmpty(l.BlobPath))

@@ -188,7 +188,10 @@ public class MfaController : Controller
             Response.Cookies.Append("dwa_dtrust", rawToken, new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
+                // BUG-023: mark Secure only when the request is HTTPS. On the plain-HTTP AKS
+                // pod a hardcoded Secure=true is silently dropped by the browser, so the
+                // device-trust cookie never persisted. Mirror the portal cookie's policy.
+                Secure = Request.IsHttps,
                 SameSite = SameSiteMode.Strict,
                 Expires = DateTimeOffset.UtcNow.AddDays(7)
             });

@@ -30,6 +30,9 @@ public class SeedDataService
         // BUG-004: WaterSources / IrrigationSystems required by FieldAndCrop Create dropdowns.
         await SeedWaterSourcesAsync();
         await SeedIrrigationSystemsAsync();
+        // BUG-018: River lookup feeds the DamCalculation/Create RiverId dropdown.
+        // Without seed rows the dropdown is empty and CP8 can never be satisfied.
+        await SeedRiversAsync();
         await SeedSampleCasesAsync();
         await SeedCropsAsync();
         await SeedCalculatorReferenceDataAsync();
@@ -375,6 +378,47 @@ public class SeedDataService
                 WaterSourceId = Guid.NewGuid(),
                 WaterSourceName = name,
                 WaterSourceType = type,
+            });
+            added = true;
+        }
+
+        if (added)
+            await _context.SaveChangesAsync();
+    }
+
+    // ── Rivers (lookup for DamCalculation/Create dropdown) ──────────────
+    // BUG-018: DamCalculation/Create requires a RiverId. With no River rows the
+    // dropdown is permanently empty and the form cannot be saved, blocking CP8.
+    // Major South African rivers relevant to the DWS V&V context. Idempotent:
+    // only inserts names that do not already exist (re-entrant on every startup).
+    private async Task SeedRiversAsync()
+    {
+        var rivers = new[]
+        {
+            "Limpopo", "Vaal", "Orange", "Crocodile", "Olifants", "Letaba",
+            "Sabie", "Komati", "Inkomati", "Buffels", "Berg", "Breede",
+            "Eerste", "Hex", "Theewaterskloof", "Sundays", "Gamtoos",
+            "Great Fish", "Bushmans", "Umgeni", "Tugela", "Pongola",
+            "Nkomazi", "Molopo", "Harts", "Riet", "Modder", "Vet", "Sand",
+            "Wilge", "Liebenbergsvlei", "Nyl", "Mokolo", "Palala",
+            "Mogalakwena", "Steelpoort", "Blyde", "Marico", "Crocodile (West)",
+            "Hex (Cape)", "Krom", "Groot",
+        };
+
+        var existingNames = await _context.Rivers
+            .Select(r => r.RiverName)
+            .ToListAsync();
+        var existingSet = new HashSet<string>(existingNames, StringComparer.OrdinalIgnoreCase);
+
+        var added = false;
+        foreach (var name in rivers)
+        {
+            if (existingSet.Contains(name)) continue;
+
+            _context.Rivers.Add(new River
+            {
+                RiverId = Guid.NewGuid(),
+                RiverName = name,
             });
             added = true;
         }
