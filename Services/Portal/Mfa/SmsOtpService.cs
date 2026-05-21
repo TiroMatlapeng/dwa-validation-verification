@@ -57,7 +57,7 @@ public class SmsOtpService : ISmsOtpService
     }
 
     private static string GenerateCode()
-        => Random.Shared.Next(100000, 999999).ToString();
+        => RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
 
     private static string HashCode(string code)
         => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(code))).ToLowerInvariant();
