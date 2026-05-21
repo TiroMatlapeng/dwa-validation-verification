@@ -367,6 +367,60 @@ public class FileMasterControllerLetterTests
         letters.Verify(l => l.IssueAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IssueLetterRequest>()), Times.Never);
     }
 
+    [Theory]
+    [InlineData("IssueS33_3a", "S33_3a_Decl")]
+    [InlineData("IssueS33_3b", "S33_3b_Decl")]
+    public async Task IssueLetter_S33_3Decl_HappyPath_IssuesAndTransitionsToDeclarationIssued(string action, string letterCode)
+    {
+        // S33(3) declarations have no letter-specific guards beyond the standard idempotency check.
+        // This test verifies that a clean case results in IssueAsync being called with the correct
+        // letter code, and that TransitionToAsync moves the case to S33_3_DeclarationIssued.
+        var db = TestDbContextFactory.Create();
+        var prop = new Property { PropertyId = Guid.NewGuid() };
+        db.Properties.Add(prop);
+        var fm = SeedHelper.NewFileMaster(prop.PropertyId);
+        fm.AssessmentTrack = "S33_3_Declaration";
+        db.FileMasters.Add(fm);
+        await db.SaveChangesAsync();
+
+        var trackedFm = await db.FileMasters.FindAsync(fm.FileMasterId);
+
+        var repo = new Mock<IFileMaster>();
+        repo.Setup(r => r.GetByIdAsync(fm.FileMasterId)).ReturnsAsync(trackedFm);
+        var scope = new Mock<IScopedCaseQuery>();
+        scope.Setup(s => s.IsInScope(It.IsAny<FileMaster>(), It.IsAny<ClaimsPrincipal>())).Returns(true);
+
+        var letters = new Mock<ILetterService>();
+        letters.Setup(l => l.IssueAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IssueLetterRequest>()))
+               .ReturnsAsync(new LetterIssuance
+               {
+                   LetterIssuanceId = Guid.NewGuid(),
+                   FileMasterId = fm.FileMasterId,
+                   LetterTypeId = Guid.NewGuid(),
+                   IssuedDate = DateOnly.FromDateTime(DateTime.Today),
+                   GeneratedDate = DateOnly.FromDateTime(DateTime.Today),
+                   SignedDate = DateOnly.FromDateTime(DateTime.Today),
+                   ResponseStatus = "Pending"
+               });
+
+        var workflow = new Mock<IWorkflowService>();
+        workflow.Setup(w => w.TransitionToAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string?>()))
+                .ReturnsAsync(new WorkflowInstance { WorkflowInstanceId = Guid.NewGuid(), FileMasterId = fm.FileMasterId, Status = "Active" });
+
+        var (sut, tempData) = BuildLetterController(
+            repo.Object, db, scope.Object, letters.Object, workflow.Object, new Mock<INotificationService>().Object);
+
+        var result = await sut.IssueLetter(fm.FileMasterId, action, "Water User B", "RegisteredPost", DateTime.Today, default);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.False(tempData.ContainsKey("Error"), $"No guard should block S33(3) issuance on a clean case ({action}).");
+        letters.Verify(l => l.IssueAsync(fm.FileMasterId, letterCode, It.IsAny<IssueLetterRequest>()), Times.Once);
+        workflow.Verify(
+            w => w.TransitionToAsync(fm.FileMasterId, "S33_3_DeclarationIssued", It.IsAny<Guid?>(), It.IsAny<string?>()),
+            Times.Once,
+            $"IssueLetter must transition to S33_3_DeclarationIssued after {letterCode} is issued.");
+    }
+
     [Fact]
     public void ResponseActionMap_StampsAgreement_OnlyForWaterUserResponseActions()
     {
