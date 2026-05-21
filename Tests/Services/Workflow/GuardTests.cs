@@ -744,3 +744,203 @@ public class Cp19PajaChecklistGuardTests
         Assert.True(result.Allowed);
     }
 }
+
+// -----------------------------------------------------------------------
+// LetterServiceConfirmedGuard
+// -----------------------------------------------------------------------
+public class LetterServiceConfirmedGuardTests
+{
+    private static ApplicationDBContext NewDb() =>
+        new ApplicationDBContext(new DbContextOptionsBuilder<ApplicationDBContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options);
+
+    private static FileMaster MinimalCase() => new FileMaster
+    {
+        FileMasterId         = Guid.NewGuid(),
+        PropertyId           = Guid.NewGuid(),
+        RegistrationNumber   = "WARMS-LSC",
+        SurveyorGeneralCode  = "SG-LSC",
+        PrimaryCatchment     = "A21",
+        QuaternaryCatchment  = "A21A",
+        FarmName             = "LSCFarm",
+        FarmNumber           = 2,
+        RegistrationDivision = "TD",
+        FarmPortion          = "0"
+    };
+
+    private static LetterType LetterTypeFor(string code) => new LetterType
+    {
+        LetterTypeId      = Guid.NewGuid(),
+        LetterName        = code,
+        LetterDescription = code,
+        NWASection        = "S35"
+    };
+
+    private static LetterIssuance IssuanceFor(Guid fileMasterId, LetterType lt, DateOnly? confirmedDate) =>
+        new LetterIssuance
+        {
+            LetterIssuanceId      = Guid.NewGuid(),
+            FileMasterId          = fileMasterId,
+            LetterTypeId          = lt.LetterTypeId,
+            LetterType            = lt,
+            IssuedDate            = DateOnly.FromDateTime(DateTime.UtcNow),
+            ServiceConfirmedDate  = confirmedDate
+        };
+
+    private static GuardContext LeavingIssuedState(FileMaster fm, string issuedState, string nextState) =>
+        new(fm,
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = issuedState, DisplayOrder = 1, Phase = "Verification" },
+            new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = nextState,   DisplayOrder = 2, Phase = "Verification" });
+
+    // Letter 1 — deny without confirmed date
+    [Fact]
+    public async Task Letter1_DeniesWhenServiceNotConfirmed()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        db.FileMasters.Add(fm);
+        var lt = LetterTypeFor("S35_L1");
+        db.LetterTypes.Add(lt);
+        db.LetterIssuances.Add(IssuanceFor(fm.FileMasterId, lt, confirmedDate: null));
+        await db.SaveChangesAsync();
+
+        var sut = new LetterServiceConfirmedGuard(db);
+        var result = await sut.CheckAsync(LeavingIssuedState(fm, "S35_Letter1Issued", "S35_Letter1Responded"));
+        Assert.False(result.Allowed);
+        Assert.Contains("Letter 1", result.Reason);
+    }
+
+    // Letter 1 — allow when confirmed
+    [Fact]
+    public async Task Letter1_AllowsWhenServiceConfirmed()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        db.FileMasters.Add(fm);
+        var lt = LetterTypeFor("S35_L1");
+        db.LetterTypes.Add(lt);
+        db.LetterIssuances.Add(IssuanceFor(fm.FileMasterId, lt, confirmedDate: DateOnly.FromDateTime(DateTime.UtcNow)));
+        await db.SaveChangesAsync();
+
+        var sut = new LetterServiceConfirmedGuard(db);
+        var result = await sut.CheckAsync(LeavingIssuedState(fm, "S35_Letter1Issued", "S35_Letter1Responded"));
+        Assert.True(result.Allowed);
+    }
+
+    // Letter 1A — deny without confirmed date
+    [Fact]
+    public async Task Letter1A_DeniesWhenServiceNotConfirmed()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        db.FileMasters.Add(fm);
+        var lt = LetterTypeFor("S35_L1A");
+        db.LetterTypes.Add(lt);
+        db.LetterIssuances.Add(IssuanceFor(fm.FileMasterId, lt, confirmedDate: null));
+        await db.SaveChangesAsync();
+
+        var sut = new LetterServiceConfirmedGuard(db);
+        var result = await sut.CheckAsync(LeavingIssuedState(fm, "S35_Letter1AIssued", "S35_Letter1AResponded"));
+        Assert.False(result.Allowed);
+        Assert.Contains("Letter 1A", result.Reason);
+    }
+
+    // Letter 1A — allow when confirmed
+    [Fact]
+    public async Task Letter1A_AllowsWhenServiceConfirmed()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        db.FileMasters.Add(fm);
+        var lt = LetterTypeFor("S35_L1A");
+        db.LetterTypes.Add(lt);
+        db.LetterIssuances.Add(IssuanceFor(fm.FileMasterId, lt, confirmedDate: DateOnly.FromDateTime(DateTime.UtcNow)));
+        await db.SaveChangesAsync();
+
+        var sut = new LetterServiceConfirmedGuard(db);
+        var result = await sut.CheckAsync(LeavingIssuedState(fm, "S35_Letter1AIssued", "S35_Letter1AResponded"));
+        Assert.True(result.Allowed);
+    }
+
+    // Letter 2 — deny without confirmed date
+    [Fact]
+    public async Task Letter2_DeniesWhenServiceNotConfirmed()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        db.FileMasters.Add(fm);
+        var lt = LetterTypeFor("S35_L2");
+        db.LetterTypes.Add(lt);
+        db.LetterIssuances.Add(IssuanceFor(fm.FileMasterId, lt, confirmedDate: null));
+        await db.SaveChangesAsync();
+
+        var sut = new LetterServiceConfirmedGuard(db);
+        var result = await sut.CheckAsync(LeavingIssuedState(fm, "S35_Letter2Issued", "S35_Letter2Responded"));
+        Assert.False(result.Allowed);
+        Assert.Contains("Letter 2", result.Reason);
+    }
+
+    // Letter 2 — allow when confirmed
+    [Fact]
+    public async Task Letter2_AllowsWhenServiceConfirmed()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        db.FileMasters.Add(fm);
+        var lt = LetterTypeFor("S35_L2");
+        db.LetterTypes.Add(lt);
+        db.LetterIssuances.Add(IssuanceFor(fm.FileMasterId, lt, confirmedDate: DateOnly.FromDateTime(DateTime.UtcNow)));
+        await db.SaveChangesAsync();
+
+        var sut = new LetterServiceConfirmedGuard(db);
+        var result = await sut.CheckAsync(LeavingIssuedState(fm, "S35_Letter2Issued", "S35_Letter2Responded"));
+        Assert.True(result.Allowed);
+    }
+
+    // Letter 2A — deny without confirmed date
+    [Fact]
+    public async Task Letter2A_DeniesWhenServiceNotConfirmed()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        db.FileMasters.Add(fm);
+        var lt = LetterTypeFor("S35_L2A");
+        db.LetterTypes.Add(lt);
+        db.LetterIssuances.Add(IssuanceFor(fm.FileMasterId, lt, confirmedDate: null));
+        await db.SaveChangesAsync();
+
+        var sut = new LetterServiceConfirmedGuard(db);
+        var result = await sut.CheckAsync(LeavingIssuedState(fm, "S35_Letter2AIssued", "S35_Letter3Issued"));
+        Assert.False(result.Allowed);
+        Assert.Contains("Letter 2A", result.Reason);
+    }
+
+    // Letter 2A — allow when confirmed
+    [Fact]
+    public async Task Letter2A_AllowsWhenServiceConfirmed()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        db.FileMasters.Add(fm);
+        var lt = LetterTypeFor("S35_L2A");
+        db.LetterTypes.Add(lt);
+        db.LetterIssuances.Add(IssuanceFor(fm.FileMasterId, lt, confirmedDate: DateOnly.FromDateTime(DateTime.UtcNow)));
+        await db.SaveChangesAsync();
+
+        var sut = new LetterServiceConfirmedGuard(db);
+        var result = await sut.CheckAsync(LeavingIssuedState(fm, "S35_Letter2AIssued", "S35_Letter3Issued"));
+        Assert.True(result.Allowed);
+    }
+
+    [Fact]
+    public async Task LetterService_PassesWhenNotInAnyIssuedState()
+    {
+        using var db = NewDb();
+        var fm = MinimalCase();
+        // No LetterIssuance seeded — guard must short-circuit.
+        var sut = new LetterServiceConfirmedGuard(db);
+        var result = await sut.CheckAsync(LeavingIssuedState(fm, "CP_StakeholderWorkshop", "S35_Letter1Issued"));
+        Assert.True(result.Allowed);
+    }
+}

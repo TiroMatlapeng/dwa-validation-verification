@@ -253,3 +253,39 @@ public class Cp19PajaChecklistGuard : ITransitionGuard
         return GuardResult.Ok;
     }
 }
+
+/// <summary>
+/// Leaving an S35 *Issued state requires proof of service (ServiceConfirmedDate)
+/// on the corresponding letter before the case can advance.
+/// </summary>
+public class LetterServiceConfirmedGuard : ITransitionGuard
+{
+    private readonly ApplicationDBContext _db;
+    public LetterServiceConfirmedGuard(ApplicationDBContext db) { _db = db; }
+
+    private static readonly Dictionary<string, (string Code, string Label)> _map = new()
+    {
+        ["S35_Letter1Issued"]  = ("S35_L1",  "Letter 1"),
+        ["S35_Letter1AIssued"] = ("S35_L1A", "Letter 1A"),
+        ["S35_Letter2Issued"]  = ("S35_L2",  "Letter 2"),
+        ["S35_Letter2AIssued"] = ("S35_L2A", "Letter 2A"),
+    };
+
+    public async Task<GuardResult> CheckAsync(GuardContext ctx)
+    {
+        if (!_map.TryGetValue(ctx.CurrentState.StateName, out var entry)) return GuardResult.Ok;
+        // Guard only fires when leaving the issued state (target is different)
+        if (ctx.TargetState.StateName == ctx.CurrentState.StateName) return GuardResult.Ok;
+
+        var issuance = await _db.LetterIssuances
+            .Include(l => l.LetterType)
+            .Where(l => l.FileMasterId == ctx.FileMaster.FileMasterId
+                     && l.LetterType!.LetterName == entry.Code)
+            .OrderByDescending(l => l.IssuedDate)
+            .FirstOrDefaultAsync();
+
+        if (issuance?.ServiceConfirmedDate.HasValue == true) return GuardResult.Ok;
+
+        return GuardResult.Deny($"{entry.Label} service must be confirmed (proof of delivery recorded) before advancing.");
+    }
+}
