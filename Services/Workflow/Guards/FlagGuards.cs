@@ -181,8 +181,11 @@ public class Cp11FileCompilationGuard : ITransitionGuard
         if (!ctx.FileMaster.WarmsReviewedAt.HasValue)
             return GuardResult.Deny("WARMS review must be recorded before file can be compiled.");
 
-        var property = await _db.Properties.FindAsync(ctx.FileMaster.PropertyId);
-        if (property is null || string.IsNullOrWhiteSpace(property.SGCode))
+        var sgCode = await _db.Properties
+            .Where(p => p.PropertyId == ctx.FileMaster.PropertyId)
+            .Select(p => p.SGCode)
+            .FirstOrDefaultAsync();
+        if (string.IsNullOrWhiteSpace(sgCode))
             return GuardResult.Deny("Property SG code must be confirmed before file can be compiled.");
 
         var hasAuth = await _db.Authorisations.AnyAsync(a => a.FileMasterId == ctx.FileMaster.FileMasterId);
