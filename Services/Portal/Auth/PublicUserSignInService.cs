@@ -153,7 +153,7 @@ public class PublicUserSignInService : IPublicUserSignInService
             Action: "PublicUserSignedIn",
             ToValue: email));
 
-        return new SignInResult(true, null, user.PublicUserId);
+        return new SignInResult(true, null, user.PublicUserId, user.MfaEnabled);
     }
 
     public async Task SignOutAsync(CancellationToken ct)
@@ -161,5 +161,43 @@ public class PublicUserSignInService : IPublicUserSignInService
         var ctx = _httpContext.HttpContext
             ?? throw new InvalidOperationException("PublicUserSignInService requires an active HttpContext.");
         await ctx.SignOutAsync(PortalCookieOptions.SchemeName);
+    }
+
+    public async Task IssuePartialSessionAsync(Guid publicUserId, CancellationToken ct)
+    {
+        var ctx = _httpContext.HttpContext
+            ?? throw new InvalidOperationException("IssuePartialSessionAsync requires an active HttpContext.");
+        var user = await _db.PublicUsers.FindAsync(new object[] { publicUserId }, ct)
+            ?? throw new InvalidOperationException($"User {publicUserId} not found.");
+
+        await ctx.SignOutAsync(PortalCookieOptions.SchemeName);
+
+        var identity = new ClaimsIdentity(PortalCookieOptions.SchemeName);
+        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, publicUserId.ToString()));
+        identity.AddClaim(new Claim(ClaimTypes.Name, user.EmailAddress));
+        identity.AddClaim(new Claim("MfaPending", "true"));
+
+        await ctx.SignInAsync(PortalCookieOptions.SchemeName, new ClaimsPrincipal(identity),
+            new AuthenticationProperties { IsPersistent = false, ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(10) });
+    }
+
+    public async Task IssueFullSessionAsync(Guid publicUserId, CancellationToken ct)
+    {
+        var ctx = _httpContext.HttpContext
+            ?? throw new InvalidOperationException("IssueFullSessionAsync requires an active HttpContext.");
+        var user = await _db.PublicUsers.FindAsync(new object[] { publicUserId }, ct)
+            ?? throw new InvalidOperationException($"User {publicUserId} not found.");
+
+        await ctx.SignOutAsync(PortalCookieOptions.SchemeName);
+
+        var identity = new ClaimsIdentity(PortalCookieOptions.SchemeName);
+        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, publicUserId.ToString()));
+        identity.AddClaim(new Claim(ClaimTypes.Name, user.EmailAddress));
+        identity.AddClaim(new Claim(PortalPolicies.EmailConfirmedClaim, "true"));
+        identity.AddClaim(new Claim(PortalPolicies.MfaEnrolledClaim, "true"));
+        identity.AddClaim(new Claim(PortalPolicies.StatusClaim, user.Status));
+
+        await ctx.SignInAsync(PortalCookieOptions.SchemeName, new ClaimsPrincipal(identity),
+            new AuthenticationProperties { IsPersistent = false });
     }
 }
