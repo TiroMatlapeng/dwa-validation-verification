@@ -243,7 +243,13 @@ using (var scope = app.Services.CreateScope())
 // Pipeline
 app.UseExceptionHandler();          // routes through the IExceptionHandler chain (PortalExceptionHandler first)
 
-if (!app.Environment.IsDevelopment())
+// Only emit HSTS when the pod is actually listening on HTTPS (or proxied as HTTPS).
+// On AKS the pod speaks plain HTTP — TLS terminates at the ingress — so emitting
+// HSTS over HTTP instructs browsers to require HTTPS for the IP/domain for the
+// next 30 days, which permanently breaks plain-HTTP dev deployments.
+if (!app.Environment.IsDevelopment()
+    && !string.IsNullOrEmpty(builder.Configuration["ASPNETCORE_URLS"])
+    && builder.Configuration["ASPNETCORE_URLS"]!.Contains("https", StringComparison.OrdinalIgnoreCase))
 {
     app.UseHsts();
 }
@@ -278,6 +284,14 @@ if (!string.IsNullOrEmpty(aspnetcoreUrls) && aspnetcoreUrls.Contains("https", St
 app.UseRouting();
 
 app.UseRateLimiter();               // must run between UseRouting and UseAuthentication
+
+// Serve wwwroot static files (CSS, JS, fonts, images) BEFORE the auth pipeline runs.
+// MapStaticAssets() registers fingerprinted/compressed endpoint handlers but operates
+// after UseAuthorization — meaning unauthenticated requests (e.g. the login page
+// requesting site.css) hit the auth middleware first and get a 401 redirect instead
+// of the file. UseStaticFiles() short-circuits before auth and fixes this.
+// MapStaticAssets() stays below for the fingerprinted asset support it adds to MVC routes.
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
