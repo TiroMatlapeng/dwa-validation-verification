@@ -303,6 +303,68 @@ public class FileMasterControllerLetterTests
         Assert.IsType<RedirectToActionResult>(result);
         Assert.False(tempData.ContainsKey("Error"), "Rates-paid guard must not block when S33_2_RatesPaidConfirmed is true.");
         letters.Verify(l => l.IssueAsync(fm.FileMasterId, "S33_2_Decl", It.IsAny<IssueLetterRequest>()), Times.Once);
+        // The controller must transition the workflow to S33_2_DeclarationIssued after issuance.
+        // Without this, the case stays in ReadyForDeclaration and the declaration track never completes.
+        workflow.Verify(
+            w => w.TransitionToAsync(fm.FileMasterId, "S33_2_DeclarationIssued", It.IsAny<Guid?>(), It.IsAny<string?>()),
+            Times.Once,
+            "IssueLetter must call TransitionToAsync('S33_2_DeclarationIssued') after a successful IssueAsync.");
+    }
+
+    [Fact]
+    public async Task IssueLetter_S33_2Decl_Idempotency_BlocksReissuanceWithCorrectMessage()
+    {
+        // A S33(2) Kader Asmal Declaration is a one-time legal instrument. Once issued, any
+        // re-issuance attempt must be blocked by the idempotency guard — BEFORE the S33(2)-specific
+        // guards fire. This test seeds a fully-valid case (rates confirmed, entitlement linked) so
+        // we can be certain the block comes from idempotency, not from a downstream guard.
+        var db = TestDbContextFactory.Create();
+        var board = new IrrigationBoard { IrrigationBoardId = Guid.NewGuid(), IrrigationBoardName = "Blyde River Board" };
+        db.IrrigationBoards.Add(board);
+        var ent = new Entitlement { EntitlementId = Guid.NewGuid(), Name = "S33(2) ELU", Volume = 12000m, EntitlementTypeId = Guid.NewGuid() };
+        db.Entitlements.Add(ent);
+        var prop = new Property { PropertyId = Guid.NewGuid() };
+        db.Properties.Add(prop);
+        var fm = SeedHelper.NewFileMaster(prop.PropertyId);
+        fm.AssessmentTrack = "S33_2_Declaration";
+        fm.S33_2_IrrigationBoardId = board.IrrigationBoardId;
+        fm.S33_2_RatesPaidConfirmed = true;
+        fm.EntitlementId = ent.EntitlementId;
+        db.FileMasters.Add(fm);
+
+        // Seed the LetterType so the idempotency guard can look it up.
+        var lt = new LetterType { LetterTypeId = Guid.NewGuid(), LetterName = "S33_2_Decl", LetterDescription = "S33(2) Kader Asmal Declaration" };
+        db.LetterTypes.Add(lt);
+        // Prior issuance (resolved — ResponseStatus not "Pending") must still block re-issuance.
+        db.LetterIssuances.Add(new LetterIssuance
+        {
+            LetterIssuanceId = Guid.NewGuid(),
+            FileMasterId = fm.FileMasterId,
+            LetterTypeId = lt.LetterTypeId,
+            IssuedDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-30)),
+            GeneratedDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-30)),
+            SignedDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-30)),
+            ResponseStatus = "Agreed"
+        });
+        await db.SaveChangesAsync();
+
+        var repo = new Mock<IFileMaster>();
+        repo.Setup(r => r.GetByIdAsync(fm.FileMasterId)).ReturnsAsync(fm);
+        var scope = new Mock<IScopedCaseQuery>();
+        scope.Setup(s => s.IsInScope(It.IsAny<FileMaster>(), It.IsAny<ClaimsPrincipal>())).Returns(true);
+        var letters = new Mock<ILetterService>();
+        var (sut, tempData) = BuildLetterController(
+            repo.Object, db, scope.Object, letters.Object,
+            new Mock<IWorkflowService>().Object, new Mock<INotificationService>().Object);
+
+        var result = await sut.IssueLetter(
+            fm.FileMasterId, "IssueS33_2", "Water User A", "RegisteredPost", DateTime.Today, default);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Details", redirect.ActionName);
+        Assert.True(tempData.ContainsKey("Error"), "Idempotency guard must set TempData[\"Error\"].");
+        Assert.Contains("already been issued", (string)tempData["Error"]!, StringComparison.OrdinalIgnoreCase);
+        letters.Verify(l => l.IssueAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IssueLetterRequest>()), Times.Never);
     }
 
     [Fact]
