@@ -70,15 +70,27 @@ jobs:
             --namespace ${{ env.HELM_NAMESPACE }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
+      # Create app secrets via kubectl to avoid Helm --set comma-splitting issues
+      # (SQL Server connection strings contain commas; Helm --set treats them as list separators)
+      - name: Create / refresh app secrets
+        run: |
+          kubectl create secret generic dwa-vv-secrets \
+            --namespace ${{ env.HELM_NAMESPACE }} \
+            --from-literal="ConnectionStrings__Default=${{ secrets.DEV_CONNECTION_STRING }}" \
+            --from-literal="Identity__InitialDemoPassword=${{ secrets.DEV_DEMO_PASSWORD }}" \
+            --from-literal="Portal__AllowPlaintextIdentityNumber=true" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic dwa-vv-mssql \
+            --namespace ${{ env.HELM_NAMESPACE }} \
+            --from-literal="sa-password=${{ secrets.DEV_MSSQL_SA_PASSWORD }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Helm upgrade / install
         run: |
           helm upgrade --install ${{ env.HELM_RELEASE }} deploy/helm/dwa-vv \
             --namespace ${{ env.HELM_NAMESPACE }} \
             -f deploy/helm/dwa-vv/values.dev.yaml \
             --set image.tag=${{ github.sha }} \
-            --set secrets.connectionString="${{ secrets.DEV_CONNECTION_STRING }}" \
-            --set secrets.demoPwd="${{ secrets.DEV_DEMO_PASSWORD }}" \
-            --set mssql.saPassword="${{ secrets.DEV_MSSQL_SA_PASSWORD }}" \
             --wait \
             --timeout 8m
 

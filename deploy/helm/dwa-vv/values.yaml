@@ -18,14 +18,10 @@ image:
 
 # ── Secret source ─────────────────────────────────────────────────────────────
 # useKeyVault: true  → secrets pulled from Azure Key Vault via CSI driver (prod)
-# useKeyVault: false → secrets stored in a plain K8s Secret created by this chart (dev)
+# useKeyVault: false → secrets live in a K8s Secret managed by kubectl in CI
+#                      (NOT by Helm — Helm --set mangles connection strings with commas)
 secrets:
   useKeyVault: true
-  # Used only when useKeyVault: false — values written directly into the K8s Secret.
-  # In CI, pass via --set secrets.connectionString=... (never commit real values here).
-  connectionString: ""
-  demoPwd: ""
-  popiaAck: "true"
 
 # Azure Workload Identity — bind the K8s service account to a managed identity
 # that has Key Vault Secrets User on the KV.  Set in environment-specific values.
@@ -45,7 +41,7 @@ keyVault:
 mssql:
   enabled: false
   image: mcr.microsoft.com/mssql/server:2022-latest
-  saPassword: ""        # Set via --set mssql.saPassword=... in CI; never commit here
+  saPassword: ""        # SA password managed by kubectl in CI — not read by Helm templates
   storageSize: 10Gi
   resources:
     requests:
