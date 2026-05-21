@@ -28,6 +28,8 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
         (typeof(LawfulnessAssessmentResult), typeof(GovernmentWaterControlArea), nameof(LawfulnessAssessmentResult.GwcaId), DeleteBehavior.SetNull),
         (typeof(Property), typeof(GovernmentWaterControlArea), nameof(Property.WaterControlAreaId), DeleteBehavior.SetNull),
         (typeof(FileMaster), typeof(IrrigationBoard), nameof(FileMaster.S33_2_IrrigationBoardId), DeleteBehavior.SetNull),
+        (typeof(TrustedDevice), typeof(PublicUser), nameof(TrustedDevice.PublicUserId), DeleteBehavior.Cascade),
+        (typeof(SmsOtp),        typeof(PublicUser), nameof(SmsOtp.PublicUserId),        DeleteBehavior.Cascade),
     };
 
     public ApplicationDBContext(DbContextOptions<ApplicationDBContext> dbContextOption) : base(dbContextOption)
@@ -106,6 +108,8 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<PublicUser> PublicUsers { get; set; }
     public DbSet<PublicUserProperty> PublicUserProperties { get; set; }
     public DbSet<PublicUserRecoveryCode> PublicUserRecoveryCodes { get; set; }
+    public DbSet<TrustedDevice> TrustedDevices { get; set; }
+    public DbSet<SmsOtp> SmsOtps { get; set; }
     public DbSet<CaseComment> CaseComments { get; set; }
     public DbSet<Objection> Objections { get; set; }
     public DbSet<ObjectionDocument> ObjectionDocuments { get; set; }
@@ -767,6 +771,32 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasIndex(e => e.PublicUserId)
             .HasDatabaseName("IX_PublicUserRecoveryCodes_PublicUserId_Unused")
             .HasFilter("[Used] = 0");
+
+        // ── TrustedDevice ──
+        modelBuilder.Entity<TrustedDevice>().HasKey(e => e.TrustedDeviceId);
+        modelBuilder.Entity<TrustedDevice>()
+            .HasOne(e => e.PublicUser)
+            .WithMany()
+            .HasForeignKey(e => e.PublicUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<TrustedDevice>()
+            .Property(e => e.DeviceTokenHash).HasMaxLength(64).IsRequired();
+        modelBuilder.Entity<TrustedDevice>()
+            .HasIndex(e => new { e.PublicUserId, e.ExpiresAt })
+            .HasDatabaseName("IX_TrustedDevices_PublicUserId_ExpiresAt");
+
+        // ── SmsOtp ──
+        modelBuilder.Entity<SmsOtp>().HasKey(e => e.SmsOtpId);
+        modelBuilder.Entity<SmsOtp>()
+            .HasOne(e => e.PublicUser)
+            .WithMany()
+            .HasForeignKey(e => e.PublicUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<SmsOtp>()
+            .Property(e => e.CodeHash).HasMaxLength(64).IsRequired();
+        modelBuilder.Entity<SmsOtp>()
+            .HasIndex(e => new { e.PublicUserId, e.Used, e.ExpiresAt })
+            .HasDatabaseName("IX_SmsOtps_PublicUserId_Used_ExpiresAt");
 
         // ── PublicUser new column constraints ──
         modelBuilder.Entity<PublicUser>()

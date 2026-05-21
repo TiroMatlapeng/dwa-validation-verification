@@ -15,6 +15,7 @@ public class PublicUser
     public DateTime RegistrationDate { get; set; }
     public string? MfaSecret { get; set; }
     public DateTime? MfaEnrolledDate { get; set; }
+    public string? MfaMethod { get; set; } // "TOTP" | "SMS" | null
     public DateTime? LastLoginDate { get; set; }
     public int FailedLoginAttempts { get; set; }
     public DateTime? LockoutUntil { get; set; }
