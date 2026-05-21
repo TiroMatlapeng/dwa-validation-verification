@@ -101,3 +101,47 @@ Evidence chain:
 5. This mirrors the internal cookie fix already in place and documented in the AKS deployment memory.
 
 No code change required. BUG-023 fix committed by dotnet-master is confirmed correct for the current and future (HTTPS-fronted) AKS topology.
+
+### 2026-05-21T22:15+02:00 — Controller — Architecture incident + manual deploy recovery
+
+- devops-deployment-architect built the image on arm64 Mac without `--platform linux/amd64`. AKS nodes are amd64. The new pod entered `ImagePullBackOff`; the old pod was already terminated by the rolling update. Site was down for ~8 minutes.
+- Controller rebuilt with `docker buildx build --platform linux/amd64 --push` targeting SHA `86ae95188e913300795a2b91371a84d728128e37` (HEAD after all commits).
+- Ran `helm upgrade dwa-vv` → revision 10. Pod `dwa-vv-b4f586b5b-87ggc` healthy, 0 restarts.
+- Smoke test: `curl http://20.87.59.203/` → HTTP 302. Site live.
+- **Lesson for future deploys:** Always use `docker buildx build --platform linux/amd64` when building on Apple Silicon for AKS. Add this to the deployment runbook.
+- Status: Dispatching validator for Phase 3.
+
+### 2026-05-21T22:45+02:00 — Controller — BUG-008 root cause discovered and fixed
+
+- First validator run (during architecture incident) observed 40% failure rate. Pod had 0 restarts — failure was NOT pod restarts.
+- Checked service endpoints: `kubectl get endpoints dwa-vv` showed TWO addresses: `10.244.0.69` (MSSQL pod) AND `10.244.1.166` (app pod). LoadBalancer was round-robining, sending ~50% of app traffic to SQL Server → connection refused.
+- Root cause: `dwa-vv.selectorLabels` Helm helper only checked `instance=dwa-vv` and `name=dwa-vv`. MSSQL pod carries both labels + `component=mssql`. Without a `component` discriminator in the selector, both pods matched.
+- Fix: `kubectl label pod <app-pod> component=app` + `kubectl patch svc dwa-vv` to add `component=app` to selector. Immediate: 20/20 requests pass.
+- Helm fix: added `app.kubernetes.io/component: app` to `selectorLabels` helper in `_helpers.tpl`. Committed as `99e6aa8`.
+- Liveness probe timeout fix (platform-strategist) was still correct but addressed a different failure mode; both fixes should be kept.
+
+### 2026-05-21T23:00+02:00 — Validator (final run) — All fixes verified
+
+| Fix | Status |
+|-----|--------|
+| BUG-008 Site stability | PASS — 20/20 requests, 0 restarts |
+| BUG-013 Letter recipient | PARTIAL — form structure correct, needs manual verification with fresh letterable case |
+| BUG-014 Letter issuance guard | PASS |
+| BUG-015 S33 pills on S35 cases | PASS |
+| BUG-018 River dropdown | PASS — 42 rivers, DamCalc saves |
+| BUG-012 Stale guard banners | PASS |
+| BUG-023 External portal MFA | PASS (to TOTP QR screen; completion needs authenticator app) |
+
+New bugs found during validation:
+- **BUG-025 (P3):** DamCalculation river dropdown shows 3 `DamCalculationStatus` enum values contaminating the river options. ViewBag population error in DamCalculation controller GET.
+- **BUG-026 (P2):** S33(2) track cases show skipped CPs (CP5–CP9, PrePublicReview, StakeholderWorkshop) as "future" pills in the phase tracker. Skip logic governs transitions but is not reflected in UI.
+
+## Retro
+
+**Converged:** All 6 code bugs were cleanly fixed by dotnet-master in a single pass (378 tests, 0 failures). The journal + briefing packet discipline worked — no agent edited the wrong files. The platform-strategist's cookie validation finding (SameAsRequest confirmed correct via ForwardedHeaders pipeline order) was directly useful to the validator and saved a debug loop.
+
+**Drifted:** Two incidents slowed delivery: (1) devops-deployment-architect built the image without `--platform linux/amd64`, causing an 8-minute outage during rolling update. (2) The first validator test session ran during the outage and produced incorrect FAIL verdicts for BUG-008 and BUG-013. Trust-but-verify at the controller level caught both — checking running image SHA and endpoint slice confirmed the validator's readings were from the incident window, not from the fix state.
+
+**Failed prompt pattern:** The deployment-architect brief did not explicitly specify `--platform linux/amd64` for the docker build. On Apple Silicon this must be stated explicitly or the agent will build a native arm64 image. Add to every future deploy brief: `docker buildx build --platform linux/amd64`.
+
+**BUG-008 root cause was misdiagnosed.** The liveness probe timeout (1s) was a real concern but the actual 50%-failure-rate was the MSSQL pod in the app service selector — a Helm chart bug present since initial deploy. The probe fix was still worth applying; both fixes are correct. But the initial diagnosis ("liveness probe timeout") was wrong and delayed finding the selector issue by one validator cycle.
