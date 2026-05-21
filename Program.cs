@@ -161,6 +161,9 @@ builder.Services.AddScoped<IPublicUserPropertyAccessor, PublicUserPropertyAccess
 builder.Services.AddScoped<IPublicUserRegistrationService, PublicUserRegistrationService>();
 builder.Services.AddScoped<IPublicUserSignInService, PublicUserSignInService>();
 builder.Services.AddScoped<dwa_ver_val.Services.Portal.Mfa.IDeviceTrustService, dwa_ver_val.Services.Portal.Mfa.DeviceTrustService>();
+builder.Services.AddScoped<dwa_ver_val.Services.Portal.Mfa.ITotpService, dwa_ver_val.Services.Portal.Mfa.TotpService>();
+builder.Services.AddScoped<dwa_ver_val.Services.Portal.Mfa.ISmsOtpService, dwa_ver_val.Services.Portal.Mfa.SmsOtpService>();
+builder.Services.AddSingleton<dwa_ver_val.Services.Portal.Mfa.ISmsGateway, dwa_ver_val.Services.Portal.Mfa.LoggingSmsGateway>();
 builder.Services.AddSingleton<PasswordHasher<PublicUser>>();
 builder.Services.AddHttpContextAccessor();
 

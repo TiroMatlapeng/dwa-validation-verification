@@ -15,13 +15,13 @@ public static class PortalPolicies
 
     public static void Configure(AuthorizationOptions options)
     {
-        // Stage 2a: PortalAuthenticated requires the cookie + EmailConfirmed=true + Status=Active.
-        // (Stage 2b will add MfaEnrolled=true.)
+        // Full portal access requires MFA.
         options.AddPolicy(PortalAuthenticated, p => p
             .AddAuthenticationSchemes(PortalCookieOptions.SchemeName)
             .RequireAuthenticatedUser()
             .RequireClaim(EmailConfirmedClaim, "true")
-            .RequireClaim(StatusClaim, "Active"));
+            .RequireClaim(StatusClaim, "Active")
+            .RequireClaim(MfaEnrolledClaim, "true"));
 
         // Used during MFA enrolment in Stage 2b — for 2a it's reachable as soon
         // as the email is confirmed, so the holding-page-on-dashboard works.
