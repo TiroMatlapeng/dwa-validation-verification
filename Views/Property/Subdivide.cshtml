@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Subdivide Property";
+    var canCreate = (await Auth.AuthorizeAsync(User, DwsPolicies.CanCreateCase)).Succeeded;
     var parent = Model.ParentProperty!;
     var headingLabel = !string.IsNullOrWhiteSpace(parent.SGCode)
         ? parent.SGCode
@@ -86,7 +87,14 @@
         }
 
         <div style="margin-top:16px;">
-            <input type="submit" value="Subdivide property" class="btn btn-primary" />
+            @if (canCreate)
+            {
+                <input type="submit" value="Subdivide property" class="btn btn-primary" />
+            }
+            else
+            {
+                <span class="text-danger" style="margin-right:8px;">You do not have permission to subdivide properties.</span>
+            }
             <a asp-action="Details" asp-route-id="@parent.PropertyId" class="btn btn-outline" style="margin-left:8px;">Cancel</a>
         </div>
     </form>

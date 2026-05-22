@@ -3,6 +3,9 @@
 @{
     ViewData["Title"] = "Case Details";
     var fm = Model.FileMaster;
+    var canCapture    = (await Auth.AuthorizeAsync(User, DwsPolicies.CanCapture)).Succeeded;
+    var canCreate     = (await Auth.AuthorizeAsync(User, DwsPolicies.CanCreateCase)).Succeeded;
+    var canTransition = (await Auth.AuthorizeAsync(User, DwsPolicies.CanTransitionWorkflow)).Succeeded;
     var badgeClass = fm.ValidationStatusName switch
     {
         "Completed" => "badge-green",
@@ -54,8 +57,14 @@
     </div>
 
     <div style="margin-top: 20px; display: flex; gap: 8px;">
-        <a asp-action="Edit" asp-route-id="@fm.FileMasterId" class="btn btn-primary">Edit</a>
-        <a asp-action="Delete" asp-route-id="@fm.FileMasterId" class="btn btn-danger">Delete</a>
+        @if (canCapture)
+        {
+            <a asp-action="Edit" asp-route-id="@fm.FileMasterId" class="btn btn-primary">Edit</a>
+        }
+        @if (canCreate)
+        {
+            <a asp-action="Delete" asp-route-id="@fm.FileMasterId" class="btn btn-danger">Delete</a>
+        }
     </div>
 </div>
 
@@ -133,12 +142,15 @@
 <div style="margin-top: 24px;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
         <h5 style="margin:0;">ELU Lawfulness Assessment</h5>
-        <form asp-action="AssessLawfulness" asp-route-id="@Model.FileMaster.FileMasterId" method="post" style="display:inline;">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-sm btn-primary">
-                @(Model.LawfulnessAssessmentResult is null ? "Run ELU Assessment" : "Re-Assess ELU")
-            </button>
-        </form>
+        @if (canCapture)
+        {
+            <form asp-action="AssessLawfulness" asp-route-id="@Model.FileMaster.FileMasterId" method="post" style="display:inline;">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-sm btn-primary">
+                    @(Model.LawfulnessAssessmentResult is null ? "Run ELU Assessment" : "Re-Assess ELU")
+                </button>
+            </form>
+        }
     </div>
 
     @if (Model.LawfulnessAssessmentResult is null)

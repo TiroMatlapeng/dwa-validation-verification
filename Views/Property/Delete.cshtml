@@ -5,6 +5,7 @@
     bool canDelete = ViewBag.CanDelete == true;
     int fileMasterCount = ViewBag.BlockingFileMasters ?? 0;
     int ownershipCount  = ViewBag.BlockingOwnerships  ?? 0;
+    var canCreate = (await Auth.AuthorizeAsync(User, DwsPolicies.CanCreateCase)).Succeeded;
 }
 
 <a asp-controller="Property" asp-action="Index" class="btn-back">&larr; Back to Properties</a>
@@ -13,6 +14,13 @@
 <div class="page-subtitle">Confirm permanent deletion of this property record</div>
 
 <div class="card" style="max-width: 600px;">
+@if (!canCreate)
+{
+    <p class="text-danger">You do not have permission to delete this property.</p>
+    <a asp-action="Index" class="btn btn-outline">Back to Properties</a>
+}
+else
+{
     <div class="form-section-title">Property Summary</div>
 
     <div class="form-row">
@@ -69,4 +77,5 @@
         <input type="submit" value="Delete Property" class="btn btn-danger" @(!canDelete ? "disabled" : "") />
         <a asp-action="Index" class="btn btn-outline" style="margin-left: 8px;">Cancel</a>
     </form>
+}
 </div>

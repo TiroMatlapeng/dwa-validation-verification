@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Property Owners";
+    var canAdmin = (await Auth.AuthorizeAsync(User, DwsPolicies.CanAdminister)).Succeeded;
 }
 
 <div class="flex-between mb-16">
@@ -10,7 +11,10 @@
         <div class="page-subtitle">@Model.Count() owner(s) registered</div>
     </div>
     <div>
-        <a asp-controller="Owner" asp-action="Register" class="btn btn-primary">+ Register Owner</a>
+        @if (canAdmin)
+        {
+            <a asp-controller="Owner" asp-action="Register" class="btn btn-primary">+ Register Owner</a>
+        }
     </div>
 </div>
 
@@ -64,8 +68,11 @@
                         }
                     </td>
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.OwnerId" class="btn btn-sm btn-outline">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@item.OwnerId" class="btn btn-sm btn-danger">Delete</a>
+                        @if (canAdmin)
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.OwnerId" class="btn btn-sm btn-outline">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@item.OwnerId" class="btn btn-sm btn-danger">Delete</a>
+                        }
                     </td>
                 </tr>
             }

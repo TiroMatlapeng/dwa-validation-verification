@@ -4,6 +4,7 @@
     ViewData["Title"] = "Forestation / SFRA Records";
     var propertyId = ViewBag.PropertyId as Guid? ?? Guid.Empty;
     var propertyRef = ViewBag.PropertyRef as string ?? "Property";
+    var canCapture = (await Auth.AuthorizeAsync(User, DwsPolicies.CanCapture)).Succeeded;
 }
 
 <a asp-controller="FileMaster" asp-action="Index" class="btn-back">&larr; Back to V&amp;V Cases</a>
@@ -11,9 +12,12 @@
 <div class="page-title">Forestation / SFRA Records</div>
 <div class="page-subtitle">Property: @propertyRef</div>
 
-<div style="margin-bottom: 16px;">
-    <a asp-action="Create" asp-route-propertyId="@propertyId" class="btn btn-primary">+ Add Forestation Record</a>
-</div>
+@if (canCapture)
+{
+    <div style="margin-bottom: 16px;">
+        <a asp-action="Create" asp-route-propertyId="@propertyId" class="btn btn-primary">+ Add Forestation Record</a>
+    </div>
+}
 
 <div class="card" style="max-width: 1200px;">
     @if (!Model.Any())
@@ -52,12 +56,15 @@
                             <td>@row.UnlawfulVolume.ToString("N2")</td>
                             <td>@(row.WithinGWCA == true ? "Yes" : row.WithinGWCA == false ? "No" : "--")</td>
                             <td>
-                                <a asp-action="Edit" asp-route-id="@row.ForestationId" class="btn btn-sm btn-primary">Edit</a>
-                                <form asp-action="Delete" asp-route-id="@row.ForestationId" method="post" style="display:inline;"
-                                      onsubmit="return confirm('Delete this forestation record?');">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                </form>
+                                @if (canCapture)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@row.ForestationId" class="btn btn-sm btn-primary">Edit</a>
+                                    <form asp-action="Delete" asp-route-id="@row.ForestationId" method="post" style="display:inline;"
+                                          onsubmit="return confirm('Delete this forestation record?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                    </form>
+                                }
                             </td>
                         </tr>
                     }

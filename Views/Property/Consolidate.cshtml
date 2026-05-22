@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Consolidate Properties";
+    var canCreate = (await Auth.AuthorizeAsync(User, DwsPolicies.CanCreateCase)).Succeeded;
 }
 
 <a asp-controller="Property" asp-action="Index" class="btn-back">&larr; Back to Properties</a>
@@ -87,7 +88,14 @@
         </div>
 
         <div style="margin-top:16px;">
-            <input type="submit" value="Consolidate properties" class="btn btn-primary" />
+            @if (canCreate)
+            {
+                <input type="submit" value="Consolidate properties" class="btn btn-primary" />
+            }
+            else
+            {
+                <span class="text-danger" style="margin-right:8px;">You do not have permission to consolidate properties.</span>
+            }
             <a asp-action="Index" class="btn btn-outline" style="margin-left:8px;">Cancel</a>
         </div>
     </div>

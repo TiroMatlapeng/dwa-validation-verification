@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Property Details";
+    var canCreate = (await Auth.AuthorizeAsync(User, DwsPolicies.CanCreateCase)).Succeeded;
 }
 
 <a asp-controller="Property" asp-action="Index" class="btn-back">&larr; Back to Properties</a>
@@ -245,12 +246,15 @@
 </div>
 
 <!-- Action Buttons -->
-<div style="display: flex; gap: 8px;">
-    <a asp-action="Edit" asp-route-id="@Model.PropertyId" class="btn btn-primary">Edit</a>
-    <a asp-action="Delete" asp-route-id="@Model.PropertyId" class="btn btn-danger">Delete</a>
-    <a asp-controller="FileMaster" asp-action="Create" asp-route-propertyId="@Model.PropertyId" class="btn btn-outline">+ New Case</a>
-    @if (status == "Active")
-    {
-        <a asp-action="Subdivide" asp-route-id="@Model.PropertyId" class="btn btn-outline">Subdivide</a>
-    }
-</div>
+@if (canCreate)
+{
+    <div style="display: flex; gap: 8px;">
+        <a asp-action="Edit" asp-route-id="@Model.PropertyId" class="btn btn-primary">Edit</a>
+        <a asp-action="Delete" asp-route-id="@Model.PropertyId" class="btn btn-danger">Delete</a>
+        <a asp-controller="FileMaster" asp-action="Create" asp-route-propertyId="@Model.PropertyId" class="btn btn-outline">+ New Case</a>
+        @if (status == "Active")
+        {
+            <a asp-action="Subdivide" asp-route-id="@Model.PropertyId" class="btn btn-outline">Subdivide</a>
+        }
+    </div>
+}

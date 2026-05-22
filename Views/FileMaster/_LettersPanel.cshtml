@@ -1,5 +1,9 @@
 @model FileMasterDetailsViewModel
 
+@{
+    var canIssue = (await Auth.AuthorizeAsync(User, DwsPolicies.CanIssueLetter)).Succeeded;
+}
+
 <div class="card" style="max-width: 900px; margin-top: 16px;">
     <div class="form-section-title">Section 35 / Section 33 Letters</div>
 
@@ -32,6 +36,8 @@
     }
 
     <div class="letter-actions">
+        @if (canIssue)
+        {
         @foreach (var action in Model.AvailableLetterActions)
         {
             var (label, cssClass) = action switch
@@ -81,6 +87,7 @@
                     <button type="submit" class="@cssClass btn-sm">@label</button>
                 </form>
             }
+        }
         }
     </div>
 

@@ -1,11 +1,15 @@
 @model IEnumerable<OngoingValidationRow>
 @{
     ViewData["Title"] = "Ongoing Validations";
+    var canCreate = (await Auth.AuthorizeAsync(User, DwsPolicies.CanCreateCase)).Succeeded;
 }
 
 <div class="dws-page-header">
     <h1>Ongoing Validations</h1>
-    <a asp-controller="FileMaster" asp-action="Create" class="dws-btn dws-btn-primary">Start a New Case</a>
+    @if (canCreate)
+    {
+        <a asp-controller="FileMaster" asp-action="Create" class="dws-btn dws-btn-primary">Start a New Case</a>
+    }
 </div>
 
 @if (!Model.Any())

@@ -44,5 +44,15 @@
 - Next agent should know: if any test or report references `ResponseReceivedDate` for KPIs, it must use `ResponseDate`. Out-of-scope items (BUG-019, BUG-022, tests) untouched.
 - Status: DONE_WITH_CONCERNS (one spec/model field-name mismatch resolved by substituting the real field `ResponseDate`)
 
+### 2026-05-22T12:00+02:00 — Controller — deployment + commit
+- devops-deployment-architect: built image cb0b764 with --platform linux/amd64, pushed to vnvregistry.azurecr.io/dwa-vv, helm upgrade revision 14, pod Running 1/1, 0 restarts.
+- devops-platform-strategist: confirmed nodes Ready, service selectors correct (component=app isolation intact from 99e6aa8 fix), PVC Bound, no events, zero restart noise.
+- Committed at 01de53b.
+- Status: DONE
+
 ## Retro (on completion)
-_To be filled on sprint close._
+**Converged:** All 6 bugs landed cleanly in a single agent pass. Build was green on first run. Deployment routine — no selector changes, no PVC risk. Two-agent deployment (deployer + platform health check) caught zero new issues; cluster was clean going in.
+
+**Drifted:** BUG-009 spec named `LetterIssuance.ResponseReceivedDate` which doesn't exist — the real field is `ResponseDate`. The implementer caught and substituted this without requiring a second pass. Root cause: briefing was written from memory without first grepping the model. Fix: always grep the model's actual fields when writing KPI query specs.
+
+**Prompt pattern that worked well:** Providing exact file:line references, exact field names to add, and an out-of-scope list in the briefing eliminated scope creep. The agent touched exactly the 16 files specified and nothing else.
