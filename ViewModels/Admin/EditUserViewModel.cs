@@ -24,6 +24,9 @@ public class EditUserViewModel
     [Display(Name = "Organisational Unit")]
     public Guid? OrgUnitId { get; set; }
 
+    [Display(Name = "HDI (Historically Disadvantaged Individual)")]
+    public bool IsHdi { get; set; }
+
     [Display(Name = "Active")]
     public bool IsActive { get; set; }
 

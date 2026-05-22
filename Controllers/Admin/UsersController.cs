@@ -104,6 +104,7 @@ public class UsersController : Controller
             LastName = model.LastName,
             EmployeeNumber = model.EmployeeNumber,
             OrgUnitId = model.OrgUnitId,
+            IsHdi = model.IsHdi,
             IsActive = true
         };
 
@@ -136,6 +137,7 @@ public class UsersController : Controller
             EmployeeNumber = user.EmployeeNumber,
             Role = roles.FirstOrDefault() ?? string.Empty,
             OrgUnitId = user.OrgUnitId,
+            IsHdi = user.IsHdi,
             IsActive = user.IsActive,
             AvailableRoles = DwsRoles.All,
             AvailableOrgUnits = await LoadOrgUnits()
@@ -161,6 +163,7 @@ public class UsersController : Controller
         user.EmployeeNumber = model.EmployeeNumber;
         user.OrgUnitId = model.OrgUnitId;
         user.IsActive = model.IsActive;
+        user.IsHdi = model.IsHdi;
 
         var update = await _users.UpdateAsync(user);
         if (!update.Succeeded)

@@ -118,7 +118,18 @@
             </div>
             <div class="form-group">
                 <label asp-for="Address.Province" class="form-label"></label>
-                <input asp-for="Address.Province" class="form-control" style="width:100%;" tabindex="14" />
+                <select asp-for="Address.Province" class="form-control" style="width:100%;" tabindex="14">
+                    <option value="">-- Select Province --</option>
+                    <option value="Eastern Cape">Eastern Cape</option>
+                    <option value="Free State">Free State</option>
+                    <option value="Gauteng">Gauteng</option>
+                    <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+                    <option value="Limpopo">Limpopo</option>
+                    <option value="Mpumalanga">Mpumalanga</option>
+                    <option value="Northern Cape">Northern Cape</option>
+                    <option value="North West">North West</option>
+                    <option value="Western Cape">Western Cape</option>
+                </select>
                 <span asp-validation-for="Address.Province" class="text-danger text-sm"></span>
             </div>
         </div>

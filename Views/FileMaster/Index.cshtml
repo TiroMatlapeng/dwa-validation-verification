@@ -54,6 +54,7 @@
                 <th>SG Code</th>
                 <th>Catchment</th>
                 <th>Status</th>
+                <th>Track</th>
                 <th>Property</th>
                 <th>Actions</th>
             </tr>
@@ -76,6 +77,18 @@
                             };
                         }
                         <span class="badge @badgeClass">@(item.ValidationStatusName ?? "Not Commenced")</span>
+                    </td>
+                    <td>
+                        @{
+                            var trackLabel = item.AssessmentTrack switch
+                            {
+                                "S35_Verification"   => "S35 Verification",
+                                "S33_2_Declaration"  => "S33(2) Declaration",
+                                "S33_3_Declaration"  => "S33(3) Declaration",
+                                _                    => "Standard"
+                            };
+                        }
+                        <span class="badge badge-grey">@trackLabel</span>
                     </td>
                     <td>
                         @if (item.Property != null)

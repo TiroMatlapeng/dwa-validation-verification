@@ -5,7 +5,7 @@
 <div class="flex-between mb-16">
     <div>
         <div class="page-title">Dashboard</div>
-        <div class="page-subtitle">National Overview &mdash; 11 March 2026</div>
+        <div class="page-subtitle">National Overview &mdash; @DateTime.Now.ToString("dd MMMM yyyy")</div>
     </div>
 </div>
 
@@ -13,28 +13,28 @@
 <div class="kpi-row">
     <div class="kpi-card">
         <div class="kpi-label">Total Properties</div>
-        <div class="kpi-value">12,483</div>
+        <div class="kpi-value">@ViewBag.TotalProperties</div>
         <div class="kpi-sub">across all WMAs</div>
     </div>
     <div class="kpi-card success">
         <div class="kpi-label">Completed</div>
-        <div class="kpi-value">4,812</div>
-        <div class="kpi-sub">38.5% of total</div>
+        <div class="kpi-value">@ViewBag.CompletedCases</div>
+        <div class="kpi-sub">@(ViewBag.TotalProperties > 0 ? $"{(int)((double)ViewBag.CompletedCases / ViewBag.TotalProperties * 100)}% of total" : "—")</div>
     </div>
     <div class="kpi-card">
         <div class="kpi-label">In Process</div>
-        <div class="kpi-value">3,241</div>
-        <div class="kpi-sub">Inception: 2,140 | Validation: 1,101</div>
+        <div class="kpi-value">@ViewBag.InProcessCases</div>
+        <div class="kpi-sub">cases currently in process</div>
     </div>
     <div class="kpi-card warn">
         <div class="kpi-label">Overdue Tasks</div>
-        <div class="kpi-value">67</div>
-        <div class="kpi-sub">23 letters, 44 workflow steps</div>
+        <div class="kpi-value">@ViewBag.OverdueTasks</div>
+        <div class="kpi-sub">letters past due date</div>
     </div>
     <div class="kpi-card alert-kpi">
         <div class="kpi-label">Letters Pending Response</div>
-        <div class="kpi-value">189</div>
-        <div class="kpi-sub">34 past due date</div>
+        <div class="kpi-value">@ViewBag.LettersPending</div>
+        <div class="kpi-sub">awaiting response</div>
     </div>
 </div>
 

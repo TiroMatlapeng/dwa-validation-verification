@@ -18,4 +18,7 @@ public class ApplicationUser : IdentityUser<Guid>
     [Display(Name = "Organisational Unit")]
     public Guid? OrgUnitId { get; set; }
     public OrganisationalUnit? OrgUnit { get; set; }
+
+    [Display(Name = "HDI (Historically Disadvantaged Individual)")]
+    public bool IsHdi { get; set; }
 }

@@ -361,6 +361,8 @@ public class SeedDataService
             ("Spring",           WaterSourceType.SURFACE),
             ("Irrigation Canal", WaterSourceType.SURFACE),
             ("Wetland",          WaterSourceType.SURFACE),
+            ("Stream",           WaterSourceType.SURFACE),
+            ("Canal / Furrow",   WaterSourceType.SURFACE),
         };
 
         var existingNames = await _context.WaterSources
@@ -460,6 +462,8 @@ public class SeedDataService
             "Flood/Furrow",
             "Centre Pivot",
             "Micro-irrigation",
+            "Drag-line",
+            "Travelling Irrigator",
         };
 
         var existingNames = await _context.IrrigationSystems

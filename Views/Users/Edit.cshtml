@@ -42,7 +42,13 @@
     </div>
     <div class="dws-form-row">
         <label class="dws-checkbox">
-            <input asp-for="IsActive" type="checkbox" tabindex="6" />
+            <input asp-for="IsHdi" type="checkbox" tabindex="6" />
+            @Html.DisplayNameFor(m => m.IsHdi)
+        </label>
+    </div>
+    <div class="dws-form-row">
+        <label class="dws-checkbox">
+            <input asp-for="IsActive" type="checkbox" tabindex="7" />
             @Html.DisplayNameFor(m => m.IsActive)
         </label>
     </div>

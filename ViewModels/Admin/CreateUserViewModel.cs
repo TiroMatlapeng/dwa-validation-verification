@@ -22,6 +22,9 @@ public class CreateUserViewModel
     [Display(Name = "Organisational Unit")]
     public Guid? OrgUnitId { get; set; }
 
+    [Display(Name = "HDI (Historically Disadvantaged Individual)")]
+    public bool IsHdi { get; set; }
+
     [Required, DataType(DataType.Password), MinLength(8), Display(Name = "Initial Password")]
     public string InitialPassword { get; set; } = string.Empty;
 

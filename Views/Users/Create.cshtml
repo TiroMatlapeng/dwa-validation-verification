@@ -45,8 +45,14 @@
         </select>
     </div>
     <div class="dws-form-row">
+        <label class="dws-checkbox">
+            <input asp-for="IsHdi" type="checkbox" tabindex="7" />
+            @Html.DisplayNameFor(m => m.IsHdi)
+        </label>
+    </div>
+    <div class="dws-form-row">
         <label asp-for="InitialPassword" class="dws-label"></label>
-        <input asp-for="InitialPassword" class="dws-input" type="password" tabindex="7" />
+        <input asp-for="InitialPassword" class="dws-input" type="password" tabindex="8" />
         <span asp-validation-for="InitialPassword" class="dws-field-error"></span>
     </div>
 
