@@ -286,7 +286,7 @@ The app pod carries `app.kubernetes.io/component=app`. The Helm `selectorLabels`
 **Live deployment:** Helm revision 13, image `0274fdd`, pod `dwa-vv-799c98dbcb-qb5qc`, 0 restarts.
 
 **Remaining open items (not in scope this session):**
-- BUG-013 runtime verification — issue a fresh letter on a case at CP9 or S33_2_ReadyForDeclaration and confirm Recipient column shows typed name (fastest: advance a new S33(2) case to CP4)
+- ~~BUG-013~~ — CLOSED 2026-05-22: "Sipho Dlamini (BUG-013 Close)" confirmed in Recipient column on live. Note: IssueLetter requires RegionalManager+ (not Validator) — tested via admin@dwa.demo per DwsPolicies.
 - BUG-009 — Dashboard hardcoded KPIs and activity feed
 - BUG-016 — Province field free-text (should be seeded dropdown)
 - BUG-017 — Owner/Register raw C# property name labels
