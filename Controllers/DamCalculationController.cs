@@ -102,12 +102,20 @@ public class DamCalculationController : Controller
             SateliteSurveyDate = vm.SateliteSurveyDate,
             DamNumber = vm.DamNumber,
             DamCapacity = vm.DamCapacity,
-            DamCalculationStatus = vm.DamCalculationStatus
+            DamCalculationStatus = vm.DamCalculationStatus,
+            CalculationMethod = vm.CalculationMethod,
+            WallLength = vm.WallLength,
+            Fetch = vm.Fetch,
+            RiverDistance = vm.RiverDistance,
+            ContourDifference = vm.ContourDifference,
+            DamArea = vm.DamArea,
+            DamDepth = vm.DamDepth,
+            ShapeFactor = vm.ShapeFactor,
         };
 
         await _repo.AddCalculationAsync(entity);
-        TempData["Success"] = "Dam Calculation record added successfully.";
-        return RedirectToAction(nameof(Index), new { propertyId = vm.PropertyId });
+        TempData["Success"] = "Dam Calculation record added. Enter Appendix D inputs and click Calculate Capacity.";
+        return RedirectToAction(nameof(Edit), new { id = entity.DamCalculationId });
     }
 
     // GET: DamCalculation/Edit/{id}
