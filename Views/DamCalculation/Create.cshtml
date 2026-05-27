@@ -69,8 +69,8 @@
             <label class="form-label">Calculation Method</label>
             <select id="calcMethod" name="CalculationMethod" class="form-control" style="width:100%;" onchange="toggleMethod()">
                 <option value="">-- Select Method --</option>
-                <option value="Method1">Method 1 — Wall Length</option>
-                <option value="Method2">Method 2 — Area</option>
+                <option value="Method1" selected="@(Model.CalculationMethod == "Method1")">Method 1 — Wall Length</option>
+                <option value="Method2" selected="@(Model.CalculationMethod == "Method2")">Method 2 — Area</option>
             </select>
         </div>
 
@@ -78,21 +78,21 @@
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Wall Length (m)</label>
-                    <input type="number" step="0.01" name="WallLength" class="form-control" style="width:100%;" />
+                    <input type="number" step="0.01" name="WallLength" value="@Model.WallLength" class="form-control" style="width:100%;" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">Fetch (m)</label>
-                    <input type="number" step="0.01" name="Fetch" class="form-control" style="width:100%;" />
+                    <input type="number" step="0.01" name="Fetch" value="@Model.Fetch" class="form-control" style="width:100%;" />
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">River Distance R1 (m)</label>
-                    <input type="number" step="0.01" name="RiverDistance" class="form-control" style="width:100%;" />
+                    <input type="number" step="0.01" name="RiverDistance" value="@Model.RiverDistance" class="form-control" style="width:100%;" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">Contour Difference C1 (m)</label>
-                    <input type="number" step="0.01" name="ContourDifference" class="form-control" style="width:100%;" />
+                    <input type="number" step="0.01" name="ContourDifference" value="@Model.ContourDifference" class="form-control" style="width:100%;" />
                 </div>
             </div>
         </div>
@@ -101,11 +101,11 @@
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Dam Area (ha)</label>
-                    <input type="number" step="0.01" name="DamArea" class="form-control" style="width:100%;" />
+                    <input type="number" step="0.01" name="DamArea" value="@Model.DamArea" class="form-control" style="width:100%;" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">Dam Depth (m)</label>
-                    <input type="number" step="0.01" name="DamDepth" class="form-control" style="width:100%;" />
+                    <input type="number" step="0.01" name="DamDepth" value="@Model.DamDepth" class="form-control" style="width:100%;" />
                 </div>
             </div>
         </div>
@@ -114,9 +114,9 @@
             <label class="form-label">Shape Factor</label>
             <select name="ShapeFactor" class="form-control" style="width:280px;">
                 <option value="">-- Select Shape --</option>
-                <option value="0.33">0.33 — Ravine (triangle)</option>
-                <option value="0.40">0.40 — Square with bends</option>
-                <option value="0.50">0.50 — Circular</option>
+                <option value="0.33" selected="@(Model.ShapeFactor == 0.33m)">0.33 — Ravine (triangle)</option>
+                <option value="0.40" selected="@(Model.ShapeFactor == 0.40m)">0.40 — Square with bends</option>
+                <option value="0.50" selected="@(Model.ShapeFactor == 0.50m)">0.50 — Circular</option>
             </select>
         </div>
 
