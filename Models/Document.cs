@@ -17,4 +17,12 @@ public class Document
     public DateTime UploadDate { get; set; }
     public string? VirusScanStatus { get; set; } // Pending, Clean, Infected
     public string? DocumentHash { get; set; } // SHA-256
+
+    // Annotation: which control point this document satisfies / belongs to (nullable).
+    public Guid? WorkflowStateId { get; set; }
+    public WorkflowState? WorkflowState { get; set; }
+
+    // eWULAAS readiness — binary stays in IFileStorage now; pushed to eWULAAS later.
+    public string? ExternalDocumentRef { get; set; }   // eWULAAS document id, null until synced
+    public string SyncStatus { get; set; } = "NotSynced"; // NotSynced | Pending | Synced | Failed
 }

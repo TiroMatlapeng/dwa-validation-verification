@@ -415,6 +415,22 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasForeignKey(d => d.UploadedByPublicUserId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Document → WorkflowState (annotation; deleting a state must not delete docs)
+        modelBuilder.Entity<Document>()
+            .HasOne(d => d.WorkflowState)
+            .WithMany()
+            .HasForeignKey(d => d.WorkflowStateId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Document>()
+            .Property(d => d.SyncStatus)
+            .HasMaxLength(16)
+            .IsRequired();
+
+        modelBuilder.Entity<Document>()
+            .Property(d => d.ExternalDocumentRef)
+            .HasMaxLength(200);
+
         // DigitalSignature → Document
         modelBuilder.Entity<DigitalSignature>()
             .HasOne(ds => ds.Document)
