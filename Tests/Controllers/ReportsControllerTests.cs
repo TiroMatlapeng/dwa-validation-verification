@@ -19,6 +19,18 @@ public class ReportsControllerTests
             => Task.FromResult(new ReportTable("Letter Tracking", new[] { new ReportColumn("Letter Type") }, Array.Empty<IReadOnlyList<string>>()));
         public Task<ReportTable> ValidationSummaryAsync(ReportFilter f, ClaimsPrincipal u, CancellationToken ct)
             => Task.FromResult(new ReportTable("Validation Summary", new[] { new ReportColumn("Catchment") }, Array.Empty<IReadOnlyList<string>>()));
+        public Task<ReportTable> UserActivityAsync(ReportFilter f, CancellationToken ct)
+            => Task.FromResult(new ReportTable("User Activity",
+                new[] { new ReportColumn("Officer"), new ReportColumn("Actions", true) },
+                new[] { (IReadOnlyList<string>)new[] { "alice", "3" } }));
+        public Task<ReportTable> PublicPortalUsageAsync(ReportFilter f, CancellationToken ct)
+            => Task.FromResult(new ReportTable("Public Portal Usage",
+                new[] { new ReportColumn("Metric"), new ReportColumn("Count", true) },
+                new[] { (IReadOnlyList<string>)new[] { "Registrations", "5" } }));
+        public Task<ReportTable> IntegrationHealthAsync(ReportFilter f, CancellationToken ct)
+            => Task.FromResult(new ReportTable("Integration Health",
+                new[] { new ReportColumn("Integration Action") },
+                Array.Empty<IReadOnlyList<string>>()));
     }
 
     private static ReportsController Build()

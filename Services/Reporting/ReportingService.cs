@@ -34,6 +34,18 @@ public class ReportingService : IReportingService
         })!;
     }
 
+    // National reports are not WMA-scoped — the same data for every authorized (NationalManager+)
+    // caller, so the cache key omits the scope signature.
+    private Task<ReportTable> CachedNationalAsync(string report, ReportFilter f, Func<Task<ReportTable>> build)
+    {
+        var key = $"rpt:{report}:national:{f.DateFrom}:{f.DateTo}";
+        return _cache.GetOrCreateAsync(key, entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = CacheTtl;
+            return build();
+        })!;
+    }
+
     // Org scope first, then the common filters. Caller can never widen beyond their scope.
     private IQueryable<FileMaster> ScopedCases(ReportFilter f, ClaimsPrincipal user, bool applyDates = true)
     {
@@ -168,6 +180,86 @@ public class ReportingService : IReportingService
                     new ReportColumn("Properties Validated", true),
                     new ReportColumn("Total ELU Volume (m³)", true),
                 },
+                tableRows);
+        });
+
+    public Task<ReportTable> UserActivityAsync(ReportFilter filter, CancellationToken ct)
+        => CachedNationalAsync("useractivity", filter, async () =>
+        {
+            var q = _db.AuditLogs.AsNoTracking();
+            if (filter.DateFrom is { } from) q = q.Where(a => a.Timestamp >= from.ToDateTime(TimeOnly.MinValue));
+            if (filter.DateTo is { } to) q = q.Where(a => a.Timestamp < to.ToDateTime(TimeOnly.MinValue).AddDays(1));
+
+            var rows = await q
+                .GroupBy(a => a.UserName ?? "(system)")
+                .Select(g => new { Officer = g.Key, Actions = g.Count(), Last = g.Max(x => x.Timestamp) })
+                .OrderByDescending(x => x.Actions)
+                .ToListAsync(ct);
+
+            // NOTE: spec §5 also lists "cases completed" per officer; that needs a discrete
+            // completion-event signal not yet modelled, so it is deferred. Actions + last-activity
+            // give the core oversight value now.
+            var tableRows = rows
+                .Select(r => (IReadOnlyList<string>)new[]
+                {
+                    r.Officer, r.Actions.ToString(), r.Last.ToString("yyyy-MM-dd HH:mm"),
+                })
+                .ToList();
+
+            return new ReportTable("User Activity",
+                new[] { new ReportColumn("Officer"), new ReportColumn("Actions", true), new ReportColumn("Last Activity") },
+                tableRows);
+        });
+
+    public Task<ReportTable> PublicPortalUsageAsync(ReportFilter filter, CancellationToken ct)
+        => CachedNationalAsync("portalusage", filter, async () =>
+        {
+            // Snapshot of current totals; the date filter is intentionally not applied here.
+            var registrations = await _db.PublicUsers.CountAsync(ct);
+            var confirmed = await _db.PublicUsers.CountAsync(u => u.EmailConfirmed, ct);
+            var mfa = await _db.PublicUsers.CountAsync(u => u.MfaEnabled, ct);
+            var loggedIn = await _db.PublicUsers.CountAsync(u => u.LastLoginDate != null, ct);
+            var portalDocs = await _db.Documents.CountAsync(d => d.UploadedByPublicUserId != null, ct);
+
+            var rows = new List<IReadOnlyList<string>>
+            {
+                new[] { "Registrations", registrations.ToString() },
+                new[] { "Email Confirmed", confirmed.ToString() },
+                new[] { "MFA Enabled", mfa.ToString() },
+                new[] { "Have Logged In", loggedIn.ToString() },
+                new[] { "Documents Uploaded (portal)", portalDocs.ToString() },
+            };
+
+            return new ReportTable("Public Portal Usage",
+                new[] { new ReportColumn("Metric"), new ReportColumn("Count", true) },
+                rows);
+        });
+
+    public Task<ReportTable> IntegrationHealthAsync(ReportFilter filter, CancellationToken ct)
+        => CachedNationalAsync("integration", filter, async () =>
+        {
+            // Shell: populated once IntegrationService/eWULAAS writes IntegrationSent/IntegrationReceived
+            // audit actions. Empty until then.
+            var q = _db.AuditLogs.AsNoTracking()
+                .Where(a => a.Action == "IntegrationSent" || a.Action == "IntegrationReceived");
+            if (filter.DateFrom is { } from) q = q.Where(a => a.Timestamp >= from.ToDateTime(TimeOnly.MinValue));
+            if (filter.DateTo is { } to) q = q.Where(a => a.Timestamp < to.ToDateTime(TimeOnly.MinValue).AddDays(1));
+
+            var rows = await q
+                .GroupBy(a => a.Action)
+                .Select(g => new { Action = g.Key, Count = g.Count(), Last = g.Max(x => x.Timestamp) })
+                .OrderBy(x => x.Action)
+                .ToListAsync(ct);
+
+            var tableRows = rows
+                .Select(r => (IReadOnlyList<string>)new[]
+                {
+                    r.Action, r.Count.ToString(), r.Last.ToString("yyyy-MM-dd HH:mm"),
+                })
+                .ToList();
+
+            return new ReportTable("Integration Health",
+                new[] { new ReportColumn("Integration Action"), new ReportColumn("Count", true), new ReportColumn("Last Occurred") },
                 tableRows);
         });
 }
