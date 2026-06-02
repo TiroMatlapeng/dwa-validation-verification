@@ -133,9 +133,32 @@ public class ReportingService : IReportingService
     public Task<ReportTable> ValidationSummaryAsync(ReportFilter filter, ClaimsPrincipal user, CancellationToken ct)
         => CachedAsync("validation", filter, user, async () =>
         {
-            await Task.CompletedTask;
+            var rows = await ScopedCases(filter, user)
+                .Where(fm => fm.EntitlementId != null)
+                .GroupBy(fm => fm.CatchmentArea != null ? fm.CatchmentArea.CatchmentName : "(unassigned)")
+                .Select(g => new
+                {
+                    Catchment = g.Key,
+                    Properties = g.Count(),
+                    Volume = g.Sum(x => x.Entitlement!.Volume),
+                })
+                .OrderBy(x => x.Catchment)
+                .ToListAsync(ct);
+
+            var tableRows = rows
+                .Select(r => (IReadOnlyList<string>)new[]
+                {
+                    r.Catchment, r.Properties.ToString(), r.Volume.ToString("0.00", CultureInfo.InvariantCulture),
+                })
+                .ToList();
+
             return new ReportTable("Validation Summary",
-                new[] { new ReportColumn("Catchment") },
-                Array.Empty<IReadOnlyList<string>>());
+                new[]
+                {
+                    new ReportColumn("Catchment"),
+                    new ReportColumn("Properties Validated", true),
+                    new ReportColumn("Total ELU Volume (m³)", true),
+                },
+                tableRows);
         });
 }
