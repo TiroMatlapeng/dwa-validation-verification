@@ -8,6 +8,7 @@ public static class DwsPolicies
     public const string CanIssueLetter = "CanIssueLetter";
     public const string CanCapture = "CanCapture";
     public const string CanRead = "CanRead";
+    public const string CanManageDocuments = "CanManageDocuments";
 
     public static void Configure(AuthorizationOptions options)
     {
@@ -28,5 +29,8 @@ public static class DwsPolicies
 
         options.AddPolicy(CanRead,
             p => p.RequireAuthenticatedUser().RequireRole(DwsRoles.AtLeastReadOnly));
+
+        options.AddPolicy(CanManageDocuments,
+            p => p.RequireAuthenticatedUser().RequireRole(DwsRoles.AtLeastValidator));
     }
 }

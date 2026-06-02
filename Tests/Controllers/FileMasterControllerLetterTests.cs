@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Security.Claims;
+using dwa_ver_val.Services.Documents;
 using dwa_ver_val.Services.Letters;
 using dwa_ver_val.Services.Notifications;
 using dwa_ver_val.Tests.Helpers;
@@ -427,6 +428,62 @@ public class FileMasterControllerLetterTests
             w => w.TransitionToAsync(fm.FileMasterId, "S33_3_DeclarationIssued", It.IsAny<Guid?>(), It.IsAny<string?>()),
             Times.Once,
             $"IssueLetter must transition to S33_3_DeclarationIssued after {letterCode} is issued.");
+    }
+
+    [Fact]
+    public async Task Details_ExternalUpload_CountsTowardChecklistButNotEditableList()
+    {
+        // Regression: the requirement checklist must reflect what the workflow guards see —
+        // ALL documents on the case regardless of uploader. A water user supplying a required
+        // doc via the portal (UploadedByPublicUserId set, UploadedByUserId null) must mark that
+        // requirement Present, while the editable CaseDocuments list (which gets Delete buttons)
+        // stays internal-only so Validators can't delete water-user uploads.
+        var db = TestDbContextFactory.Create();
+        var prop = new Property { PropertyId = Guid.NewGuid() };
+        db.Properties.Add(prop);
+        var fm = SeedHelper.NewFileMaster(prop.PropertyId);
+        db.FileMasters.Add(fm);
+
+        // ONLY an external/public upload of the WARMS report exists.
+        db.Documents.Add(new Document
+        {
+            DocumentId = Guid.NewGuid(),
+            FileMasterId = fm.FileMasterId,
+            DocumentType = DocumentTypes.WarmsReport,
+            FileName = "warms.pdf",
+            BlobPath = "blob/warms.pdf",
+            UploadedByUserId = null,
+            UploadedByPublicUserId = Guid.NewGuid(),
+            UploadDate = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var repo = new Mock<IFileMaster>();
+        repo.Setup(r => r.GetWithWorkflowAsync(fm.FileMasterId)).ReturnsAsync(fm);
+        var scope = new Mock<IScopedCaseQuery>();
+        scope.Setup(s => s.IsInScope(It.IsAny<FileMaster>(), It.IsAny<ClaimsPrincipal>())).Returns(true);
+
+        var workflow = new Mock<IWorkflowService>();
+        workflow.Setup(w => w.GetBlockingReasonsAsync(It.IsAny<Guid>(), It.IsAny<Guid?>()))
+                .ReturnsAsync(new List<string>());
+
+        var (sut, _) = BuildLetterController(
+            repo.Object, db, scope.Object,
+            new Mock<ILetterService>().Object, workflow.Object,
+            new Mock<INotificationService>().Object);
+
+        var result = await sut.Details(fm.FileMasterId);
+
+        var view = Assert.IsType<ViewResult>(result);
+        var vm = Assert.IsType<FileMasterDetailsViewModel>(view.Model);
+
+        // Checklist sees the external upload → WARMS report marked Present.
+        var warms = vm.DocumentRequirementStatuses.Single(s => s.DocumentType == DocumentTypes.WarmsReport);
+        Assert.True(warms.Present, "External (portal) upload of the WARMS report must mark the requirement Present.");
+
+        // Editable list excludes the external upload (no Delete button for water-user docs).
+        Assert.DoesNotContain(vm.CaseDocuments, d => d.DocumentType == DocumentTypes.WarmsReport);
+        Assert.Empty(vm.CaseDocuments);
     }
 
     [Fact]

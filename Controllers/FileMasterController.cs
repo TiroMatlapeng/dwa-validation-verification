@@ -197,6 +197,23 @@ public class FileMasterController : Controller
             .OrderByDescending(o => o.LodgedDate)
             .ToListAsync();
 
+        // Editable list shown in the panel: internal staff uploads only (external/public uploads
+        // appear read-only in _PortalInboxPanel and must not get a Delete button here).
+        vm.CaseDocuments = await _context.Documents
+            .Where(d => d.FileMasterId == id && d.UploadedByUserId != null)
+            .OrderByDescending(d => d.UploadDate)
+            .ToListAsync();
+
+        // Requirement checklist must match what the workflow guards see: ALL documents on the
+        // case regardless of uploader (a water user may supply a required doc via the portal).
+        var presentTypes = await _context.Documents
+            .Where(d => d.FileMasterId == id)
+            .Select(d => d.DocumentType)
+            .ToListAsync();
+        vm.DocumentRequirementStatuses =
+            dwa_ver_val.Services.Workflow.Guards.DocumentRequirements.StatusesFor(
+                presentTypes.ToHashSet(StringComparer.Ordinal));
+
         return View(vm);
     }
 

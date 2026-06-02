@@ -31,5 +31,11 @@ Rule: split PascalCase into words; abbreviations (SG, ELU, WARMS, SFRA, SAPWAT, 
 - Read all target models/ViewModels to verify existing Display coverage.
 - Confirmed ViewModels for DamCalculation/FieldAndCrop/Forestation fully covered.
 - Confirmed Address.cs has ZERO Display attributes — this is the primary visual gap.
-- Implementing directly (no agent needed — pure attribute additions to 4 model files).
-- Status: IMPLEMENTING
+- Implemented directly in 4 model files. Build: 0 errors, 24 warnings (all pre-existing).
+- Commit: 09adfc3. Deployed: Helm revision 18, pod Running 1/1.
+- Status: DONE
+
+## Retro (on completion)
+**Converged:** Single-pass, no agent needed. All 4 models updated in one controller pass. Build green first run. Deployment clean.
+
+**Key finding:** The most impactful file was Address.cs (StreetAddress, SuburbName, CityName showing raw PascalCase in Property Register/Edit). All other ViewModels were already correctly annotated from prior sprints. DamCalculation/FieldAndCrop/Forestation model annotations are belt-and-suspenders since those forms use ViewModels.
