@@ -163,6 +163,12 @@ builder.Services.AddSingleton<dwa_ver_val.Services.Letters.IBlobStore>(sp =>
         Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "_uploads")));
 builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterService, dwa_ver_val.Services.Letters.LetterService>();
 
+// Reporting — memory cache + exporters (IReportingService added in Task 6)
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<dwa_ver_val.Services.Reporting.Export.IReportExporter, dwa_ver_val.Services.Reporting.Export.CsvReportExporter>();
+builder.Services.AddScoped<dwa_ver_val.Services.Reporting.Export.IReportExporter, dwa_ver_val.Services.Reporting.Export.ExcelReportExporter>();
+builder.Services.AddScoped<dwa_ver_val.Services.Reporting.Export.IReportExporter, dwa_ver_val.Services.Reporting.Export.PdfReportExporter>();
+
 // Portal infrastructure abstractions
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 var smtpHost = builder.Configuration["SmtpSettings:Host"];
