@@ -224,6 +224,16 @@ public class Cp11FileCompilationGuard : ITransitionGuard
                 return GuardResult.Deny("SFRA/Forestation record must be recorded or marked N/A before file can be compiled.");
         }
 
+        foreach (var req in DocumentRequirements.FileCompilationDocuments)
+        {
+            var hasDoc = await _db.Documents.AnyAsync(d =>
+                d.FileMasterId == ctx.FileMaster.FileMasterId
+                && d.DocumentType == req.DocumentType
+                && (d.VirusScanStatus == null || d.VirusScanStatus != "Infected"));
+            if (!hasDoc)
+                return GuardResult.Deny($"{req.DisplayName} must be uploaded before file can be compiled.");
+        }
+
         return GuardResult.Ok;
     }
 }

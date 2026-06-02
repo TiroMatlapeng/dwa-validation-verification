@@ -482,6 +482,24 @@ public class Cp11FileCompilationGuardTests
         return (fm, propId);
     }
 
+    private static void AddCp11Docs(ApplicationDBContext db, Guid fileMasterId)
+    {
+        foreach (var type in new[] { "WARMSReport", "TitleDeedReport", "SGDiagram" })
+        {
+            db.Documents.Add(new Document
+            {
+                DocumentId = Guid.NewGuid(),
+                FileMasterId = fileMasterId,
+                DocumentType = type,
+                FileName = "f.pdf",
+                BlobPath = "x/f.pdf",
+                VirusScanStatus = "Clean",
+                SyncStatus = "NotSynced",
+                UploadDate = DateTime.UtcNow
+            });
+        }
+    }
+
     private static GuardContext LeavingCp11(FileMaster fm) =>
         new(fm,
             new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP11_FileCompiled",  DisplayOrder = 16, Phase = "Verification" },
@@ -497,6 +515,8 @@ public class Cp11FileCompilationGuardTests
     {
         using var db = NewDb();
         var (fm, _) = await SeedFullCase(db);
+        AddCp11Docs(db, fm.FileMasterId);
+        await db.SaveChangesAsync();
         var result = await new Cp11FileCompilationGuard(db).CheckAsync(LeavingCp11(fm));
         Assert.True(result.Allowed);
     }
@@ -628,6 +648,7 @@ public class Cp11FileCompilationGuardTests
             RiverId           = river.RiverId,
             River             = river
         });
+        AddCp11Docs(db, fm.FileMasterId);
         await db.SaveChangesAsync();
 
         var result = await new Cp11FileCompilationGuard(db).CheckAsync(LeavingCp11(fm));
@@ -662,8 +683,30 @@ public class Cp11FileCompilationGuardTests
             RegisteredHectares = 15m,
             RegisteredVolume  = 500m
         });
+        AddCp11Docs(db, fm.FileMasterId);
         await db.SaveChangesAsync();
 
+        var result = await new Cp11FileCompilationGuard(db).CheckAsync(LeavingCp11(fm));
+        Assert.True(result.Allowed);
+    }
+
+    [Fact]
+    public async Task Cp11_DeniesWhenMandatoryDocumentsMissing()
+    {
+        using var db = NewDb();
+        var (fm, _) = await SeedFullCase(db); // seeds data records but NOT documents
+        var result = await new Cp11FileCompilationGuard(db).CheckAsync(LeavingCp11(fm));
+        Assert.False(result.Allowed);
+        Assert.Contains("report", result.Reason!); // e.g. "WARMS report" / "Title Deed report"
+    }
+
+    [Fact]
+    public async Task Cp11_AllowsWhenAllDataAndDocumentsPresent()
+    {
+        using var db = NewDb();
+        var (fm, _) = await SeedFullCase(db);
+        AddCp11Docs(db, fm.FileMasterId);
+        await db.SaveChangesAsync();
         var result = await new Cp11FileCompilationGuard(db).CheckAsync(LeavingCp11(fm));
         Assert.True(result.Allowed);
     }
