@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace dwa_ver_val.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20260602125055_AddDocumentWorkflowAnnotationAndSync")]
+    [Migration("20260602125719_AddDocumentWorkflowAnnotationAndSync")]
     partial class AddDocumentWorkflowAnnotationAndSync
     {
         /// <inheritdoc />
@@ -556,8 +556,10 @@ namespace dwa_ver_val.Migrations
 
                     b.Property<string>("SyncStatus")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(16)
-                        .HasColumnType("nvarchar(16)");
+                        .HasColumnType("nvarchar(16)")
+                        .HasDefaultValue("NotSynced");
 
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("datetime2");

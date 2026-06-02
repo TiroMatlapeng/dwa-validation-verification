@@ -553,8 +553,10 @@ namespace dwa_ver_val.Migrations
 
                     b.Property<string>("SyncStatus")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(16)
-                        .HasColumnType("nvarchar(16)");
+                        .HasColumnType("nvarchar(16)")
+                        .HasDefaultValue("NotSynced");
 
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("datetime2");

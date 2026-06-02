@@ -24,7 +24,7 @@ namespace dwa_ver_val.Migrations
                 type: "nvarchar(16)",
                 maxLength: 16,
                 nullable: false,
-                defaultValue: "");
+                defaultValue: "NotSynced");
 
             migrationBuilder.AddColumn<Guid>(
                 name: "WorkflowStateId",

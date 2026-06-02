@@ -415,16 +415,20 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasForeignKey(d => d.UploadedByPublicUserId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Document → WorkflowState (annotation; deleting a state must not delete docs)
+        // Document → WorkflowState (annotation). Restrict: workflow states are seeded
+        // reference data and are never deleted; Restrict prevents removing a state that
+        // documents still reference, so a document's CP annotation is never silently
+        // orphaned. Consistent with this context's Restrict-by-default FK convention.
         modelBuilder.Entity<Document>()
             .HasOne(d => d.WorkflowState)
             .WithMany()
             .HasForeignKey(d => d.WorkflowStateId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Document>()
             .Property(d => d.SyncStatus)
             .HasMaxLength(16)
+            .HasDefaultValue("NotSynced")
             .IsRequired();
 
         modelBuilder.Entity<Document>()
