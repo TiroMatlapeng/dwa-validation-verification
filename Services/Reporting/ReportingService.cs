@@ -35,14 +35,14 @@ public class ReportingService : IReportingService
     }
 
     // Org scope first, then the common filters. Caller can never widen beyond their scope.
-    private IQueryable<FileMaster> ScopedCases(ReportFilter f, ClaimsPrincipal user)
+    private IQueryable<FileMaster> ScopedCases(ReportFilter f, ClaimsPrincipal user, bool applyDates = true)
     {
         var q = _scope.FilterFileMasters(_db.FileMasters.AsNoTracking(), user);
         if (f.WaterManagementAreaId is { } wma) q = q.Where(fm => fm.Property!.WmaId == wma);
         if (f.CatchmentAreaId is { } cat) q = q.Where(fm => fm.CatchmentAreaId == cat);
         if (!string.IsNullOrWhiteSpace(f.ValidationStatus)) q = q.Where(fm => fm.ValidationStatusName == f.ValidationStatus);
-        if (f.DateFrom is { } from) q = q.Where(fm => fm.FileCreatedDate >= from);
-        if (f.DateTo is { } to) q = q.Where(fm => fm.FileCreatedDate <= to);
+        if (applyDates && f.DateFrom is { } from) q = q.Where(fm => fm.FileCreatedDate >= from);
+        if (applyDates && f.DateTo is { } to) q = q.Where(fm => fm.FileCreatedDate <= to);
         return q;
     }
 
@@ -70,6 +70,9 @@ public class ReportingService : IReportingService
                     r.Completed.ToString(),
                     r.InProcess.ToString(),
                     r.NotCommenced.ToString(),
+                    // NOTE (Plan A): completion % is derived from ValidationStatusName ("Completed").
+                    // Spec §5 envisaged deriving it from WorkflowInstance.CurrentWorkflowState (states past
+                    // CP9/CP11); deferred to when dashboards (Plan B) need workflow-state granularity.
                     r.Total == 0 ? "0.0%" : (100.0 * r.Completed / r.Total).ToString("0.0", CultureInfo.InvariantCulture) + "%",
                 })
                 .ToList();
@@ -91,10 +94,12 @@ public class ReportingService : IReportingService
         => CachedAsync("letters", filter, user, async () =>
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var caseIds = ScopedCases(filter, user).Select(fm => fm.FileMasterId);
+            var caseIds = ScopedCases(filter, user, applyDates: false).Select(fm => fm.FileMasterId);
 
             var q = _db.LetterIssuances.AsNoTracking()
                 .Where(l => caseIds.Contains(l.FileMasterId));
+            // One population: issued letters. Dates apply to IssuedDate only (not case creation).
+            q = q.Where(l => l.IssuedDate != null);
             if (filter.DateFrom is { } from) q = q.Where(l => l.IssuedDate >= from);
             if (filter.DateTo is { } to) q = q.Where(l => l.IssuedDate <= to);
 
@@ -103,7 +108,7 @@ public class ReportingService : IReportingService
                 .Select(g => new
                 {
                     Type = g.Key,
-                    Issued = g.Count(x => x.IssuedDate != null),
+                    Issued = g.Count(),
                     Responses = g.Count(x => x.ResponseDate != null),
                     Overdue = g.Count(x => x.DueDate != null && x.DueDate < today && x.ResponseDate == null),
                     Rts = g.Count(x => x.ReturnedToSender),
@@ -135,13 +140,13 @@ public class ReportingService : IReportingService
         {
             var rows = await ScopedCases(filter, user)
                 .Where(fm => fm.EntitlementId != null)
-                .GroupBy(fm => fm.CatchmentArea != null ? fm.CatchmentArea.CatchmentName : "(unassigned)")
-                .Select(g => new
+                .Select(fm => new
                 {
-                    Catchment = g.Key,
-                    Properties = g.Count(),
-                    Volume = g.Sum(x => x.Entitlement!.Volume),
+                    Catchment = fm.CatchmentArea != null ? fm.CatchmentArea.CatchmentName : "(unassigned)",
+                    Volume = fm.Entitlement!.Volume
                 })
+                .GroupBy(x => x.Catchment)
+                .Select(g => new { Catchment = g.Key, Properties = g.Count(), Volume = g.Sum(x => x.Volume) })
                 .OrderBy(x => x.Catchment)
                 .ToListAsync(ct);
 
