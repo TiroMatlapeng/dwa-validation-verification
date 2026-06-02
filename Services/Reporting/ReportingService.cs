@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -48,11 +49,42 @@ public class ReportingService : IReportingService
     public Task<ReportTable> CatchmentProgressAsync(ReportFilter filter, ClaimsPrincipal user, CancellationToken ct)
         => CachedAsync("catchment", filter, user, async () =>
         {
-            // Filled in Task 7. Skeleton returns the titled empty table.
-            await Task.CompletedTask;
+            var rows = await ScopedCases(filter, user)
+                .GroupBy(fm => fm.CatchmentArea != null ? fm.CatchmentArea.CatchmentName : "(unassigned)")
+                .Select(g => new
+                {
+                    Catchment = g.Key,
+                    Total = g.Count(),
+                    Completed = g.Count(x => x.ValidationStatusName == "Completed"),
+                    InProcess = g.Count(x => x.ValidationStatusName == "In Process"),
+                    NotCommenced = g.Count(x => x.ValidationStatusName == "Not Commenced"),
+                })
+                .OrderBy(x => x.Catchment)
+                .ToListAsync(ct);
+
+            var tableRows = rows
+                .Select(r => (IReadOnlyList<string>)new[]
+                {
+                    r.Catchment,
+                    r.Total.ToString(),
+                    r.Completed.ToString(),
+                    r.InProcess.ToString(),
+                    r.NotCommenced.ToString(),
+                    r.Total == 0 ? "0.0%" : (100.0 * r.Completed / r.Total).ToString("0.0", CultureInfo.InvariantCulture) + "%",
+                })
+                .ToList();
+
             return new ReportTable("Catchment Progress",
-                new[] { new ReportColumn("Catchment") },
-                Array.Empty<IReadOnlyList<string>>());
+                new[]
+                {
+                    new ReportColumn("Catchment"),
+                    new ReportColumn("Total", true),
+                    new ReportColumn("Completed", true),
+                    new ReportColumn("In Process", true),
+                    new ReportColumn("Not Commenced", true),
+                    new ReportColumn("Completion %", true),
+                },
+                tableRows);
         });
 
     public Task<ReportTable> LetterTrackingAsync(ReportFilter filter, ClaimsPrincipal user, CancellationToken ct)
