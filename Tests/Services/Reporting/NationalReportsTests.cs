@@ -90,4 +90,24 @@ public class NationalReportsTests
         Assert.Equal("IntegrationSent", row[0]);
         Assert.Equal("1", row[1]);
     }
+
+    [Fact]
+    public async Task PublicPortalUsage_IgnoresDateFilter_Snapshot()
+    {
+        using var db = NewDb();
+        db.PublicUsers.Add(new PublicUser
+        {
+            PublicUserId = Guid.NewGuid(), EmailAddress = "a@x.com", PasswordHash = "h",
+            FirstName = "A", LastName = "A", Status = "Active",
+            RegistrationDate = new DateTime(2010, 1, 1)
+        });
+        await db.SaveChangesAsync();
+
+        // A 2026 window far from the 2010 registration must NOT reduce the snapshot count.
+        var table = await Svc(db).PublicPortalUsageAsync(
+            new ReportFilter(DateFrom: new DateOnly(2026, 1, 1), DateTo: new DateOnly(2026, 12, 31)),
+            CancellationToken.None);
+
+        Assert.Contains(table.Rows, r => r[0] == "Registrations" && r[1] == "1");
+    }
 }
