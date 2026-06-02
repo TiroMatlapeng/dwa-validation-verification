@@ -1,3 +1,5 @@
+@model dwa_ver_val.Services.Dashboard.DashboardViewModel
+@using System.Text.Json
 @{
     ViewData["Title"] = "Dashboard";
 }
@@ -5,203 +7,111 @@
 <div class="flex-between mb-16">
     <div>
         <div class="page-title">Dashboard</div>
-        <div class="page-subtitle">National Overview &mdash; @DateTime.Now.ToString("dd MMMM yyyy")</div>
+        <div class="page-subtitle">@Model.ScopeLabel &mdash; @DateTime.Now.ToString("dd MMMM yyyy")</div>
     </div>
 </div>
 
-<!-- KPI Row -->
+<!-- KPI Row (org-scoped) -->
 <div class="kpi-row">
     <div class="kpi-card">
         <div class="kpi-label">Total Properties</div>
-        <div class="kpi-value">@ViewBag.TotalProperties</div>
-        <div class="kpi-sub">across all WMAs</div>
+        <div class="kpi-value">@Model.TotalProperties</div>
+        <div class="kpi-sub">in scope</div>
     </div>
     <div class="kpi-card success">
         <div class="kpi-label">Completed</div>
-        <div class="kpi-value">@ViewBag.CompletedCases</div>
-        <div class="kpi-sub">@(ViewBag.TotalProperties > 0 ? $"{(int)((double)ViewBag.CompletedCases / ViewBag.TotalProperties * 100)}% of total" : "—")</div>
+        <div class="kpi-value">@Model.CompletedCases</div>
+        <div class="kpi-sub">validations completed</div>
     </div>
     <div class="kpi-card">
         <div class="kpi-label">In Process</div>
-        <div class="kpi-value">@ViewBag.InProcessCases</div>
-        <div class="kpi-sub">cases currently in process</div>
+        <div class="kpi-value">@Model.InProcessCases</div>
+        <div class="kpi-sub">cases in process</div>
     </div>
     <div class="kpi-card warn">
-        <div class="kpi-label">Overdue Tasks</div>
-        <div class="kpi-value">@ViewBag.OverdueTasks</div>
-        <div class="kpi-sub">letters past due date</div>
+        <div class="kpi-label">Overdue Letters</div>
+        <div class="kpi-value">@Model.OverdueLetters</div>
+        <div class="kpi-sub">past due, no response</div>
     </div>
     <div class="kpi-card alert-kpi">
-        <div class="kpi-label">Letters Pending Response</div>
-        <div class="kpi-value">@ViewBag.LettersPending</div>
+        <div class="kpi-label">Letters Pending</div>
+        <div class="kpi-value">@Model.LettersPending</div>
         <div class="kpi-sub">awaiting response</div>
     </div>
 </div>
 
-<!-- V&V Progress + Letter Status -->
+<!-- Charts -->
 <div class="panel-grid">
     <div class="card">
-        <div class="card-header">
-            <span class="card-title">V&amp;V Progress by Phase</span>
-        </div>
-        <div style="height: 220px;">
-            <canvas id="myChart"></canvas>
-        </div>
+        <div class="card-header"><span class="card-title">Cases by V&amp;V Phase</span></div>
+        <div id="phaseChart" style="height: 220px;"></div>
     </div>
     <div class="card">
-        <div class="card-header">
-            <span class="card-title">Letter Status Summary</span>
-        </div>
-        <table>
-            <thead>
-                <tr><th>Letter Type</th><th>Issued</th><th>Awaiting</th><th>Overdue</th></tr>
-            </thead>
-            <tbody>
-                <tr><td>Letter 1 &mdash; S35(1)</td><td>1,204</td><td>89</td><td><span class="badge badge-red">12</span></td></tr>
-                <tr><td>Letter 1A &mdash; S53(1)</td><td>156</td><td>34</td><td><span class="badge badge-red">8</span></td></tr>
-                <tr><td>Letter 2 &mdash; S35(3)(a)</td><td>312</td><td>45</td><td><span class="badge badge-orange">6</span></td></tr>
-                <tr><td>Letter 3 &mdash; S35(4)</td><td>4,812</td><td>&mdash;</td><td>&mdash;</td></tr>
-                <tr><td>Letter 4A &mdash; S53(1)</td><td>23</td><td>11</td><td><span class="badge badge-red">3</span></td></tr>
-            </tbody>
-        </table>
+        <div class="card-header"><span class="card-title">Validation Status</span></div>
+        <div id="statusChart" style="height: 240px;"></div>
     </div>
 </div>
 
-<!-- Recent Activity + My Tasks -->
+<!-- Letter tracking (real) + My tasks -->
 <div class="panel-grid">
     <div class="card">
-        <div class="card-header">
-            <span class="card-title">Recent Activity</span>
-        </div>
-        <div class="timeline">
-            <div class="timeline-item">
-                <div class="timeline-date">10 Mar, 14:32</div>
-                <div class="timeline-text">J. Mokoena completed CP6 (SAPWAT) for <strong>Farm Rietfontein 234</strong></div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-date">10 Mar, 11:15</div>
-                <div class="timeline-text">Letter 3 issued to <strong>P.J. van der Merwe</strong> &mdash; ELU confirmed 45,200 m&sup3;</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-date">10 Mar, 09:40</div>
-                <div class="timeline-text">M. Naidoo uploaded title deed for <strong>Erf 1145 Stellenbosch</strong></div>
-            </div>
-            <div class="timeline-item grey">
-                <div class="timeline-date">09 Mar, 16:22</div>
-                <div class="timeline-text">WARMS daily sync completed &mdash; 3 new records, 1 ownership change</div>
-            </div>
-        </div>
+        <div class="card-header"><span class="card-title">Letter Tracking</span></div>
+        @if (Model.LetterTracking is { } lt && lt.Rows.Count > 0)
+        {
+            <table>
+                <thead>
+                    <tr>@foreach (var c in lt.Columns) { <th>@c.Header</th> }</tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in lt.Rows)
+                    {
+                        <tr>@foreach (var cell in row) { <td>@cell</td> }</tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p style="color:#666;">No letters issued in scope yet.</p>
+        }
     </div>
     <div class="card">
-        <div class="card-header">
-            <span class="card-title">My Assigned Tasks</span>
-            <span class="badge badge-blue">7 pending</span>
+        <div class="card-header"><span class="card-title">My Assigned Cases</span>
+            <span class="badge badge-blue">@Model.MyTasks.Count</span>
         </div>
-        <table>
-            <thead>
-                <tr><th>Case</th><th>Task</th><th>Due</th></tr>
-            </thead>
-            <tbody>
-                <tr><td>BG-2024-0412</td><td>Complete CP5 (GIS Analysis)</td><td><span class="badge badge-red">Overdue</span></td></tr>
-                <tr><td>BG-2024-0567</td><td>Sign Letter 1 for issuance</td><td><span class="badge badge-orange">Today</span></td></tr>
-                <tr><td>BG-2024-0891</td><td>Record Letter 1 response</td><td>14 Mar</td></tr>
-                <tr><td>BG-2024-1023</td><td>Review uploaded documents</td><td>16 Mar</td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Charts Row -->
-<div class="panel-grid">
-    <div class="card">
-        <div class="card-header">
-            <span class="card-title">Water Use Distribution</span>
-        </div>
-        <div style="height: 250px;">
-            <canvas id="pieChart"></canvas>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-header">
-            <span class="card-title">Irrigation vs Storage</span>
-        </div>
-        <div style="height: 250px;">
-            <canvas id="comboChart"></canvas>
-        </div>
+        @if (Model.MyTasks.Count > 0)
+        {
+            <table>
+                <thead><tr><th>Case</th><th>Current Step</th></tr></thead>
+                <tbody>
+                    @foreach (var t in Model.MyTasks)
+                    {
+                        <tr>
+                            <td><a asp-controller="FileMaster" asp-action="Details" asp-route-id="@t.FileMasterId">@t.CaseReference</a></td>
+                            <td>@t.CurrentState</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p style="color:#666;">No cases currently assigned to you.</p>
+        }
     </div>
 </div>
 
 @section Scripts {
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // V&V Progress bar chart
-    const ctx = document.getElementById('myChart');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Not Started', 'Inception', 'Validation', 'Verification', 'Complete'],
-            datasets: [{
-                label: 'Properties',
-                data: [4430, 2140, 1101, 189, 4812],
-                backgroundColor: ['#dee2e6', '#003366', '#7db8e0', '#f39c12', '#27ae60'],
-                borderWidth: 0,
-                borderRadius: 3
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
-        }
-    });
-
-    // Pie chart
-    const pieCtx = document.getElementById('pieChart');
-    new Chart(pieCtx, {
-        type: 'pie',
-        data: {
-            labels: ['Commercial', 'Small & Emerging', 'Undefined', 'Household'],
-            datasets: [{
-                data: [55, 25, 10, 10],
-                backgroundColor: ['#003366', '#27ae60', '#f39c12', '#e74c3c']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-
-    // Combo chart
-    const comboCtx = document.getElementById('comboChart');
-    new Chart(comboCtx, {
-        data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-            datasets: [
-                {
-                    type: 'bar',
-                    label: 'Irrigation',
-                    data: [120, 190, 300, 250, 220],
-                    backgroundColor: '#003366',
-                    borderRadius: 3
-                },
-                {
-                    type: 'line',
-                    label: 'Storage',
-                    data: [30, 50, 80, 60, 70],
-                    borderColor: '#e74c3c',
-                    borderWidth: 2,
-                    fill: false,
-                    tension: 0.3
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } }
-        }
-    });
-</script>
+    <script src="~/lib/d3/d3.min.js"></script>
+    <script src="~/js/reporting/charts.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            var phase = @Html.Raw(JsonSerializer.Serialize(Model.PhaseChart));
+            var status = @Html.Raw(JsonSerializer.Serialize(Model.ValidationStatusChart));
+            if (window.DwsCharts) {
+                DwsCharts.barChart('#phaseChart', phase);
+                DwsCharts.donutChart('#statusChart', status);
+            }
+        })();
+    </script>
 }

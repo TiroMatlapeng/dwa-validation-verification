@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using dwa_ver_val.Models;
+using dwa_ver_val.Services.Dashboard;
 
 namespace dwa_ver_val.Controllers;
 
@@ -10,27 +10,18 @@ namespace dwa_ver_val.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-    private readonly ApplicationDBContext _db;
+    private readonly IDashboardService _dashboard;
 
-    public HomeController(ILogger<HomeController> logger, ApplicationDBContext db)
+    public HomeController(ILogger<HomeController> logger, IDashboardService dashboard)
     {
         _logger = logger;
-        _db = db;
+        _dashboard = dashboard;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(CancellationToken ct)
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
-
-        ViewBag.TotalProperties = await _db.Properties.CountAsync();
-        ViewBag.CompletedCases = await _db.FileMasters.CountAsync(f => f.ValidationStatusName == "Completed");
-        ViewBag.InProcessCases = await _db.FileMasters.CountAsync(f => f.ValidationStatusName == "In Process");
-        ViewBag.OverdueTasks = await _db.LetterIssuances
-            .CountAsync(l => l.DueDate != null && l.DueDate < today && l.ResponseDate == null);
-        ViewBag.LettersPending = await _db.LetterIssuances
-            .CountAsync(l => l.ResponseDate == null && l.DueDate != null);
-
-        return View();
+        var vm = await _dashboard.GetAsync(User, ct);
+        return View(vm);
     }
 
     [AllowAnonymous]
