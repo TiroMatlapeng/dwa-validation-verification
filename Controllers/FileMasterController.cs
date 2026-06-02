@@ -197,6 +197,15 @@ public class FileMasterController : Controller
             .OrderByDescending(o => o.LodgedDate)
             .ToListAsync();
 
+        vm.CaseDocuments = await _context.Documents
+            .Where(d => d.FileMasterId == id && d.UploadedByUserId != null)
+            .OrderByDescending(d => d.UploadDate)
+            .ToListAsync();
+
+        var presentTypes = vm.CaseDocuments.Select(d => d.DocumentType).ToHashSet(StringComparer.Ordinal);
+        vm.DocumentRequirementStatuses =
+            dwa_ver_val.Services.Workflow.Guards.DocumentRequirements.StatusesFor(presentTypes);
+
         return View(vm);
     }
 

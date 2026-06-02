@@ -1,0 +1,78 @@
+@model FileMasterDetailsViewModel
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService Auth
+@{
+    var canCapture = (await Auth.AuthorizeAsync(User, DwsPolicies.CanCapture)).Succeeded;
+    var canManage  = (await Auth.AuthorizeAsync(User, DwsPolicies.CanManageDocuments)).Succeeded;
+}
+
+<div class="card" style="max-width: 900px; margin-top: 16px;">
+    <div class="form-section-title">Case Documents (Appendix A Evidence)</div>
+
+    <table class="table">
+        <thead>
+            <tr><th>Required Document</th><th>Mandatory at</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var s in Model.DocumentRequirementStatuses)
+        {
+            <tr>
+                <td>@s.DisplayName</td>
+                <td>@s.MandatoryAtCp</td>
+                <td>
+                    @if (s.Present)
+                    {
+                        <span style="color: var(--dws-green, #2e7d32); font-weight: 600;">&#10003; Present</span>
+                    }
+                    else
+                    {
+                        <span style="color: var(--dws-red, #c62828); font-weight: 600;">&#10007; Missing</span>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    @if (Model.CaseDocuments.Any())
+    {
+        <table class="table" style="margin-top: 12px;">
+            <thead>
+                <tr><th>File</th><th>Type</th><th>Uploaded</th><th></th></tr>
+            </thead>
+            <tbody>
+            @foreach (var d in Model.CaseDocuments)
+            {
+                <tr>
+                    <td>
+                        <a asp-action="Download" asp-controller="Document" asp-route-documentId="@d.DocumentId">@d.FileName</a>
+                    </td>
+                    <td>@dwa_ver_val.Services.Documents.DocumentTypes.Display(d.DocumentType)</td>
+                    <td>@d.UploadDate.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        @if (canManage)
+                        {
+                            <form asp-action="Delete" asp-controller="Document" method="post" style="display:inline;"
+                                  onsubmit="return confirm('Delete this document?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="documentId" value="@d.DocumentId" />
+                                <button type="submit" class="btn btn-link" style="color: var(--dws-red, #c62828);">Delete</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color:#666;">No documents uploaded yet.</p>
+    }
+
+    @if (canCapture)
+    {
+        <a asp-action="Upload" asp-controller="Document" asp-route-fileMasterId="@Model.FileMaster.FileMasterId"
+           class="btn btn-primary" style="margin-top: 8px;">Upload Document</a>
+    }
+</div>

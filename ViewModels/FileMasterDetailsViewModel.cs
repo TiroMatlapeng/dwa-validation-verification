@@ -7,6 +7,11 @@ public class FileMasterDetailsViewModel
     public List<LetterIssuance> Letters { get; set; } = new();
     public List<AuditLog> AuditTrail { get; set; } = new();
 
+    // Internal staff documents attached to this case + the Appendix A requirement checklist.
+    public List<Document> CaseDocuments { get; set; } = new();
+    public IReadOnlyList<dwa_ver_val.Services.Workflow.Guards.DocumentRequirementStatus> DocumentRequirementStatuses { get; set; }
+        = new List<dwa_ver_val.Services.Workflow.Guards.DocumentRequirementStatus>();
+
     // Workflow gap-fill (PRD CP12/CP13/CP19) — inline guard feedback + PAJA checklist.
     public List<string> BlockingReasons { get; set; } = new();
     public PAJAChecklist? PAJAChecklist { get; set; }
