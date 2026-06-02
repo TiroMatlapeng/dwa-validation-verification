@@ -90,10 +90,44 @@ public class ReportingService : IReportingService
     public Task<ReportTable> LetterTrackingAsync(ReportFilter filter, ClaimsPrincipal user, CancellationToken ct)
         => CachedAsync("letters", filter, user, async () =>
         {
-            await Task.CompletedTask;
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var caseIds = ScopedCases(filter, user).Select(fm => fm.FileMasterId);
+
+            var q = _db.LetterIssuances.AsNoTracking()
+                .Where(l => caseIds.Contains(l.FileMasterId));
+            if (filter.DateFrom is { } from) q = q.Where(l => l.IssuedDate >= from);
+            if (filter.DateTo is { } to) q = q.Where(l => l.IssuedDate <= to);
+
+            var rows = await q
+                .GroupBy(l => l.LetterType!.LetterName)
+                .Select(g => new
+                {
+                    Type = g.Key,
+                    Issued = g.Count(x => x.IssuedDate != null),
+                    Responses = g.Count(x => x.ResponseDate != null),
+                    Overdue = g.Count(x => x.DueDate != null && x.DueDate < today && x.ResponseDate == null),
+                    Rts = g.Count(x => x.ReturnedToSender),
+                })
+                .OrderBy(x => x.Type)
+                .ToListAsync(ct);
+
+            var tableRows = rows
+                .Select(r => (IReadOnlyList<string>)new[]
+                {
+                    r.Type, r.Issued.ToString(), r.Responses.ToString(), r.Overdue.ToString(), r.Rts.ToString(),
+                })
+                .ToList();
+
             return new ReportTable("Letter Tracking",
-                new[] { new ReportColumn("Letter Type") },
-                Array.Empty<IReadOnlyList<string>>());
+                new[]
+                {
+                    new ReportColumn("Letter Type"),
+                    new ReportColumn("Issued", true),
+                    new ReportColumn("Responses", true),
+                    new ReportColumn("Overdue", true),
+                    new ReportColumn("Returned to Sender", true),
+                },
+                tableRows);
         });
 
     public Task<ReportTable> ValidationSummaryAsync(ReportFilter filter, ClaimsPrincipal user, CancellationToken ct)
