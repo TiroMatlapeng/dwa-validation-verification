@@ -169,6 +169,7 @@ builder.Services.AddScoped<dwa_ver_val.Services.Reporting.IReportingService, dwa
 builder.Services.AddScoped<dwa_ver_val.Services.Reporting.Export.IReportExporter, dwa_ver_val.Services.Reporting.Export.CsvReportExporter>();
 builder.Services.AddScoped<dwa_ver_val.Services.Reporting.Export.IReportExporter, dwa_ver_val.Services.Reporting.Export.ExcelReportExporter>();
 builder.Services.AddScoped<dwa_ver_val.Services.Reporting.Export.IReportExporter, dwa_ver_val.Services.Reporting.Export.PdfReportExporter>();
+builder.Services.AddScoped<dwa_ver_val.Services.Dashboard.IDashboardService, dwa_ver_val.Services.Dashboard.DashboardService>();
 
 // Portal infrastructure abstractions
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
