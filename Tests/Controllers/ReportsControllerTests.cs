@@ -89,4 +89,29 @@ public class ReportsControllerTests
         var view = Assert.IsType<ViewResult>(result);
         Assert.Same(filter, view.ViewData["Filter"]);
     }
+
+    [Fact]
+    public async Task UserActivity_Html_ReturnsViewWithTable()
+    {
+        var result = await Build().UserActivity(new ReportFilter(), null, CancellationToken.None);
+        var view = Assert.IsType<ViewResult>(result);
+        var table = Assert.IsType<ReportTable>(view.Model);
+        Assert.Equal("User Activity", table.Title);
+        Assert.Equal("Report", view.ViewName);
+    }
+
+    [Fact]
+    public async Task PublicPortalUsage_Csv_ReturnsFile()
+    {
+        var result = await Build().PublicPortalUsage(new ReportFilter(), "csv", CancellationToken.None);
+        var file = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("text/csv", file.ContentType);
+    }
+
+    [Fact]
+    public async Task IntegrationHealth_Html_ReturnsView()
+    {
+        var result = await Build().IntegrationHealth(new ReportFilter(), null, CancellationToken.None);
+        Assert.IsType<ViewResult>(result);
+    }
 }

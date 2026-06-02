@@ -1,5 +1,8 @@
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService Auth
 @{
     ViewData["Title"] = "Reports";
+    var canViewNational = (await Auth.AuthorizeAsync(User, DwsPolicies.CanViewNationalReports)).Succeeded;
 }
 
 <div class="card" style="max-width: 700px;">
@@ -9,4 +12,13 @@
         <li><a asp-action="LetterTracking">Letter Tracking</a> — letters issued, responses, overdue, returned-to-sender</li>
         <li><a asp-action="ValidationSummary">Validation Summary</a> — properties validated &amp; ELU volumes by catchment</li>
     </ul>
+    @if (canViewNational)
+    {
+        <div class="form-section-title" style="margin-top: 16px;">National Oversight (managers)</div>
+        <ul style="line-height: 2;">
+            <li><a asp-action="UserActivity">User Activity</a> &mdash; actions per officer</li>
+            <li><a asp-action="PublicPortalUsage">Public Portal Usage</a> &mdash; registrations, logins, document uploads</li>
+            <li><a asp-action="IntegrationHealth">Integration Health</a> &mdash; eWULAAS/WARMS sync activity (populates once integration is live)</li>
+        </ul>
+    }
 </div>

@@ -28,6 +28,18 @@ public class ReportsController : Controller
     public Task<IActionResult> ValidationSummary(ReportFilter filter, string? format, CancellationToken ct)
         => RenderAsync(filter, () => _reporting.ValidationSummaryAsync(filter, User, ct), format, ct);
 
+    [Authorize(Policy = DwsPolicies.CanViewNationalReports)]
+    public Task<IActionResult> UserActivity(ReportFilter filter, string? format, CancellationToken ct)
+        => RenderAsync(filter, () => _reporting.UserActivityAsync(filter, ct), format, ct);
+
+    [Authorize(Policy = DwsPolicies.CanViewNationalReports)]
+    public Task<IActionResult> PublicPortalUsage(ReportFilter filter, string? format, CancellationToken ct)
+        => RenderAsync(filter, () => _reporting.PublicPortalUsageAsync(filter, ct), format, ct);
+
+    [Authorize(Policy = DwsPolicies.CanViewNationalReports)]
+    public Task<IActionResult> IntegrationHealth(ReportFilter filter, string? format, CancellationToken ct)
+        => RenderAsync(filter, () => _reporting.IntegrationHealthAsync(filter, ct), format, ct);
+
     private async Task<IActionResult> RenderAsync(ReportFilter filter, Func<Task<ReportTable>> build, string? format, CancellationToken ct)
     {
         var table = await build();
