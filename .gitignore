@@ -36,8 +36,9 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 
-# ASP.NET Core
-wwwroot/lib/
+# ASP.NET Core — libman-restored packages are not committed
+wwwroot/lib/*
+!wwwroot/lib/d3/
 
 # Logs
 *.log
