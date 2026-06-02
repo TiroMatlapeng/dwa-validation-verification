@@ -1,4 +1,5 @@
 @model dwa_ver_val.Areas.ExternalPortal.ViewModels.DocumentUploadViewModel
+@using dwa_ver_val.Services.Documents
 @{
     ViewData["Title"] = "Upload Document";
     Layout = "~/Areas/ExternalPortal/Views/Shared/_PortalLayout.cshtml";
@@ -15,12 +16,11 @@
              style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
 
         <label asp-for="DocumentType">Document Type</label>
-        <select asp-for="DocumentType" style="width:100%;padding:7px 10px;border:1px solid var(--dws-border);border-radius:4px;font-size:var(--dws-fs-sm);margin-top:4px">
-            <option value="TitleDeed">Title Deed</option>
-            <option value="Permit">Permit</option>
-            <option value="SurveyDiagram">SG Diagram</option>
-            <option value="FieldSurvey">Field Survey</option>
-            <option value="Other">Other</option>
+        <select asp-for="DocumentType" class="form-control" style="width:100%;padding:7px 10px;border:1px solid var(--dws-border);border-radius:4px;font-size:var(--dws-fs-sm);margin-top:4px">
+            @foreach (var kvp in DocumentTypes.All)
+            {
+                <option value="@kvp.Key">@kvp.Value.Display</option>
+            }
         </select>
 
         <label asp-for="File" style="margin-top:var(--dws-space-3)">File</label>
