@@ -42,6 +42,10 @@
                class="sidebar-item @(controllerName == "Validation" ? "active" : "")">
                 <span class="sidebar-icon">&#9632;</span> Validation
             </a>
+            <a asp-controller="Reports" asp-action="Index"
+               class="sidebar-item @(controllerName == "Reports" ? "active" : "")">
+                <span class="sidebar-icon">&#9632;</span> Reports
+            </a>
 
             @if (User.IsInRole("SystemAdmin"))
             {

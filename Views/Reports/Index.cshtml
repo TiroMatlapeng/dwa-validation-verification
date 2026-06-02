@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Reports";
+}
+
+<div class="card" style="max-width: 700px;">
+    <div class="form-section-title">Reports</div>
+    <ul style="line-height: 2;">
+        <li><a asp-action="CatchmentProgress">Catchment Progress</a> — records, status breakdown &amp; completion % per catchment</li>
+        <li><a asp-action="LetterTracking">Letter Tracking</a> — letters issued, responses, overdue, returned-to-sender</li>
+        <li><a asp-action="ValidationSummary">Validation Summary</a> — properties validated &amp; ELU volumes by catchment</li>
+    </ul>
+</div>

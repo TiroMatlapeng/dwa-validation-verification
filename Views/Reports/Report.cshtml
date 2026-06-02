@@ -1,0 +1,44 @@
+@model dwa_ver_val.Services.Reporting.ReportTable
+@{
+    ViewData["Title"] = Model.Title;
+    var action = (string?)ViewContext.RouteData.Values["action"];
+}
+
+<div class="card" style="max-width: 1100px;">
+    <div class="form-section-title">@Model.Title</div>
+
+    <div style="margin-bottom: 12px;">
+        <a class="btn btn-secondary" asp-action="@action" asp-route-format="csv">Export CSV</a>
+        <a class="btn btn-secondary" asp-action="@action" asp-route-format="xlsx">Export Excel</a>
+        <a class="btn btn-secondary" asp-action="@action" asp-route-format="pdf">Export PDF</a>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+            @foreach (var col in Model.Columns)
+            {
+                <th style="@(col.Numeric ? "text-align:right;" : "")">@col.Header</th>
+            }
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Rows.Count == 0)
+        {
+            <tr><td colspan="@Model.Columns.Count" style="color:#666;">No data for the selected filters.</td></tr>
+        }
+        else
+        {
+            @foreach (var row in Model.Rows)
+            {
+                <tr>
+                @for (var i = 0; i < row.Count; i++)
+                {
+                    <td style="@(i < Model.Columns.Count && Model.Columns[i].Numeric ? "text-align:right;" : "")">@row[i]</td>
+                }
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
