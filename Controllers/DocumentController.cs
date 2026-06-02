@@ -11,6 +11,7 @@ namespace dwa_ver_val.Controllers;
 [Authorize(Policy = DwsPolicies.CanRead)]
 public class DocumentController : Controller
 {
+    // TIFF is allowed for internal uploads (scanned title deeds / GIS diagrams), unlike the external portal.
     private static readonly HashSet<string> _allowedExtensions =
         new(StringComparer.OrdinalIgnoreCase) { ".pdf", ".jpg", ".jpeg", ".png", ".tiff" };
     private const long MaxBytes = 25 * 1024 * 1024;
@@ -113,6 +114,9 @@ public class DocumentController : Controller
             .FirstOrDefaultAsync(d => d.DocumentId == documentId, ct);
         if (doc?.FileMaster is null || !_scope.IsInScope(doc.FileMaster, User)) return Forbid();
 
+        if (doc.VirusScanStatus == "Infected")
+            return BadRequest("File failed virus scanning and cannot be downloaded.");
+
         var stream = await _storage.OpenReadAsync(doc.BlobPath, ct);
         return File(stream, doc.ContentType ?? "application/octet-stream", doc.FileName);
     }
@@ -130,14 +134,14 @@ public class DocumentController : Controller
         var snapshot = $"{doc.DocumentType}:{doc.FileName}";
         var blobPath = doc.BlobPath;
 
-        await _storage.DeleteAsync(blobPath, ct);
         _db.Documents.Remove(doc);
         await _db.SaveChangesAsync(ct);
+        await _storage.DeleteAsync(blobPath, ct); // after commit: a dangling blob is safer than a row pointing at a missing file
 
         await _audit.LogAsync(new AuditEvent(
             EntityType: "Document",
             EntityId: documentId.ToString(),
-            Action: "Delete",
+            Action: "DocumentDeleted",
             UserId: CurrentUserId(),
             UserDisplayName: User.Identity?.Name,
             FromValue: snapshot,

@@ -64,6 +64,13 @@ public class DocumentControllerTests
         };
     }
 
+    private static IFormFile EmptyFile(string name = "empty.pdf")
+        => new FormFile(new MemoryStream(Array.Empty<byte>()), 0, 0, "File", name)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = "application/pdf"
+        };
+
     private static DocumentController BuildController(ApplicationDBContext db, ClaimsPrincipal user)
     {
         var controller = new DocumentController(db, new ScopedCaseQuery(db), new FakeStorage(), new TestAuditService());
@@ -188,6 +195,112 @@ public class DocumentControllerTests
         var result = await ctrl.Delete(doc.DocumentId, CancellationToken.None);
 
         Assert.IsType<RedirectToActionResult>(result);
+        Assert.Empty(db.Documents);
+    }
+
+    [Fact]
+    public async Task Download_ReturnsFile_WhenInScope()
+    {
+        using var db = NewDb();
+        var wma = Guid.NewGuid();
+        var (fm, _) = SeedCase(db, wma);
+        var doc = new Document
+        {
+            DocumentId = Guid.NewGuid(), FileMasterId = fm.FileMasterId,
+            DocumentType = DocumentTypes.TitleDeedReport, FileName = "d.pdf",
+            BlobPath = "docs/d.pdf", ContentType = "application/pdf",
+            SyncStatus = "NotSynced", UploadDate = DateTime.UtcNow
+        };
+        db.Documents.Add(doc); await db.SaveChangesAsync();
+
+        var ctrl = BuildController(db, User(Guid.NewGuid(), DwsRoles.ReadOnly));
+        ((ClaimsIdentity)ctrl.User.Identity!).AddClaim(new Claim("wmaId", wma.ToString()));
+
+        var result = await ctrl.Download(doc.DocumentId, CancellationToken.None);
+        Assert.IsType<FileStreamResult>(result);
+    }
+
+    [Fact]
+    public async Task Download_ForbidsWhenOutOfScope()
+    {
+        using var db = NewDb();
+        var (fm, _) = SeedCase(db, Guid.NewGuid()); // case in WMA A
+        var doc = new Document
+        {
+            DocumentId = Guid.NewGuid(), FileMasterId = fm.FileMasterId,
+            DocumentType = DocumentTypes.TitleDeedReport, FileName = "d.pdf",
+            BlobPath = "docs/d.pdf", SyncStatus = "NotSynced", UploadDate = DateTime.UtcNow
+        };
+        db.Documents.Add(doc); await db.SaveChangesAsync();
+
+        var ctrl = BuildController(db, User(Guid.NewGuid(), DwsRoles.Validator));
+        ((ClaimsIdentity)ctrl.User.Identity!).AddClaim(new Claim("wmaId", Guid.NewGuid().ToString())); // WMA B
+
+        var result = await ctrl.Download(doc.DocumentId, CancellationToken.None);
+        Assert.IsType<ForbidResult>(result);
+    }
+
+    [Fact]
+    public async Task Download_RejectsInfectedFile()
+    {
+        using var db = NewDb();
+        var wma = Guid.NewGuid();
+        var (fm, _) = SeedCase(db, wma);
+        var doc = new Document
+        {
+            DocumentId = Guid.NewGuid(), FileMasterId = fm.FileMasterId,
+            DocumentType = DocumentTypes.TitleDeedReport, FileName = "d.pdf",
+            BlobPath = "docs/d.pdf", VirusScanStatus = "Infected",
+            SyncStatus = "NotSynced", UploadDate = DateTime.UtcNow
+        };
+        db.Documents.Add(doc); await db.SaveChangesAsync();
+
+        var ctrl = BuildController(db, User(Guid.NewGuid(), DwsRoles.Validator));
+        ((ClaimsIdentity)ctrl.User.Identity!).AddClaim(new Claim("wmaId", wma.ToString()));
+
+        var result = await ctrl.Download(doc.DocumentId, CancellationToken.None);
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task Delete_ForbidsWhenOutOfScope()
+    {
+        using var db = NewDb();
+        var (fm, _) = SeedCase(db, Guid.NewGuid()); // case in WMA A
+        var doc = new Document
+        {
+            DocumentId = Guid.NewGuid(), FileMasterId = fm.FileMasterId,
+            DocumentType = DocumentTypes.TitleDeedReport, FileName = "d.pdf",
+            BlobPath = "docs/d.pdf", SyncStatus = "NotSynced", UploadDate = DateTime.UtcNow
+        };
+        db.Documents.Add(doc); await db.SaveChangesAsync();
+
+        var ctrl = BuildController(db, User(Guid.NewGuid(), DwsRoles.Validator));
+        ((ClaimsIdentity)ctrl.User.Identity!).AddClaim(new Claim("wmaId", Guid.NewGuid().ToString())); // WMA B
+
+        var result = await ctrl.Delete(doc.DocumentId, CancellationToken.None);
+        Assert.IsType<ForbidResult>(result);
+        Assert.Single(db.Documents); // not deleted
+    }
+
+    [Fact]
+    public async Task Upload_RejectsEmptyFile()
+    {
+        using var db = NewDb();
+        var wma = Guid.NewGuid();
+        var (fm, _) = SeedCase(db, wma);
+        var ctrl = BuildController(db, User(Guid.NewGuid(), DwsRoles.Validator));
+        ((ClaimsIdentity)ctrl.User.Identity!).AddClaim(new Claim("wmaId", wma.ToString()));
+
+        var model = new CaseDocumentUploadViewModel
+        {
+            FileMasterId = fm.FileMasterId,
+            DocumentType = DocumentTypes.TitleDeedReport,
+            File = EmptyFile()
+        };
+
+        var result = await ctrl.Upload(model, CancellationToken.None);
+        Assert.IsType<ViewResult>(result);
         Assert.Empty(db.Documents);
     }
 }
