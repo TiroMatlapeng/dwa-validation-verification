@@ -30,6 +30,19 @@ public class CsvReportExporterTests
     }
 
     [Fact]
+    public async Task NeutralizesFormulaInjection()
+    {
+        var table = new ReportTable("T",
+            new[] { new ReportColumn("Name") },
+            new[] { (IReadOnlyList<string>)new[] { "=cmd|'/c calc'!A1" } });
+        var sut = new CsvReportExporter();
+        using var ms = new MemoryStream();
+        await sut.WriteAsync(table, ms, CancellationToken.None);
+        var csv = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        Assert.Contains("'=cmd", csv); // leading apostrophe neutralizes the formula
+    }
+
+    [Fact]
     public void Metadata_IsCsv()
     {
         var sut = new CsvReportExporter();

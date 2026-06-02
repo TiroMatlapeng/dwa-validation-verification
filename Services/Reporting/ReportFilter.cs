@@ -10,6 +10,6 @@ public record ReportFilter(
     Guid? WaterManagementAreaId = null,
     Guid? CatchmentAreaId = null,
     string? ValidationStatus = null,
-    Guid? OfficerUserId = null,
+    Guid? OfficerUserId = null, // reserved for the deferred User Activity report (Plan A2); not yet applied to any query
     int Page = 1,
     int PageSize = 50);

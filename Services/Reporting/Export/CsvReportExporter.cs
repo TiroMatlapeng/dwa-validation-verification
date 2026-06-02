@@ -16,7 +16,7 @@ public class CsvReportExporter : IReportExporter
         foreach (var row in table.Rows)
         {
             ct.ThrowIfCancellationRequested();
-            await writer.WriteLineAsync(string.Join(",", row.Select(Quote)));
+            await writer.WriteLineAsync(string.Join(",", row.Select(v => Quote(ReportValueGuard.NeutralizeFormula(v)))));
         }
         await writer.FlushAsync(ct);
     }

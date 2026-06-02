@@ -24,7 +24,7 @@ public class ExcelReportExporter : IReportExporter
 
         for (var r = 0; r < table.Rows.Count; r++)
             for (var c = 0; c < table.Rows[r].Count; c++)
-                ws.Cell(r + 2, c + 1).Value = table.Rows[r][c];
+                ws.Cell(r + 2, c + 1).Value = ReportValueGuard.NeutralizeFormula(table.Rows[r][c]);
 
         ws.SheetView.FreezeRows(1);
         ws.Columns().AdjustToContents();

@@ -20,24 +20,27 @@ public class ReportsController : Controller
     public IActionResult Index() => View();
 
     public Task<IActionResult> CatchmentProgress(ReportFilter filter, string? format, CancellationToken ct)
-        => RenderAsync(() => _reporting.CatchmentProgressAsync(filter, User, ct), format, ct);
+        => RenderAsync(filter, () => _reporting.CatchmentProgressAsync(filter, User, ct), format, ct);
 
     public Task<IActionResult> LetterTracking(ReportFilter filter, string? format, CancellationToken ct)
-        => RenderAsync(() => _reporting.LetterTrackingAsync(filter, User, ct), format, ct);
+        => RenderAsync(filter, () => _reporting.LetterTrackingAsync(filter, User, ct), format, ct);
 
     public Task<IActionResult> ValidationSummary(ReportFilter filter, string? format, CancellationToken ct)
-        => RenderAsync(() => _reporting.ValidationSummaryAsync(filter, User, ct), format, ct);
+        => RenderAsync(filter, () => _reporting.ValidationSummaryAsync(filter, User, ct), format, ct);
 
-    private async Task<IActionResult> RenderAsync(Func<Task<ReportTable>> build, string? format, CancellationToken ct)
+    private async Task<IActionResult> RenderAsync(ReportFilter filter, Func<Task<ReportTable>> build, string? format, CancellationToken ct)
     {
         var table = await build();
 
-        if (string.IsNullOrWhiteSpace(format))
-            return View("Report", table);
+        var exporter = string.IsNullOrWhiteSpace(format)
+            ? null
+            : _exporters.FirstOrDefault(e => e.Format.Equals(format, StringComparison.OrdinalIgnoreCase));
 
-        var exporter = _exporters.FirstOrDefault(e => e.Format.Equals(format, StringComparison.OrdinalIgnoreCase));
         if (exporter is null)
-            return View("Report", table); // unknown format → HTML
+        {
+            ViewData["Filter"] = filter;     // so export links can carry the active filter
+            return View("Report", table);
+        }
 
         using var ms = new MemoryStream();
         await exporter.WriteAsync(table, ms, ct);

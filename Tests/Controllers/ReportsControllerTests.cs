@@ -68,4 +68,13 @@ public class ReportsControllerTests
         var result = await Build().CatchmentProgress(new ReportFilter(), "weird", CancellationToken.None);
         Assert.IsType<ViewResult>(result);
     }
+
+    [Fact]
+    public async Task CatchmentProgress_Html_PutsFilterInViewData()
+    {
+        var filter = new ReportFilter(ValidationStatus: "Completed");
+        var result = await Build().CatchmentProgress(filter, null, CancellationToken.None);
+        var view = Assert.IsType<ViewResult>(result);
+        Assert.Same(filter, view.ViewData["Filter"]);
+    }
 }

@@ -138,6 +138,10 @@ public class ReportingService : IReportingService
     public Task<ReportTable> ValidationSummaryAsync(ReportFilter filter, ClaimsPrincipal user, CancellationToken ct)
         => CachedAsync("validation", filter, user, async () =>
         {
+            // PERF NOTE: this project-then-group shape translates safely but EF emits a
+            // correlated subquery for the ELU SUM (one per catchment group). Acceptable given
+            // the bounded number of quaternary catchments (~2k). Revisit (flat single GROUP BY,
+            // or the planned reporting data mart) if this proves slow on the full 500k dataset.
             var rows = await ScopedCases(filter, user)
                 .Where(fm => fm.EntitlementId != null)
                 .Select(fm => new

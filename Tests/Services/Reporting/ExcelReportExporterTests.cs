@@ -29,6 +29,26 @@ public class ExcelReportExporterTests
     }
 
     [Fact]
+    public async Task NeutralizesFormulaInjection()
+    {
+        // ClosedXML strips the leading apostrophe on GetString() (it stores it as the Excel
+        // "prefix" quoting convention, which marks the cell as literal text). We therefore
+        // verify the cell is NOT a formula and its text content equals the neutralized value.
+        var table = new ReportTable("T",
+            new[] { new ReportColumn("Name") },
+            new[] { (IReadOnlyList<string>)new[] { "=1+1" } });
+        var sut = new ExcelReportExporter();
+        using var ms = new MemoryStream();
+        await sut.WriteAsync(table, ms, CancellationToken.None);
+        ms.Position = 0;
+        using var wb = new XLWorkbook(ms);
+        var cell = wb.Worksheet(1).Cell(2, 1);
+        Assert.False(cell.HasFormula);                          // neutralized: not treated as formula
+        Assert.Equal(XLDataType.Text, cell.Value.Type);         // stored as literal text
+        Assert.Equal("=1+1", cell.GetString());                 // apostrophe was stripped by ClosedXML's prefix convention
+    }
+
+    [Fact]
     public void Metadata_IsXlsx()
     {
         var sut = new ExcelReportExporter();

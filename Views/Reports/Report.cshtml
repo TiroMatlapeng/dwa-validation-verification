@@ -1,16 +1,25 @@
 @model dwa_ver_val.Services.Reporting.ReportTable
+@using dwa_ver_val.Services.Reporting
 @{
     ViewData["Title"] = Model.Title;
     var action = (string?)ViewContext.RouteData.Values["action"];
+    var filter = ViewData["Filter"] as ReportFilter ?? new ReportFilter();
+    var exportRoute = new Dictionary<string, string>();
+    if (filter.DateFrom is { } df) exportRoute["DateFrom"] = df.ToString("yyyy-MM-dd");
+    if (filter.DateTo is { } dt) exportRoute["DateTo"] = dt.ToString("yyyy-MM-dd");
+    if (filter.WaterManagementAreaId is { } wma) exportRoute["WaterManagementAreaId"] = wma.ToString();
+    if (filter.CatchmentAreaId is { } cat) exportRoute["CatchmentAreaId"] = cat.ToString();
+    if (!string.IsNullOrWhiteSpace(filter.ValidationStatus)) exportRoute["ValidationStatus"] = filter.ValidationStatus;
+    if (filter.OfficerUserId is { } off) exportRoute["OfficerUserId"] = off.ToString();
 }
 
 <div class="card" style="max-width: 1100px;">
     <div class="form-section-title">@Model.Title</div>
 
     <div style="margin-bottom: 12px;">
-        <a class="btn btn-secondary" asp-action="@action" asp-route-format="csv">Export CSV</a>
-        <a class="btn btn-secondary" asp-action="@action" asp-route-format="xlsx">Export Excel</a>
-        <a class="btn btn-secondary" asp-action="@action" asp-route-format="pdf">Export PDF</a>
+        <a class="btn btn-secondary" asp-action="@action" asp-all-route-data="exportRoute" asp-route-format="csv">Export CSV</a>
+        <a class="btn btn-secondary" asp-action="@action" asp-all-route-data="exportRoute" asp-route-format="xlsx">Export Excel</a>
+        <a class="btn btn-secondary" asp-action="@action" asp-all-route-data="exportRoute" asp-route-format="pdf">Export PDF</a>
     </div>
 
     <table class="table">
