@@ -121,4 +121,32 @@ public class DashboardServiceTests
         Assert.Equal("WARMS-1", task.CaseReference);
         Assert.Equal("CP5_GISAnalysis", task.CurrentState);
     }
+
+    [Fact]
+    public async Task PhaseChart_And_MyTasks_AreOrgScoped_ExcludeOtherWma()
+    {
+        using var db = NewDb();
+        var wmaA = Guid.NewGuid(); var wmaB = Guid.NewGuid();
+        var pB = Prop(db, wmaB);
+        var me = Guid.NewGuid();
+        var state = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP3_WARMSEvaluation", Phase = "Validation", DisplayOrder = 9 };
+        db.WorkflowStates.Add(state);
+
+        // A case in the OTHER WMA (B), with a Validation-phase instance, assigned to ME.
+        var bCase = Case(db, pB.PropertyId, "In Process");
+        db.FileMasters.Add(bCase);
+        db.WorkflowInstances.Add(new WorkflowInstance
+        {
+            WorkflowInstanceId = Guid.NewGuid(), FileMasterId = bCase.FileMasterId,
+            CurrentWorkflowStateId = state.WorkflowStateId, AssignedToId = me,
+            Status = "Active", CreatedDate = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        // RegionalManager scoped to WMA-A must see nothing from WMA-B.
+        var vm = await Svc(db).GetAsync(RegionalManager(me, wmaA), CancellationToken.None);
+
+        Assert.DoesNotContain(vm.PhaseChart, x => x.Label == "Validation" && x.Value > 0);
+        Assert.Empty(vm.MyTasks); // the WMA-B task assigned to me is excluded by scope
+    }
 }

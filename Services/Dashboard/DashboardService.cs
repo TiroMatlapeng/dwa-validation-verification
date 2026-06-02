@@ -54,7 +54,7 @@ public class DashboardService : IDashboardService
             .ToListAsync(ct);
         var total = await cases.CountAsync(ct);
         var withInstance = phaseCounts.Sum(x => x.Count);
-        var phaseSeries = new List<ChartPoint> { new("Not Started", total - withInstance) };
+        var phaseSeries = new List<ChartPoint> { new("Not Started", Math.Max(0, total - withInstance)) };
         foreach (var phase in PhaseOrder)
             phaseSeries.Add(new ChartPoint(phase, phaseCounts.FirstOrDefault(x => x.Phase == phase)?.Count ?? 0));
         vm.PhaseChart = phaseSeries;
