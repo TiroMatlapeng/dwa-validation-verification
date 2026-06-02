@@ -125,4 +125,20 @@ public class DocumentEvidenceGuardTests
         var result = await new DocumentEvidenceGuard(db).CheckAsync(Leaving(fm, "CP2", "CP2"));
         Assert.True(result.Allowed);
     }
+
+    [Fact]
+    public async Task Cp2_DoesNotCountDocumentBelongingToDifferentCase()
+    {
+        using var db = NewDb();
+        var fm = NewCase();
+        var otherFm = NewCase();
+        db.FileMasters.Add(fm);
+        db.FileMasters.Add(otherFm);
+        AddDoc(db, otherFm.FileMasterId, DocumentTypes.TitleDeedReport, "Clean");
+        AddDoc(db, otherFm.FileMasterId, DocumentTypes.SgDiagram, "Clean");
+        await db.SaveChangesAsync();
+
+        var result = await new DocumentEvidenceGuard(db).CheckAsync(Leaving(fm, "CP2", "CP3"));
+        Assert.False(result.Allowed);
+    }
 }
