@@ -59,9 +59,12 @@
 
         var legend = d3.select(el).append("div").style("font-size", "11px").style("margin-top", "6px");
         data.forEach(function (d, i) {
-            legend.append("span").style("display", "inline-block").style("margin-right", "12px")
-                .html("<span style='display:inline-block;width:10px;height:10px;background:" + color(i) +
-                    ";margin-right:4px;'></span>" + d.Label + " (" + d.Value + ")");
+            // Build swatch + label separately; label via .text() so it is never interpreted as
+            // HTML (defensive — keeps donutChart safe if ever fed labels from a less-trusted source).
+            var item = legend.append("span").style("display", "inline-block").style("margin-right", "12px");
+            item.append("span").style("display", "inline-block").style("width", "10px")
+                .style("height", "10px").style("background", color(i)).style("margin-right", "4px");
+            item.append("span").text(d.Label + " (" + d.Value + ")");
         });
     }
 
