@@ -901,6 +901,20 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasIndex(e => new { e.FileMasterId, e.IssuedDate })
             .HasDatabaseName("IX_LetterIssuances_FileMasterId_IssuedDate");
 
+        // ── Report aggregation indexes ──
+        modelBuilder.Entity<FileMaster>()
+            .HasIndex(f => f.ValidationStatusName)
+            .HasDatabaseName("IX_FileMasters_ValidationStatusName");
+        modelBuilder.Entity<LetterIssuance>()
+            .HasIndex(l => l.IssuedDate)
+            .HasDatabaseName("IX_LetterIssuances_IssuedDate");
+        modelBuilder.Entity<LetterIssuance>()
+            .HasIndex(l => l.ResponseDate)
+            .HasDatabaseName("IX_LetterIssuances_ResponseDate");
+        modelBuilder.Entity<LetterIssuance>()
+            .HasIndex(l => l.DueDate)
+            .HasDatabaseName("IX_LetterIssuances_DueDate");
+
         // ── Notification unread filtered index for portal bell ──
         modelBuilder.Entity<Notification>()
             .HasIndex(e => e.PublicUserId)
