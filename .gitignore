@@ -53,7 +53,12 @@ secrets.json
 .worktrees/
 
 # Generated runtime uploads (letter PDFs, etc.)
+# wwwroot/_uploads/ entry retained for safety in case a stray file appears there.
 wwwroot/_uploads/
+# SEC/DOC-01: letter blobs live here (outside wwwroot) — PII, never commit.
+letter-blobs/
+# Portal uploads — PII, never commit.
+portal-uploads/
 
 # Test runner output
 Tests/TestResults/
