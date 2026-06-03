@@ -160,7 +160,10 @@ builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterTemplateRegistry,
 builder.Services.AddSingleton<dwa_ver_val.Services.Letters.IPdfRenderer, dwa_ver_val.Services.Letters.QuestPdfRenderer>();
 builder.Services.AddSingleton<dwa_ver_val.Services.Letters.IBlobStore>(sp =>
     new dwa_ver_val.Services.Letters.FileSystemBlobStore(
-        Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "_uploads")));
+        Path.Combine(builder.Environment.ContentRootPath, "letter-blobs")));
+// SEC/DOC-01: letter blobs are stored outside wwwroot so UseStaticFiles() cannot
+// serve them. Access is exclusively through the scope-checked FileMasterController.LetterPdf
+// action which resolves bytes via IBlobStore.ReadAsync.
 builder.Services.AddScoped<dwa_ver_val.Services.Letters.ILetterService, dwa_ver_val.Services.Letters.LetterService>();
 
 // Portal infrastructure abstractions
@@ -285,6 +288,20 @@ if (!string.IsNullOrEmpty(aspnetcoreUrls) && aspnetcoreUrls.Contains("https", St
 app.UseRouting();
 
 app.UseRateLimiter();               // must run between UseRouting and UseAuthentication
+
+// Defense-in-depth (SEC/DOC-01): never serve anything under /_uploads via static files.
+// Generated letter/blob artefacts now live outside wwwroot (in letter-blobs/) and are served
+// only by scope-checked controller actions (FileMasterController.LetterPdf).
+// This block remains here as a safety net in case any stray file appears under wwwroot/_uploads.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/_uploads"))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+    await next();
+});
 
 // Serve wwwroot static files (CSS, JS, fonts, images) BEFORE the auth pipeline runs.
 // MapStaticAssets() registers fingerprinted/compressed endpoint handlers but operates
