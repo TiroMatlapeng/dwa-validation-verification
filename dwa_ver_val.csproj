@@ -14,17 +14,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MailKit" Version="4.8.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.2">
+    <!-- SEC/X-04: bumped to patched versions (GHSA-9j88-vvj5-vhgr patched in 4.16.0) -->
+    <PackageReference Include="MailKit" Version="4.16.0" />
+    <!-- SEC/X-04: MimeKit is transitive via MailKit; pinned here to clear GHSA-g7hc-96xr-gvvx (patched 4.15.1; MailKit 4.16.0 pulls 4.16.0 which is safe) -->
+    <PackageReference Include="MimeKit" Version="4.16.0" />
+    <!-- SEC/X-04: DataProtection.EFCore 10.0.7 pulls DataProtection 10.0.7 (GHSA-9mv3-2cwr-p262 patched in 10.0.7) -->
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="10.0.7" />
+    <!-- SEC/X-04: System.Security.Cryptography.Xml transitive; pinned to clear GHSA-37gx-xxp4-5rgx + GHSA-w3x6-4m5h-cxqf (patched in 10.0.6) -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.7" />
+    <!-- EF Core family bumped to 10.0.7 to match DataProtection.EntityFrameworkCore 10.0.7 requirement -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.7">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.7" />
     <PackageReference Include="Otp.NET" Version="1.4.0" />
     <PackageReference Include="QRCoder" Version="1.6.0" />
     <PackageReference Include="QuestPDF" Version="2025.7.0" />
