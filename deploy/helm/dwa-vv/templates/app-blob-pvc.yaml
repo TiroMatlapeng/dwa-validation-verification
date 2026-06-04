@@ -1,0 +1,41 @@
+{{- if .Values.blobStore.persistence.enabled }}
+# PersistentVolumeClaim backing the app's PII blob stores:
+#   - Letter PDFs        → /app/letter-blobs   (subPath: letters)
+#   - Portal doc uploads → /app/portal-uploads (subPath: portal)
+#
+# Both paths live OUTSIDE wwwroot (SEC/DOC-01) so static-file serving cannot
+# expose them. Before this PVC existed these directories were on the container
+# overlay FS and were lost on every pod restart / redeploy / scale event.
+#
+# Design: ONE PVC mounted twice via subPath. The deployment is single-replica
+# (replicaCount: 1, strategy Recreate) so a single RWO Azure managed disk is
+# correct and cheapest — there is no second pod to contend for the disk. The
+# two data sets are isolated into separate top-level directories on the disk
+# (letters/, portal/) via subPath, not co-mingled at the volume root.
+#
+# Region: the underlying Azure managed disk is provisioned in the AKS cluster
+# region (southafricanorth) by the disk.csi.azure.com provisioner, satisfying
+# POPIA data-residency for these PII artefacts.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "dwa-vv.fullname" . }}-app-blobs
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "dwa-vv.labels" . | nindent 4 }}
+  annotations:
+    # Retain the PVC across an accidental `helm uninstall`. NOTE: this does NOT
+    # change the PV reclaim policy (the storage class default is Delete). To
+    # truly protect the data after first provisioning, patch the bound PV:
+    #   kubectl patch pv <pv-name> -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- with .Values.blobStore.persistence.storageClass }}
+  storageClassName: {{ . }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.blobStore.persistence.size }}
+{{- end }}

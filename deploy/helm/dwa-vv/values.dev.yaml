@@ -83,3 +83,12 @@ mssql:
 blobStore:
   useLocalDisk: true
   pvcName: ""
+  # Persist letter PDFs and portal uploads on a durable Azure managed disk.
+  # Without this these PII artefacts live on the container overlay FS and are
+  # lost on every pod restart/redeploy. southafricanorth disk = POPIA-resident.
+  # Enabling this switches the deployment strategy to Recreate (single replica,
+  # RWO disk cannot multi-attach during a rolling update).
+  persistence:
+    enabled: true
+    storageClass: managed-csi
+    size: 5Gi

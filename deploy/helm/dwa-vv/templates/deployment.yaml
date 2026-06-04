@@ -11,10 +11,21 @@ spec:
     matchLabels:
       {{- include "dwa-vv.selectorLabels" . | nindent 6 }}
   strategy:
+    {{- if .Values.blobStore.persistence.enabled }}
+    # An RWO Azure managed disk can only be attached to one pod at a time. With a
+    # single replica, RollingUpdate (maxSurge:1) would try to start the new pod
+    # while the old pod still holds the disk → the new pod hangs in
+    # ContainerCreating ("Multi-Attach error"). Recreate tears the old pod down
+    # first, releasing the disk, then starts the new one. Brief downtime is
+    # acceptable on a single-replica dev deployment and is the correct trade-off
+    # for durable PII storage.
+    type: Recreate
+    {{- else }}
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 0         # never take pods down before new ones are ready
       maxSurge: 1
+    {{- end }}
   template:
     metadata:
       labels:
@@ -95,13 +106,17 @@ spec:
               mountPath: /mnt/secrets
               readOnly: true
             {{- end }}
-            {{- if .Values.blobStore.useLocalDisk }}
-            {{- if .Values.blobStore.pvcName }}
-            - name: uploads
-              mountPath: /app/wwwroot/_uploads
-            - name: portal-uploads
+            {{- if .Values.blobStore.persistence.enabled }}
+            # PII blob stores on a durable PVC. Both mountPaths are OUTSIDE
+            # wwwroot (SEC/DOC-01) and match the app's
+            # ContentRootPath/<dir> (ContentRootPath = /app). One PVC, two
+            # subPaths so the two data sets stay isolated on the disk.
+            - name: app-blobs
+              mountPath: /app/letter-blobs
+              subPath: letters
+            - name: app-blobs
               mountPath: /app/portal-uploads
-            {{- end }}
+              subPath: portal
             {{- end }}
 
           livenessProbe:
@@ -134,15 +149,10 @@ spec:
             volumeAttributes:
               secretProviderClass: {{ include "dwa-vv.spcName" . }}
         {{- end }}
-        {{- if .Values.blobStore.useLocalDisk }}
-        {{- if .Values.blobStore.pvcName }}
-        - name: uploads
+        {{- if .Values.blobStore.persistence.enabled }}
+        - name: app-blobs
           persistentVolumeClaim:
-            claimName: {{ .Values.blobStore.pvcName }}
-        - name: portal-uploads
-          persistentVolumeClaim:
-            claimName: {{ .Values.blobStore.pvcName }}
-        {{- end }}
+            claimName: {{ include "dwa-vv.fullname" . }}-app-blobs
         {{- end }}
 
       # Spread pods across nodes for HA
