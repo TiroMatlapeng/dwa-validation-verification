@@ -2,7 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-[Authorize(Policy = DwsPolicies.CanAdminister)]
+// BUG-030: Controller-level policy changed from CanAdminister (SystemAdmin only) to
+// CanRead (all authenticated staff), so NationalManager and other read roles can view
+// property owner lists and details. Mutating actions (Register, Edit, Delete) carry an
+// additional action-level [Authorize(Policy = DwsPolicies.CanCapture)] — AtLeastCapturer.
+[Authorize(Policy = DwsPolicies.CanRead)]
 public class OwnerController : Controller
 {
     private readonly ApplicationDBContext _context;
@@ -14,6 +18,7 @@ public class OwnerController : Controller
         _logger = logger;
     }
 
+    // READ — covered by controller-level CanRead
     [HttpGet]
     public async Task<IActionResult> Index()
     {
@@ -24,7 +29,9 @@ public class OwnerController : Controller
         return View(owners);
     }
 
+    // MUTATE — Capturer+ required for Register/Edit/Delete
     [HttpGet]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
     public async Task<IActionResult> Register()
     {
         await PopulateDropdownsAsync();
@@ -33,6 +40,7 @@ public class OwnerController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
     public async Task<IActionResult> Register(PropertyOwner owner)
     {
         if (ModelState.IsValid)
@@ -50,6 +58,7 @@ public class OwnerController : Controller
     }
 
     [HttpGet]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
     public async Task<IActionResult> Edit(Guid id)
     {
         var owner = await _context.PropertyOwners
@@ -62,6 +71,7 @@ public class OwnerController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
     public async Task<IActionResult> Edit(Guid id, PropertyOwner owner)
     {
         if (id != owner.OwnerId) return BadRequest();
@@ -77,6 +87,7 @@ public class OwnerController : Controller
     }
 
     [HttpGet]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var owner = await _context.PropertyOwners
@@ -93,6 +104,7 @@ public class OwnerController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = DwsPolicies.CanCapture)]
     public async Task<IActionResult> DeleteConfirmed(Guid id)
     {
         var ownershipCount = await _context.PropertyOwnerships.CountAsync(po => po.PropertyOwnerId == id);

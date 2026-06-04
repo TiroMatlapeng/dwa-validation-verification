@@ -267,6 +267,65 @@ public class SeedDataService
                 .ExecuteDeleteAsync();
         }
 
+        // 8. Rivers — natural key: RiverName.
+        //    Child FK: DamCalculation.RiverId (non-nullable).
+        //    Canonical row selection: prefer the row that is already referenced by at
+        //    least one DamCalculation (to minimise repoint work); if no DamCalc refs
+        //    any duplicate, fall back to the lowest GUID (deterministic).
+        //    Uses change-tracking (RemoveRange) rather than ExecuteDeleteAsync so that
+        //    the in-memory EF provider (used in tests) works correctly.
+        var riverRows = await _context.Rivers
+            .Select(r => new { r.RiverId, r.RiverName })
+            .ToListAsync();
+        var riverGroups = riverRows
+            .GroupBy(r => r.RiverName, StringComparer.OrdinalIgnoreCase)
+            .Where(g => g.Count() > 1)
+            .ToList();
+        if (riverGroups.Count > 0)
+        {
+            // Load all DamCalculation FK values in one round-trip.
+            var damRiverIds = await _context.DamCalculations
+                .Select(d => d.RiverId)
+                .ToListAsync();
+            var referencedRiverIds = new HashSet<Guid>(damRiverIds);
+
+            var allDupRiverIds = new List<Guid>();
+            foreach (var grp in riverGroups)
+            {
+                var ids = grp.Select(r => r.RiverId).ToList();
+
+                // Prefer an id already referenced by a DamCalculation; else lowest GUID.
+                var keepId = ids.FirstOrDefault(id => referencedRiverIds.Contains(id));
+                if (keepId == Guid.Empty)
+                    keepId = ids.OrderBy(id => id).First();
+
+                var discardIds = ids.Where(id => id != keepId).ToList();
+                allDupRiverIds.AddRange(discardIds);
+
+                // Repoint DamCalculations that reference any duplicate to the kept row.
+                var damCalcsToRepoint = await _context.DamCalculations
+                    .Where(d => discardIds.Contains(d.RiverId))
+                    .ToListAsync();
+                foreach (var dam in damCalcsToRepoint)
+                {
+                    dam.RiverId = keepId;
+                }
+                if (damCalcsToRepoint.Count > 0)
+                    await _context.SaveChangesAsync();
+            }
+
+            // Remove duplicate River rows using change-tracking (compatible with
+            // in-memory provider and SQL Server; avoids ExecuteDeleteAsync).
+            var dupRiverEntities = await _context.Rivers
+                .Where(r => allDupRiverIds.Contains(r.RiverId))
+                .ToListAsync();
+            if (dupRiverEntities.Count > 0)
+            {
+                _context.Rivers.RemoveRange(dupRiverEntities);
+                await _context.SaveChangesAsync();
+            }
+        }
+
         // 7. IrrigationSystems — natural key: IrrigationSystemName.
         //    Children: CropWaterRate.IrrigationSystemId (nullable), FieldAndCrop.IrrigationSystemId (shadow FK, nullable).
         var isRows = await _context.IrrigationSystems
