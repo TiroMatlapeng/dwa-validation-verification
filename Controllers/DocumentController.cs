@@ -69,6 +69,15 @@ public class DocumentController : Controller
                 ModelState.AddModelError(nameof(model.File), "File exceeds the 25 MB limit.");
         }
 
+        // DOC-02: magic-byte content validation — must come after extension check, before saving.
+        if (ModelState.IsValid && model.File is { Length: > 0 })
+        {
+            var ext = Path.GetExtension(model.File.FileName);
+            using var peekStream = model.File.OpenReadStream();
+            if (!FileSignatureValidator.MatchesExtension(peekStream, ext))
+                ModelState.AddModelError(nameof(model.File), "File content does not match its extension.");
+        }
+
         if (!ModelState.IsValid) return View(model);
 
         var uid = CurrentUserId();
@@ -114,6 +123,8 @@ public class DocumentController : Controller
             .FirstOrDefaultAsync(d => d.DocumentId == documentId, ct);
         if (doc?.FileMaster is null || !_scope.IsInScope(doc.FileMaster, User)) return Forbid();
 
+        // DOC-02: real AV scanning deferred (no scanner wired). Until an IVirusScanner sets "Clean"/"Infected",
+        // we block only "Infected"; tighten to require "Clean" once scanning exists.
         if (doc.VirusScanStatus == "Infected")
             return BadRequest("File failed virus scanning and cannot be downloaded.");
 

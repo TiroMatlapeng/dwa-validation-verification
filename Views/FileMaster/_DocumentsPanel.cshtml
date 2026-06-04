@@ -38,7 +38,7 @@
     {
         <table class="table" style="margin-top: 12px;">
             <thead>
-                <tr><th>File</th><th>Type</th><th>Uploaded</th><th></th></tr>
+                <tr><th>File</th><th>Type</th><th>Uploaded</th><th>AV Status</th><th></th></tr>
             </thead>
             <tbody>
             @foreach (var d in Model.CaseDocuments)
@@ -49,6 +49,17 @@
                     </td>
                     <td>@dwa_ver_val.Services.Documents.DocumentTypes.Display(d.DocumentType)</td>
                     <td>@d.UploadDate.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        @{
+                            var (avLabel, avStyle) = d.VirusScanStatus switch
+                            {
+                                "Clean"    => ("Clean",    "background:var(--dws-green,#2e7d32);color:#fff;"),
+                                "Infected" => ("Infected", "background:var(--dws-red,#c62828);color:#fff;"),
+                                _          => ("Pending",  "background:var(--dws-grey,#757575);color:#fff;"),
+                            };
+                        }
+                        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.78em;font-weight:600;@avStyle">@avLabel</span>
+                    </td>
                     <td>
                         @if (canManage)
                         {
