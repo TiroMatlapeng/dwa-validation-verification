@@ -29,3 +29,20 @@ ingress:
   tls:
     enabled: true
     secretName: dwa-vv-prod-tls
+
+# ── Durable PII blob storage (letter PDFs + portal uploads) ──────────────────
+# IMPORTANT: prod runs replicaCount: 3. A ReadWriteOnce Azure managed disk can
+# only attach to ONE node/pod at a time, so the single-PVC + Recreate design used
+# in dev does NOT work here — pods 2 and 3 would fail to mount.
+# Before enabling persistence in prod, switch the blob stores to a shared
+# ReadWriteMany backend (storageClass: azurefile-csi / azurefile-csi-premium)
+# OR migrate FileSystemBlobStore/LocalDiskFileStorage to Azure Blob (Task 10.x)
+# and leave this disabled. Left OFF here deliberately to avoid a broken rollout.
+blobStore:
+  persistence:
+    enabled: false
+    # For multi-replica prod, use RWX file storage (NOT managed-csi). The PVC
+    # template requests ReadWriteOnce, so this also needs the template extended
+    # to accept an access mode before turning on in prod. Tracked as a follow-up.
+    storageClass: azurefile-csi-premium
+    size: 10Gi

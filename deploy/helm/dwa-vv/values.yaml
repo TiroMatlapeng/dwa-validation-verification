@@ -129,3 +129,13 @@ blobStore:
   useLocalDisk: true    # set false when Azure Blob is wired
   # persistentVolumeClaim name if useLocalDisk=true with shared storage
   pvcName: ""
+  # Durable storage for the app's PII blob stores (letter PDFs + portal uploads).
+  # When enabled, the chart provisions ONE RWO PVC mounted at /app/letter-blobs
+  # (subPath letters) and /app/portal-uploads (subPath portal), and switches the
+  # deployment strategy to Recreate (RWO disk cannot multi-attach on rollout).
+  # Default off so the base chart stays compatible with future RWX/Azure-Blob
+  # backends; enable per environment.
+  persistence:
+    enabled: false
+    storageClass: managed-csi   # Azure managed disk (disk.csi.azure.com), RWO
+    size: 5Gi
