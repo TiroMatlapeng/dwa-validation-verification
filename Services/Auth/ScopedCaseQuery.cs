@@ -13,40 +13,117 @@ public class ScopedCaseQuery : IScopedCaseQuery
     private static bool BypassesScope(ClaimsPrincipal user) =>
         user.IsInRole(DwsRoles.SystemAdmin) || user.IsInRole(DwsRoles.NationalManager);
 
-    private static Guid? GetScopeWma(ClaimsPrincipal user)
+    // ── Effective scope resolution (narrowest wins) ───────────────────────────
+
+    private enum ScopeLevel { None, Province, Wma, Catchment }
+
+    private readonly record struct EffectiveScope(ScopeLevel Level, Guid ScopeId);
+
+    /// <summary>
+    /// Reads the narrowest non-empty scope claim from the principal.
+    /// Precedence: catchmentId > wmaId > provinceId > none.
+    /// </summary>
+    private static EffectiveScope GetEffectiveScope(ClaimsPrincipal user)
     {
+        var catchmentClaim = user.FindFirst("catchmentId")?.Value;
+        if (Guid.TryParse(catchmentClaim, out var catchment))
+            return new(ScopeLevel.Catchment, catchment);
+
         var wmaClaim = user.FindFirst("wmaId")?.Value;
-        return Guid.TryParse(wmaClaim, out var wma) ? wma : null;
+        if (Guid.TryParse(wmaClaim, out var wma))
+            return new(ScopeLevel.Wma, wma);
+
+        var provinceClaim = user.FindFirst("provinceId")?.Value;
+        if (Guid.TryParse(provinceClaim, out var province))
+            return new(ScopeLevel.Province, province);
+
+        return new(ScopeLevel.None, Guid.Empty);
     }
+
+    // ── Public interface ──────────────────────────────────────────────────────
 
     public IQueryable<FileMaster> FilterFileMasters(IQueryable<FileMaster> source, ClaimsPrincipal user)
     {
         if (BypassesScope(user)) return source;
-        var wmaId = GetScopeWma(user);
-        if (wmaId is null) return source.Where(_ => false);
-        return source.Where(fm => fm.Property!.WmaId == wmaId);
+
+        var scope = GetEffectiveScope(user);
+        return scope.Level switch
+        {
+            ScopeLevel.Catchment => source.Where(fm => fm.Property!.CatchmentAreaId == scope.ScopeId),
+            ScopeLevel.Wma       => source.Where(fm => fm.Property!.WmaId == scope.ScopeId),
+            ScopeLevel.Province  => source.Where(fm => fm.Property!.WaterManagementArea!.ProvinceId == scope.ScopeId),
+            _                    => source.Where(_ => false),
+        };
     }
 
     public IQueryable<Property> FilterProperties(IQueryable<Property> source, ClaimsPrincipal user)
     {
         if (BypassesScope(user)) return source;
-        var wmaId = GetScopeWma(user);
-        if (wmaId is null) return source.Where(_ => false);
-        return source.Where(p => p.WmaId == wmaId);
+
+        var scope = GetEffectiveScope(user);
+        return scope.Level switch
+        {
+            ScopeLevel.Catchment => source.Where(p => p.CatchmentAreaId == scope.ScopeId),
+            ScopeLevel.Wma       => source.Where(p => p.WmaId == scope.ScopeId),
+            ScopeLevel.Province  => source.Where(p => p.WaterManagementArea!.ProvinceId == scope.ScopeId),
+            _                    => source.Where(_ => false),
+        };
     }
 
     public bool IsInScope(FileMaster fileMaster, ClaimsPrincipal user)
     {
         if (BypassesScope(user)) return true;
-        var wmaId = GetScopeWma(user);
-        if (wmaId is null) return false;
 
-        var propertyWmaId = fileMaster.Property?.WmaId
-            ?? _db.Properties.AsNoTracking()
-                .Where(p => p.PropertyId == fileMaster.PropertyId)
-                .Select(p => p.WmaId)
-                .FirstOrDefault();
+        var scope = GetEffectiveScope(user);
+        if (scope.Level == ScopeLevel.None) return false;
 
-        return propertyWmaId == wmaId;
+        // Try to resolve the needed values from the nav property first (avoids a DB round-trip).
+        var prop = fileMaster.Property;
+
+        switch (scope.Level)
+        {
+            case ScopeLevel.Catchment:
+            {
+                var catchmentId = prop?.CatchmentAreaId
+                    ?? _db.Properties.AsNoTracking()
+                        .Where(p => p.PropertyId == fileMaster.PropertyId)
+                        .Select(p => p.CatchmentAreaId)
+                        .FirstOrDefault();
+                return catchmentId == scope.ScopeId;
+            }
+
+            case ScopeLevel.Wma:
+            {
+                var wmaId = prop?.WmaId
+                    ?? _db.Properties.AsNoTracking()
+                        .Where(p => p.PropertyId == fileMaster.PropertyId)
+                        .Select(p => p.WmaId)
+                        .FirstOrDefault();
+                return wmaId == scope.ScopeId;
+            }
+
+            case ScopeLevel.Province:
+            {
+                // Province requires a join through WaterManagementArea.
+                Guid? provinceId = null;
+
+                if (prop?.WaterManagementArea is { } wma)
+                {
+                    provinceId = wma.ProvinceId;
+                }
+                else
+                {
+                    provinceId = _db.Properties.AsNoTracking()
+                        .Where(p => p.PropertyId == fileMaster.PropertyId)
+                        .Select(p => (Guid?)p.WaterManagementArea!.ProvinceId)
+                        .FirstOrDefault();
+                }
+
+                return provinceId == scope.ScopeId;
+            }
+
+            default:
+                return false;
+        }
     }
 }
