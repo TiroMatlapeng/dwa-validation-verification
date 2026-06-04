@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using dwa_ver_val.Areas.ExternalPortal.ViewModels;
 using dwa_ver_val.Helpers;
+using dwa_ver_val.Services.Documents;
 using dwa_ver_val.Services.Infrastructure.Storage;
 using dwa_ver_val.Services.Notifications;
 using dwa_ver_val.Services.Portal.Auth;
@@ -61,20 +62,37 @@ public class DocumentController : Controller
             return Forbid();
         }
 
+        // DOC-03: validate document type against the controlled vocabulary.
+        if (!DocumentTypes.IsKnown(model.DocumentType))
+            ModelState.AddModelError(nameof(model.DocumentType), "Unknown document type.");
+
         if (model.File is null || model.File.Length <= 0)
         {
             ModelState.AddModelError(nameof(model.File), "Please select a file.");
-            return View(model);
         }
-
-        var ext = Path.GetExtension(model.File.FileName);
-        if (!_allowedExtensions.Contains(ext))
+        else
         {
-            ModelState.AddModelError(nameof(model.File), "Only PDF, JPG, and PNG files are accepted.");
-            return View(model);
+            var ext = Path.GetExtension(model.File.FileName);
+            if (!_allowedExtensions.Contains(ext))
+                ModelState.AddModelError(nameof(model.File), "Only PDF, JPG, and PNG files are accepted.");
+
+            // DOC-03: explicit size cap (mirrors the [RequestSizeLimit] attribute, 10 MB).
+            const long ExternalMaxBytes = 10L * 1024 * 1024;
+            if (model.File.Length > ExternalMaxBytes)
+                ModelState.AddModelError(nameof(model.File), "File exceeds the 10 MB limit.");
+
+            // DOC-02: magic-byte content validation — check after extension, before saving.
+            if (ModelState.IsValid)
+            {
+                using var peekStream = model.File.OpenReadStream();
+                if (!FileSignatureValidator.MatchesExtension(peekStream, ext))
+                    ModelState.AddModelError(nameof(model.File), "File content does not match its extension.");
+            }
         }
 
-        using var stream = model.File.OpenReadStream();
+        if (!ModelState.IsValid) return View(model);
+
+        using var stream = model.File!.OpenReadStream();
         var stored = await _storage.SaveAsync(
             stream,
             model.File.ContentType ?? "application/octet-stream",

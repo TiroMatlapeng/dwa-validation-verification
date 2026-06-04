@@ -8,13 +8,14 @@ public interface IScopedCaseQuery
 
     /// <summary>
     /// Returns true if the user is allowed to act on the given case under their scope.
-    /// SystemAdmin and NationalManager always pass. Other roles must hold a <c>wmaId</c>
-    /// claim matching the case's property WMA.
+    /// SystemAdmin and NationalManager always pass. All other roles are evaluated against
+    /// the narrowest scope claim present: catchmentId > wmaId > provinceId (none → false).
     /// </summary>
     /// <remarks>
-    /// Callers MAY pre-load <see cref="FileMaster.Property"/> to avoid an extra DB round-trip,
-    /// but this is not required — the implementation falls back to a DB lookup by
-    /// <see cref="FileMaster.PropertyId"/> when the nav is null.
+    /// Callers MAY pre-load <see cref="FileMaster.Property"/> (and its
+    /// <see cref="Property.WaterManagementArea"/> nav for province-scoped users) to avoid
+    /// extra DB round-trips, but this is not required — the implementation falls back to a
+    /// DB lookup by <see cref="FileMaster.PropertyId"/> when the nav is null.
     /// </remarks>
     bool IsInScope(FileMaster fileMaster, ClaimsPrincipal user);
 }

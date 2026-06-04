@@ -303,4 +303,37 @@ public class DocumentControllerTests
         Assert.IsType<ViewResult>(result);
         Assert.Empty(db.Documents);
     }
+
+    // ── DOC-02: magic-byte content validation ────────────────────────────────
+
+    private static IFormFile FakeFile(string name, byte[] content)
+        => new FormFile(new MemoryStream(content), 0, content.Length, "File", name)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = "application/octet-stream"
+        };
+
+    [Fact]
+    public async Task Upload_RejectsContentExtensionMismatch_WithPdfExtensionButTextContent()
+    {
+        // DOC-02: "hello" bytes do not start with %PDF — must be rejected even though extension is .pdf
+        using var db = NewDb();
+        var wma = Guid.NewGuid();
+        var (fm, _) = SeedCase(db, wma);
+        var ctrl = BuildController(db, User(Guid.NewGuid(), DwsRoles.Validator));
+        ((ClaimsIdentity)ctrl.User.Identity!).AddClaim(new Claim("wmaId", wma.ToString()));
+
+        var model = new CaseDocumentUploadViewModel
+        {
+            FileMasterId = fm.FileMasterId,
+            DocumentType = DocumentTypes.TitleDeedReport,
+            File = FakeFile("malicious.pdf", new byte[] { (byte)'h', (byte)'e', (byte)'l', (byte)'l', (byte)'o' })
+        };
+
+        var result = await ctrl.Upload(model, CancellationToken.None);
+
+        Assert.IsType<ViewResult>(result);
+        Assert.False(ctrl.ModelState.IsValid);
+        Assert.Empty(db.Documents); // nothing saved
+    }
 }

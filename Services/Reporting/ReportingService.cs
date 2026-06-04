@@ -18,10 +18,28 @@ public class ReportingService : IReportingService
         _db = db; _scope = scope; _cache = cache;
     }
 
-    // Scope signature ensures two users in different WMAs never share a cached result.
-    private static string ScopeKey(ClaimsPrincipal user) =>
-        (user.FindFirst("wmaId")?.Value ?? "none")
-        + "|" + (user.IsInRole(DwsRoles.SystemAdmin) || user.IsInRole(DwsRoles.NationalManager) ? "all" : "wma");
+    // Scope signature encodes the full effective scope so two users with different
+    // catchment/province/WMA assignments never share a cached result (AUTH-01 / RPT-02).
+    private static string ScopeKey(ClaimsPrincipal user)
+    {
+        if (user.IsInRole(DwsRoles.SystemAdmin) || user.IsInRole(DwsRoles.NationalManager))
+            return "all";
+
+        // Mirror the narrowest-wins precedence from ScopedCaseQuery.GetEffectiveScope.
+        var catchmentId = user.FindFirst("catchmentId")?.Value;
+        if (!string.IsNullOrEmpty(catchmentId) && Guid.TryParse(catchmentId, out _))
+            return $"catchment:{catchmentId}";
+
+        var wmaId = user.FindFirst("wmaId")?.Value;
+        if (!string.IsNullOrEmpty(wmaId) && Guid.TryParse(wmaId, out _))
+            return $"wma:{wmaId}";
+
+        var provinceId = user.FindFirst("provinceId")?.Value;
+        if (!string.IsNullOrEmpty(provinceId) && Guid.TryParse(provinceId, out _))
+            return $"province:{provinceId}";
+
+        return "none";
+    }
 
     private Task<ReportTable> CachedAsync(string report, ReportFilter f, ClaimsPrincipal user,
         Func<Task<ReportTable>> build)

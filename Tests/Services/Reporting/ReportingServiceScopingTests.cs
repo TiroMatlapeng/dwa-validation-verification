@@ -27,10 +27,28 @@ public class ReportingServiceScopingTests
             new Claim("wmaId", wmaId.ToString())
         }, "Test"));
 
-    // Seeds a completed case in the given WMA + catchment; Property carries the WMA used by ScopedCaseQuery.
+    // AUTH-01 / RPT-02: catchment-scoped user principal
+    private static ClaimsPrincipal CatchmentValidator(Guid catchmentId, Guid wmaId) =>
+        new(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.Role, DwsRoles.Validator),
+            new Claim("catchmentId", catchmentId.ToString()),
+            new Claim("wmaId", wmaId.ToString()),
+            new Claim("provinceId", string.Empty)
+        }, "Test"));
+
+    // Seeds a completed case in the given WMA + catchment.
+    // Property carries BOTH WmaId and CatchmentAreaId so ScopedCaseQuery can scope at any level.
     private static void SeedCase(ApplicationDBContext db, Guid wmaId, Guid catchmentId)
     {
-        var prop = new Property { PropertyId = Guid.NewGuid(), PropertyReferenceNumber = "P", SGCode = "SG", WmaId = wmaId };
+        var prop = new Property
+        {
+            PropertyId = Guid.NewGuid(),
+            PropertyReferenceNumber = "P",
+            SGCode = "SG",
+            WmaId = wmaId,
+            CatchmentAreaId = catchmentId   // required for catchment-level scope
+        };
         db.Properties.Add(prop);
         db.FileMasters.Add(new FileMaster
         {
@@ -123,5 +141,60 @@ public class ReportingServiceScopingTests
         var row = Assert.Single(table.Rows);
         Assert.Equal("(unassigned)", row[0]);
         Assert.Equal("0.0%", row[5]);
+    }
+
+    // ── AUTH-01 / RPT-02: catchment-level scope + cache isolation ─────────────
+
+    [Fact]
+    public async Task CatchmentScopedUser_SeesOnlyOwnCatchment_NotSiblingCatchmentInSameWma()
+    {
+        using var db = NewDb();
+        Guid wmaId = Guid.NewGuid();
+        var catA = Catchment("Cat-A", wmaId);
+        var catB = Catchment("Cat-B", wmaId);
+        db.CatchmentAreas.AddRange(catA, catB);
+        SeedCase(db, wmaId, catA.CatchmentAreaId);
+        SeedCase(db, wmaId, catB.CatchmentAreaId);
+        await db.SaveChangesAsync();
+
+        var table = await Svc(db).CatchmentProgressAsync(
+            new ReportFilter(),
+            CatchmentValidator(catA.CatchmentAreaId, wmaId),
+            CancellationToken.None);
+
+        var row = Assert.Single(table.Rows);
+        Assert.Equal("Cat-A", row[0]);
+    }
+
+    /// <summary>
+    /// RPT-02: two validators scoped to different catchments in the same WMA must NOT
+    /// receive each other's cached report. Before the fix, ScopeKey used only wmaId,
+    /// so both users shared a single cache entry.
+    /// </summary>
+    [Fact]
+    public async Task Cache_DoesNotLeakBetweenDifferentCatchmentUsersInSameWma()
+    {
+        using var db = NewDb();
+        Guid wmaId = Guid.NewGuid();
+        var catA = Catchment("Cat-A", wmaId);
+        var catB = Catchment("Cat-B", wmaId);
+        db.CatchmentAreas.AddRange(catA, catB);
+        SeedCase(db, wmaId, catA.CatchmentAreaId);
+        SeedCase(db, wmaId, catB.CatchmentAreaId);
+        await db.SaveChangesAsync();
+
+        // Both users share the same WMA — the bug would give them the same cache entry.
+        var svc = new ReportingService(db, new ScopedCaseQuery(db), new MemoryCache(new MemoryCacheOptions()));
+        var userA = CatchmentValidator(catA.CatchmentAreaId, wmaId);
+        var userB = CatchmentValidator(catB.CatchmentAreaId, wmaId);
+
+        var tableA = await svc.CatchmentProgressAsync(new ReportFilter(), userA, CancellationToken.None);
+        var tableB = await svc.CatchmentProgressAsync(new ReportFilter(), userB, CancellationToken.None);
+
+        // Each user sees only their own catchment row
+        var rowA = Assert.Single(tableA.Rows);
+        var rowB = Assert.Single(tableB.Rows);
+        Assert.Equal("Cat-A", rowA[0]);
+        Assert.Equal("Cat-B", rowB[0]); // must NOT be "Cat-A" (a cache hit from userA)
     }
 }

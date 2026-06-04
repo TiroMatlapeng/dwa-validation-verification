@@ -24,6 +24,25 @@ public class ScopedCaseQueryTests
         return new ClaimsPrincipal(identity);
     }
 
+    /// <summary>
+    /// Builds a principal whose claims mirror what DwsClaimsTransformation stamps:
+    /// catchmentId, wmaId, provinceId — each empty string when null.
+    /// </summary>
+    private static ClaimsPrincipal MakeUser(
+        string role,
+        Guid? catchmentId = null,
+        Guid? wmaId = null,
+        Guid? provinceId = null)
+    {
+        var identity = new ClaimsIdentity(authenticationType: "Test");
+        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()));
+        identity.AddClaim(new Claim(ClaimTypes.Role, role));
+        identity.AddClaim(new Claim("catchmentId", catchmentId?.ToString() ?? string.Empty));
+        identity.AddClaim(new Claim("wmaId", wmaId?.ToString() ?? string.Empty));
+        identity.AddClaim(new Claim("provinceId", provinceId?.ToString() ?? string.Empty));
+        return new ClaimsPrincipal(identity);
+    }
+
     private static FileMaster CreateTestFileMaster(Guid propertyId, string fileNumber)
     {
         return new FileMaster
@@ -158,5 +177,266 @@ public class ScopedCaseQueryTests
         var admin = UserWithRoleAndOrgUnit(DwsRoles.SystemAdmin, orgUnitId: null, wmaId: null);
 
         Assert.True(sut.IsInScope(fm, admin));
+    }
+
+    // ─── AUTH-01: narrowest-scope enforcement ──────────────────────────────────
+
+    // Helper: seed Province → WMA → CatchmentArea → Property → FileMaster
+    private static (Guid provinceId, Guid wmaId, Guid catchmentId, Property prop, FileMaster fm)
+        SeedHierarchy(ApplicationDBContext db, string suffix)
+    {
+        var provinceId = Guid.NewGuid();
+        var wmaId = Guid.NewGuid();
+        var catchmentId = Guid.NewGuid();
+
+        db.Provinces.Add(new Province
+        {
+            ProvinceId = provinceId,
+            ProvinceName = $"Province-{suffix}",
+            ProvinceCode = suffix
+        });
+
+        db.WaterManagementAreas.Add(new WaterManagementArea
+        {
+            WmaId = wmaId,
+            WmaName = $"WMA-{suffix}",
+            WmaCode = suffix,
+            ProvinceId = provinceId
+        });
+
+        db.CatchmentAreas.Add(new CatchmentArea
+        {
+            CatchmentAreaId = catchmentId,
+            CatchmentCode = $"C{suffix}",
+            CatchmentName = $"Catchment-{suffix}",
+            WmaId = wmaId
+        });
+
+        var prop = new Property
+        {
+            PropertyId = Guid.NewGuid(),
+            SGCode = $"SG-{suffix}",
+            WmaId = wmaId,
+            CatchmentAreaId = catchmentId
+        };
+        db.Properties.Add(prop);
+
+        var fm = CreateTestFileMaster(prop.PropertyId, $"FM-{suffix}");
+        db.FileMasters.Add(fm);
+
+        return (provinceId, wmaId, catchmentId, prop, fm);
+    }
+
+    // ── FilterFileMasters ──────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task FilterFileMasters_CatchmentScopedUser_SeesOnlyOwnCatchment()
+    {
+        using var db = CreateDb();
+        var (_, wmaId, catchA, _, _) = SeedHierarchy(db, "A");
+        // Same WMA, different catchment:
+        var catchB = Guid.NewGuid();
+        db.CatchmentAreas.Add(new CatchmentArea
+        {
+            CatchmentAreaId = catchB,
+            CatchmentCode = "CB", CatchmentName = "Catchment-B", WmaId = wmaId
+        });
+        var propB = new Property { PropertyId = Guid.NewGuid(), SGCode = "SG-B", WmaId = wmaId, CatchmentAreaId = catchB };
+        db.Properties.Add(propB);
+        db.FileMasters.Add(CreateTestFileMaster(propB.PropertyId, "FM-B"));
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.Validator, catchmentId: catchA, wmaId: wmaId);
+
+        var result = await sut.FilterFileMasters(db.FileMasters, user).ToListAsync();
+
+        Assert.Single(result);
+        Assert.Equal("FM-A", result[0].FileNumber);
+    }
+
+    [Fact]
+    public async Task FilterFileMasters_WmaScopedUser_SeesAllCatchmentsInWma()
+    {
+        using var db = CreateDb();
+        var (_, wmaA, _, _, _) = SeedHierarchy(db, "A");
+        var (_, _, _, _, _) = SeedHierarchy(db, "X"); // different WMA entirely
+        // Second catchment in wmaA:
+        var catchA2 = Guid.NewGuid();
+        db.CatchmentAreas.Add(new CatchmentArea
+        {
+            CatchmentAreaId = catchA2,
+            CatchmentCode = "CA2", CatchmentName = "Catchment-A2", WmaId = wmaA
+        });
+        var propA2 = new Property { PropertyId = Guid.NewGuid(), SGCode = "SG-A2", WmaId = wmaA, CatchmentAreaId = catchA2 };
+        db.Properties.Add(propA2);
+        db.FileMasters.Add(CreateTestFileMaster(propA2.PropertyId, "FM-A2"));
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.RegionalManager, wmaId: wmaA);
+
+        var result = await sut.FilterFileMasters(db.FileMasters, user).ToListAsync();
+
+        Assert.Equal(2, result.Count);
+        Assert.All(result, r => Assert.StartsWith("FM-A", r.FileNumber));
+    }
+
+    [Fact]
+    public async Task FilterFileMasters_ProvinceScopedUser_SeesAllWmasInProvince_NotOtherProvinces()
+    {
+        using var db = CreateDb();
+        var (provA, _, _, _, _) = SeedHierarchy(db, "A");
+        var (_, _, _, _, _) = SeedHierarchy(db, "X"); // different province
+        // Second WMA in provA:
+        var wmaA2 = Guid.NewGuid();
+        db.WaterManagementAreas.Add(new WaterManagementArea
+        {
+            WmaId = wmaA2, WmaName = "WMA-A2", WmaCode = "A2", ProvinceId = provA
+        });
+        var catchA2 = Guid.NewGuid();
+        db.CatchmentAreas.Add(new CatchmentArea
+        {
+            CatchmentAreaId = catchA2, CatchmentCode = "CA2", CatchmentName = "Catchment-A2", WmaId = wmaA2
+        });
+        var propA2 = new Property { PropertyId = Guid.NewGuid(), SGCode = "SG-A2", WmaId = wmaA2, CatchmentAreaId = catchA2 };
+        db.Properties.Add(propA2);
+        db.FileMasters.Add(CreateTestFileMaster(propA2.PropertyId, "FM-A2"));
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.RegionalManager, provinceId: provA);
+
+        var result = await sut.FilterFileMasters(db.FileMasters, user).ToListAsync();
+
+        Assert.Equal(2, result.Count);
+        // Both cases must be in province A — neither is from province X
+        Assert.All(result, r => Assert.DoesNotMatch("FM-X", r.FileNumber!));
+    }
+
+    [Fact]
+    public async Task FilterFileMasters_NoScopeUser_SeesNothing()
+    {
+        using var db = CreateDb();
+        SeedHierarchy(db, "A");
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.Validator); // no catchment, wma or province claims
+
+        var result = await sut.FilterFileMasters(db.FileMasters, user).ToListAsync();
+
+        Assert.Empty(result);
+    }
+
+    // ── FilterProperties ───────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task FilterProperties_CatchmentScopedUser_SeesOnlyOwnCatchment()
+    {
+        using var db = CreateDb();
+        var (_, wmaId, catchA, _, _) = SeedHierarchy(db, "A");
+        var catchB = Guid.NewGuid();
+        db.CatchmentAreas.Add(new CatchmentArea
+        {
+            CatchmentAreaId = catchB, CatchmentCode = "CB", CatchmentName = "B", WmaId = wmaId
+        });
+        db.Properties.Add(new Property
+        {
+            PropertyId = Guid.NewGuid(), SGCode = "SG-B", WmaId = wmaId, CatchmentAreaId = catchB
+        });
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.Validator, catchmentId: catchA, wmaId: wmaId);
+
+        var result = await sut.FilterProperties(db.Properties, user).ToListAsync();
+
+        Assert.Single(result);
+        Assert.Equal("SG-A", result[0].SGCode);
+    }
+
+    [Fact]
+    public async Task FilterProperties_ProvinceScopedUser_SeesAllPropertiesInProvince()
+    {
+        using var db = CreateDb();
+        var (provA, _, _, _, _) = SeedHierarchy(db, "A");
+        SeedHierarchy(db, "Z"); // different province
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.Validator, provinceId: provA);
+
+        var result = await sut.FilterProperties(db.Properties, user).ToListAsync();
+
+        Assert.Single(result);
+        Assert.Equal("SG-A", result[0].SGCode);
+    }
+
+    // ── IsInScope ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task IsInScope_CatchmentScopedUser_InCatchment_ReturnsTrue()
+    {
+        using var db = CreateDb();
+        var (_, _, catchA, prop, fm) = SeedHierarchy(db, "A");
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.Validator, catchmentId: catchA);
+
+        Assert.True(sut.IsInScope(fm, user));
+    }
+
+    [Fact]
+    public async Task IsInScope_CatchmentScopedUser_OutOfCatchment_ReturnsFalse()
+    {
+        using var db = CreateDb();
+        var (_, wmaA, catchA, propA, fmA) = SeedHierarchy(db, "A");
+        // Second catchment in same WMA:
+        var catchB = Guid.NewGuid();
+        db.CatchmentAreas.Add(new CatchmentArea
+        {
+            CatchmentAreaId = catchB, CatchmentCode = "CB", CatchmentName = "B", WmaId = wmaA
+        });
+        var propB = new Property { PropertyId = Guid.NewGuid(), SGCode = "B", WmaId = wmaA, CatchmentAreaId = catchB };
+        db.Properties.Add(propB);
+        var fmB = CreateTestFileMaster(propB.PropertyId, "FM-B");
+        db.FileMasters.Add(fmB);
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        // User is scoped to catchA only — fmB lives in catchB
+        var user = MakeUser(DwsRoles.Validator, catchmentId: catchA, wmaId: wmaA);
+
+        Assert.False(sut.IsInScope(fmB, user));
+    }
+
+    [Fact]
+    public async Task IsInScope_ProvinceScopedUser_InProvince_ReturnsTrue()
+    {
+        using var db = CreateDb();
+        var (provA, _, _, _, fm) = SeedHierarchy(db, "A");
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.RegionalManager, provinceId: provA);
+
+        Assert.True(sut.IsInScope(fm, user));
+    }
+
+    [Fact]
+    public async Task IsInScope_ProvinceScopedUser_OutOfProvince_ReturnsFalse()
+    {
+        using var db = CreateDb();
+        var (_, _, _, _, fmA) = SeedHierarchy(db, "A");
+        var (provX, _, _, _, _) = SeedHierarchy(db, "X");
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        // User is scoped to province X — fmA lives in province A
+        var user = MakeUser(DwsRoles.RegionalManager, provinceId: provX);
+
+        Assert.False(sut.IsInScope(fmA, user));
     }
 }
