@@ -1,5 +1,5 @@
 @model dwa_ver_val.Services.Dashboard.DashboardViewModel
-@using System.Text.Json
+@inject Microsoft.AspNetCore.Mvc.Rendering.IJsonHelper Json
 @{
     ViewData["Title"] = "Dashboard";
 }
@@ -106,8 +106,8 @@
     <script src="~/js/reporting/charts.js" asp-append-version="true"></script>
     <script>
         (function () {
-            var phase = @Html.Raw(JsonSerializer.Serialize(Model.PhaseChart));
-            var status = @Html.Raw(JsonSerializer.Serialize(Model.ValidationStatusChart));
+            var phase = @Json.Serialize(Model.PhaseChart);
+            var status = @Json.Serialize(Model.ValidationStatusChart);
             if (window.DwsCharts) {
                 DwsCharts.barChart('#phaseChart', phase);
                 DwsCharts.donutChart('#statusChart', status);

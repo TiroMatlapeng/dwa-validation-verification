@@ -111,6 +111,44 @@ public class DocumentControllerTests
         Assert.IsType<ForbidResult>(result);
     }
 
+    // ── EXT-01: GET access check ─────────────────────────────────────────────
+
+    [Fact]
+    public async Task Upload_Get_LinkedCase_ReturnsView()
+    {
+        var userId = Guid.NewGuid();
+        var (db, controller) = Build(userId);
+
+        var prop = new Property { PropertyId = Guid.NewGuid(), SGCode = "T0010", WmaId = null, PropertyReferenceNumber = "R10" };
+        var fm = SeedHelper.NewFileMaster(prop.PropertyId);
+        db.Properties.Add(prop);
+        db.FileMasters.Add(fm);
+        db.PublicUserProperties.Add(new PublicUserProperty
+        {
+            Id = Guid.NewGuid(), PublicUserId = userId, PropertyId = prop.PropertyId,
+            Status = PropertyClaimStatus.Approved,
+            EvidenceType = PropertyClaimEvidenceType.IdMatch, RequestedDate = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var result = await controller.Upload(fm.FileMasterId, default);
+
+        var view = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<DocumentUploadViewModel>(view.Model);
+        Assert.Equal(fm.FileMasterId, model.FileMasterId);
+    }
+
+    [Fact]
+    public async Task Upload_Get_UnlinkedCase_ReturnsForbid()
+    {
+        var userId = Guid.NewGuid();
+        var (_, controller) = Build(userId);
+
+        var result = await controller.Upload(Guid.NewGuid(), default);
+
+        Assert.IsType<ForbidResult>(result);
+    }
+
     // ── DOC-03: document type vocabulary validation ──────────────────────────
 
     [Fact]

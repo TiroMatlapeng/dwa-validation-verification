@@ -27,13 +27,29 @@ public class ResponseController : Controller
         _notify = notify;
     }
 
+    private bool TryGetCurrentUserId(out Guid userId)
+    {
+        var raw = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (raw is not null && Guid.TryParse(raw, out userId)) return true;
+        userId = default;
+        return false;
+    }
+
     private Guid CurrentUserId() =>
-        Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new InvalidOperationException("Not authenticated."));
+        TryGetCurrentUserId(out var uid) ? uid : throw new InvalidOperationException("Not authenticated.");
 
     [HttpGet]
-    public IActionResult Submit(Guid fileMasterId)
+    public async Task<IActionResult> Submit(Guid fileMasterId, CancellationToken ct)
     {
+        if (!TryGetCurrentUserId(out var uid)) return Forbid();
+        try
+        {
+            await _access.AssertHasAccessToFileMasterAsync(uid, fileMasterId, ct);
+        }
+        catch (NotFoundException)
+        {
+            return Forbid();
+        }
         return View(new LetterResponseViewModel
         {
             FileMasterId = fileMasterId

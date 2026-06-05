@@ -51,6 +51,33 @@ public class ObjectionControllerTests
         return fm;
     }
 
+    // ── EXT-01: GET access check ─────────────────────────────────────────────
+
+    [Fact]
+    public async Task Lodge_Get_LinkedCase_ReturnsView()
+    {
+        var userId = Guid.NewGuid();
+        var (db, controller) = Build(userId);
+        var fm = await SeedApprovedCase(db, userId);
+
+        var result = await controller.Lodge(fm.FileMasterId, default);
+
+        var view = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<ObjectionViewModel>(view.Model);
+        Assert.Equal(fm.FileMasterId, model.FileMasterId);
+    }
+
+    [Fact]
+    public async Task Lodge_Get_UnlinkedCase_ReturnsForbid()
+    {
+        var userId = Guid.NewGuid();
+        var (_, controller) = Build(userId);
+
+        var result = await controller.Lodge(Guid.NewGuid(), default);
+
+        Assert.IsType<ForbidResult>(result);
+    }
+
     [Fact]
     public async Task Lodge_Post_ValidGrounds_CreatesObjection()
     {

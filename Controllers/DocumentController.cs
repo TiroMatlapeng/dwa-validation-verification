@@ -30,6 +30,14 @@ public class DocumentController : Controller
         Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? throw new InvalidOperationException("Not authenticated."));
 
+    private bool TryGetCurrentUserId(out Guid userId)
+    {
+        var raw = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (raw is not null && Guid.TryParse(raw, out userId)) return true;
+        userId = default;
+        return false;
+    }
+
     private async Task<FileMaster?> ScopedCaseAsync(Guid fileMasterId)
     {
         var fm = await _db.FileMasters.Include(f => f.Property)
@@ -80,7 +88,7 @@ public class DocumentController : Controller
 
         if (!ModelState.IsValid) return View(model);
 
-        var uid = CurrentUserId();
+        if (!TryGetCurrentUserId(out var uid)) return Forbid();
         using var stream = model.File!.OpenReadStream();
         var stored = await _storage.SaveAsync(
             stream, model.File.ContentType ?? "application/octet-stream", model.File.FileName, ct);
@@ -137,6 +145,8 @@ public class DocumentController : Controller
     [Authorize(Policy = DwsPolicies.CanManageDocuments)]
     public async Task<IActionResult> Delete(Guid documentId, CancellationToken ct)
     {
+        if (!TryGetCurrentUserId(out var uid)) return Forbid();
+
         var doc = await _db.Documents.Include(d => d.FileMaster).ThenInclude(f => f!.Property)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId, ct);
         if (doc?.FileMaster is null || !_scope.IsInScope(doc.FileMaster, User)) return Forbid();
@@ -153,7 +163,7 @@ public class DocumentController : Controller
             EntityType: "Document",
             EntityId: documentId.ToString(),
             Action: "DocumentDeleted",
-            UserId: CurrentUserId(),
+            UserId: uid,
             UserDisplayName: User.Identity?.Name,
             FromValue: snapshot,
             IPAddress: HttpContext.Connection.RemoteIpAddress?.ToString()));
