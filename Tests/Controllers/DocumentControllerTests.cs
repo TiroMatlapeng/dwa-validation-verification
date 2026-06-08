@@ -73,7 +73,8 @@ public class DocumentControllerTests
 
     private static DocumentController BuildController(ApplicationDBContext db, ClaimsPrincipal user)
     {
-        var controller = new DocumentController(db, new ScopedCaseQuery(db), new FakeStorage(), new TestAuditService());
+        var controller = new DocumentController(
+            db, new ScopedCaseQuery(db), new FakeStorage(), new TestAuditService(), new EicarVirusScanner());
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = user }
@@ -104,7 +105,7 @@ public class DocumentControllerTests
         var doc = await db.Documents.SingleAsync();
         Assert.Equal(DocumentTypes.TitleDeedReport, doc.DocumentType);
         Assert.Equal(uid, doc.UploadedByUserId);
-        Assert.Equal("Pending", doc.VirusScanStatus);
+        Assert.Equal("Clean", doc.VirusScanStatus);
         Assert.Equal("NotSynced", doc.SyncStatus);
         Assert.Equal("deadbeef", doc.DocumentHash);
     }
@@ -209,6 +210,7 @@ public class DocumentControllerTests
             DocumentId = Guid.NewGuid(), FileMasterId = fm.FileMasterId,
             DocumentType = DocumentTypes.TitleDeedReport, FileName = "d.pdf",
             BlobPath = "docs/d.pdf", ContentType = "application/pdf",
+            VirusScanStatus = "Clean",
             SyncStatus = "NotSynced", UploadDate = DateTime.UtcNow
         };
         db.Documents.Add(doc); await db.SaveChangesAsync();
@@ -240,9 +242,15 @@ public class DocumentControllerTests
         Assert.IsType<ForbidResult>(result);
     }
 
-    [Fact]
-    public async Task Download_RejectsInfectedFile()
+    [Theory]
+    [InlineData("Infected")]
+    [InlineData("Pending")]
+    [InlineData("Error")]
+    [InlineData(null)]
+    public async Task Download_BlocksEverythingExceptClean_FailClosed(string? scanStatus)
     {
+        // DOC-02: fail-closed download gate — only "Clean" is served; everything else (Infected,
+        // Pending, Error, or null/not-yet-scanned) returns NotFound.
         using var db = NewDb();
         var wma = Guid.NewGuid();
         var (fm, _) = SeedCase(db, wma);
@@ -250,7 +258,7 @@ public class DocumentControllerTests
         {
             DocumentId = Guid.NewGuid(), FileMasterId = fm.FileMasterId,
             DocumentType = DocumentTypes.TitleDeedReport, FileName = "d.pdf",
-            BlobPath = "docs/d.pdf", VirusScanStatus = "Infected",
+            BlobPath = "docs/d.pdf", VirusScanStatus = scanStatus,
             SyncStatus = "NotSynced", UploadDate = DateTime.UtcNow
         };
         db.Documents.Add(doc); await db.SaveChangesAsync();
@@ -259,7 +267,33 @@ public class DocumentControllerTests
         ((ClaimsIdentity)ctrl.User.Identity!).AddClaim(new Claim("wmaId", wma.ToString()));
 
         var result = await ctrl.Download(doc.DocumentId, CancellationToken.None);
-        Assert.IsType<BadRequestObjectResult>(result);
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task Upload_RejectsEicarPayload_AndPersistsNothing()
+    {
+        // DOC-02: an EICAR-carrying PDF passes the magic-byte check (valid %PDF header) but the
+        // virus scanner flags it Infected → the upload is rejected and no Document row is written.
+        using var db = NewDb();
+        var wma = Guid.NewGuid();
+        var (fm, _) = SeedCase(db, wma);
+        var ctrl = BuildController(db, User(Guid.NewGuid(), DwsRoles.Validator));
+        ((ClaimsIdentity)ctrl.User.Identity!).AddClaim(new Claim("wmaId", wma.ToString()));
+
+        var eicar = "%PDF-1.4\nX5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*\n%%EOF";
+        var model = new CaseDocumentUploadViewModel
+        {
+            FileMasterId = fm.FileMasterId,
+            DocumentType = DocumentTypes.TitleDeedReport,
+            File = FakeFile("infected.pdf", System.Text.Encoding.ASCII.GetBytes(eicar))
+        };
+
+        var result = await ctrl.Upload(model, CancellationToken.None);
+
+        Assert.IsType<ViewResult>(result);
+        Assert.False(ctrl.ModelState.IsValid);
+        Assert.Empty(db.Documents);
     }
 
     [Fact]

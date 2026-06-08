@@ -3,6 +3,7 @@ using System.Text;
 using dwa_ver_val.Areas.ExternalPortal.Controllers;
 using dwa_ver_val.Areas.ExternalPortal.ViewModels;
 using dwa_ver_val.Models.Enums;
+using dwa_ver_val.Services.Documents;
 using dwa_ver_val.Services.Infrastructure.Storage;
 using dwa_ver_val.Services.Notifications;
 using dwa_ver_val.Services.Portal.Auth;
@@ -31,7 +32,8 @@ public class DocumentControllerTests
                 Sha256Hex = "abc"
             });
         var notify = new Mock<INotificationService>();
-        var controller = new DocumentController(db, accessor, storage.Object, notify.Object);
+        var controller = new DocumentController(
+            db, accessor, storage.Object, notify.Object, new EicarVirusScanner());
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext
@@ -86,6 +88,48 @@ public class DocumentControllerTests
         Assert.Equal(fm.FileMasterId, doc.FileMasterId);
         Assert.Equal("TitleDeed", doc.DocumentType);
         Assert.Equal(userId, doc.UploadedByPublicUserId);
+        Assert.Equal("Clean", doc.VirusScanStatus); // DOC-02: a scanned-clean upload persists Clean, not Pending
+    }
+
+    [Fact]
+    public async Task Upload_Post_EicarPayload_ReturnsView_NotSaved()
+    {
+        // DOC-02: a PDF carrying the EICAR signature passes the magic-byte check (valid %PDF header)
+        // but the virus scanner flags it Infected → rejected, nothing persisted.
+        var userId = Guid.NewGuid();
+        var (db, controller) = Build(userId);
+
+        var prop = new Property { PropertyId = Guid.NewGuid(), SGCode = "T0005", WmaId = null, PropertyReferenceNumber = "R5" };
+        var fm = SeedHelper.NewFileMaster(prop.PropertyId);
+        db.Properties.Add(prop);
+        db.FileMasters.Add(fm);
+        db.PublicUserProperties.Add(new PublicUserProperty
+        {
+            Id = Guid.NewGuid(), PublicUserId = userId, PropertyId = prop.PropertyId,
+            Status = PropertyClaimStatus.Approved,
+            EvidenceType = PropertyClaimEvidenceType.IdMatch, RequestedDate = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var eicarPdf = Encoding.ASCII.GetBytes(
+            "%PDF-1.4\nX5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*\n%%EOF");
+        var file = new Mock<IFormFile>();
+        file.Setup(f => f.FileName).Returns("infected.pdf");
+        file.Setup(f => f.ContentType).Returns("application/pdf");
+        file.Setup(f => f.Length).Returns(eicarPdf.Length);
+        file.Setup(f => f.OpenReadStream()).Returns(() => new MemoryStream(eicarPdf));
+
+        var result = await controller.Upload(
+            new DocumentUploadViewModel
+            {
+                FileMasterId = fm.FileMasterId,
+                DocumentType = "TitleDeed",
+                File = file.Object
+            }, default);
+
+        Assert.IsType<ViewResult>(result);
+        Assert.False(controller.ModelState.IsValid);
+        Assert.Empty(db.Documents);
     }
 
     [Fact]
