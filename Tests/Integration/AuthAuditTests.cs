@@ -10,6 +10,7 @@ namespace dwa_ver_val.Tests.Integration;
 /// row. Without these tests, a refactor of AccountController could silently drop the calls
 /// to IAuditService.LogAsync and the regression wouldn't show up until production review.
 /// </summary>
+[Collection(SqlServerIntegrationCollection.Name)]
 public class AuthAuditTests : IClassFixture<IntegrationTestFixture>
 {
     private readonly IntegrationTestFixture _factory;

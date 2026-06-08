@@ -22,7 +22,7 @@ namespace dwa_ver_val.Tests.Integration;
 /// PREREQUISITE: SQL Server must be reachable at localhost,1433 (docker dev stack).
 /// If unreachable the tests fail with a SqlException, NOT a silent skip — per design.
 /// </summary>
-[Collection("LetterIssuanceRace")]
+[Collection(SqlServerIntegrationCollection.Name)]
 public class LetterIssuanceRaceTests : IAsyncLifetime
 {
     static LetterIssuanceRaceTests() => QuestPDF.Settings.License = LicenseType.Community;

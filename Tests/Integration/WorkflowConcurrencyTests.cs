@@ -17,7 +17,7 @@ namespace dwa_ver_val.Tests.Integration;
 /// PREREQUISITE: SQL Server must be reachable at localhost,1433 (docker dev stack).
 /// If unreachable the tests fail with a SqlException, NOT a silent skip — per design.
 /// </summary>
-[Collection("WorkflowConcurrency")]
+[Collection(SqlServerIntegrationCollection.Name)]
 public class WorkflowConcurrencyTests : IAsyncLifetime
 {
     private const string ConnectionString =
