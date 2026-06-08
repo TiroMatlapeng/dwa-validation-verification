@@ -11,6 +11,11 @@
     <Compile Remove="Tests/**" />
     <Content Remove="Tests/**" />
     <None Remove="Tests/**" />
+    <!-- E2E test project lives under Tests.E2E/; exclude from the web app's default globs
+         (mirrors the Tests/** exclusion above). Pure build-config; no behaviour change. -->
+    <Compile Remove="Tests.E2E/**" />
+    <Content Remove="Tests.E2E/**" />
+    <None Remove="Tests.E2E/**" />
   </ItemGroup>
 
   <ItemGroup>
