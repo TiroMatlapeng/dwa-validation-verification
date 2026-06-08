@@ -70,6 +70,28 @@ public class ScopedCaseQuery : IScopedCaseQuery
         };
     }
 
+    public IQueryable<WaterManagementArea> FilterWaterManagementAreas(IQueryable<WaterManagementArea> source, ClaimsPrincipal user)
+    {
+        if (BypassesScope(user)) return source;
+
+        var scope = GetEffectiveScope(user);
+        return scope.Level switch
+        {
+            // Catchment-scoped: the user belongs to exactly one catchment; show the owning WMA.
+            ScopeLevel.Catchment => source.Where(wma =>
+                _db.CatchmentAreas.Any(c => c.CatchmentAreaId == scope.ScopeId && c.WmaId == wma.WmaId)),
+
+            // WMA-scoped: exactly the one WMA they belong to.
+            ScopeLevel.Wma      => source.Where(wma => wma.WmaId == scope.ScopeId),
+
+            // Province-scoped: all WMAs in that province.
+            ScopeLevel.Province => source.Where(wma => wma.ProvinceId == scope.ScopeId),
+
+            // No valid scope → empty.
+            _                   => source.Where(_ => false),
+        };
+    }
+
     public bool IsInScope(FileMaster fileMaster, ClaimsPrincipal user)
     {
         if (BypassesScope(user)) return true;
