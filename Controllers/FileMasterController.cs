@@ -584,6 +584,19 @@ public class FileMasterController : Controller
         var orgUnit = caseFm.OrgUnit?.Name ?? "DWS Regional Office";
         var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Regional Manager";
 
+        // WF-02: wrap the letter issuance + the subsequent workflow transition in ONE database
+        // transaction so a transition failure rolls back the LetterIssuance row (no orphan letter).
+        //
+        // Both LetterService and WorkflowService are AddScoped and receive the SAME
+        // ApplicationDBContext per request — a single transaction on _context spans both.
+        //
+        // GATE on IsRelational(): EF InMemory throws NotSupportedException on BeginTransaction.
+        // The existing InMemory-backed letter-controller unit tests must continue to pass unchanged,
+        // so we skip the transaction wrapper on InMemory and fall through to the plain await path.
+        Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? tx = null;
+        if (_context.Database.IsRelational())
+            tx = await _context.Database.BeginTransactionAsync();
+
         try
         {
             await _letters.IssueAsync(id, map.LetterCode, new dwa_ver_val.Services.Letters.IssueLetterRequest(
@@ -606,22 +619,28 @@ public class FileMasterController : Controller
                 LawfulVolumeM3: string.Equals(map.LetterCode, "S33_2_Decl", StringComparison.OrdinalIgnoreCase)
                     ? caseFm.Entitlement?.Volume
                     : null));
+
+            await _workflow.TransitionToAsync(id, map.TargetState, userId: signedInId == Guid.Empty ? null : signedInId,
+                notes: $"{map.LetterCode} issued to {recipient}");
+
+            if (tx is not null)
+                await tx.CommitAsync();
+        }
+        catch (dwa_ver_val.Services.Letters.LetterIssuanceDuplicateException ex)
+        {
+            if (tx is not null) await tx.RollbackAsync();
+            TempData["Error"] = ex.Message; // "This letter has already been issued for this case."
+            return RedirectToAction(nameof(Details), new { id });
         }
         catch (InvalidOperationException ex)
         {
+            if (tx is not null) await tx.RollbackAsync();
             TempData["Error"] = $"Could not issue letter: {ex.Message}";
             return RedirectToAction(nameof(Details), new { id });
         }
-
-        try
+        finally
         {
-            await _workflow.TransitionToAsync(id, map.TargetState, userId: signedInId == Guid.Empty ? null : signedInId,
-                notes: $"{map.LetterCode} issued to {recipient}");
-        }
-        catch (InvalidOperationException ex)
-        {
-            TempData["Error"] = $"Letter issued but workflow transition failed: {ex.Message} Please contact your system administrator.";
-            return RedirectToAction(nameof(Details), new { id });
+            if (tx is not null) await tx.DisposeAsync();
         }
 
         try
