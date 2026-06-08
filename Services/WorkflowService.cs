@@ -283,7 +283,19 @@ public class WorkflowService : IWorkflowService
             CompletedById = target.IsTerminal ? userId : null,
         });
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // Another concurrent request committed a transition for this WorkflowInstance
+            // before ours. The rowversion on our tracked instance is now stale. Translate
+            // to a domain exception so controllers/callers can give the operator a clear,
+            // actionable message without exposing EF internals.
+            throw new dwa_ver_val.Services.Workflow.WorkflowConcurrencyException(
+                "This case was advanced by another user. Refresh and retry.", ex);
+        }
 
         await _audit.LogAsync(new AuditEvent(
             EntityType: nameof(FileMaster),

@@ -180,6 +180,7 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
 
         modelBuilder.Entity<WorkflowState>().HasKey(e => e.WorkflowStateId);
         modelBuilder.Entity<WorkflowInstance>().HasKey(e => e.WorkflowInstanceId);
+        modelBuilder.Entity<WorkflowInstance>().Property(e => e.RowVersion).IsRowVersion();
         modelBuilder.Entity<WorkflowStepRecord>().HasKey(e => e.WorkflowStepRecordId);
 
         modelBuilder.Entity<LetterType>().HasKey(e => e.LetterTypeId);
