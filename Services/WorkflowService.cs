@@ -143,8 +143,13 @@ public class WorkflowService : IWorkflowService
     // sequential AdvanceAsync path. GetBlockingReasonsAsync surfaces *advance* guard
     // denials; once a case is in (or about to enter) the letter phase, those advance
     // reasons are irrelevant and only confuse the operator — so we suppress them.
+    // CP_StakeholderWorkshop is the launch point for the letter sub-process, so advance-guard
+    // banners are irrelevant there. CP9_SFRACalculated is intentionally NOT treated as a letter
+    // phase: the case still advances CP9 → CP11 → CP_PrePublicReview → CP_StakeholderWorkshop,
+    // and its advance-blocking reasons must remain visible so the operator can complete those
+    // control points. (Mirrors FileMasterDetailsViewModel.IsReadyForLetters.)
     private static bool IsLetterPhaseState(WorkflowState state) =>
-        state.StateName is "CP9_SFRACalculated" or "CP_StakeholderWorkshop"
+        state.StateName is "CP_StakeholderWorkshop"
         || state.StateName.StartsWith("S35_", StringComparison.OrdinalIgnoreCase)
         || state.StateName.StartsWith("S33_", StringComparison.OrdinalIgnoreCase);
 
