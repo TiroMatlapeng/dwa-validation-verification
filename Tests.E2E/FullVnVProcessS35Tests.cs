@@ -109,8 +109,8 @@ public sealed class FullVnVProcessS35Tests
             await AdvanceAsync(page, fileMasterId);
             await AssertCurrentStateAsync(fileMasterId, "CP9_SFRACalculated");
 
-            // CP9 is a letter-ready state, so advance-blocking reasons are suppressed there.
-            // It still needs Authorisation seeded for the CP11 compilation re-check downstream.
+            // CP9 advances normally toward CP11 (it is NOT letter-ready — that was the stranding
+            // bug this PR fixed). Authorisation must be seeded for the CP11 compilation re-check.
             await VnVTestData.SeedAuthorisationAsync(fileMasterId);
             await AdvanceAsync(page, fileMasterId);
             await AssertCurrentStateAsync(fileMasterId, "CP11_FileCompiled");

@@ -187,15 +187,24 @@ public sealed class StateMachineGuardTests
             // The Capturer never sees the Advance button (CanTransitionWorkflow gate in the panel).
             Assert.Equal(0, await page.Locator("form[action*='AdvanceWorkflow'] button[type='submit']").CountAsync());
 
-            // And a direct POST to AdvanceWorkflow is forbidden by the policy. The cookie
-            // pipeline answers a denied policy with a 302 to AccessDenied, which the API
-            // request client follows — so assert the landing URL (or a hard 403/400).
+            // And a direct POST to AdvanceWorkflow is forbidden by the policy. Send a VALID
+            // antiforgery token (from the Capturer's own Details page) so the request gets past
+            // the antiforgery filter and the CanTransitionWorkflow policy is what refuses it —
+            // otherwise this test would only prove antiforgery, not RBAC. The cookie pipeline
+            // answers a denied policy with a 302 to AccessDenied, which the API client follows.
+            var afToken = await page.GetAttributeAsync("input[name='__RequestVerificationToken']", "value");
+            Assert.False(string.IsNullOrEmpty(afToken), "No antiforgery token found on Capturer's Details page.");
             var resp = await page.Context.APIRequest.PostAsync(
                 $"{_fixture.BaseUrl}/FileMaster/AdvanceWorkflow/{fmId}",
-                new APIRequestContextOptions { Form = page.Context.APIRequest.CreateFormData().Set("notes", "x") });
-            Assert.True(resp.Status is 403 or 400
+                new APIRequestContextOptions
+                {
+                    Form = page.Context.APIRequest.CreateFormData()
+                        .Set("__RequestVerificationToken", afToken!)
+                        .Set("notes", "x"),
+                });
+            Assert.True(resp.Status is 403
                     || resp.Url.Contains("/Account/AccessDenied", StringComparison.OrdinalIgnoreCase),
-                $"Expected forbidden outcome for Capturer advance, got {resp.Status} at {resp.Url}.");
+                $"Expected policy denial for Capturer advance, got {resp.Status} at {resp.Url}.");
 
             // State is unchanged regardless.
             Assert.Equal("CP1_WARMSObtained", await VnVTestData.CurrentStateNameAsync(fmId));
@@ -256,6 +265,41 @@ public sealed class StateMachineGuardTests
             // The controller redirects back to Details with a TempData error (no exception, no move).
             Assert.True(resp.Status is 200 or 302, $"Unexpected status {resp.Status} for early letter issue.");
             Assert.Equal("CP4_AdditionalInfo", await VnVTestData.CurrentStateNameAsync(fmId));
+        }
+        finally { await E2EAppFixture.DisposePageAsync(page); }
+    }
+
+    [Fact]
+    public async Task Advance_CannotEnterLetterState_WithoutIssuingLetter()
+    {
+        // The UI hides the Advance button once a case is letter-ready, but the engine itself must
+        // refuse a crafted advance from CP_StakeholderWorkshop into S35_Letter1Issued — otherwise
+        // the case lands in a letter state with no LetterIssuance and wedges permanently
+        // (LetterServiceConfirmedGuard has no issuance to ever confirm service on).
+        var page = await _fixture.NewPageAsync();
+        try
+        {
+            await _fixture.LoginAsync(page, DemoUsers.Validator("3"));
+            var (fmId, _) = await CreateCaseAsync(page, "LtrAdv");
+            await VnVTestData.ForceStateAsync(fmId, "CP_StakeholderWorkshop");
+
+            await page.GotoAsync($"/FileMaster/Details/{fmId}", Idle);
+            var token = await page.GetAttributeAsync("input[name='__RequestVerificationToken']", "value");
+            Assert.False(string.IsNullOrEmpty(token), "No antiforgery token found on Details page.");
+
+            var resp = await page.Context.APIRequest.PostAsync(
+                $"{_fixture.BaseUrl}/FileMaster/AdvanceWorkflow/{fmId}",
+                new APIRequestContextOptions
+                {
+                    Form = page.Context.APIRequest.CreateFormData()
+                        .Set("__RequestVerificationToken", token!),
+                });
+
+            // Engine refusal surfaces as a TempData error on the post-redirect page (this response).
+            Assert.True(resp.Status is 200 or 302, $"Unexpected status {resp.Status} for blocked letter-state advance.");
+            Assert.Contains("Direct workflow advance into letter state",
+                await resp.TextAsync(), StringComparison.OrdinalIgnoreCase);
+            Assert.Equal("CP_StakeholderWorkshop", await VnVTestData.CurrentStateNameAsync(fmId));
         }
         finally { await E2EAppFixture.DisposePageAsync(page); }
     }
