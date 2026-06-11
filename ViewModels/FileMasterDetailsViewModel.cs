@@ -19,9 +19,16 @@ public class FileMasterDetailsViewModel
 
     public WorkflowState? CurrentState => WorkflowInstance?.CurrentWorkflowState;
 
+    // The letter/declaration sub-process launches from CP_StakeholderWorkshop (the last
+    // control point before the statutory letters). CP9_SFRACalculated is deliberately NOT
+    // letter-ready: a case must still advance CP9 → CP11 → CP_PrePublicReview →
+    // CP_StakeholderWorkshop (file compilation, then the Regional Manager pre-public review,
+    // then the stakeholder workshop) before any letter is issued. Treating CP9 as letter-ready
+    // hid the "Advance to Next CP" button at CP9 and stranded the case, leaving CP11 and the
+    // review/workshop states unreachable through the UI. (CanIssueLetterAsync still tolerates
+    // CP9 as an S35_L1/S33_3 prerequisite for legacy cases issued before the gap-fill.)
     public bool IsReadyForLetters =>
-        CurrentState is { } s && (s.StateName == "CP9_SFRACalculated"
-                                   || s.StateName == "CP_StakeholderWorkshop"
+        CurrentState is { } s && (s.StateName == "CP_StakeholderWorkshop"
                                    || s.StateName.StartsWith("S35_")
                                    || s.StateName.StartsWith("S33_"));
 
