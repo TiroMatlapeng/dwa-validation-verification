@@ -194,4 +194,59 @@ public class AssessmentTrackTests
         Assert.Contains("S33_2_ReadyForDeclaration", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("SeedWorkflowStatesAsync", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public async Task AdvanceAsync_IntoLetterState_ThrowsInvalidOperation()
+    {
+        // Letter states must be entered via IssueLetter/MarkLetterResponse (TransitionToAsync),
+        // which create the LetterIssuance record the letter-phase guards depend on. A direct
+        // advance from CP_StakeholderWorkshop into S35_Letter1Issued would wedge the case:
+        // LetterServiceConfirmedGuard could never pass (no issuance to confirm service on).
+        using var db = NewDb();
+
+        var workshop = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "CP_StakeholderWorkshop", DisplayOrder = 18, Phase = "Verification", IsTerminal = false };
+        var letter1  = new WorkflowState { WorkflowStateId = Guid.NewGuid(), StateName = "S35_Letter1Issued",      DisplayOrder = 19, Phase = "Verification", IsTerminal = false };
+        db.WorkflowStates.AddRange(workshop, letter1);
+
+        var fm = new FileMaster
+        {
+            FileMasterId = Guid.NewGuid(),
+            PropertyId = Guid.NewGuid(),
+            RegistrationNumber = "N/A",
+            SurveyorGeneralCode = "N/A",
+            PrimaryCatchment = "N/A",
+            QuaternaryCatchment = "N/A",
+            FarmName = "N/A",
+            FarmNumber = 0,
+            RegistrationDivision = "N/A",
+            FarmPortion = "N/A",
+            AssessmentTrack = "S35_Verification",
+            StakeholderWorkshopDate = DateTime.UtcNow,   // workshop guard satisfied —
+            StakeholderWorkshopAttendance = 25           // the refusal must come from the letter-entry block
+        };
+        db.FileMasters.Add(fm);
+
+        var instance = new WorkflowInstance
+        {
+            WorkflowInstanceId = Guid.NewGuid(),
+            FileMasterId = fm.FileMasterId,
+            CurrentWorkflowStateId = workshop.WorkflowStateId,
+            Status = "Active",
+            CreatedDate = DateTime.UtcNow
+        };
+        db.WorkflowInstances.Add(instance);
+        fm.WorkflowInstanceId = instance.WorkflowInstanceId;
+        await db.SaveChangesAsync();
+
+        var svc = new WorkflowService(db, Array.Empty<ITransitionGuard>(), new TestAuditService());
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => svc.AdvanceAsync(fm.FileMasterId, userId: null, notes: null));
+
+        Assert.Contains("Direct workflow advance into letter state", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("S35_Letter1Issued", ex.Message, StringComparison.OrdinalIgnoreCase);
+
+        // The case did not move.
+        var unchanged = await db.WorkflowInstances.SingleAsync(w => w.WorkflowInstanceId == instance.WorkflowInstanceId);
+        Assert.Equal(workshop.WorkflowStateId, unchanged.CurrentWorkflowStateId);
+    }
 }

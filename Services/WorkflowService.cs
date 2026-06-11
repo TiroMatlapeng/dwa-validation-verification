@@ -82,6 +82,21 @@ public class WorkflowService : IWorkflowService
         var nextState = await ResolveNextStateAsync(fileMaster, currentState)
             ?? throw new InvalidOperationException("No further states available.");
 
+        // Letter/declaration states must be entered exclusively through IssueLetter /
+        // MarkLetterResponse (TransitionToAsync), which create the LetterIssuance record the
+        // letter-phase guards and UI depend on. Without this block, a direct advance from
+        // CP_StakeholderWorkshop walks the case into S35_Letter1Issued with no letter issued,
+        // wedging it: LetterServiceConfirmedGuard can never pass (there is no issuance to
+        // confirm service on). The S33_2_ReadyForDeclaration holding state is the one
+        // letter-phase state that IS legitimately reached by advance (the S33(2) track skip).
+        var entersLetterPhase = (nextState.StateName.StartsWith("S35_", StringComparison.OrdinalIgnoreCase)
+                                 || nextState.StateName.StartsWith("S33_", StringComparison.OrdinalIgnoreCase))
+                                && !string.Equals(nextState.StateName, "S33_2_ReadyForDeclaration", StringComparison.OrdinalIgnoreCase);
+        if (entersLetterPhase)
+            throw new InvalidOperationException(
+                $"Direct workflow advance into letter state '{nextState.StateName}' is not permitted. " +
+                "Issue the appropriate letter via the Letters panel to proceed.");
+
         return await MoveToStateAsync(instance, fileMaster, currentState, nextState, userId, notes);
     }
 
