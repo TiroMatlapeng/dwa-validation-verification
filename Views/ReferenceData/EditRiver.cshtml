@@ -1,0 +1,14 @@
+@model dwa_ver_val.ViewModels.Admin.RiverFormViewModel
+@{ ViewData["Title"] = "Edit River"; }
+<div class="dws-page-header"><h1>Edit River</h1></div>
+<form asp-action="EditRiver" asp-route-id="@Model.Id" method="post" class="dws-form">
+    <input asp-for="Id" type="hidden" />
+    <div asp-validation-summary="All" class="dws-validation-summary"></div>
+    <div class="dws-form-row">
+        <label asp-for="RiverName" class="dws-label"></label>
+        <input asp-for="RiverName" class="dws-input" />
+        <span asp-validation-for="RiverName" class="dws-field-error"></span>
+    </div>
+    <button type="submit" class="dws-btn dws-btn-primary">Save</button>
+    <a asp-action="Index" class="dws-btn dws-btn-ghost">Cancel</a>
+</form>

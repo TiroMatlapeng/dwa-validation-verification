@@ -1,0 +1,19 @@
+@model dwa_ver_val.ViewModels.Admin.WaterSourceFormViewModel
+@{ ViewData["Title"] = "Edit Water Source"; }
+<div class="dws-page-header"><h1>Edit Water Source</h1></div>
+<form asp-action="EditWaterSource" asp-route-id="@Model.Id" method="post" class="dws-form">
+    <input asp-for="Id" type="hidden" />
+    <div asp-validation-summary="All" class="dws-validation-summary"></div>
+    <div class="dws-form-row">
+        <label asp-for="WaterSourceName" class="dws-label"></label>
+        <input asp-for="WaterSourceName" class="dws-input" />
+        <span asp-validation-for="WaterSourceName" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="WaterSourceType" class="dws-label"></label>
+        <select asp-for="WaterSourceType" asp-items="Html.GetEnumSelectList<WaterSourceType>()" class="dws-input"></select>
+        <span asp-validation-for="WaterSourceType" class="dws-field-error"></span>
+    </div>
+    <button type="submit" class="dws-btn dws-btn-primary">Save</button>
+    <a asp-action="Index" class="dws-btn dws-btn-ghost">Cancel</a>
+</form>

@@ -1,0 +1,46 @@
+@model IEnumerable<dwa_ver_val.ViewModels.Admin.GwcaListItemViewModel>
+@{
+    ViewData["Title"] = "Government Water Control Areas";
+}
+
+<div class="dws-page-header">
+    <h1>GWCAs &amp; Proclamation Rules</h1>
+    <a asp-action="Create" class="dws-btn dws-btn-primary">Add GWCA</a>
+</div>
+
+<table class="dws-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Gazette Reference</th>
+            <th>Proclamation Date</th>
+            <th>Active Rules</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var g in Model)
+    {
+        <tr>
+            <td>@g.Name</td>
+            <td>@(g.GazetteReference ?? "—")</td>
+            <td>@(g.ProclamationDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+            <td>@g.ActiveRuleCount</td>
+            <td>
+                <div class="dws-row-actions">
+                    <a asp-action="Edit" asp-route-id="@g.Id" class="dws-btn dws-btn-ghost">Manage</a>
+                    <form asp-action="Delete" asp-route-id="@g.Id" method="post" class="dws-inline-form"
+                          onsubmit="return confirm('Delete this GWCA and all its rules?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="dws-btn dws-btn-danger">Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+    }
+    @if (!Model.Any())
+    {
+        <tr><td colspan="5">No GWCAs defined yet.</td></tr>
+    }
+    </tbody>
+</table>

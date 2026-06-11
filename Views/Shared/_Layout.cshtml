@@ -49,7 +49,7 @@
 
             @if (User.IsInRole("SystemAdmin"))
             {
-                <div class="sidebar-section">System</div>
+                <div class="sidebar-section">Administration</div>
                 <a href="/Admin/Users/Index"
                    class="sidebar-item @(controllerName == "Users" ? "active" : "")">
                     <span class="sidebar-icon">&#9632;</span> Manage Users
@@ -57,6 +57,18 @@
                 <a asp-controller="Owner" asp-action="Index"
                    class="sidebar-item @(controllerName == "Owner" ? "active" : "")">
                     <span class="sidebar-icon">&#9632;</span> Property Owners
+                </a>
+                <a href="/Admin/OrganisationalUnits/Index"
+                   class="sidebar-item @(controllerName == "OrganisationalUnits" ? "active" : "")">
+                    <span class="sidebar-icon">&#9632;</span> Organisational Units
+                </a>
+                <a href="/Admin/Gwcas/Index"
+                   class="sidebar-item @(controllerName == "Gwcas" ? "active" : "")">
+                    <span class="sidebar-icon">&#9632;</span> GWCAs &amp; Rules
+                </a>
+                <a href="/Admin/ReferenceData/Index"
+                   class="sidebar-item @(controllerName == "ReferenceData" ? "active" : "")">
+                    <span class="sidebar-icon">&#9632;</span> Reference Data
                 </a>
             }
         </nav>

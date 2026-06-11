@@ -1,0 +1,15 @@
+@model dwa_ver_val.ViewModels.Admin.OrgUnitFormViewModel
+@{
+    ViewData["Title"] = "Edit Organisational Unit";
+}
+
+<div class="dws-page-header">
+    <h1>Edit Organisational Unit</h1>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="dws-form">
+    <input asp-for="Id" type="hidden" />
+    <partial name="_Form" model="Model" />
+    <button type="submit" class="dws-btn dws-btn-primary">Save</button>
+    <a asp-action="Index" class="dws-btn dws-btn-ghost">Cancel</a>
+</form>
