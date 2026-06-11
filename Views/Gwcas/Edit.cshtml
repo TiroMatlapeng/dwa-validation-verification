@@ -1,0 +1,130 @@
+@model dwa_ver_val.ViewModels.Admin.GwcaDetailViewModel
+@{
+    ViewData["Title"] = "Manage GWCA";
+}
+
+<div class="dws-page-header">
+    <h1>@Model.Gwca.Name</h1>
+    <a asp-action="Index" class="dws-btn dws-btn-ghost">Back to GWCAs</a>
+</div>
+
+<h2>GWCA Details</h2>
+<form asp-action="Edit" asp-route-id="@Model.Gwca.Id" method="post" class="dws-form">
+    <input type="hidden" asp-for="Gwca.Id" />
+    <div asp-validation-summary="ModelOnly" class="dws-validation-summary"></div>
+
+    <div class="dws-form-row">
+        <label asp-for="Gwca.Name" class="dws-label"></label>
+        <input asp-for="Gwca.Name" class="dws-input" />
+        <span asp-validation-for="Gwca.Name" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="Gwca.GazetteReference" class="dws-label"></label>
+        <input asp-for="Gwca.GazetteReference" class="dws-input" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="Gwca.ProclamationDate" class="dws-label"></label>
+        <input asp-for="Gwca.ProclamationDate" class="dws-input" type="date" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="Gwca.PhoneNumber" class="dws-label"></label>
+        <input asp-for="Gwca.PhoneNumber" class="dws-input" />
+    </div>
+    <button type="submit" class="dws-btn dws-btn-primary">Save Details</button>
+</form>
+
+<h2 style="margin-top:32px;">Proclamation Rules</h2>
+<p class="page-subtitle">These configurable legal limits drive the lawfulness assessment for properties within this GWCA.</p>
+
+<table class="dws-table">
+    <thead>
+        <tr>
+            <th>Code</th>
+            <th>Description</th>
+            <th>Limit</th>
+            <th>Unit</th>
+            <th>Gazette</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var r in Model.Rules)
+    {
+        <tr>
+            <td>@r.RuleCode</td>
+            <td>@r.RuleDescription</td>
+            <td>@(r.NumericLimit?.ToString("0.##") ?? "—")</td>
+            <td>@(r.Unit ?? "—")</td>
+            <td>@(r.GovernmentGazetteReference ?? "—")</td>
+            <td>
+                @if (r.IsActive)
+                {
+                    <span class="dws-status-pill dws-status-pill--ok">Active</span>
+                }
+                else
+                {
+                    <span class="dws-status-pill dws-status-pill--warning">Inactive</span>
+                }
+            </td>
+            <td>
+                <div class="dws-row-actions">
+                    <a asp-action="EditRule" asp-route-ruleId="@r.RuleId" class="dws-btn dws-btn-ghost">Edit</a>
+                    <form asp-action="ToggleRule" asp-route-ruleId="@r.RuleId" method="post" class="dws-inline-form">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="dws-btn dws-btn-ghost">@(r.IsActive ? "Deactivate" : "Activate")</button>
+                    </form>
+                    <form asp-action="DeleteRule" asp-route-ruleId="@r.RuleId" method="post" class="dws-inline-form"
+                          onsubmit="return confirm('Delete this rule permanently?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="dws-btn dws-btn-danger">Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+    }
+    @if (Model.Rules.Count == 0)
+    {
+        <tr><td colspan="7">No rules defined. Add one below.</td></tr>
+    }
+    </tbody>
+</table>
+
+<h3 style="margin-top:24px;">Add Rule</h3>
+<form asp-action="AddRule" asp-route-id="@Model.Gwca.Id" method="post" class="dws-form">
+    @Html.AntiForgeryToken()
+    <div class="dws-form-row">
+        <label asp-for="NewRule.RuleCode" class="dws-label"></label>
+        <input asp-for="NewRule.RuleCode" class="dws-input" placeholder="e.g. MAX_HECTARES" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="NewRule.RuleDescription" class="dws-label"></label>
+        <input asp-for="NewRule.RuleDescription" class="dws-input" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="NewRule.NumericLimit" class="dws-label"></label>
+        <input asp-for="NewRule.NumericLimit" class="dws-input" type="number" step="0.01" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="NewRule.Unit" class="dws-label"></label>
+        <input asp-for="NewRule.Unit" class="dws-input" placeholder="ha, m3/ha, pct, m3" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="NewRule.GazetteReference" class="dws-label"></label>
+        <input asp-for="NewRule.GazetteReference" class="dws-input" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="NewRule.EffectiveFrom" class="dws-label"></label>
+        <input asp-for="NewRule.EffectiveFrom" class="dws-input" type="date" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="NewRule.EffectiveTo" class="dws-label"></label>
+        <input asp-for="NewRule.EffectiveTo" class="dws-input" type="date" />
+    </div>
+    <div class="dws-form-row">
+        <label class="dws-checkbox">
+            <input asp-for="NewRule.IsActive" type="checkbox" /> Active
+        </label>
+    </div>
+    <button type="submit" class="dws-btn dws-btn-primary">Add Rule</button>
+</form>

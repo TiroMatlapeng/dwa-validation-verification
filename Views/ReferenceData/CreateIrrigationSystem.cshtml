@@ -1,0 +1,23 @@
+@model dwa_ver_val.ViewModels.Admin.IrrigationSystemFormViewModel
+@{ ViewData["Title"] = "Add Irrigation System"; }
+<div class="dws-page-header"><h1>Add Irrigation System</h1></div>
+<form asp-action="CreateIrrigationSystem" method="post" class="dws-form">
+    <div asp-validation-summary="All" class="dws-validation-summary"></div>
+    <div class="dws-form-row">
+        <label asp-for="IrrigationSystemName" class="dws-label"></label>
+        <input asp-for="IrrigationSystemName" class="dws-input" />
+        <span asp-validation-for="IrrigationSystemName" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="IrrigationSystemDescription" class="dws-label"></label>
+        <input asp-for="IrrigationSystemDescription" class="dws-input" />
+        <span asp-validation-for="IrrigationSystemDescription" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="IrrigationSystemModel" class="dws-label"></label>
+        <input asp-for="IrrigationSystemModel" class="dws-input" />
+        <span asp-validation-for="IrrigationSystemModel" class="dws-field-error"></span>
+    </div>
+    <button type="submit" class="dws-btn dws-btn-primary">Create</button>
+    <a asp-action="Index" class="dws-btn dws-btn-ghost">Cancel</a>
+</form>

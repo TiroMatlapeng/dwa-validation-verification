@@ -1,0 +1,25 @@
+@model dwa_ver_val.ViewModels.Admin.CropFormViewModel
+@{ ViewData["Title"] = "Edit Crop"; }
+<div class="dws-page-header"><h1>Edit Crop</h1></div>
+<form asp-action="EditCrop" asp-route-id="@Model.Id" method="post" class="dws-form">
+    <input asp-for="Id" type="hidden" />
+    <div asp-validation-summary="All" class="dws-validation-summary"></div>
+    <div class="dws-form-row">
+        <label asp-for="CropName" class="dws-label"></label>
+        <input asp-for="CropName" class="dws-input" />
+        <span asp-validation-for="CropName" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="CropTypeId" class="dws-label"></label>
+        <select asp-for="CropTypeId" class="dws-input">
+            <option value="">-- No Type --</option>
+            @foreach (var t in Model.AvailableCropTypes)
+            {
+                <option value="@t.Id" selected="@(t.Id == Model.CropTypeId)">@t.Name</option>
+            }
+        </select>
+        <span asp-validation-for="CropTypeId" class="dws-field-error"></span>
+    </div>
+    <button type="submit" class="dws-btn dws-btn-primary">Save</button>
+    <a asp-action="Index" class="dws-btn dws-btn-ghost">Cancel</a>
+</form>

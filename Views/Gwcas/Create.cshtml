@@ -1,0 +1,33 @@
+@model dwa_ver_val.ViewModels.Admin.GwcaFormViewModel
+@{
+    ViewData["Title"] = "Add GWCA";
+}
+
+<div class="dws-page-header">
+    <h1>Add GWCA</h1>
+</div>
+
+<form asp-action="Create" method="post" class="dws-form">
+    <div asp-validation-summary="All" class="dws-validation-summary"></div>
+
+    <div class="dws-form-row">
+        <label asp-for="Name" class="dws-label"></label>
+        <input asp-for="Name" class="dws-input" />
+        <span asp-validation-for="Name" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="GazetteReference" class="dws-label"></label>
+        <input asp-for="GazetteReference" class="dws-input" placeholder="e.g. GN 180 of 10 July 1970" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="ProclamationDate" class="dws-label"></label>
+        <input asp-for="ProclamationDate" class="dws-input" type="date" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="PhoneNumber" class="dws-label"></label>
+        <input asp-for="PhoneNumber" class="dws-input" />
+    </div>
+
+    <button type="submit" class="dws-btn dws-btn-primary">Create</button>
+    <a asp-action="Index" class="dws-btn dws-btn-ghost">Cancel</a>
+</form>

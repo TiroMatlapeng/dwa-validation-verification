@@ -1,0 +1,48 @@
+@model dwa_ver_val.ViewModels.Admin.OrgUnitFormViewModel
+
+<div asp-validation-summary="All" class="dws-validation-summary"></div>
+
+<div class="dws-form-row">
+    <label asp-for="Name" class="dws-label"></label>
+    <input asp-for="Name" class="dws-input" />
+    <span asp-validation-for="Name" class="dws-field-error"></span>
+</div>
+<div class="dws-form-row">
+    <label asp-for="Type" class="dws-label"></label>
+    <select asp-for="Type" class="dws-input" asp-items="@(new SelectList(Model.AvailableTypes))">
+        <option value="">-- select type --</option>
+    </select>
+    <span asp-validation-for="Type" class="dws-field-error"></span>
+</div>
+<div class="dws-form-row">
+    <label asp-for="ProvinceId" class="dws-label"></label>
+    <select asp-for="ProvinceId" class="dws-input"
+            asp-items="@(new SelectList(Model.AvailableProvinces, "Id", "Name"))">
+        <option value="">-- none --</option>
+    </select>
+    <span asp-validation-for="ProvinceId" class="dws-field-error"></span>
+</div>
+<div class="dws-form-row">
+    <label asp-for="WmaId" class="dws-label"></label>
+    <select asp-for="WmaId" class="dws-input"
+            asp-items="@(new SelectList(Model.AvailableWmas, "Id", "Name"))">
+        <option value="">-- none --</option>
+    </select>
+    <span asp-validation-for="WmaId" class="dws-field-error"></span>
+</div>
+<div class="dws-form-row">
+    <label asp-for="CatchmentAreaId" class="dws-label"></label>
+    <select asp-for="CatchmentAreaId" class="dws-input"
+            asp-items="@(new SelectList(Model.AvailableCatchments, "Id", "Name"))">
+        <option value="">-- none --</option>
+    </select>
+    <span asp-validation-for="CatchmentAreaId" class="dws-field-error"></span>
+</div>
+<div class="dws-form-row">
+    <label asp-for="ParentOrgUnitId" class="dws-label"></label>
+    <select asp-for="ParentOrgUnitId" class="dws-input"
+            asp-items="@(new SelectList(Model.AvailableParents, "Id", "Name"))">
+        <option value="">-- none (top level) --</option>
+    </select>
+    <span asp-validation-for="ParentOrgUnitId" class="dws-field-error"></span>
+</div>

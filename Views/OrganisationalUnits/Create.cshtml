@@ -1,0 +1,14 @@
+@model dwa_ver_val.ViewModels.Admin.OrgUnitFormViewModel
+@{
+    ViewData["Title"] = "Add Organisational Unit";
+}
+
+<div class="dws-page-header">
+    <h1>Add Organisational Unit</h1>
+</div>
+
+<form asp-action="Create" method="post" class="dws-form">
+    <partial name="_Form" model="Model" />
+    <button type="submit" class="dws-btn dws-btn-primary">Create</button>
+    <a asp-action="Index" class="dws-btn dws-btn-ghost">Cancel</a>
+</form>

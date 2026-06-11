@@ -1,0 +1,54 @@
+@model dwa_ver_val.ViewModels.Admin.GwcaRuleFormViewModel
+@{
+    ViewData["Title"] = "Edit Proclamation Rule";
+}
+
+<div class="dws-page-header">
+    <h1>Edit Proclamation Rule</h1>
+    <a asp-action="Edit" asp-route-id="@Model.WaterControlAreaId" class="dws-btn dws-btn-ghost">Back to GWCA</a>
+</div>
+
+<form asp-action="EditRule" asp-route-ruleId="@Model.RuleId" method="post" class="dws-form">
+    <input type="hidden" asp-for="RuleId" />
+    <input type="hidden" asp-for="WaterControlAreaId" />
+    <div asp-validation-summary="All" class="dws-validation-summary"></div>
+
+    <div class="dws-form-row">
+        <label asp-for="RuleCode" class="dws-label"></label>
+        <input asp-for="RuleCode" class="dws-input" />
+        <span asp-validation-for="RuleCode" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="RuleDescription" class="dws-label"></label>
+        <input asp-for="RuleDescription" class="dws-input" />
+        <span asp-validation-for="RuleDescription" class="dws-field-error"></span>
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="NumericLimit" class="dws-label"></label>
+        <input asp-for="NumericLimit" class="dws-input" type="number" step="0.01" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="Unit" class="dws-label"></label>
+        <input asp-for="Unit" class="dws-input" placeholder="ha, m3/ha, pct, m3" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="GazetteReference" class="dws-label"></label>
+        <input asp-for="GazetteReference" class="dws-input" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="EffectiveFrom" class="dws-label"></label>
+        <input asp-for="EffectiveFrom" class="dws-input" type="date" />
+    </div>
+    <div class="dws-form-row">
+        <label asp-for="EffectiveTo" class="dws-label"></label>
+        <input asp-for="EffectiveTo" class="dws-input" type="date" />
+    </div>
+    <div class="dws-form-row">
+        <label class="dws-checkbox">
+            <input asp-for="IsActive" type="checkbox" /> Active
+        </label>
+    </div>
+
+    <button type="submit" class="dws-btn dws-btn-primary">Save Rule</button>
+    <a asp-action="Edit" asp-route-id="@Model.WaterControlAreaId" class="dws-btn dws-btn-ghost">Cancel</a>
+</form>

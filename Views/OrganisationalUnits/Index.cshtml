@@ -1,0 +1,52 @@
+@model IEnumerable<dwa_ver_val.ViewModels.Admin.OrgUnitListItemViewModel>
+@{
+    ViewData["Title"] = "Organisational Units";
+}
+
+<div class="dws-page-header">
+    <h1>Organisational Units</h1>
+    <a asp-action="Create" class="dws-btn dws-btn-primary">Add Unit</a>
+</div>
+
+<table class="dws-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Province</th>
+            <th>WMA</th>
+            <th>Catchment</th>
+            <th>Parent</th>
+            <th>Users</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var ou in Model)
+    {
+        <tr>
+            <td>@ou.Name</td>
+            <td>@ou.Type</td>
+            <td>@(ou.ProvinceName ?? "—")</td>
+            <td>@(ou.WmaName ?? "—")</td>
+            <td>@(ou.CatchmentName ?? "—")</td>
+            <td>@(ou.ParentName ?? "—")</td>
+            <td>@ou.UserCount</td>
+            <td>
+                <div class="dws-row-actions">
+                    <a asp-action="Edit" asp-route-id="@ou.Id" class="dws-btn dws-btn-ghost">Edit</a>
+                    <form asp-action="Delete" asp-route-id="@ou.Id" method="post" class="dws-inline-form"
+                          onsubmit="return confirm('Delete this organisational unit?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="dws-btn dws-btn-danger">Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+    }
+    @if (!Model.Any())
+    {
+        <tr><td colspan="8">No organisational units defined yet.</td></tr>
+    }
+    </tbody>
+</table>

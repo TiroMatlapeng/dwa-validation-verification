@@ -1,0 +1,191 @@
+@model dwa_ver_val.ViewModels.Admin.ReferenceDataIndexViewModel
+@{
+    ViewData["Title"] = "Reference Data";
+}
+
+<div class="dws-page-header">
+    <h1>Reference Data</h1>
+</div>
+<p class="page-subtitle">Lookup tables used by the V&amp;V capture forms. Deletes are blocked while a value is still in use.</p>
+
+<!-- Rivers -->
+<section class="card" style="margin-bottom:24px;">
+    <div class="dws-page-header">
+        <h2>Rivers</h2>
+        <a asp-action="CreateRiver" class="dws-btn dws-btn-primary">Add River</a>
+    </div>
+    <table class="dws-table">
+        <thead><tr><th>Name</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var r in Model.Rivers)
+        {
+            <tr>
+                <td>@r.RiverName</td>
+                <td>
+                    <div class="dws-row-actions">
+                        <a asp-action="EditRiver" asp-route-id="@r.RiverId" class="dws-btn dws-btn-ghost">Edit</a>
+                        <form asp-action="DeleteRiver" asp-route-id="@r.RiverId" method="post" class="dws-inline-form" onsubmit="return confirm('Delete this river?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dws-btn dws-btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        @if (Model.Rivers.Count == 0) { <tr><td colspan="2">None.</td></tr> }
+        </tbody>
+    </table>
+</section>
+
+<!-- Catchment Areas -->
+<section class="card" style="margin-bottom:24px;">
+    <div class="dws-page-header">
+        <h2>Catchment Areas</h2>
+        <a asp-action="CreateCatchment" class="dws-btn dws-btn-primary">Add Catchment</a>
+    </div>
+    <table class="dws-table">
+        <thead><tr><th>Code</th><th>Name</th><th>WMA</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var c in Model.CatchmentAreas)
+        {
+            <tr>
+                <td>@c.CatchmentCode</td>
+                <td>@c.CatchmentName</td>
+                <td>@(c.WaterManagementArea?.WmaName ?? "—")</td>
+                <td>
+                    <div class="dws-row-actions">
+                        <a asp-action="EditCatchment" asp-route-id="@c.CatchmentAreaId" class="dws-btn dws-btn-ghost">Edit</a>
+                        <form asp-action="DeleteCatchment" asp-route-id="@c.CatchmentAreaId" method="post" class="dws-inline-form" onsubmit="return confirm('Delete this catchment?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dws-btn dws-btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        @if (Model.CatchmentAreas.Count == 0) { <tr><td colspan="4">None.</td></tr> }
+        </tbody>
+    </table>
+</section>
+
+<!-- Irrigation Boards -->
+<section class="card" style="margin-bottom:24px;">
+    <div class="dws-page-header">
+        <h2>Irrigation Boards</h2>
+        <a asp-action="CreateIrrigationBoard" class="dws-btn dws-btn-primary">Add Board</a>
+    </div>
+    <table class="dws-table">
+        <thead><tr><th>Name</th><th>P-Number</th><th>Email</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var b in Model.IrrigationBoards)
+        {
+            <tr>
+                <td>@b.IrrigationBoardName</td>
+                <td>@(b.IrrigationBoardPNumber ?? "—")</td>
+                <td>@(b.EmailAddress ?? "—")</td>
+                <td>
+                    <div class="dws-row-actions">
+                        <a asp-action="EditIrrigationBoard" asp-route-id="@b.IrrigationBoardId" class="dws-btn dws-btn-ghost">Edit</a>
+                        <form asp-action="DeleteIrrigationBoard" asp-route-id="@b.IrrigationBoardId" method="post" class="dws-inline-form" onsubmit="return confirm('Delete this board?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dws-btn dws-btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        @if (Model.IrrigationBoards.Count == 0) { <tr><td colspan="4">None.</td></tr> }
+        </tbody>
+    </table>
+</section>
+
+<!-- Crops -->
+<section class="card" style="margin-bottom:24px;">
+    <div class="dws-page-header">
+        <h2>Crops</h2>
+        <a asp-action="CreateCrop" class="dws-btn dws-btn-primary">Add Crop</a>
+    </div>
+    <table class="dws-table">
+        <thead><tr><th>Name</th><th>Type</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var c in Model.Crops)
+        {
+            <tr>
+                <td>@c.CropName</td>
+                <td>@(c.CropType?.CropTypeName ?? "—")</td>
+                <td>
+                    <div class="dws-row-actions">
+                        <a asp-action="EditCrop" asp-route-id="@c.CropId" class="dws-btn dws-btn-ghost">Edit</a>
+                        <form asp-action="DeleteCrop" asp-route-id="@c.CropId" method="post" class="dws-inline-form" onsubmit="return confirm('Delete this crop?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dws-btn dws-btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        @if (Model.Crops.Count == 0) { <tr><td colspan="3">None.</td></tr> }
+        </tbody>
+    </table>
+</section>
+
+<!-- Water Sources -->
+<section class="card" style="margin-bottom:24px;">
+    <div class="dws-page-header">
+        <h2>Water Sources</h2>
+        <a asp-action="CreateWaterSource" class="dws-btn dws-btn-primary">Add Water Source</a>
+    </div>
+    <table class="dws-table">
+        <thead><tr><th>Name</th><th>Type</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var w in Model.WaterSources)
+        {
+            <tr>
+                <td>@w.WaterSourceName</td>
+                <td>@w.WaterSourceType</td>
+                <td>
+                    <div class="dws-row-actions">
+                        <a asp-action="EditWaterSource" asp-route-id="@w.WaterSourceId" class="dws-btn dws-btn-ghost">Edit</a>
+                        <form asp-action="DeleteWaterSource" asp-route-id="@w.WaterSourceId" method="post" class="dws-inline-form" onsubmit="return confirm('Delete this water source?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dws-btn dws-btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        @if (Model.WaterSources.Count == 0) { <tr><td colspan="3">None.</td></tr> }
+        </tbody>
+    </table>
+</section>
+
+<!-- Irrigation Systems -->
+<section class="card" style="margin-bottom:24px;">
+    <div class="dws-page-header">
+        <h2>Irrigation Systems</h2>
+        <a asp-action="CreateIrrigationSystem" class="dws-btn dws-btn-primary">Add System</a>
+    </div>
+    <table class="dws-table">
+        <thead><tr><th>Name</th><th>Description</th><th>Model</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var i in Model.IrrigationSystems)
+        {
+            <tr>
+                <td>@i.IrrigationSystemName</td>
+                <td>@(i.IrrigationSystemDescription ?? "—")</td>
+                <td>@(i.IrrigationSystemModel ?? "—")</td>
+                <td>
+                    <div class="dws-row-actions">
+                        <a asp-action="EditIrrigationSystem" asp-route-id="@i.IrrigationSystemId" class="dws-btn dws-btn-ghost">Edit</a>
+                        <form asp-action="DeleteIrrigationSystem" asp-route-id="@i.IrrigationSystemId" method="post" class="dws-inline-form" onsubmit="return confirm('Delete this system?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dws-btn dws-btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        @if (Model.IrrigationSystems.Count == 0) { <tr><td colspan="4">None.</td></tr> }
+        </tbody>
+    </table>
+</section>
