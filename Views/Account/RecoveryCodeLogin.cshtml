@@ -1,0 +1,23 @@
+@model dwa_ver_val.ViewModels.RecoveryCodeLoginViewModel
+@{
+    ViewData["Title"] = "Recovery code sign-in";
+    Layout = "_LoginLayout";
+}
+
+<div class="dws-card dws-card--login">
+    <h1>Recovery code sign-in</h1>
+    <p>Enter one of your single-use recovery codes. After signing in, generate a fresh set under Security.</p>
+
+    <form asp-action="RecoveryCodeLogin" method="post" class="dws-form">
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div asp-validation-summary="All" class="dws-validation-summary"></div>
+
+        <div class="dws-form-row">
+            <label asp-for="RecoveryCode" class="dws-label"></label>
+            <input asp-for="RecoveryCode" class="dws-input" autocomplete="off" autofocus />
+            <span asp-validation-for="RecoveryCode" class="dws-field-error"></span>
+        </div>
+
+        <button type="submit" class="dws-btn dws-btn-primary">Sign in</button>
+    </form>
+</div>

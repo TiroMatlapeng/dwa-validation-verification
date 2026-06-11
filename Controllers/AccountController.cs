@@ -82,6 +82,13 @@ public class AccountController : Controller
             return RedirectToAction("Index", "Home");
         }
 
+        if (result.RequiresTwoFactor)
+        {
+            // Password was correct; Identity has issued the TwoFactorUserId cookie.
+            return RedirectToAction(nameof(LoginWith2fa),
+                new { returnUrl = model.ReturnUrl, rememberMe = model.RememberMe });
+        }
+
         if (result.IsLockedOut)
         {
             await _audit.LogAsync(new AuditEvent(
@@ -105,6 +112,121 @@ public class AccountController : Controller
             Reason: "Wrong password",
             IPAddress: ipAddress));
         ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+        return View(model);
+    }
+
+    /// <summary>
+    /// Second factor for local-Identity sign-ins. Reached only after PasswordSignInAsync
+    /// returned RequiresTwoFactor (the TwoFactorUserId cookie carries the half-authenticated
+    /// user). Entra sign-ins never land here — Entra enforces MFA itself.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> LoginWith2fa(string? returnUrl = null, bool rememberMe = false)
+    {
+        var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+        if (user is null) return RedirectToAction(nameof(Login), new { returnUrl });
+        return View(new TwoFactorLoginViewModel { ReturnUrl = returnUrl, RememberMe = rememberMe });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> LoginWith2fa(TwoFactorLoginViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+
+        var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+        if (user is null) return RedirectToAction(nameof(Login), new { returnUrl = model.ReturnUrl });
+
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var code = model.TwoFactorCode.Replace(" ", string.Empty).Replace("-", string.Empty);
+        var result = await _signInManager.TwoFactorAuthenticatorSignInAsync(
+            code, model.RememberMe, rememberClient: false);
+
+        if (result.Succeeded)
+        {
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: user.Id.ToString(),
+                Action: "SignedInWith2fa",
+                UserId: user.Id,
+                UserDisplayName: $"{user.FirstName} {user.LastName}",
+                IPAddress: ipAddress));
+            if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+                return Redirect(model.ReturnUrl);
+            return RedirectToAction("Index", "Home");
+        }
+
+        if (result.IsLockedOut)
+        {
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: user.Id.ToString(),
+                Action: "AccountLockedOut",
+                UserId: user.Id,
+                UserDisplayName: $"{user.FirstName} {user.LastName}",
+                Reason: "Too many failed two-factor attempts",
+                IPAddress: ipAddress));
+            ModelState.AddModelError(string.Empty, "Account locked. Try again later.");
+            return View(model);
+        }
+
+        await _audit.LogAsync(new AuditEvent(
+            EntityType: nameof(ApplicationUser),
+            EntityId: user.Id.ToString(),
+            Action: "SignInFailed",
+            UserId: user.Id,
+            UserDisplayName: $"{user.FirstName} {user.LastName}",
+            Reason: "Invalid authenticator code",
+            IPAddress: ipAddress));
+        ModelState.AddModelError(string.Empty, "Invalid authenticator code.");
+        return View(model);
+    }
+
+    /// <summary>Fallback second factor: single-use recovery code (e.g. lost phone).</summary>
+    [HttpGet]
+    public async Task<IActionResult> RecoveryCodeLogin(string? returnUrl = null)
+    {
+        var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+        if (user is null) return RedirectToAction(nameof(Login), new { returnUrl });
+        return View(new RecoveryCodeLoginViewModel { ReturnUrl = returnUrl });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RecoveryCodeLogin(RecoveryCodeLoginViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+
+        var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+        if (user is null) return RedirectToAction(nameof(Login), new { returnUrl = model.ReturnUrl });
+
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var code = model.RecoveryCode.Replace(" ", string.Empty);
+        var result = await _signInManager.TwoFactorRecoveryCodeSignInAsync(code);
+
+        if (result.Succeeded)
+        {
+            await _audit.LogAsync(new AuditEvent(
+                EntityType: nameof(ApplicationUser),
+                EntityId: user.Id.ToString(),
+                Action: "SignedInWithRecoveryCode",
+                UserId: user.Id,
+                UserDisplayName: $"{user.FirstName} {user.LastName}",
+                IPAddress: ipAddress));
+            if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+                return Redirect(model.ReturnUrl);
+            return RedirectToAction("Index", "Home");
+        }
+
+        await _audit.LogAsync(new AuditEvent(
+            EntityType: nameof(ApplicationUser),
+            EntityId: user.Id.ToString(),
+            Action: "SignInFailed",
+            UserId: user.Id,
+            UserDisplayName: $"{user.FirstName} {user.LastName}",
+            Reason: "Invalid recovery code",
+            IPAddress: ipAddress));
+        ModelState.AddModelError(string.Empty, "Invalid recovery code.");
         return View(model);
     }
 

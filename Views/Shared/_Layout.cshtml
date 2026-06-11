@@ -111,6 +111,7 @@
                                 <div class="top-bar-user__role">@role</div>
                             </div>
                             <div class="user-avatar" title="@displayName">@initials</div>
+                            <a asp-controller="Security" asp-action="Index" class="dws-btn dws-btn-ghost" title="Two-factor authentication settings">Security</a>
                             <form asp-controller="Account" asp-action="Logout" method="post" class="dws-inline-form">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="dws-btn dws-btn-ghost">Sign out</button>

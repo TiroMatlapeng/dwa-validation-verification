@@ -1,0 +1,30 @@
+@model dwa_ver_val.ViewModels.EnableAuthenticatorViewModel
+@{ ViewData["Title"] = "Enable two-factor"; }
+
+<div class="page-title">Enable two-factor authentication</div>
+<div class="page-subtitle">Scan the QR code with your authenticator app, then confirm with a code</div>
+
+<div class="card" style="max-width: 640px;">
+    <ol style="margin: 0 0 16px 18px; padding: 0; line-height: 1.8;">
+        <li>Open your authenticator app and scan this QR code (or type the key below).</li>
+        <li>Enter the 6-digit code the app shows to confirm.</li>
+    </ol>
+
+    <img src="@Model.QrCodeDataUri" alt="Authenticator QR code" width="200" height="200"
+         style="border: 1px solid var(--dws-border, #ddd); border-radius: 6px;" />
+
+    <p style="margin-top: 10px;">
+        Manual entry key: <code id="shared-key">@Model.SharedKey</code>
+    </p>
+
+    <form asp-action="EnableAuthenticator" method="post" class="dws-form" style="margin-top: 12px;">
+        <div asp-validation-summary="All" class="dws-validation-summary"></div>
+        <div class="dws-form-row">
+            <label asp-for="Code" class="dws-label"></label>
+            <input asp-for="Code" class="dws-input" autocomplete="one-time-code" inputmode="numeric" autofocus />
+            <span asp-validation-for="Code" class="dws-field-error"></span>
+        </div>
+        <button type="submit" class="dws-btn dws-btn-primary">Verify and enable</button>
+        <a asp-action="Index" class="dws-btn dws-btn-ghost">Cancel</a>
+    </form>
+</div>

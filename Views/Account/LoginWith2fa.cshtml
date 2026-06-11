@@ -1,0 +1,30 @@
+@model dwa_ver_val.ViewModels.TwoFactorLoginViewModel
+@{
+    ViewData["Title"] = "Two-factor authentication";
+    Layout = "_LoginLayout";
+}
+
+<div class="dws-card dws-card--login">
+    <h1>Two-factor authentication</h1>
+    <p>Enter the 6-digit code from your authenticator app.</p>
+
+    <form asp-action="LoginWith2fa" method="post" class="dws-form">
+        <input type="hidden" asp-for="ReturnUrl" />
+        <input type="hidden" asp-for="RememberMe" />
+        <div asp-validation-summary="All" class="dws-validation-summary"></div>
+
+        <div class="dws-form-row">
+            <label asp-for="TwoFactorCode" class="dws-label"></label>
+            <input asp-for="TwoFactorCode" class="dws-input" autocomplete="one-time-code"
+                   inputmode="numeric" autofocus />
+            <span asp-validation-for="TwoFactorCode" class="dws-field-error"></span>
+        </div>
+
+        <button type="submit" class="dws-btn dws-btn-primary">Verify</button>
+    </form>
+
+    <p style="margin-top:14px;">
+        Lost your device?
+        <a asp-action="RecoveryCodeLogin" asp-route-returnUrl="@Model.ReturnUrl">Sign in with a recovery code</a>
+    </p>
+</div>
