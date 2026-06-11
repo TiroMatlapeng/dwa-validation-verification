@@ -56,3 +56,9 @@
     <button type="submit" class="dws-btn dws-btn-primary">Save</button>
     <a asp-action="Index" class="dws-btn dws-btn-ghost">Cancel</a>
 </form>
+
+<form asp-action="ResetMfa" asp-route-id="@Model.Id" method="post" style="margin-top: 12px;"
+      onsubmit="return confirm('Reset two-factor authentication for this user? They will sign in with password only until they re-enrol.');">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="dws-btn dws-btn-danger">Reset two-factor (MFA)</button>
+</form>

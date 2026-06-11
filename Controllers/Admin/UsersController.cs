@@ -232,6 +232,21 @@ public class UsersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    /// <summary>
+    /// Lockout escape hatch: clears a user's authenticator enrolment so they can sign in with
+    /// password only and re-enrol (lost phone, no recovery codes). Admin-only by class policy.
+    /// </summary>
+    [HttpPost("{id:guid}"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetMfa(Guid id)
+    {
+        var user = await _users.FindByIdAsync(id.ToString());
+        if (user is null) return NotFound();
+        await _users.SetTwoFactorEnabledAsync(user, false);
+        await _users.ResetAuthenticatorKeyAsync(user);
+        TempData["Success"] = $"Two-factor authentication reset for {user.Email}. They can now sign in with password only and re-enrol.";
+        return RedirectToAction(nameof(Edit), new { id });
+    }
+
     private async Task<IEnumerable<OrgUnitOption>> LoadOrgUnits() =>
         await _db.OrganisationalUnits
             .OrderBy(ou => ou.Name)

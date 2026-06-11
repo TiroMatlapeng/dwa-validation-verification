@@ -1,0 +1,28 @@
+@model dwa_ver_val.ViewModels.SecurityIndexViewModel
+@{ ViewData["Title"] = "Security"; }
+
+<div class="page-title">Security</div>
+<div class="page-subtitle">Two-factor authentication for your account</div>
+
+<div class="card" style="max-width: 640px;">
+    @if (Model.TwoFactorEnabled)
+    {
+        <p>
+            <strong>Two-factor authentication is enabled.</strong><br />
+            Recovery codes remaining: @Model.RecoveryCodesLeft
+        </p>
+        <form asp-action="DisableAuthenticator" method="post" style="margin-top:12px;"
+              onsubmit="return confirm('Disable two-factor authentication? Your account will be protected by password only.');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="dws-btn dws-btn-danger">Disable two-factor</button>
+        </form>
+    }
+    else
+    {
+        <p>
+            Two-factor authentication is <strong>not enabled</strong>. Protect your account with an
+            authenticator app (Google Authenticator, Microsoft Authenticator, Authy, 1Password).
+        </p>
+        <a asp-action="EnableAuthenticator" class="dws-btn dws-btn-primary">Enable two-factor</a>
+    }
+</div>

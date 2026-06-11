@@ -1,0 +1,16 @@
+@model dwa_ver_val.ViewModels.RecoveryCodesViewModel
+@{ ViewData["Title"] = "Recovery codes"; }
+
+<div class="page-title">Recovery codes</div>
+<div class="page-subtitle">Store these somewhere safe — each can be used once if you lose your authenticator</div>
+
+<div class="card" style="max-width: 640px;">
+    <p><strong>These codes are shown only once.</strong> Print them or store them in a password manager.</p>
+    <ul id="recovery-codes" style="columns: 2; list-style: none; margin: 12px 0; padding: 0; font-family: monospace; font-size: 15px; line-height: 2;">
+        @foreach (var code in Model.Codes)
+        {
+            <li>@code</li>
+        }
+    </ul>
+    <a asp-action="Index" class="dws-btn dws-btn-primary">Done</a>
+</div>
