@@ -1,4 +1,4 @@
-name: Build and deploy to AKS (VnV-Project)
+name: "Deploy: AKS (dev)"
 
 on:
   push:
@@ -7,6 +7,10 @@ on:
   workflow_dispatch:
 
 env:
+  # Naming convention: docs/DEPLOYMENT-NAMING-CONVENTION.md.
+  # ACR target name is acrdwavv — switch when the registry is recreated (rename
+  # is impossible in Azure). Namespace target is dwa-vv-dev — switch during the
+  # planned namespace migration (stateful mssql data must move with it).
   ACR_LOGIN_SERVER: vnvregistry.azurecr.io
   IMAGE_NAME: dwa-vv
   HELM_RELEASE: dwa-vv
@@ -41,12 +45,20 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
+      # Human-readable image tags: 7-char short SHA + dev-latest pointer
+      # (full 40-char SHA tags are unreadable in the portal — see naming convention §3.2).
+      - name: Compute short image tag
+        id: meta
+        run: echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: |
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.short_sha }}
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:dev-latest
 
       # ── Deploy to AKS via stored kubeconfig ───────────────────────────────
       - name: Set up kubectl
@@ -63,7 +75,7 @@ jobs:
 
       - name: Create / refresh ACR pull secret
         run: |
-          kubectl create secret docker-registry acr-pull-secret \
+          kubectl create secret docker-registry dwa-vv-acr-pull \
             --docker-server=${{ env.ACR_LOGIN_SERVER }} \
             --docker-username=${{ secrets.ACR_USERNAME }} \
             --docker-password=${{ secrets.ACR_PASSWORD }} \
@@ -115,7 +127,7 @@ jobs:
           helm upgrade --install ${{ env.HELM_RELEASE }} deploy/helm/dwa-vv \
             --namespace ${{ env.HELM_NAMESPACE }} \
             -f deploy/helm/dwa-vv/values.dev.yaml \
-            --set image.tag=${{ github.sha }} \
+            --set image.tag=${{ steps.meta.outputs.short_sha }} \
             --wait \
             --timeout 8m
 

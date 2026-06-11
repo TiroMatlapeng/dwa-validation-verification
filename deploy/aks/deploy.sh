@@ -2,22 +2,22 @@
 # Builds, pushes, and deploys the DWA V&V System image to AKS via Helm.
 #
 # Usage (minimum):
-#   export ACR_NAME=dwaregistry
-#   export RG=rg-dwa-vv-aks
-#   export AKS_CLUSTER=aks-dwa-vv-demo
+#   export ACR_NAME=acrdwavv
+#   export RG=rg-dwa-vv-dev
+#   export AKS_CLUSTER=aks-dwa-vv-dev
 #   ./deploy/aks/deploy.sh
 #
 # Full example with all options:
-#   export ACR_NAME=dwaregistry
-#   export RG=rg-dwa-vv-aks
-#   export AKS_CLUSTER=aks-dwa-vv-demo
+#   export ACR_NAME=acrdwavv
+#   export RG=rg-dwa-vv-dev
+#   export AKS_CLUSTER=aks-dwa-vv-dev
 #   export IMAGE_TAG=abc1234
 #   export RELEASE_NAME=dwa-vv
 #   export NAMESPACE=dwa-vv
 #   export VALUES_FILE=deploy/helm/dwa-vv/values.prod.yaml
 #   export MANAGED_IDENTITY_CLIENT_ID=<uuid>
 #   export AZURE_TENANT_ID=<uuid>
-#   export KEY_VAULT_NAME=kv-dwa-vv-aks
+#   export KEY_VAULT_NAME=kv-dwa-vv-dev
 #   ./deploy/aks/deploy.sh
 #
 # Requires: docker, az CLI, kubectl, helm.
@@ -25,7 +25,7 @@
 set -euo pipefail
 
 # ── Required env vars ─────────────────────────────────────────────────────────
-: "${ACR_NAME:?ERROR: ACR_NAME is required (e.g. dwaregistry)}"
+: "${ACR_NAME:?ERROR: ACR_NAME is required (e.g. acrdwavv)}"
 : "${RG:?ERROR: RG is required — the Azure resource group}"
 : "${AKS_CLUSTER:?ERROR: AKS_CLUSTER is required}"
 
