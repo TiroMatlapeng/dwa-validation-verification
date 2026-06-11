@@ -20,15 +20,26 @@ public class DocumentController : Controller
     private readonly IScopedCaseQuery _scope;
     private readonly IFileStorage _storage;
     private readonly IAuditService _audit;
+    private readonly IVirusScanner _virusScanner;
 
-    public DocumentController(ApplicationDBContext db, IScopedCaseQuery scope, IFileStorage storage, IAuditService audit)
+    public DocumentController(
+        ApplicationDBContext db, IScopedCaseQuery scope, IFileStorage storage,
+        IAuditService audit, IVirusScanner virusScanner)
     {
-        _db = db; _scope = scope; _storage = storage; _audit = audit;
+        _db = db; _scope = scope; _storage = storage; _audit = audit; _virusScanner = virusScanner;
     }
 
     private Guid CurrentUserId() =>
         Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? throw new InvalidOperationException("Not authenticated."));
+
+    private bool TryGetCurrentUserId(out Guid userId)
+    {
+        var raw = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (raw is not null && Guid.TryParse(raw, out userId)) return true;
+        userId = default;
+        return false;
+    }
 
     private async Task<FileMaster?> ScopedCaseAsync(Guid fileMasterId)
     {
@@ -78,9 +89,20 @@ public class DocumentController : Controller
                 ModelState.AddModelError(nameof(model.File), "File content does not match its extension.");
         }
 
+        // DOC-02: virus scan — after magic-byte validation, before persisting the blob/row.
+        // Fail-closed: only a Clean verdict is allowed; Infected or scanner Error rejects the upload.
+        if (ModelState.IsValid && model.File is { Length: > 0 })
+        {
+            using var scanStream = model.File.OpenReadStream();
+            var scan = await _virusScanner.ScanAsync(scanStream, ct);
+            if (scan != VirusScanResult.Clean)
+                ModelState.AddModelError(nameof(model.File),
+                    "The file failed virus scanning and was rejected. Please upload a clean file.");
+        }
+
         if (!ModelState.IsValid) return View(model);
 
-        var uid = CurrentUserId();
+        if (!TryGetCurrentUserId(out var uid)) return Forbid();
         using var stream = model.File!.OpenReadStream();
         var stored = await _storage.SaveAsync(
             stream, model.File.ContentType ?? "application/octet-stream", model.File.FileName, ct);
@@ -97,7 +119,7 @@ public class DocumentController : Controller
             FileSizeBytes = stored.SizeBytes,
             UploadedByUserId = uid,
             UploadDate = DateTime.UtcNow,
-            VirusScanStatus = "Pending",
+            VirusScanStatus = "Clean", // DOC-02: only Clean content reaches here (Infected/Error rejected above)
             SyncStatus = "NotSynced",
             DocumentHash = stored.Sha256Hex
         };
@@ -123,10 +145,10 @@ public class DocumentController : Controller
             .FirstOrDefaultAsync(d => d.DocumentId == documentId, ct);
         if (doc?.FileMaster is null || !_scope.IsInScope(doc.FileMaster, User)) return Forbid();
 
-        // DOC-02: real AV scanning deferred (no scanner wired). Until an IVirusScanner sets "Clean"/"Infected",
-        // we block only "Infected"; tighten to require "Clean" once scanning exists.
-        if (doc.VirusScanStatus == "Infected")
-            return BadRequest("File failed virus scanning and cannot be downloaded.");
+        // DOC-02: fail-closed virus-scan gate. Serve ONLY documents whose scan came back "Clean".
+        // Anything else (Infected, Pending, Error, or null/not-yet-scanned) is not downloadable.
+        if (doc.VirusScanStatus != "Clean")
+            return NotFound();
 
         var stream = await _storage.OpenReadAsync(doc.BlobPath, ct);
         return File(stream, doc.ContentType ?? "application/octet-stream", doc.FileName);
@@ -137,6 +159,8 @@ public class DocumentController : Controller
     [Authorize(Policy = DwsPolicies.CanManageDocuments)]
     public async Task<IActionResult> Delete(Guid documentId, CancellationToken ct)
     {
+        if (!TryGetCurrentUserId(out var uid)) return Forbid();
+
         var doc = await _db.Documents.Include(d => d.FileMaster).ThenInclude(f => f!.Property)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId, ct);
         if (doc?.FileMaster is null || !_scope.IsInScope(doc.FileMaster, User)) return Forbid();
@@ -153,7 +177,7 @@ public class DocumentController : Controller
             EntityType: "Document",
             EntityId: documentId.ToString(),
             Action: "DocumentDeleted",
-            UserId: CurrentUserId(),
+            UserId: uid,
             UserDisplayName: User.Identity?.Name,
             FromValue: snapshot,
             IPAddress: HttpContext.Connection.RemoteIpAddress?.ToString()));

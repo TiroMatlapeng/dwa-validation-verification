@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DWA V&amp;V System — Build Status Report (2026-06-08)</title>
+<style>
+  :root{
+    --navy-900:#001a3a; --navy-800:#002855; --navy-700:#003d7a;
+    --blue-600:#0066b3; --blue-300:#7db8e0; --blue-50:#eef5fb;
+    --green-700:#2e7d32; --green-50:#eaf4ea;
+    --amber-700:#8a6d00; --amber-500:#c49000; --amber-50:#fbf4dd;
+    --red-700:#c62828; --red-50:#fbeaea;
+    --n-900:#1a1f2b; --n-700:#555d6e; --n-500:#8892a0; --n-300:#d0d5db; --n-100:#f1f3f6; --white:#fff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--n-900);background:var(--n-100);line-height:1.55;font-size:15px}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 24px 64px}
+  header.hero{background:linear-gradient(135deg,var(--navy-800),var(--navy-700));color:#fff;padding:36px 0 30px;margin-bottom:28px;
+       border-bottom:5px solid var(--blue-600)}
+  header.hero .wrap{padding-top:0;padding-bottom:0}
+  .eyebrow{letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:var(--blue-300);font-weight:700;margin:0 0 6px}
+  h1{margin:0 0 6px;font-size:28px;font-weight:700}
+  .sub{color:#c9dcef;font-size:14px;margin:0}
+  .verdict{display:inline-flex;align-items:center;gap:10px;margin-top:18px;background:rgba(255,255,255,.10);
+       border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:12px 16px}
+  .verdict .dot{width:12px;height:12px;border-radius:50%;background:var(--blue-300);box-shadow:0 0 0 4px rgba(125,184,224,.25)}
+  .verdict strong{font-size:16px}
+  .verdict span{color:#c9dcef;font-size:13px}
+  h2{font-size:20px;margin:34px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--n-300);color:var(--navy-800)}
+  h3{font-size:16px;margin:22px 0 8px;color:var(--navy-700)}
+  p{margin:10px 0}
+  .card{background:#fff;border:1px solid var(--n-300);border-radius:12px;padding:20px 22px;margin:16px 0;
+       box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}
+  .stat{background:#fff;border:1px solid var(--n-300);border-radius:12px;padding:16px;text-align:center}
+  .stat .num{font-size:30px;font-weight:800;line-height:1}
+  .stat .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--n-700);margin-top:6px}
+  .stat.imp .num{color:var(--amber-700)} .stat.blue .num{color:var(--blue-600)} .stat.ok .num{color:var(--green-700)}
+  .bar{height:14px;border-radius:8px;background:var(--n-300);overflow:hidden;margin:6px 0 2px}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--blue-600),var(--navy-700))}
+  .pill{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;letter-spacing:.03em;white-space:nowrap}
+  .pill.done{background:var(--green-50);color:var(--green-700);border:1px solid #aed4af}
+  .pill.part{background:var(--amber-50);color:var(--amber-700);border:1px solid #e6d28a}
+  .pill.miss{background:var(--red-50);color:var(--red-700);border:1px solid #e6b9b9}
+  table{width:100%;border-collapse:collapse;margin:12px 0;background:#fff;border:1px solid var(--n-300);border-radius:10px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--n-300);vertical-align:top;font-size:14px}
+  th{background:var(--navy-800);color:#fff;font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  tr:nth-child(even) td{background:#fafbfc}
+  code{background:var(--n-100);border:1px solid var(--n-300);border-radius:5px;padding:1px 5px;font-size:13px;
+       font-family:"SF Mono",Menlo,Consolas,monospace}
+  .good{background:var(--green-50);border:1px solid #aed4af;border-left:6px solid var(--green-700);border-radius:10px;padding:16px 20px;margin:16px 0}
+  .info{background:var(--blue-50);border:1px solid #b9d6ee;border-left:6px solid var(--blue-600);border-radius:10px;padding:16px 20px;margin:16px 0}
+  ol.plan{counter-reset:step;list-style:none;padding-left:0;margin:8px 0}
+  ol.plan li{position:relative;padding:12px 14px 12px 52px;background:#fff;border:1px solid var(--n-300);border-radius:10px;margin:10px 0}
+  ol.plan li::before{counter-increment:step;content:counter(step);position:absolute;left:12px;top:12px;width:28px;height:28px;
+       background:var(--navy-700);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+  ol.plan li b{color:var(--navy-800)}
+  .muted{color:var(--n-700);font-size:13px}
+  ul.tight li{margin:5px 0}
+  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--n-300);color:var(--n-500);font-size:12px}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">DWA Validation &amp; Verification System</p>
+    <h1>Build Status Report — Internal &amp; External Applications</h1>
+    <p class="sub">Branch <code>fix/remediation-wave4</code> &nbsp;·&nbsp; 8 June 2026 &nbsp;·&nbsp; ASP.NET Core 10 · EF Core 10 · SQL Server</p>
+    <div class="verdict">
+      <span class="dot"></span>
+      <div>
+        <strong>Status: ON TRACK — core V&amp;V pipeline built &amp; working</strong><br>
+        <span>Ship-blocker (DOC-01) resolved · ~441 tests pass · outstanding work concentrated in 2 unbuilt services, security/automation hardening &amp; UI/portal polish</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <h2>Executive summary</h2>
+  <div class="card">
+    <p>The system's central pipeline — <b>case → workflow → validate → verify → statutory letters → reporting</b> — is genuinely built, wired, and tested. The 3 June ship-blocker (publicly downloadable letter PDFs, DOC-01) is fixed, and four remediation waves have cleared the critical and most of the important findings.</p>
+    <p>Outstanding build work falls into three buckets: <b>two spec'd services never built</b> (SignatureService, IntegrationService/eWULAAS), <b>security &amp; automation hardening</b> (virus scanning, due-date reminders, two workflow concurrency bugs, Entra SSO, POPIA review), and <b>UI/portal polish</b> (report filter forms, mobile/WCAG, MFA recovery codes, portal workflow-state surfacing).</p>
+  </div>
+
+  <div class="grid">
+    <div class="stat ok"><div class="num">~82%</div><div class="lbl">Internal app built</div></div>
+    <div class="stat ok"><div class="num">~78%</div><div class="lbl">External portal built</div></div>
+    <div class="stat blue"><div class="num">~441</div><div class="lbl">Tests passing</div></div>
+    <div class="stat imp"><div class="num">~20–25%</div><div class="lbl">Build work outstanding</div></div>
+  </div>
+
+  <h2>Remediation tail — 3 June 2026 review</h2>
+  <div class="good">
+    <b>Ship-blocker cleared.</b> DOC-01 (letter-PDF exposure) is FIXED — blobs moved out of <code>wwwroot</code>, <code>/_uploads</code> blocked, served only via a scope-gated controller action with an exposure regression test.
+  </div>
+  <table>
+    <tr><th>Severity</th><th>Fixed</th><th>Partial</th><th>Outstanding</th></tr>
+    <tr><td>Critical (1)</td><td>1 — DOC-01</td><td>—</td><td>—</td></tr>
+    <tr><td>Important (8)</td><td>4 — AUTH-01, BUG-030, X-04, DOC-03</td><td>2 — DOC-02 (virus gate), X-01 (SQL tests)</td><td><b>2 — WF-01, WF-02</b></td></tr>
+    <tr><td>Minor (13)</td><td>6</td><td>1 — dam auto-calc</td><td>6</td></tr>
+  </table>
+  <p class="muted">Still open: WF-01 (no concurrency token on <code>WorkflowInstance</code>), WF-02 (no unique index on <code>LetterIssuance(FileMasterId, LetterTypeId)</code>), virus-scan gate, most tests still on EF-InMemory, report filter UI, guards keying on <code>PropertyId</code>, non-atomic letter issuance, Forestation/DamCalc index 404 without <code>?propertyId=</code>, Integration Health empty-state, brittle path-traversal guard.</p>
+
+  <h2>Internal app — status vs functional spec</h2>
+  <table>
+    <tr><th>Component</th><th>Status</th><th>Outstanding</th></tr>
+    <tr><td>WorkflowEngine (CP1–CP9, S33(2) skip, blocking reasons)</td><td><span class="pill done">Built</span></td><td>CP1 sub-steps 1.1–1.7 not decomposed into guarded sub-states</td></tr>
+    <tr><td>Transition guards (CP2–CP9, PAJA, file-compilation)</td><td><span class="pill done">Built</span></td><td>Dam/Forestation/SAPWAT guards key on <code>PropertyId</code> not <code>FileMasterId</code></td></tr>
+    <tr><td>S35/S33 letter state machine + AssessmentTrack</td><td><span class="pill done">Built</span></td><td>—</td></tr>
+    <tr><td>LetterService (QuestPDF, 10 templates, delivery tracking)</td><td><span class="pill done">Built</span></td><td>Letter+transition not atomic; no unique letter index</td></tr>
+    <tr><td>LawfulnessAssessmentService (two-tier GWCA→general)</td><td><span class="pill done">Built</span></td><td>—</td></tr>
+    <tr><td>CalculatorService (SAPWAT, Dam M1/M2, SFRA, Lawfulness)</td><td><span class="pill done">Built</span></td><td>Button-triggered, not auto-on-save (acceptable)</td></tr>
+    <tr><td>Reporting (6 reports, CSV/Excel/PDF, D3 dashboard)</td><td><span class="pill done">Built</span></td><td>No filter-form UI in views (querystring only)</td></tr>
+    <tr><td>Role / org-scope model (6 roles, catchment&gt;WMA&gt;province)</td><td><span class="pill done">Built</span></td><td>—</td></tr>
+    <tr><td>AuditService (immutable log)</td><td><span class="pill done">Built</span></td><td>Immutability by convention only</td></tr>
+    <tr><td>Client-feedback entities (property status/parent, HDI, catchment FK, Objection)</td><td><span class="pill done">Built</span></td><td>V&amp;V case-number generator not built (rule TBD)</td></tr>
+    <tr><td>NotificationService</td><td><span class="pill part">Partial</span></td><td>No due-date reminder automation (no background service)</td></tr>
+    <tr><td>SignatureService (e-sig capture + X.509)</td><td><span class="pill miss">Missing</span></td><td>Models exist; no service / SignaturePad / X.509</td></tr>
+    <tr><td>IntegrationService (eWULAAS outbound / WARMS inbound)</td><td><span class="pill miss">Missing</span></td><td>Integration Health report is an empty shell</td></tr>
+    <tr><td>Virus scanning on uploads</td><td><span class="pill miss">Stub</span></td><td>Status hard-set to <code>Pending</code>, never scanned</td></tr>
+    <tr><td>Concurrency control on transitions (WF-01)</td><td><span class="pill miss">Missing</span></td><td>No <code>RowVersion</code> → double-transition race</td></tr>
+  </table>
+  <p>Internal functional completeness <b>~82%</b> &nbsp;→&nbsp; ~18% outstanding.</p>
+  <div class="bar"><i style="width:82%"></i></div>
+
+  <h2>External portal — status vs functional spec</h2>
+  <table>
+    <tr><th>Capability</th><th>Status</th><th>Outstanding</th></tr>
+    <tr><td>Separate identity realm (<code>PublicUser</code>, <code>PublicPortalScheme</code>, short timeout)</td><td><span class="pill done">Built</span></td><td>—</td></tr>
+    <tr><td>Self-registration + email confirm + SA-ID validation + HDI/POPIA consent</td><td><span class="pill done">Built</span></td><td>—</td></tr>
+    <tr><td>Mandatory MFA (TOTP + SMS OTP, device-trust)</td><td><span class="pill done">Built</span></td><td>Recovery codes dead schema; SMS gateway is a logging stub</td></tr>
+    <tr><td>Row-level isolation + DWS claim-approval gate</td><td><span class="pill done">Built</span></td><td>—</td></tr>
+    <tr><td>Case status view</td><td><span class="pill part">Partial</span></td><td><code>WorkflowState</code> hardcoded null — state + history not surfaced</td></tr>
+    <tr><td>Notifications</td><td><span class="pill part">Partial</span></td><td>Event-specific only; no notification-bell/inbox UI</td></tr>
+    <tr><td>Document upload (size, extension, magic-byte, vocabulary)</td><td><span class="pill done">Built</span></td><td>Virus scanning stubbed</td></tr>
+    <tr><td>Comments / letter responses</td><td><span class="pill done">Built</span></td><td>—</td></tr>
+    <tr><td>Appeal/Objection lodging (Protest→Objection rename honoured)</td><td><span class="pill done">Built</span></td><td>Objection supporting-doc uploads absent; legacy <code>Protest</code> dead models remain</td></tr>
+    <tr><td>Internal-side read visibility of portal comments/uploads</td><td><span class="pill done">Built</span></td><td>—</td></tr>
+    <tr><td>Portal tests (isolation, boundary, flows)</td><td><span class="pill part">Partial</span></td><td><code>PortalBoundaryTests</code> likely red — controllers inject <code>ApplicationDBContext</code> directly</td></tr>
+  </table>
+  <p>External portal functional completeness <b>~78%</b> &nbsp;→&nbsp; ~22% outstanding.</p>
+  <div class="bar"><i style="width:78%"></i></div>
+
+  <h2>Comparative analysis vs rollout-plan WBS</h2>
+  <p class="muted">Build streams (WBS 4–10); testing/deploy/post-deploy (WBS 11–13) excluded.</p>
+  <table>
+    <tr><th>WBS stream</th><th>Actual</th><th>Outstanding</th></tr>
+    <tr><td>4 · Core domain &amp; data layer</td><td>~90% — 55+ entities, migrations, repos, services</td><td>~10%</td></tr>
+    <tr><td>5 · V&amp;V workflow engine</td><td>~85% — engine + letters + audit; appeals partial</td><td>~15%</td></tr>
+    <tr><td>6 · Reporting &amp; analytics</td><td>~90% — 6 reports, exports, D3 dashboard</td><td>~10% (filter UI, ad-hoc query builder)</td></tr>
+    <tr><td>7 · Advanced features &amp; automation</td><td><b>~15%</b> — routing, automation, reminders unbuilt</td><td><b>~85%</b></td></tr>
+    <tr><td>8 · Internal UI enhancement</td><td>~60% — sidebar/brand done</td><td>~40% (mobile-responsive, WCAG 2.1 AA, filter forms)</td></tr>
+    <tr><td>9 · External portal</td><td>~78%</td><td>~22%</td></tr>
+    <tr><td>10 · Identity, security &amp; POPIA</td><td>~50% — RBAC/HDI done; Entra SSO stubbed</td><td>~50% (POPIA review, threat model, virus scan, signatures)</td></tr>
+  </table>
+  <p>Blended functional-build completeness <b>≈ 75–80%</b> (~20–25% outstanding), weighting the two missing services and the advanced-automation stream against an otherwise mature core.</p>
+
+  <h2>Next steps (excluding smoke / UA testing)</h2>
+  <h3>Tier 1 — correctness &amp; security</h3>
+  <ol class="plan">
+    <li><b>WF-01</b> — add <code>RowVersion</code> concurrency token to <code>WorkflowInstance</code>; wrap transitions in a transaction.</li>
+    <li><b>WF-02</b> — unique DB index on <code>LetterIssuance(FileMasterId, LetterTypeId)</code> + atomic reference numbering; make letter-issue + transition a single transaction.</li>
+    <li><b>Virus-scan gate</b> — wire a real <code>IVirusScanner</code> (ClamAV/Defender); require <code>Clean</code> before any download, internal + portal.</li>
+    <li>Fix workflow guards to key on <code>FileMasterId</code>; harden <code>LocalDiskFileStorage</code> path-traversal with canonical-path containment.</li>
+  </ol>
+  <h3>Tier 2 — missing spec services</h3>
+  <ol class="plan">
+    <li><b>SignatureService</b> — SignaturePad.js capture + server-side X.509 verification for statutory letters.</li>
+    <li><b>IntegrationService</b> — eWULAAS outbound push of ELU determinations; fill the Integration Health report.</li>
+    <li><b>V&amp;V case-number generator</b> — confirm business rule with DWS, then implement runtime generation on case creation.</li>
+    <li><b>Reminder/automation</b> (WBS 7) — hosted <code>BackgroundService</code> for due-date reminders + overdue-letter escalation.</li>
+  </ol>
+  <h3>Tier 3 — portal &amp; UX completion</h3>
+  <ol class="plan">
+    <li>MFA <b>recovery codes</b> (generate/display/consume) + a real SMS provider.</li>
+    <li>Surface <b>workflow state + history</b> in the portal case view; add notification <b>bell/inbox</b> + generic state-change notifications.</li>
+    <li><b>Objection document uploads</b>; remove legacy <code>Protest</code>/<code>ProtestDocument</code> models.</li>
+    <li><b>Report filter-form UI</b>; Forestation/DamCalc index empty-state; Integration Health empty-state.</li>
+  </ol>
+  <h3>Tier 4 — platform hardening (WBS 8 &amp; 10)</h3>
+  <ol class="plan">
+    <li><b>Entra ID SSO</b> (currently stubbed), POPIA data-classification review, threat model, mobile responsiveness + WCAG 2.1 AA.</li>
+    <li><b>Migrate the test suite off EF-InMemory</b> to SQL Server (Testcontainers/Respawn) + introduce <b>Playwright E2E</b> regression so UI/SQL defects surface in CI.</li>
+  </ol>
+
+  <div class="info">
+    <b>Decisions awaiting client input.</b> (1) <b>V&amp;V case-number rule</b> is still "business rule TBD" — blocks Tier-2 step 7. (2) The dam <b>Method-2 ×1000 factor</b> faithfully implements Appendix D but is physically unusual — confirm with the DWS requirements owner.
+  </div>
+
+  <footer>
+    Generated for the DWA V&amp;V System · 8 June 2026 · Consolidated from three read-only audits (internal app, external portal, remediation status) plus the rollout-plan WBS and git history. No code changed in producing this report.
+  </footer>
+</div>
+</body>
+</html>

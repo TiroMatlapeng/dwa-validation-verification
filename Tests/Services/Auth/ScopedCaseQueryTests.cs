@@ -439,4 +439,111 @@ public class ScopedCaseQueryTests
 
         Assert.False(sut.IsInScope(fmA, user));
     }
+
+    // ── FilterWaterManagementAreas ─────────────────────────────────────────────
+
+    [Fact]
+    public async Task FilterWaterManagementAreas_NationalManager_SeesAll()
+    {
+        using var db = CreateDb();
+        var (_, _, _, _, _) = SeedHierarchy(db, "A");
+        var (_, _, _, _, _) = SeedHierarchy(db, "B");
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.NationalManager);
+
+        var result = await sut.FilterWaterManagementAreas(db.WaterManagementAreas, user).ToListAsync();
+
+        Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
+    public async Task FilterWaterManagementAreas_SystemAdmin_SeesAll()
+    {
+        using var db = CreateDb();
+        SeedHierarchy(db, "A");
+        SeedHierarchy(db, "B");
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.SystemAdmin);
+
+        var result = await sut.FilterWaterManagementAreas(db.WaterManagementAreas, user).ToListAsync();
+
+        Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
+    public async Task FilterWaterManagementAreas_WmaScopedUser_SeesOnlyOwnWma()
+    {
+        using var db = CreateDb();
+        var (_, wmaA, _, _, _) = SeedHierarchy(db, "A");
+        SeedHierarchy(db, "B"); // different WMA
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.RegionalManager, wmaId: wmaA);
+
+        var result = await sut.FilterWaterManagementAreas(db.WaterManagementAreas, user).ToListAsync();
+
+        Assert.Single(result);
+        Assert.Equal(wmaA, result[0].WmaId);
+    }
+
+    [Fact]
+    public async Task FilterWaterManagementAreas_ProvinceScopedUser_SeesWmasInProvince_NotOthers()
+    {
+        using var db = CreateDb();
+        var (provA, wmaA, _, _, _) = SeedHierarchy(db, "A");
+        // Second WMA in same province:
+        var wmaA2 = Guid.NewGuid();
+        db.WaterManagementAreas.Add(new WaterManagementArea
+        {
+            WmaId = wmaA2, WmaName = "WMA-A2", WmaCode = "A2", ProvinceId = provA
+        });
+        SeedHierarchy(db, "Z"); // different province
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.RegionalManager, provinceId: provA);
+
+        var result = await sut.FilterWaterManagementAreas(db.WaterManagementAreas, user).ToListAsync();
+
+        Assert.Equal(2, result.Count);
+        Assert.All(result, w => Assert.Equal(provA, w.ProvinceId));
+    }
+
+    [Fact]
+    public async Task FilterWaterManagementAreas_CatchmentScopedUser_SeesOnlyOwningWma()
+    {
+        using var db = CreateDb();
+        var (_, wmaA, catchA, _, _) = SeedHierarchy(db, "A");
+        SeedHierarchy(db, "B"); // different WMA
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        // User is scoped to catchA, which lives in wmaA.
+        var user = MakeUser(DwsRoles.Validator, catchmentId: catchA, wmaId: wmaA);
+
+        var result = await sut.FilterWaterManagementAreas(db.WaterManagementAreas, user).ToListAsync();
+
+        Assert.Single(result);
+        Assert.Equal(wmaA, result[0].WmaId);
+    }
+
+    [Fact]
+    public async Task FilterWaterManagementAreas_NoScopeUser_SeesNothing()
+    {
+        using var db = CreateDb();
+        SeedHierarchy(db, "A");
+        await db.SaveChangesAsync();
+
+        var sut = new ScopedCaseQuery(db);
+        var user = MakeUser(DwsRoles.Validator); // no catchment, wma, or province claims
+
+        var result = await sut.FilterWaterManagementAreas(db.WaterManagementAreas, user).ToListAsync();
+
+        Assert.Empty(result);
+    }
 }

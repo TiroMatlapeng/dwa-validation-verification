@@ -3,6 +3,7 @@ using Xunit;
 
 namespace dwa_ver_val.Tests.Integration;
 
+[Collection(SqlServerIntegrationCollection.Name)]
 public class ForgotPasswordFlowTests : IClassFixture<IntegrationTestFixture>
 {
     private readonly IntegrationTestFixture _factory;

@@ -3,6 +3,7 @@ using dwa_ver_val.Controllers;
 using dwa_ver_val.Services.Reporting;
 using dwa_ver_val.Services.Reporting.Export;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace dwa_ver_val.Tests.Controllers;
@@ -33,10 +34,26 @@ public class ReportsControllerTests
                 Array.Empty<IReadOnlyList<string>>()));
     }
 
-    private static ReportsController Build()
+    /// <summary>
+    /// Creates an in-memory ApplicationDBContext for test use — empty, isolated per call.
+    /// </summary>
+    private static ApplicationDBContext CreateDb()
     {
-        var ctrl = new ReportsController(new FakeReporting(),
-            new IReportExporter[] { new CsvReportExporter(), new ExcelReportExporter(), new PdfReportExporter() });
+        var options = new DbContextOptionsBuilder<ApplicationDBContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        return new ApplicationDBContext(options);
+    }
+
+    private static ReportsController Build(ApplicationDBContext? db = null)
+    {
+        var testDb = db ?? CreateDb();
+        // NationalManager bypasses scope → FilterWaterManagementAreas returns all (empty in-memory DB → empty list, which is correct for unit tests).
+        var ctrl = new ReportsController(
+            new FakeReporting(),
+            new IReportExporter[] { new CsvReportExporter(), new ExcelReportExporter(), new PdfReportExporter() },
+            testDb,
+            new ScopedCaseQuery(testDb));
         ctrl.ControllerContext = new ControllerContext
         {
             HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext

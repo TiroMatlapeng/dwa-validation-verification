@@ -13,6 +13,7 @@ namespace dwa_ver_val.Tests.Integration;
 /// No SQL interaction is needed — the middleware block fires before routing, so no DB seed
 /// or authenticated user is required.
 /// </summary>
+[Collection(SqlServerIntegrationCollection.Name)]
 public class StaticFileExposureTests : IClassFixture<IntegrationTestFixture>
 {
     private readonly IntegrationTestFixture _factory;

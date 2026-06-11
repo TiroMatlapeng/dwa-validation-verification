@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DWA V&amp;V System — Validation Report (2026-06-03)</title>
+<style>
+  :root{
+    --navy-900:#001a3a; --navy-800:#002855; --navy-700:#003d7a;
+    --blue-600:#0066b3; --blue-300:#7db8e0; --blue-50:#eef5fb;
+    --green-700:#2e7d32; --green-50:#eaf4ea;
+    --amber-700:#8a6d00; --amber-500:#c49000; --amber-50:#fbf4dd;
+    --red-700:#c62828; --red-50:#fbeaea;
+    --n-900:#1a1f2b; --n-700:#555d6e; --n-500:#8892a0; --n-300:#d0d5db; --n-100:#f1f3f6; --white:#fff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--n-900);background:var(--n-100);line-height:1.55;font-size:15px}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 24px 64px}
+  header.hero{background:linear-gradient(135deg,var(--navy-800),var(--navy-700));color:#fff;padding:36px 0 30px;margin-bottom:28px;
+       border-bottom:5px solid var(--blue-600)}
+  header.hero .wrap{padding-top:0;padding-bottom:0}
+  .eyebrow{letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:var(--blue-300);font-weight:700;margin:0 0 6px}
+  h1{margin:0 0 6px;font-size:28px;font-weight:700}
+  .sub{color:#c9dcef;font-size:14px;margin:0}
+  .verdict{display:inline-flex;align-items:center;gap:10px;margin-top:18px;background:rgba(255,255,255,.10);
+       border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:12px 16px}
+  .verdict .dot{width:12px;height:12px;border-radius:50%;background:var(--amber-500);box-shadow:0 0 0 4px rgba(196,144,0,.25)}
+  .verdict strong{font-size:16px}
+  .verdict span{color:#c9dcef;font-size:13px}
+  h2{font-size:20px;margin:34px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--n-300);color:var(--navy-800)}
+  h3{font-size:16px;margin:22px 0 8px;color:var(--navy-700)}
+  p{margin:10px 0}
+  .card{background:#fff;border:1px solid var(--n-300);border-radius:12px;padding:20px 22px;margin:16px 0;
+       box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}
+  .stat{background:#fff;border:1px solid var(--n-300);border-radius:12px;padding:16px;text-align:center}
+  .stat .num{font-size:30px;font-weight:800;line-height:1}
+  .stat .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--n-700);margin-top:6px}
+  .stat.crit .num{color:var(--red-700)} .stat.imp .num{color:var(--amber-700)}
+  .stat.min .num{color:var(--blue-600)} .stat.ok .num{color:var(--green-700)}
+  .pill{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;letter-spacing:.03em;white-space:nowrap}
+  .pill.crit{background:var(--red-50);color:var(--red-700);border:1px solid #e6b9b9}
+  .pill.imp{background:var(--amber-50);color:var(--amber-700);border:1px solid #e6d28a}
+  .pill.min{background:var(--blue-50);color:var(--blue-600);border:1px solid #b9d6ee}
+  .pill.legacy{background:var(--n-100);color:var(--n-700);border:1px solid var(--n-300)}
+  .pill.new{background:var(--green-50);color:var(--green-700);border:1px solid #aed4af}
+  table{width:100%;border-collapse:collapse;margin:12px 0;background:#fff;border:1px solid var(--n-300);border-radius:10px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--n-300);vertical-align:top;font-size:14px}
+  th{background:var(--navy-800);color:#fff;font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  tr:nth-child(even) td{background:#fafbfc}
+  code{background:var(--n-100);border:1px solid var(--n-300);border-radius:5px;padding:1px 5px;font-size:13px;
+       font-family:"SF Mono",Menlo,Consolas,monospace}
+  .crit-banner{background:var(--red-50);border:1px solid #e6b9b9;border-left:6px solid var(--red-700);border-radius:10px;padding:18px 20px;margin:16px 0}
+  .crit-banner h3{margin-top:0;color:var(--red-700)}
+  .good{background:var(--green-50);border:1px solid #aed4af;border-left:6px solid var(--green-700);border-radius:10px;padding:16px 20px;margin:16px 0}
+  ol.plan{counter-reset:step;list-style:none;padding-left:0;margin:8px 0}
+  ol.plan li{position:relative;padding:12px 14px 12px 52px;background:#fff;border:1px solid var(--n-300);border-radius:10px;margin:10px 0}
+  ol.plan li::before{counter-increment:step;content:counter(step);position:absolute;left:12px;top:12px;width:28px;height:28px;
+       background:var(--navy-700);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+  ol.plan li b{color:var(--navy-800)}
+  .muted{color:var(--n-700);font-size:13px}
+  ul.tight li{margin:5px 0}
+  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--n-300);color:var(--n-500);font-size:12px}
+  .legend{font-size:12px;color:var(--n-700);margin:6px 0 0}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">DWA Validation &amp; Verification System</p>
+    <h1>Validation Report — Deep Code &amp; Live Application Review</h1>
+    <p class="sub">Branch <code style="color:#fff;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25)">feature/reporting-foundation</code> &nbsp;·&nbsp; 3 June 2026 &nbsp;·&nbsp; ASP.NET Core 10 · EF Core 10 · SQL Server</p>
+    <div class="verdict">
+      <span class="dot"></span>
+      <div><strong>Verdict: HOLD — do not ship until DOC-01 is fixed</strong><br>
+      <span>Functionally solid · build clean · 441/441 tests pass · zero runtime 500s · one critical data-exposure blocker</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <h2>Executive summary</h2>
+  <div class="card">
+    <p>The system is <b>functionally healthy and notably mature</b>: clean build, <b>441/441 automated tests passing</b>, no EF migration drift, and <b>zero HTTP 500s across 100+ live requests</b>. The recently built work — <b>document uploads with workflow gating, the six reports, the export engine, and the D3 dashboard — validated clean</b>, with genuinely strong, server-enforced role-based access control and organisational-unit data scoping.</p>
+    <p>However, the build <b>must not ship</b> until one critical issue is resolved: <b>signed statutory letter PDFs are downloadable without authentication</b> (confirmed against the running application). Crucially, <b>almost every serious finding lives in pre-existing/legacy code</b> — not in the work delivered this session.</p>
+  </div>
+
+  <div class="grid">
+    <div class="stat crit"><div class="num">1</div><div class="lbl">Critical</div></div>
+    <div class="stat imp"><div class="num">8</div><div class="lbl">Important</div></div>
+    <div class="stat min"><div class="num">13</div><div class="lbl">Minor</div></div>
+    <div class="stat ok"><div class="num">441/441</div><div class="lbl">Tests pass</div></div>
+  </div>
+
+  <div class="good">
+    <b>What validated clean (this session's work):</b> document upload + Appendix-A evidence gating, all six Appendix-C reports, CSV/Excel/PDF exporters (18/18 export combinations), the self-hosted D3 dashboard (no CDN), and — verified live — RBAC + WMA data-scoping (a Regional Manager sees a strict subset; non-managers are blocked from national reports server-side). Gated document downloads work correctly.
+  </div>
+
+  <h2>🔴 Critical — ship-blocker (1)</h2>
+  <div class="crit-banner">
+    <h3>DOC-01 — Statutory letter PDFs are publicly accessible</h3>
+    <p>Signed Section 35 / 33 letters are written to <code>wwwroot/_uploads/letters/</code> and served by static-file middleware with <b>no authentication, no scope check, no virus gate</b>.</p>
+    <p><b>Confirmed live:</b> an anonymous request — <code>curl -kL http://localhost:4000/_uploads/letters/VV-9476BEAF-001-S35_L1.pdf</code> — returned <code>HTTP 200</code>, <code>Content-Type: application/pdf</code>, a valid 38&nbsp;KB <code>%PDF</code>. The reference format <code>VV-{8hex}-{NNN}-{code}</code> is structured/guessable.</p>
+    <p><b>Impact:</b> exposure of personal, legally sensitive ELU correspondence — a POPIA data-protection breach. <b>Irony:</b> case <em>documents</em> are already correctly gated through a controller + database-blob storage; only letters bypass it.</p>
+    <p><b>Fix:</b> serve letters via an authenticated, scope-checked controller action (mirror <code>/Document/Download</code>) and move the blob root out of <code>wwwroot</code>.</p>
+    <p class="muted">Status: pre-existing (Letters feature). Confirmed by both the code review and the live run.</p>
+  </div>
+
+  <h2>🟠 Important (8)</h2>
+  <p class="legend">Origin: <span class="pill legacy">legacy</span> pre-existing code · <span class="pill new">this session</span> recently built</p>
+  <table>
+    <thead><tr><th style="width:90px">ID</th><th>Finding</th><th style="width:110px">Origin</th></tr></thead>
+    <tbody>
+      <tr><td>AUTH-01</td><td><b>Org scoping is WMA-only.</b> <code>catchmentId</code>/<code>provinceId</code> claims are stamped but ignored by <code>ScopedCaseQuery</code> — a catchment-scoped user sees the whole WMA (over-broad access). Reporting cache key is coupled to this.</td><td><span class="pill legacy">legacy</span></td></tr>
+      <tr><td>WF-01</td><td><b>No concurrency control on workflow transitions.</b> Concurrent advances both pass guards → double-transition / duplicate step records (no <code>RowVersion</code> on <code>WorkflowInstance</code>).</td><td><span class="pill legacy">legacy</span></td></tr>
+      <tr><td>WF-02</td><td><b>Letter-issuance race.</b> Check-then-act with no unique index on <code>(FileMasterId, LetterTypeId)</code> + non-atomic reference numbering → duplicate letters / overwritten PDFs.</td><td><span class="pill legacy">legacy</span></td></tr>
+      <tr><td>DOC-02</td><td><b>Uploads are never virus-scanned yet downloadable.</b> Download only blocks <code>"Infected"</code> (never set); should require <code>"Clean"</code> + magic-byte validation.</td><td><span class="pill new">this session</span></td></tr>
+      <tr><td>BUG-030</td><td><b><code>/Owner</code> inaccessible to NationalManager</b> (and all roles except admin) — a national manager cannot view property owners.</td><td><span class="pill legacy">legacy</span></td></tr>
+      <tr><td>X-04</td><td><b>Vulnerable packages</b> — <code>DataProtection 10.0.2</code> (critical CVE), <code>Crypto.Xml</code> (high), MailKit/MimeKit (moderate). Patch promptly.</td><td><span class="pill legacy">legacy</span></td></tr>
+      <tr><td>X-01</td><td><b>Tests run on EF InMemory</b> — SQL-translation defects are invisible to CI (current queries verified only by manual live-DB probing).</td><td><span class="pill legacy">legacy</span></td></tr>
+      <tr><td>DOC-03</td><td><b>External uploader</b> doesn't validate <code>DocumentType</code> against the vocabulary or enforce an explicit size check (the internal controller does).</td><td><span class="pill new">this session</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2>🟡 Minor &amp; scope-gaps (13)</h2>
+  <div class="card">
+    <h3>Notable</h3>
+    <ul class="tight">
+      <li><b>Reports have no filter UI</b> — <code>ReportFilter</code> is wired in controller/service (works via querystring) but there's no filter form in the views. <span class="muted">(Deferred UI piece, not a bug.)</span></li>
+      <li><b>River seed data duplicated ~5×</b> (212 dropdown rows, 44 unique) — seed-idempotency regression in the dam-calc river picker.</li>
+      <li><b>Dam capacity isn't auto-computed</b> (BUG-019 partial) — Method 1/2 inputs exist but the <code>CalculatorEngine</code> isn't wired; capacity is manual and can contradict the inputs.</li>
+    </ul>
+    <h3>Other minor</h3>
+    <ul class="tight">
+      <li>Workflow guards key on <code>PropertyId</code> not <code>FileMasterId</code> (cross-case leak if a property is ever shared).</li>
+      <li>CSV formula-neutralisation corrupts legitimate negative numbers.</li>
+      <li>Dashboard chart JSON injected via <code>@@Html.Raw</code> (prefer the HTML-safe <code>Json.Serialize</code>).</li>
+      <li>Letter creation + workflow transition aren't a single transaction (split-operation risk).</li>
+      <li><code>sa</code> connection string &amp; demo password committed in config — move to secrets/Key Vault.</li>
+      <li>External GET form actions don't pre-check access (no data leak; POST validates).</li>
+      <li>Mixed-locale decimal display on the DamCalculation Edit form (cosmetic; round-trip safe).</li>
+      <li><code>/Forestation</code> &amp; <code>/DamCalculation</code> index 404 without <code>?propertyId=</code>.</li>
+      <li>Integration Health export is header-only on a fresh DB — add an explicit empty-state.</li>
+      <li>Path-traversal guard in <code>LocalDiskFileStorage</code> is brittle (adopt the blob-store approach).</li>
+    </ul>
+    <p class="muted">Domain check (not a code defect): the dam Method-2 <code>×1000</code> factor faithfully implements Appendix D but is physically unusual — confirm with the DWS requirements owner.</p>
+  </div>
+
+  <h2>Suggested remediation plan</h2>
+  <ol class="plan">
+    <li><b>Now / blocker:</b> DOC-01 — move letters out of <code>wwwroot</code>; serve only via a scope-checked controller action.</li>
+    <li><b>Security hardening:</b> AUTH-01 (catchment/province scoping + cache key), DOC-02 (virus-scan gate + magic bytes), X-04 (patch packages), DOC-03.</li>
+    <li><b>Concurrency correctness:</b> WF-01 (RowVersion + transaction on transitions), WF-02 (unique index + collision-safe reference numbers + transactional issuance).</li>
+    <li><b>Functional bugs:</b> BUG-030 (Owner access for NationalManager), river-seed de-duplication.</li>
+    <li><b>Test infrastructure:</b> X-01 — add SQL Server-backed integration tests so reporting/guard regressions can't slip past InMemory.</li>
+    <li><b>Scheduled scope (not ship-blockers):</b> report filter UI, dam <code>CalculatorEngine</code>, and the remaining Minor cleanups.</li>
+  </ol>
+
+  <h2>Methodology</h2>
+  <div class="card">
+    <p><b>Phase 1 — Deep code validation</b> (code-validator, Opus): full build + test run, plus security, EF/ORM, business-logic-vs-domain, concurrency and error-handling passes across document uploads, reporting/dashboards, the workflow engine, auth/scoping, letters, calculators, the external portal and migrations. The five riskiest report/dashboard queries were executed against the <b>live SQL Server</b> (then cleaned up) to prove they translate server-side with no client-evaluation.</p>
+    <p><b>Phase 2 — Live application validation</b> (user-testing-validator, Opus): started the app locally (<code>http://localhost:4000</code>, migrations applied, demo users seeded) and exercised it end-to-end over HTTP with per-role sessions — auth gates, the dashboard + D3 charts, all six reports and 18 export combinations, RBAC/scoping by role, document upload + workflow gating, and the external portal. This phase <b>confirmed DOC-01</b> with a live anonymous download.</p>
+    <p class="muted">No code was changed and nothing was committed. The live validator created harmless dev-DB test data on case <code>WARMS-2024-002</code> (2 documents + a "QA-TEST-1" dam calculation) and left evidence at <code>/tmp/leak.pdf</code> and <code>/tmp/dwa_app.log</code>; the application was stopped cleanly afterwards.</p>
+  </div>
+
+  <footer>
+    Generated for the DWA V&amp;V System validation review · 3 June 2026 ·
+    Source findings consolidated from the code-validator and user-testing-validator agents (both Opus).
+    Severity counts: 1 Critical · 8 Important · 13 Minor.
+  </footer>
+
+</div>
+</body>
+</html>

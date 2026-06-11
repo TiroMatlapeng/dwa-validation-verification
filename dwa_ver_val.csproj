@@ -11,6 +11,11 @@
     <Compile Remove="Tests/**" />
     <Content Remove="Tests/**" />
     <None Remove="Tests/**" />
+    <!-- E2E test project lives under Tests.E2E/; exclude from the web app's default globs
+         (mirrors the Tests/** exclusion above). Pure build-config; no behaviour change. -->
+    <Compile Remove="Tests.E2E/**" />
+    <Content Remove="Tests.E2E/**" />
+    <None Remove="Tests.E2E/**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +32,14 @@
     <!-- EF Core family bumped to 10.0.7 to match DataProtection.EntityFrameworkCore 10.0.7 requirement -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
+    <!-- Explicitly pin Design to 10.0.7 to override the 8.0.0 version that
+         QuestPDF/other transitive packages pull in via older EF references.
+         Without this, dotnet-ef migrations add fails at design-time with
+         MissingMethodException because the 8.0.0 DLL is loaded in a 10.x context. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.7">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

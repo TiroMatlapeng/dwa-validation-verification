@@ -6,6 +6,7 @@ using Xunit;
 
 namespace dwa_ver_val.Tests.Integration;
 
+[Collection(SqlServerIntegrationCollection.Name)]
 public class PortalRegistrationFlowTests : IClassFixture<PortalIntegrationTestFixture>
 {
     private readonly PortalIntegrationTestFixture _fixture;

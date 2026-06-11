@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using dwa_ver_val.Services.Audit;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace dwa_ver_val.Services.Letters;
@@ -75,12 +76,22 @@ public class LetterService : ILetterService
             referenceNumber: referenceNumber);
 
         var pdfBytes = _renderer.RenderLetter(template, ctx);
-        var blobPath = await _blobs.WriteAsync($"letters/{referenceNumber}.pdf", pdfBytes);
+
+        // WF-02: The blob path is derived from the unique LetterIssuanceId (Guid) rather than
+        // the reference number alone. Two concurrent issuances for different letter types could
+        // produce the same NNN from the count-based NextReferenceNumberAsync, landing on the
+        // same blob key and overwriting each other's PDF. Using the Guid makes the path unique
+        // per issuance record regardless of concurrency. The human-readable reference number is
+        // preserved in the LetterContext (for the letter body) and in the audit log; it is not
+        // the authoritative storage key.
+        var issuanceId = Guid.NewGuid();
+        var blobPath = await _blobs.WriteAsync(
+            $"letters/{fileMasterId:N}/{letterCode}/{issuanceId:N}.pdf", pdfBytes);
         var hash = Convert.ToHexString(SHA256.HashData(pdfBytes));
 
         var issuance = new LetterIssuance
         {
-            LetterIssuanceId = Guid.NewGuid(),
+            LetterIssuanceId = issuanceId,
             FileMasterId = fileMasterId,
             LetterTypeId = letterType.LetterTypeId,
             IssuedDate = req.IssueDate,
@@ -99,7 +110,23 @@ public class LetterService : ILetterService
             ResponseStatus = "Pending"
         };
         _db.LetterIssuances.Add(issuance);
-        await _db.SaveChangesAsync();
+
+        // WF-02: catch the filtered unique-index violation (SQL error 2601 / 2627) that fires
+        // when a concurrent issuance of the same letter type on the same case wins the race.
+        // Translate it to a domain-level LetterIssuanceDuplicateException so the controller
+        // can surface a clean user message rather than an unhandled 500. The blob written above
+        // is orphaned in this path (the filtered index fires before it is referenced by any
+        // LetterIssuance row), which is acceptable — blob storage is append-only and the orphan
+        // is unreachable and harmless.
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueIndexViolation(ex))
+        {
+            throw new LetterIssuanceDuplicateException(
+                "This letter has already been issued for this case.", ex);
+        }
 
         await _audit.LogAsync(new AuditEvent(
             EntityType: nameof(LetterIssuance),
@@ -153,5 +180,27 @@ public class LetterService : ILetterService
     {
         var count = await _db.LetterIssuances.CountAsync(l => l.FileMasterId == fileMasterId);
         return $"VV-{fileMasterId.ToString()[..8].ToUpperInvariant()}-{(count + 1):D3}-{letterCode}";
+    }
+
+    /// <summary>
+    /// Returns true when a <see cref="DbUpdateException"/> wraps a SQL Server unique-index
+    /// violation (error numbers 2601 = duplicate key row in index; 2627 = unique constraint).
+    /// Used to detect the WF-02 filtered unique index race and translate it to
+    /// <see cref="LetterIssuanceDuplicateException"/>.
+    /// </summary>
+    private static bool IsUniqueIndexViolation(DbUpdateException ex)
+    {
+        // Walk the inner exception chain looking for a SqlException with error 2601 or 2627.
+        var inner = ex.InnerException;
+        while (inner is not null)
+        {
+            if (inner is SqlException sqlEx &&
+                (sqlEx.Number == 2601 || sqlEx.Number == 2627))
+            {
+                return true;
+            }
+            inner = inner.InnerException;
+        }
+        return false;
     }
 }

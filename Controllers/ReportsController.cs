@@ -2,6 +2,7 @@ using dwa_ver_val.Services.Reporting;
 using dwa_ver_val.Services.Reporting.Export;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace dwa_ver_val.Controllers;
 
@@ -10,11 +11,33 @@ public class ReportsController : Controller
 {
     private readonly IReportingService _reporting;
     private readonly IReadOnlyList<IReportExporter> _exporters;
+    private readonly ApplicationDBContext _db;
+    private readonly IScopedCaseQuery _scope;
 
-    public ReportsController(IReportingService reporting, IEnumerable<IReportExporter> exporters)
+    // Validation statuses from Appendix B of the DWS requirements document.
+    // Kept as a static list so no DB round-trip is needed per request.
+    internal static readonly IReadOnlyList<string> ValidationStatuses = new[]
+    {
+        "Not Commenced",
+        "In Process",
+        "Compl require client interaction",
+        "Completed",
+        "Compl Not Client Interaction",
+        "Compl Post Interact Processing",
+        "Q. Outside",
+        "Consolidated",
+    };
+
+    public ReportsController(
+        IReportingService reporting,
+        IEnumerable<IReportExporter> exporters,
+        ApplicationDBContext db,
+        IScopedCaseQuery scope)
     {
         _reporting = reporting;
         _exporters = exporters.ToList();
+        _db = db;
+        _scope = scope;
     }
 
     public IActionResult Index() => View();
@@ -51,6 +74,22 @@ public class ReportsController : Controller
         if (exporter is null)
         {
             ViewData["Filter"] = filter;     // so export links can carry the active filter
+
+            // Populate the filter form: scoped WMA list (ordered by name) and static status list.
+            var scopedWmas = await _scope
+                .FilterWaterManagementAreas(_db.WaterManagementAreas, User)
+                .OrderBy(w => w.WmaName)
+                .Select(w => new { w.WmaId, w.WmaName })
+                .ToListAsync(ct);
+
+            ViewData["ScopedWmas"] = scopedWmas
+                .Select(w => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(w.WmaName, w.WmaId.ToString()))
+                .ToList();
+
+            ViewData["ValidationStatuses"] = ValidationStatuses
+                .Select(s => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(s, s))
+                .ToList();
+
             return View("Report", table);
         }
 

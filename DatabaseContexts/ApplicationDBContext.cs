@@ -180,6 +180,7 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
 
         modelBuilder.Entity<WorkflowState>().HasKey(e => e.WorkflowStateId);
         modelBuilder.Entity<WorkflowInstance>().HasKey(e => e.WorkflowInstanceId);
+        modelBuilder.Entity<WorkflowInstance>().Property(e => e.RowVersion).IsRowVersion();
         modelBuilder.Entity<WorkflowStepRecord>().HasKey(e => e.WorkflowStepRecordId);
 
         modelBuilder.Entity<LetterType>().HasKey(e => e.LetterTypeId);
@@ -393,6 +394,19 @@ public class ApplicationDBContext : IdentityDbContext<ApplicationUser, IdentityR
             .WithMany()
             .HasForeignKey(li => li.ReissuedFromId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // WF-02: filtered unique index — at most ONE original issuance per (case, letter type).
+        // Re-issuances (ReissuedFromId IS NOT NULL) are exempt from this index and are never
+        // blocked. The filter mirrors the domain rule exactly:
+        //   IF ReissuedFromId IS NULL → this is an original issuance → must be unique
+        //   IF ReissuedFromId IS NOT NULL → this is a legitimate re-issue → allowed
+        // SQL Server error 2601/2627 on this index is caught in LetterService.IssueAsync and
+        // translated to LetterIssuanceDuplicateException (clean domain error, not a 500).
+        modelBuilder.Entity<LetterIssuance>()
+            .HasIndex(l => new { l.FileMasterId, l.LetterTypeId })
+            .IsUnique()
+            .HasFilter("[ReissuedFromId] IS NULL")
+            .HasDatabaseName("IX_LetterIssuance_FileMaster_LetterType_Original");
 
         // Document → FileMaster
         modelBuilder.Entity<Document>()

@@ -16,7 +16,7 @@ namespace dwa_ver_val.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -1315,6 +1315,11 @@ namespace dwa_ver_val.Migrations
                     b.HasIndex("FileMasterId", "IssuedDate")
                         .HasDatabaseName("IX_LetterIssuances_FileMasterId_IssuedDate");
 
+                    b.HasIndex("FileMasterId", "LetterTypeId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_LetterIssuance_FileMaster_LetterType_Original")
+                        .HasFilter("[ReissuedFromId] IS NULL");
+
                     b.ToTable("LetterIssuances");
                 });
 
@@ -2475,6 +2480,12 @@ namespace dwa_ver_val.Migrations
 
                     b.Property<Guid>("FileMasterId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<string>("Status")
                         .IsRequired()

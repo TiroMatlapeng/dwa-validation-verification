@@ -1,9 +1,13 @@
 @model dwa_ver_val.Services.Reporting.ReportTable
 @using dwa_ver_val.Services.Reporting
+@using Microsoft.AspNetCore.Mvc.Rendering
 @{
     ViewData["Title"] = Model.Title;
     var action = (string?)ViewContext.RouteData.Values["action"];
     var filter = ViewData["Filter"] as ReportFilter ?? new ReportFilter();
+    var scopedWmas = ViewData["ScopedWmas"] as List<SelectListItem> ?? new List<SelectListItem>();
+    var validationStatuses = ViewData["ValidationStatuses"] as List<SelectListItem> ?? new List<SelectListItem>();
+
     var exportRoute = new Dictionary<string, string>();
     if (filter.DateFrom is { } df) exportRoute["DateFrom"] = df.ToString("yyyy-MM-dd");
     if (filter.DateTo is { } dt) exportRoute["DateTo"] = dt.ToString("yyyy-MM-dd");
@@ -15,6 +19,81 @@
 
 <div class="card" style="max-width: 1100px;">
     <div class="form-section-title">@Model.Title</div>
+
+    @* ── STICKY FILTER FORM ── *@
+    <form method="get" asp-action="@action" style="margin-bottom: 18px;">
+        <div class="form-section-title" style="font-size: 13px; margin-bottom: 10px; color: var(--dws-text-muted, #5a7184);">Filter</div>
+        <div class="form-row" style="flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+
+            <div class="form-group" style="min-width: 150px; flex: 1 1 150px;">
+                <label class="form-label" for="report-date-from">Date From</label>
+                <input id="report-date-from"
+                       type="date"
+                       name="DateFrom"
+                       class="form-control"
+                       value="@(filter.DateFrom?.ToString("yyyy-MM-dd") ?? "")"
+                       style="width: 100%;" />
+            </div>
+
+            <div class="form-group" style="min-width: 150px; flex: 1 1 150px;">
+                <label class="form-label" for="report-date-to">Date To</label>
+                <input id="report-date-to"
+                       type="date"
+                       name="DateTo"
+                       class="form-control"
+                       value="@(filter.DateTo?.ToString("yyyy-MM-dd") ?? "")"
+                       style="width: 100%;" />
+            </div>
+
+            <div class="form-group" style="min-width: 200px; flex: 2 1 200px;">
+                <label class="form-label" for="report-wma">Water Management Area</label>
+                <select id="report-wma"
+                        name="WaterManagementAreaId"
+                        class="form-control"
+                        style="width: 100%;">
+                    <option value="">All WMAs</option>
+                    @foreach (var item in scopedWmas)
+                    {
+                        if (item.Value == filter.WaterManagementAreaId?.ToString())
+                        {
+                            <option value="@item.Value" selected="selected">@item.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="form-group" style="min-width: 200px; flex: 2 1 200px;">
+                <label class="form-label" for="report-status">Validation Status</label>
+                <select id="report-status"
+                        name="ValidationStatus"
+                        class="form-control"
+                        style="width: 100%;">
+                    <option value="">All statuses</option>
+                    @foreach (var item in validationStatuses)
+                    {
+                        if (item.Value == filter.ValidationStatus)
+                        {
+                            <option value="@item.Value" selected="selected">@item.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="form-group" style="flex: 0 0 auto; display: flex; gap: 8px; align-items: flex-end; padding-bottom: 0;">
+                <button type="submit" id="report-apply" class="btn btn-primary">Apply</button>
+                <a asp-action="@action" id="report-clear" class="btn btn-secondary">Clear</a>
+            </div>
+
+        </div>
+    </form>
 
     <div style="margin-bottom: 12px;">
         <a class="btn btn-secondary" asp-action="@action" asp-all-route-data="exportRoute" asp-route-format="csv">Export CSV</a>

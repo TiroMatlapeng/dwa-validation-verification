@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -13,12 +14,52 @@ namespace dwa_ver_val.Tests.Integration;
 /// runs the app in Development environment and relaxes the application cookie's SecurePolicy
 /// to <c>SameAsRequest</c> so the in-memory test client (which talks plain HTTP) can carry the
 /// auth cookie between requests. Production cookie config (SecurePolicy=Always) is unchanged.
+///
+/// AUTH-02: credentials are no longer committed in appsettings.json. The integration test
+/// fixture loads the connection string from the environment variable
+/// <c>ConnectionStrings__Default</c> (set by CI or local .env) or from the main project's
+/// user-secrets (loaded automatically in Development via the UserSecretsId in dwa_ver_val.csproj).
+/// The fixture adds an in-process fallback so the test runner does not crash on machines
+/// that have no SQL Server; those tests will fail with a clean connectivity error rather
+/// than a missing-connection-string exception.
 /// </summary>
 public class IntegrationTestFixture : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+
+        // AUTH-02: if neither user-secrets nor env var supplies the connection string,
+        // inject the local-dev default so integration tests still run on the dev machine
+        // without requiring a second secret store.  On CI the env var takes precedence.
+        builder.ConfigureAppConfiguration((ctx, config) =>
+        {
+            var envCs = Environment.GetEnvironmentVariable("ConnectionStrings__Default");
+            if (!string.IsNullOrEmpty(envCs))
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:Default"] = envCs,
+                });
+            }
+            else
+            {
+                // Load user-secrets for the main app assembly (UserSecretsId in dwa_ver_val.csproj).
+                // This picks up the real connection string without committing credentials.
+                config.AddUserSecrets<Program>(optional: true);
+            }
+
+            // Ensure test-only Identity:InitialDemoPassword is set so seeder doesn't crash.
+            var envPass = Environment.GetEnvironmentVariable("Identity__InitialDemoPassword");
+            if (!string.IsNullOrEmpty(envPass))
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Identity:InitialDemoPassword"] = envPass,
+                });
+            }
+        });
+
         builder.ConfigureServices(services =>
         {
             services.Configure<CookieAuthenticationOptions>(IdentityConstants.ApplicationScheme, o =>

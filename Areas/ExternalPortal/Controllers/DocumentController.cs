@@ -22,26 +22,45 @@ public class DocumentController : Controller
     private readonly IPublicUserPropertyAccessor _access;
     private readonly IFileStorage _storage;
     private readonly INotificationService _notify;
+    private readonly IVirusScanner _virusScanner;
 
     public DocumentController(
         ApplicationDBContext db,
         IPublicUserPropertyAccessor access,
         IFileStorage storage,
-        INotificationService notify)
+        INotificationService notify,
+        IVirusScanner virusScanner)
     {
         _db = db;
         _access = access;
         _storage = storage;
         _notify = notify;
+        _virusScanner = virusScanner;
+    }
+
+    private bool TryGetCurrentUserId(out Guid userId)
+    {
+        var raw = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (raw is not null && Guid.TryParse(raw, out userId)) return true;
+        userId = default;
+        return false;
     }
 
     private Guid CurrentUserId() =>
-        Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new InvalidOperationException("Not authenticated."));
+        TryGetCurrentUserId(out var uid) ? uid : throw new InvalidOperationException("Not authenticated.");
 
     [HttpGet]
-    public IActionResult Upload(Guid fileMasterId)
+    public async Task<IActionResult> Upload(Guid fileMasterId, CancellationToken ct)
     {
+        if (!TryGetCurrentUserId(out var uid)) return Forbid();
+        try
+        {
+            await _access.AssertHasAccessToFileMasterAsync(uid, fileMasterId, ct);
+        }
+        catch (NotFoundException)
+        {
+            return Forbid();
+        }
         return View(new DocumentUploadViewModel { FileMasterId = fileMasterId });
     }
 
@@ -88,6 +107,17 @@ public class DocumentController : Controller
                 if (!FileSignatureValidator.MatchesExtension(peekStream, ext))
                     ModelState.AddModelError(nameof(model.File), "File content does not match its extension.");
             }
+
+            // DOC-02: virus scan — after magic-byte validation, before persisting the blob/row.
+            // Fail-closed: only a Clean verdict is allowed; Infected or scanner Error rejects the upload.
+            if (ModelState.IsValid)
+            {
+                using var scanStream = model.File.OpenReadStream();
+                var scan = await _virusScanner.ScanAsync(scanStream, ct);
+                if (scan != VirusScanResult.Clean)
+                    ModelState.AddModelError(nameof(model.File),
+                        "The file failed virus scanning and was rejected. Please upload a clean file.");
+            }
         }
 
         if (!ModelState.IsValid) return View(model);
@@ -110,7 +140,7 @@ public class DocumentController : Controller
             FileSizeBytes = stored.SizeBytes,
             UploadedByPublicUserId = uid,
             UploadDate = DateTime.UtcNow,
-            VirusScanStatus = "Pending",
+            VirusScanStatus = "Clean", // DOC-02: only Clean content reaches here (Infected/Error rejected above)
             DocumentHash = stored.Sha256Hex
         };
         _db.Documents.Add(doc);

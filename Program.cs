@@ -184,6 +184,10 @@ else
 builder.Services.AddSingleton<IFileStorage>(sp =>
     new LocalDiskFileStorage(
         Path.Combine(builder.Environment.ContentRootPath, "portal-uploads")));
+// DOC-02: virus scanner behind IVirusScanner. EicarVirusScanner is the stateless default
+// (detects the standard EICAR test signature); swap for ClamAV/Defender via config later.
+builder.Services.AddSingleton<dwa_ver_val.Services.Documents.IVirusScanner,
+    dwa_ver_val.Services.Documents.EicarVirusScanner>();
 builder.Services.AddScoped<dwa_ver_val.Services.Notifications.INotificationService,
     dwa_ver_val.Services.Notifications.NotificationService>();
 builder.Services.AddScoped<IPublicUserPropertyAccessor, PublicUserPropertyAccessor>();
