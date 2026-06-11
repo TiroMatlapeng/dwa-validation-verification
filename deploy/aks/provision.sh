@@ -19,18 +19,19 @@ set -euo pipefail
 
 # ---------- Configurable ----------
 : "${AZ_LOCATION:=southafricanorth}"
-: "${AZ_RG:=rg-dwa-vv-aks}"
-: "${AZ_ACR:=dwaregistry}"                     # must be globally unique
-: "${AKS_CLUSTER:=aks-dwa-vv-demo}"
+: "${AZ_RG:=rg-dwa-vv-dev}"
+: "${AZ_ACR:=acrdwavv}"                     # must be globally unique
+: "${AKS_CLUSTER:=aks-dwa-vv-dev}"
+: "${AZ_AKS_NODE_RG:=rg-dwa-vv-dev-nodes}"     # explicit node RG name (else AKS generates MC_*)
 : "${AKS_NODE_COUNT:=2}"
 : "${AKS_NODE_VM:=Standard_B2s}"               # 2 vCPU, 4 GB RAM
-: "${AZ_SQL_SERVER:=sql-dwa-vv-aks}"
+: "${AZ_SQL_SERVER:=sql-dwa-vv-dev}"
 : "${AZ_SQL_DB:=dwa_val_ver}"
 : "${AZ_SQL_ADMIN:=dwaadmin}"
 : "${AZ_SQL_PASSWORD:=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)Aa1!}"
-: "${AZ_KV:=kv-dwa-vv-aks}"
-: "${AZ_LAW:=law-dwa-vv}"                      # Log Analytics workspace
-: "${K8S_NAMESPACE:=dwa-vv}"
+: "${AZ_KV:=kv-dwa-vv-dev}"
+: "${AZ_LAW:=log-dwa-vv-dev}"                      # Log Analytics workspace
+: "${K8S_NAMESPACE:=dwa-vv-dev}"
 # POPIA acknowledgement value — set to "true" for demo/testing.
 # Remove this KV secret entry when Task 10.3 (DataProtection) lands.
 : "${IDENTITY_DEMO_PASSWORD:=Demo@Pass2026}"
@@ -68,6 +69,7 @@ az aks create \
   -g "$AZ_RG" \
   -n "$AKS_CLUSTER" \
   -l "$AZ_LOCATION" \
+  --node-resource-group "$AZ_AKS_NODE_RG" \
   --node-count "$AKS_NODE_COUNT" \
   --node-vm-size "$AKS_NODE_VM" \
   --network-plugin azure \
@@ -151,7 +153,7 @@ az keyvault secret set \
 
 # 7. Workload Identity for the app pod
 echo "==> Creating managed identity for app workload..."
-APP_MI_NAME="mi-dwa-vv-app"
+APP_MI_NAME="id-dwa-vv-app-dev"
 az identity create -g "$AZ_RG" -n "$APP_MI_NAME" -l "$AZ_LOCATION" -o none
 APP_MI_CLIENT_ID=$(az identity show -g "$AZ_RG" -n "$APP_MI_NAME" --query clientId -o tsv)
 APP_MI_PRINCIPAL_ID=$(az identity show -g "$AZ_RG" -n "$APP_MI_NAME" --query principalId -o tsv)

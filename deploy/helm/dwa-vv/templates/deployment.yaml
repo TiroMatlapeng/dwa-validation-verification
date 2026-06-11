@@ -40,7 +40,7 @@ spec:
     spec:
       serviceAccountName: {{ include "dwa-vv.fullname" . }}
       imagePullSecrets:
-        - name: acr-pull-secret
+        - name: dwa-vv-acr-pull
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

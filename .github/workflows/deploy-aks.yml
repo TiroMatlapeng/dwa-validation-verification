@@ -1,4 +1,4 @@
-name: Deploy to AKS
+name: "Deploy: AKS (manual)"
 
 # Manual-only trigger.  AKS is the Stage-3+ path; App Service handles today's demo.
 # See .github/workflows/deploy-azure.yml for the active App Service workflow.
@@ -115,7 +115,7 @@ jobs:
           AKS_CLUSTER: ${{ vars.AKS_CLUSTER_NAME }}
           IMAGE_TAG:   ${{ steps.tag.outputs.tag }}
           RELEASE_NAME: dwa-vv
-          NAMESPACE:   dwa-vv
+          NAMESPACE:   dwa-vv-dev
           VALUES_FILE: ${{ steps.values.outputs.file }}
           # Workload Identity + Key Vault — stored as repository/environment variables.
           # Set these in GitHub → Settings → Variables for each environment.
@@ -128,7 +128,7 @@ jobs:
       - name: Capture URL
         id: smoke
         env:
-          NAMESPACE: dwa-vv
+          NAMESPACE: dwa-vv-dev
           RELEASE_NAME: dwa-vv
         run: |
           HOST=$(kubectl -n "$NAMESPACE" get ingress \
@@ -145,7 +145,7 @@ jobs:
       - name: Collect diagnostics on failure
         if: failure()
         env:
-          NAMESPACE: dwa-vv
+          NAMESPACE: dwa-vv-dev
           RELEASE_NAME: dwa-vv
         run: |
           mkdir -p /tmp/aks-diag

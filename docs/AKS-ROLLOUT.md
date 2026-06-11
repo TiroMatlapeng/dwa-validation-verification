@@ -42,12 +42,12 @@ Set these once in **GitHub → Settings → Secrets and variables → Actions**:
 | Key | Type | Value |
 |-----|------|-------|
 | `AZURE_CREDENTIALS` | **Secret** | Service principal JSON from `az ad sp create-for-rbac` (see below) |
-| `ACR_NAME` | Variable | The ACR name you chose (e.g. `dwaregistry`) |
-| `AZURE_RG` | Variable | Resource group name (e.g. `rg-dwa-vv-aks`) |
-| `AKS_CLUSTER_NAME` | Variable | AKS cluster name (e.g. `aks-dwa-vv-demo`) |
+| `ACR_NAME` | Variable | The ACR name you chose (e.g. `acrdwavv`) |
+| `AZURE_RG` | Variable | Resource group name (e.g. `rg-dwa-vv-dev`) |
+| `AKS_CLUSTER_NAME` | Variable | AKS cluster name (e.g. `aks-dwa-vv-dev`) |
 | `MANAGED_IDENTITY_CLIENT_ID` | Variable | From provisioning output |
 | `AZURE_TENANT_ID` | Variable | Your Azure AD tenant ID |
-| `KEY_VAULT_NAME` | Variable | Key Vault name (e.g. `kv-dwa-vv-aks`) |
+| `KEY_VAULT_NAME` | Variable | Key Vault name (e.g. `kv-dwa-vv-dev`) |
 
 **Creating the service principal for `AZURE_CREDENTIALS`:**
 
@@ -55,7 +55,7 @@ Set these once in **GitHub → Settings → Secrets and variables → Actions**:
 az ad sp create-for-rbac \
   --name sp-dwa-vv-github \
   --role Contributor \
-  --scopes /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-dwa-vv-aks \
+  --scopes /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-dwa-vv-dev \
   --sdk-auth
 ```
 
@@ -76,10 +76,10 @@ credentials for the app pod.
 
 ```bash
 export AZ_LOCATION=southafricanorth   # or eastus / westeurope
-export AZ_RG=rg-dwa-vv-aks
-export AZ_ACR=dwaregistry            # globally unique name
-export AKS_CLUSTER=aks-dwa-vv-demo
-export AZ_KV=kv-dwa-vv-aks
+export AZ_RG=rg-dwa-vv-dev
+export AZ_ACR=acrdwavv            # globally unique name
+export AKS_CLUSTER=aks-dwa-vv-dev
+export AZ_KV=kv-dwa-vv-dev
 export AZ_SQL_SERVER=sql-dwa-vv-aks
 
 bash deploy/aks/provision.sh
@@ -91,9 +91,9 @@ printed at the end — save it to a password manager immediately.
 **What you get at the end:**
 
 ```
-ACR login server:          dwaregistry.azurecr.io
-AKS cluster:               aks-dwa-vv-demo
-Key Vault:                 kv-dwa-vv-aks
+ACR login server:          acrdwavv.azurecr.io
+AKS cluster:               aks-dwa-vv-dev
+Key Vault:                 kv-dwa-vv-dev
 Managed Identity clientId: <uuid>
 SQL admin password:        <generated>
 ```
@@ -108,7 +108,7 @@ kubectl get nodes
 kubectl get pods -n kube-system -l app=secrets-store-csi-driver
 
 # Key Vault secrets present
-az keyvault secret list --vault-name kv-dwa-vv-aks -o table
+az keyvault secret list --vault-name kv-dwa-vv-dev -o table
 ```
 
 ---
@@ -118,12 +118,12 @@ az keyvault secret list --vault-name kv-dwa-vv-aks -o table
 After provisioning, export the values printed at the end of `provision.sh`:
 
 ```bash
-export ACR_NAME=dwaregistry
-export RG=rg-dwa-vv-aks
-export AKS_CLUSTER=aks-dwa-vv-demo
+export ACR_NAME=acrdwavv
+export RG=rg-dwa-vv-dev
+export AKS_CLUSTER=aks-dwa-vv-dev
 export MANAGED_IDENTITY_CLIENT_ID=<uuid from provisioning output>
 export AZURE_TENANT_ID=$(az account show --query tenantId -o tsv)
-export KEY_VAULT_NAME=kv-dwa-vv-aks
+export KEY_VAULT_NAME=kv-dwa-vv-dev
 
 # Optional overrides (defaults shown):
 # export IMAGE_TAG=$(git rev-parse --short HEAD)
@@ -227,12 +227,12 @@ bash deploy/aks/teardown.sh
 **Re-provisioning the same Key Vault name:** Azure soft-deletes the KV when
 the RG is dropped, reserving the name for ~90 days. To reuse the name
 immediately, run teardown with `PURGE_KEYVAULT=true bash deploy/aks/teardown.sh`
-or manually `az keyvault purge --name kv-dwa-vv-aks` after teardown completes.
+or manually `az keyvault purge --name kv-dwa-vv-dev` after teardown completes.
 
 **Tracking deletion progress:**
 
 ```bash
-az group show -n rg-dwa-vv-aks --query properties.provisioningState -o tsv
+az group show -n rg-dwa-vv-dev --query properties.provisioningState -o tsv
 # Returns "Deleting" until done; "ResourceGroupNotFound" once complete.
 ```
 
@@ -358,7 +358,7 @@ variables projected from the synced K8s Secret will only update on the next pod 
 Force a rolling restart after updating a sensitive secret:
 
 ```bash
-az keyvault secret set --vault-name kv-dwa-vv-aks \
+az keyvault secret set --vault-name kv-dwa-vv-dev \
   --name "ConnectionStrings--Default" --value "<new value>"
 
 # Wait ~2 min for CSI sync, then:

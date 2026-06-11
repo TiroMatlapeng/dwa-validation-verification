@@ -37,11 +37,17 @@ resources:
     cpu: 500m
     memory: 512Mi
 
-# IP-only — AKS provisions a public IP; kubectl get svc dwa-vv shows EXTERNAL-IP.
+# Named static IP — pre-created in the AKS node resource group so the Azure
+# object has a human-readable name (see docs/DEPLOYMENT-NAMING-CONVENTION.md §5.1).
+# The resource-group annotation must reference the CURRENT node RG; update it to
+# rg-dwa-vv-dev-nodes when the cluster is re-provisioned under the convention.
 service:
   type: LoadBalancer
   port: 80
   targetPort: 8080
+  annotations:
+    service.beta.kubernetes.io/azure-pip-name: "pip-dwa-vv-ingress-dev"
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: "MC_VnV-Project_vnv-aks_southafricanorth"
 
 ingress:
   enabled: false

@@ -21,10 +21,10 @@ set -euo pipefail
 
 # ---------- Configurable ----------
 : "${AZ_LOCATION:=southafricanorth}"
-: "${AZ_RG:=rg-dwa-vv-demo}"
-: "${AZ_PLAN:=plan-dwa-vv-demo}"
-: "${AZ_APP:=dwa-vv-demo}"              # must be globally unique on azurewebsites.net
-: "${AZ_SQL_SERVER:=sql-dwa-vv-demo}"   # must be globally unique on database.windows.net
+: "${AZ_RG:=rg-dwa-vv-dev}"
+: "${AZ_PLAN:=plan-dwa-vv-dev}"
+: "${AZ_APP:=app-dwa-vv-dev}"              # must be globally unique on azurewebsites.net
+: "${AZ_SQL_SERVER:=sql-dwa-vv-dev}"   # must be globally unique on database.windows.net
 : "${AZ_SQL_DB:=dwa_val_ver}"
 : "${AZ_SQL_ADMIN:=dwaadmin}"
 : "${AZ_SQL_PASSWORD:=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)Aa1!}"
